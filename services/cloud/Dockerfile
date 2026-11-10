@@ -2,7 +2,7 @@
 # jar the host produced and the smokes already verified (scripts/cloud_smoke.sh, cloud_lb_smoke.sh),
 # byte for byte. Rebuild on the host first:
 #
-#   mvn -B -q -f services/cloud/pom.xml -DskipTests clean package
+#   mvn -B -q -f services/cloud/pom.xml -DskipTests clean package   # builds eureka, config, gateway, admin-server
 #
 # For a self-contained image that compiles from source inside the build container see
 # Dockerfile.build. That path needs a warm Maven Central (the build downloads the reactor's

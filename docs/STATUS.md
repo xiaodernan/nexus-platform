@@ -37529,3 +37529,52 @@ observable this session; all three smokes ran green locally.
   `scripts/check_cloud_discovery.mjs` (the single-node gates, unchanged),
   `scripts/cloud_smoke.sh`, `scripts/cloud_lb_smoke.sh`, `scripts/cloud_refresh.sh`,
   `docs/PLAN.md` (the cloud-plane queue, D858 row).
+
+## 859. D859 — the plane's one window: Spring Boot Admin, live (Eureka + the whole registry at a glance)
+
+**What the mandate asked. "Add Spring Cloud elements"** — the plane had a registry, a config server, a
+breaker, a limiter and a container story; what it did NOT have was a single place that SHOWS all of it.
+This unit adds it.
+
+**The lane.** `services/cloud/admin-server` (new module in the cloud reactor; spring-boot-admin 3.5.11,
+compiled against the same Spring Cloud train 2025.0.3 / Boot 3.5.16). `AdminServerApplication` enables
+`@EnableAdminServer` and `@EnableDiscoveryClient`; it registers **nothing** (`register-with-eureka: false`,
+`fetch-registry: true`) — the window watches, it does not widen the doorway. Two deliberateness details:
+(1) it binds only `health,info` for its own actuator and (2) its discovery (`NEXUS_EUREKA_URI`, default the
+plane's own 18761) — the admin reads the SAME registry every service on the plane shares.
+
+**Measured live this session.** `:19444/actuator/health` → 200 (`{"status":"UP","groups":["liveness","readiness"]}`).
+`:19444/instances` (with `Accept: application/json` — a deliberate fork in the code path: without the header
+the admin serves its Thymeleaf SPA, an HTML shell that is correct but not the API) →
+`[{"id":"d26498e4a25b","registration":{"name":"NEXUS-GATEWAY","managementUrl":"http://192.168.1.5:18088/actuator",
+..."source":"discovery","metadata":{"management.port":"18088"}},"registered":true,
+...{"status":"UP",...},
+"endpoints":[health, refresh, gateway, info]}]`
+— the admin discovered the gateway through the registry and shows it UP live with its full endpoint table,
+and nothing else (the registry held only NEXUS-GATEWAY at that point — exactly the one-service isolation
+stance the smoke asserts).
+
+**Smoke, extended, green.** `scripts/cloud_smoke.sh` gained the admin phase after the eureka/gateway phases:
+start the admin server against the same throwaway eureka, wait healthy, poll `:19444/instances`
+(`Accept: application/json`) until `"name":"NEXUS-GATEWAY"` appears with `"status":"UP"`; then re-poll to
+confirm the listed endpoints. **PASS** (`cloud plane smoke - eureka + config + gateway + admin`) —
+CI's `cloud` job covers it for free (it runs `cloud_smoke.sh`). `cloud_lb_smoke.sh` re-run: PASS (both
+lb:// routes, correlation, deterministic limiter). `cloud_refresh.sh` re-run: PASS. The `
+  wait_health` bug found and fixed in the same unit (the admin phase passed a full URL where the function
+expects a port — the admin waited forever on a garbage URL; every service call site now passes the port).
+
+**Compose.** The `cloud` profile in `infra/docker-compose.yml` gains the `admin-server` service (image
+`nexus/admin:dev`, published at `127.0.0.1:${NEXUS_ADMIN_HOST_PORT:-19444}`, `depends_on: [eureka, gateway]`).
+**Not claimed.** (a) No auth on the admin surface — same trusted-hop boundary as the edge (D850 ruling; a
+deployment ingress owns the door). (b) Docker image for the admin module not built this session (Dockerfile.build
+is the self-contained path; the runnable image waits for the deployment proof the host's saturated daemon
+delays — D853). (c) The admin's rendered SPA versus its API: the smoke asserts the API only; the Thymeleaf
+view is exercised by a browser on a live plane, not by curl. (d) CI-runner results for the extended `cloud`
+job not observable this session; everything green locally.
+
+- readers: `services/cloud/admin-server/pom.xml`,
+  `services/cloud/admin-server/src/main/java/com/nexus/cloud/admin/AdminServerApplication.java`,
+  `services/cloud/admin-server/src/main/resources/application.yaml`,
+  `scripts/cloud_smoke.sh` (the admin phase),
+  `infra/docker-compose.yml` (the `admin-server` service, `cloud` profile),
+  `docs/PLAN.md` (the cloud-plane queue, D859 row).

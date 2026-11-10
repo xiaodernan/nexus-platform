@@ -1,0 +1,39 @@
+server:
+  port: ${NEXUS_ADMIN_PORT:19444}
+
+spring:
+  application:
+    name: nexus-admin
+  boot:
+    admin:
+      monitor:
+        # A dev plane's health is re-read every 10s, not every default 5s — a polite metronome.
+        default-period: 10s
+        instance-event-replay: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+    # The admin server WATCHES; it does not register. Everything it knows it learns from the
+    # registry (NEXUS-GATEWAY, and NEXUS-PLATFORM / NEXUS-AI under opt-in) — it adds nothing
+    # to it. A window must not widen the doorway.
+    register-with-eureka: false
+    fetch-registry: true
+  instance:
+    instance-id: ${spring.application.name}:${server.port}
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    de.codecentric.boot.admin: INFO

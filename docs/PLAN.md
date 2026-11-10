@@ -4135,6 +4135,16 @@ normal boot unchanged unless a profile opts in.
   open. The smoke does NOT belong in `db_gate_fresh.sh` (§845(e)); its gate is the CI `cloud` job.
 - **D858 (§858): the two-node Eureka HA experiment did NOT converge on this host — the plane keeps one
   registry.**
+- **D859 (§859): the plane's one window — Spring Boot Admin, live.** `services/cloud/admin-server`
+  (new module, spring-boot-admin 3.5.11 against Boot 3.5.16) discovers every Eureka-registered service
+  and presents live health, endpoints, metrics — `:19444/actuator/health` 200, `:19444/instances` returns
+  NEXUS-GATEWAY discovered through the registry (status UP, endpoints health/refresh/gateway/info). The
+  admin server watches: `register-with-eureka: false` — a window must not widen the doorway. Trust-hop
+  posture matches the edge (no auth on this dev plane, same ruling as D850 reserved for the deployment
+  ingress). `cloud_smoke.sh` proves it end-to-end (started after the gateway, discovered it, showed it UP;
+  PASS with the admin member), compose's `cloud` profile gains the `admin-server` service on
+  `127.0.0.1:19444`, CI's `cloud` job covers it through the same smoke.
+
   The mandate asked for Spring Cloud elements, and a registry surviving a node death is the textbook one.
   Three configurations were tried on throwaway ports (18961/18962/18089, nothing of the plane's deployment
   touched): a comma-separated zone (both nodes log "The replica size seems to be empty"; the default

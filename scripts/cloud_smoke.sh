@@ -184,4 +184,24 @@ done
 echo "  NEXUS-GATEWAY registered"
 assert_registry_is_ours
 
-echo "PASS: cloud plane smoke - eureka + config + gateway"
+echo "== the admin server lists the registered services =="
+export NEXUS_ADMIN_PORT="${NEXUS_ADMIN_SMOKE_PORT:-19444}"
+start admin "$CLOUD/admin-server/target/app.jar" --server.port="$NEXUS_ADMIN_PORT"
+wait_health admin "$NEXUS_ADMIN_PORT"
+admin_found=0
+attempt=0
+while [ "$attempt" -lt 90 ]; do
+    if curl -fsS -H 'Accept: application/json' "http://127.0.0.1:$NEXUS_ADMIN_PORT/instances" 2>/dev/null | grep -q '"name":"NEXUS-GATEWAY"'; then
+        admin_found=1
+        break
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+done
+[ "$admin_found" = 1 ] || fail "the admin server never listed NEXUS-GATEWAY (see $LOG_DIR/admin.log)"
+echo "  /instances lists NEXUS-GATEWAY, discovered live through the registry"
+info="$(curl -fsS -H 'Accept: application/json' "http://127.0.0.1:$NEXUS_ADMIN_PORT/instances" 2>/dev/null)"
+echo "$info" | grep -q '"status":"UP"' || fail "the admin shows NEXUS-GATEWAY but not UP: $info"
+echo "  the admin shows NEXUS-GATEWAY as UP with its endpoints"
+
+echo "PASS: cloud plane smoke - eureka + config + gateway + admin"
