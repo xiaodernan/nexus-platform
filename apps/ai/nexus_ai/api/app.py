@@ -31,6 +31,7 @@ from nexus_ai.api.routes_search import router as search_router
 from nexus_ai.api.routes_stream import router as stream_router
 from nexus_ai.api.routes_system import router as system_router
 from nexus_ai.api.routes_agent import router as agent_router
+from nexus_ai.api.routes_actuator import router as actuator_router
 from nexus_ai.db import pool as db_pool
 
 log = logging.getLogger("nexus_ai.api.app")
@@ -111,7 +112,7 @@ def create_app(settings: Any | None = None) -> FastAPI:
         return _envelope("internal", "internal server error", status=500)
 
     for r in (search_router, stream_router, discover_router, rag_router,
-              conversations_router, system_router, agent_router):
+              conversations_router, system_router, agent_router, actuator_router):
         app.include_router(r)
 
     @app.get("/")

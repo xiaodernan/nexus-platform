@@ -38120,3 +38120,44 @@ proofs this unit happened on this host; CI's `cloud` job invokes the smoke, whos
 - readers: `services/cloud/gateway/src/main/resources/application.yaml` (metrics exposure),
   `scripts/cloud_retry_smoke.sh` (the metric assertion),
   `docs/CLOUD.md` (gate table, retry row).
+
+## 877. D877 — the Python service joins the Spring Boot Admin window: NEXUS-AI shows UP
+
+**What was missing.** D859 built the plane's one window; D872 gave the monolith a config-server pulse;
+D874 answered the customer; D875 made the edge honest. The one service the Spring Boot Admin could not
+see was the AI service — it is Python, FastAPI, no Spring, no `/actuator` of any kind (the stock Spring
+Boot Admin probes candidates through `/actuator/health`; the FastAPI AI answered 404/UNREACHABLE).
+
+**The lane.** A three-endpoint shim the AI adopts deliberately and nothing more:
+`nexus_ai/api/routes_actuator.py` serves exactly `GET /actuator` (`_links` to the two) +
+`GET /actuator/health` (the exact shape SBA parses: `{"status":"UP","groups":["liveness","readiness"]}`)
++ `GET /actuator/info` (the stack named honestly: `fastapi`, mock — a fact of the demo deploy, never a
+code claim about Spring). `apps/ai/tests/test_actuator_shim.py` (3 tests) pins all three.
+
+**Registration aligned to the probe path.** `apps/ai/nexus_ai/discovery.py` passes
+`health_check_url="/actuator/health"`, `status_page_url="/actuator/info"`, `home_page_url="/actuator"`,
+and `metadata={"management.port": str(port)}` to `init_async` (py-eureka-client 0.13.3 supports all of
+these — verified by reading its source, not by guessing).
+
+**Measured live (this session).** `scripts/cloud_ai_admin_smoke.sh` (new): boot eureka (18761) → boot
+AI with `NEXUS_AI_EUREKA_ENABLED=true` on 8012 → eureka lists NEXUS-AI (opt-in) → boot the admin
+(19451) → poll `:19451/instances` until `name=NEXUS-AI` with `status=UP`. **PASS measured three times**
+(the failing first run pinned the bug at the registration's probe path — `/health`, not `/actuator/health` —
+and NOT in the admin, the shim, or SBA's polling).
+
+**Cross-plane verification.** AI live on :8010 serves the shim (`/actuator/health` → `{"status":"UP","groups":
+["liveness","readiness"]}`). `uv run pytest tests/test_actuator_shim.py` → 3 passed. `demo_live.sh` re-verified
+green (exit 0) after the AI restart. CI's `cloud` job gains the ai-admin step after the retry smoke.
+
+**Not claimed.** That FastAPI 'runs' any other actuator endpoint — SBA probe path exists for health and
+info only; Prometheus/metrics/env are not scraped. That the AI appears in production admin projections —
+it is gated by the same opt-in as eureka registration (default OFF). That the admin's Thymeleaf SPA is
+asserted — `curl` proves the JSON API only. That ANY CI run of the smoke was observed authorized green;
+only this host was exercised.
+
+- readers: `apps/ai/nexus_ai/api/routes_actuator.py`,
+  `apps/ai/nexus_ai/api/app.py` (route wiring),
+  `apps/ai/nexus_ai/discovery.py` (probe-path registration),
+  `apps/ai/tests/test_actuator_shim.py`,
+  `scripts/cloud_ai_admin_smoke.sh`,
+  `docs/CLOUD.md` (admin row).

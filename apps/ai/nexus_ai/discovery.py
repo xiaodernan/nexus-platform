@@ -95,6 +95,10 @@ async def maybe_register_eureka() -> Registration | None:
             duration_in_secs=10,
             should_register=True,
             should_discover=False,  # findable, not a client — same shape as the monolith's cloud profile
+            health_check_url="/actuator/health",  # D877: what the Spring Boot Admin probes (default would be /health)
+            status_page_url="/actuator/info",
+            home_page_url="/actuator",
+            metadata={"management.port": str(port)},  # the admin's discovery default reads this too
         )
     except Exception:
         log.warning("eureka registration failed — serving without a registry (D4)", exc_info=True)

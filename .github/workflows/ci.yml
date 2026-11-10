@@ -183,6 +183,10 @@ jobs:
         run: bash scripts/cloud_monolith_refresh.sh
       - name: retry smoke — idempotent GETs retry twice past a transient upstream 5xx; POSTs never retried
         run: bash scripts/cloud_retry_smoke.sh
+      - name: ai-admin smoke — the FastAPI service shows UP in the Spring Boot Admin window
+        env:
+          NEXUS_DATABASE_URL: postgresql://postgres:ci_secret@127.0.0.1:5433/nexus_test
+        run: bash scripts/cloud_ai_admin_smoke.sh
 
   ai:
     needs: changes
