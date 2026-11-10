@@ -4184,6 +4184,11 @@ normal boot unchanged unless a profile opts in.
   depending on eureka+gateway; the CI job invokes all six smokes + the readers; `docs/CLOUD.md` lists them
   all and keeps the `NOT claim` honesty heading. 51 checks, PASS. The gateway Retry also gained
   `backoff` (5ms, ×2, max 50ms) — smoke PASS after the edit.
+- **D879 (§879): README.md learns the plane.** The door ranked "What exists today (measured
+  2026-11-10)" — the demo plane at a glance (3002/8090/8010, live this session), the §142 loop closing both
+  ways (merchant reply D871; consumer history hydration D874), one-command proof (`scripts/demo_live.sh`),
+  the Spring Cloud sidecar inventory with CI wiring and the 51-check plane guard, and pointers to the
+  ledger/CLOUD/TESTING holds. Prose only, dated, honest claims.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).
 - **D875 (§875): the edge retries idempotent GETs past a transient upstream, and the fallback stops 405-ing POST.**

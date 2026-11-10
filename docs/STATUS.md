@@ -38161,3 +38161,24 @@ only this host was exercised.
   `apps/ai/tests/test_actuator_shim.py`,
   `scripts/cloud_ai_admin_smoke.sh`,
   `docs/CLOUD.md` (admin row).
+
+## 879. D879 — README.md learns the plane
+
+**What was missing.** The README's own table said "current phase: **MVP vertical slice**" and pointed at
+TESTING.md for the runbook — but told a new operator nothing about: the demo loop that CLOSES (consumer
+ask → merchant answers → team replies → customer sees it), the Spring Cloud sidecar plane with its ports
+and gates, or where the ledger/live records live. A new agent or reviewer had no map to today's project.
+
+**What changed (prose only, honest, dated).** `README.md` gains a "What exists today
+(measured 2026-11-10)" section — live plane at a glance (:3002/:8090/:8010), the §142 circle completed in
+two directions (merchant reply D871, consumer history hydration D874), one-command proof
+(`demo_live.sh`), the Spring Cloud sidecar plane inventory + CI wiring, the numbers gates (5 eval suites
+206/206, consumer 22 + ask-merchant 4/4 + history 4/4, merchant 14/14, ledger 874+, `check_cloud_plane.mjs`
+51 checks) and pointers to `STATUS.md`/`CLOUD.md`/`TESTING.md`.
+
+**Not claimed.** That the README is compilable/checkable by any gate (it is not — prose); that any number
+in it is fresh as of this commit (all were measured 2026-11-10 and pinned with the date; the plane can
+move the moment this lands); that the demo plane is reachable on any other host (the coordinates are this
+machine's documented ports).
+
+- readers: `README.md` (the "What exists today" section).

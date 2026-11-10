@@ -57,6 +57,30 @@ deterministic heuristics, and every response is labelled degraded. Point `NEXUS_
 `NEXUS_LLM_API_KEY` at an Anthropic- or OpenAI-compatible endpoint to enable real models. No secret is
 ever committed.
 
+## What exists today (measured 2026-11-10)
+
+The demo plane is a **running system**, verified live this session: `web:3002` (200, `/m/basil-leaf-0419`),
+`platform:8090` (200; Postgres `nexus_verify2` with `data_origin='demo'`), `AI:8010` (200, mock). The
+§142 operator loop is whole end-to-end through the browser: consumer signs in → asks a merchant →
+a merchant agent answers from that merchant's own knowledge base (degraded is labelled, never faked) →
+both turns land in the thread the merchant inbox reads → the merchant team **replies** through the same
+thread — and the consumer sees it on reload. One command proves it: `bash scripts/demo_live.sh`.
+
+Latest units shipped (master): merchant reply + rollback-fix relay (`D861`, `D871`), monolith hot-refresh
+off the config server (`D872`), consumer conversation history hydration closes the loop, anonymous
+visitor sees nothing (`D874`), edge circuit-breaker + retry + honest fallback (`D850`, `D875`), the whole
+**Spring Cloud sidecar plane** — Eureka (`:18761`) · Config Server (`:18888`, src + refresh) · Gateway
+(`:18088`, `lb://` routes, limiter, X-Request-Id, five restart-free proofs) · Spring Boot Admin
+(`:19444`, platform/AI/gateway all UP) — plus `scripts/cloud_*_smoke.sh` in CI and `docs/CLOUD.md` with
+the explicit "not claimed" list. Every host coordinate was measured free (D9); `check_cloud_plane.mjs`
+verifies the whole plane, 51 checks.
+
+Live console: `web:3002` (consumer + merchant + admin); 5 eval suites green (`206`/206 cases); E2E
+consumer **22 passed** + `ask-merchant` 4/4 + `ask-merchant-history` 4/4; merchant suite **14/14**.
+`STATUS.md` (874+ entries) is the unit ledger; `docs/CLOUD.md` is the one page for the sidecar;
+`docs/TESTING.md` §8 lists every measured command; every spec of the §142 loop is under
+`tests/e2e/specs/merchant|consumer/`.
+
 ## Non-negotiable product rules
 
 - Real data or nothing: every price, rating, hour and distance shown to a user traces to a `facts` row
