@@ -37367,3 +37367,74 @@ only place the numbers live, and this entry binds them for the record.
 **Not claimed.** Which session authored the 午市 files — found uncommitted and landed at 575beaa with
 thanks, not with a claim; the parallel lane's own intent for a D852 is unknown. That either 851 is edited
 retroactively — both stand as committed; this entry is the correction, not a rewrite.
+
+## 856. D856 — the AI service registers by opt-in too, and the edge routes it by name (Spring Cloud discovery, second half)
+
+**The lane D849 left open.** §849 landed the monolith's registration (`dev,cloud`, `application-cloud.yml`)
+and the edge's `lb://NEXUS-PLATFORM` route; `check_cloud_discovery.mjs` R4 gated it. The AI service — the
+other Java-less process on the plane — stayed a URI route on purpose, with the receipt pinned in the reader:
+"the AI/web routes, which stay URI routes until those services register". This unit registers the AI.
+
+**The lane.** `apps/ai/nexus_ai/discovery.py` (new) — an opt-in Eureka client for the FastAPI app:
+`NEXUS_AI_EUREKA_ENABLED=true` registers `NEXUS-AI` (instance id `NEXUS-AI:<port>`, 5s/10s leases,
+`should_discover=False` — findable, never a client; the same shape as the monolith's cloud profile). The
+port is the one `start_ai.py` binds (`NEXUS_AI_HOST_PORT`, default 8010) — not a second drift copy. wired
+into the app's lifespan; a failed registration logs a warning and keeps serving (D4: misconfiguration
+degrades, never crashes). `py-eureka-client` 0.13.3 is a declared dependency (`pyproject.toml:9`, lockfile
+updated). The gateway's AI route now reads `${NEXUS_AI_URI:${nexus.edge.ai-uri:http://127.0.0.1:8010}}` and
+its `cloud` profile points `nexus.edge.ai-uri` at `lb://NEXUS-AI` — same pattern as the platform route, env
+override intact, base default unchanged.
+
+**Two library traps, both measured, both fixed honestly.** (1) `py_eureka_client.init` does not exist —
+registration crashed on import; the entry point is `init_async`, and calling the sync `init` from inside
+the running asyncio loop dies with "Cannot run the event loop while another loop is running". (2) The
+library's own daemon heartbeat thread registered the instance at boot but stopped renewing on this stack
+(registration timestamped, then `lastRenewalTimestamp` froze while the service served on) — the lease would
+have expired and the gateway's `lb://` resolution would have silently dropped the AI out of rotation. The
+heartbeat here is ours: an asyncio task renewing `send_heartbeat` every 5s for the app's lifetime, cancelled
+cleanly on shutdown. Measured after the fix: `lastRenewalTimestamp` advances on a ~5s cadence (12:14:01 →
+12:14:06 observed). Note the second trap was masked by two further layers: the discovery INFO log is
+invisible at default levels (print statements used for the boot evidence), and the java server's
+`/eureka/apps` list view is served from a response cache (~30s+ lag — the single-instance view is the
+truth; both read the same bytes eventually).
+
+**The gateway exemption this unit's smoke forced.** The deterministic limiter test exposed a real defect in
+D850's filter: `/actuator/**` (liveness/readiness, and this plane's health) consumed the same token bucket
+as traffic — a liveness probe could be refused by our own limiter. Management paths are now exempt
+(`EdgeRateLimitFilter.java:62`). The lb smoke's burst proof is also deterministic now (`REPLENISH=0`,
+bucket of 10 spent by the two correlation calls then the loop; management exempt) — measured: 25 rapid
+calls → 6 admitted / 19 refused, a 429 with `Retry-After: 1`.
+
+**CI.** The `cloud` job gained `astral-sh/setup-uv@v5` (`.github/workflows/ci.yml:154`) so the lb smoke can
+boot the AI; `scripts/check_cloud_discovery.mjs` gains R6/R7 (ai opt-in: env gate, findable-not-client, 5s
+lease, declared name, bound port, declared dependency; ai lb by profile) — **RESULT: PASS — 7 checks, no
+offender**. The lb smoke runs the AI too: eureka lists `NEXUS-AI` (from the AI's own opt-in registration),
+`/ai/v1/health` through the gateway answers `{"status":"ok"}`, the route table carries `lb://NEXUS-AI`, and
+the AI hop echoes `X-Request-Id`. Full run: **PASS** (`== start the AI service with the cloud profile ==`
+onward). `cloud_smoke.sh` re-run green. AI regression blast radius: **175 passed**.
+
+**Environment defect found and fixed (machine-local, not a repo change).** This machine's editable-install
+`.pth` (`D:\获客平台\apps\ai\.venv/Lib/site-packages/_editable_impl_nexus_ai.pth`) held the UTF-8 bytes of
+`D:\获客平台\apps\ai`; `site.addsitedir` decodes `.pth` files with the ANSI codepage (cp936 here), which
+cannot decode `0xae` — every `uv run python` died at startup with `UnicodeDecodeError: 'gbk' codec can't
+decode byte 0xae`. The file was re-encoded as cp936 bytes; the venv imports cleanly (yaml + py-eureka-client
+both verified). It will regress if the editable install is rewritten; the durable fix is a path without
+non-ASCII bytes, which is not this repository's to rename.
+
+**Not claimed.** (a) The web route stays URI by design — the browser's entry is not a service the edge
+balances; nobody registered it and the reader does not ask it to. (b) The java server's list-view response
+cache lags the registry by tens of seconds (observed); the smoke's 90s poll window absorbs it, and the
+freshness of the single-instance view was observed to advance on the ~5s heartbeat. (c) Compose does not run
+discovery — the compose plane boots its own jars on host-mapped ports and registers nothing. (d) CI-runner
+results for the `setup-uv` addition and the R6 checks are not observable this session; locally all green.
+(e) `/actuator/gateway/routes` remains publicly introspectable on this dev edge (pre-existing, D850's
+documented posture) — exempting it from the limiter is deliberate, not an endorsement of public exposure.
+
+- readers: `apps/ai/nexus_ai/discovery.py:41-58`, `:72-101`,
+  `apps/ai/nexus_ai/api/app.py` (the lifespan registration),
+  `apps/ai/pyproject.toml:9`, `apps/ai/uv.lock`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:62`,
+  `services/cloud/gateway/src/main/resources/application.yaml` (ai route + cloud document),
+  `scripts/check_cloud_discovery.mjs:26`, `:192-228`,
+  `scripts/cloud_lb_smoke.sh:98-131`, `:135-139`,
+  `.github/workflows/ci.yml:154`.
