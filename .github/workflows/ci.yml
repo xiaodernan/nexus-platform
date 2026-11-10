@@ -171,6 +171,8 @@ jobs:
           NEXUS_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
           NEXUS_PLATFORM_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
         run: bash scripts/cloud_lb_smoke.sh
+      - name: refresh smoke — a config-repo edit lands at the edge with no restart
+        run: bash scripts/cloud_refresh.sh
 
   ai:
     needs: changes

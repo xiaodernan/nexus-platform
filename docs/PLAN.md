@@ -4121,6 +4121,13 @@ normal boot unchanged unless a profile opts in.
   gains R6; the lb smoke boots the AI too and proves both lb:// routes end to end (PASS) —
   NEXUS-PLATFORM and NEXUS-AI both registered, both proxied by name, both correlation-asserted. The web
   route stays URI by design (the browser's entry is not a service the edge balances).
+- **Landed - D857 (§857): the edge picks up a config-repo edit without a restart.** The gateway's
+  `/cloud/info` controller is `@RefreshScope`; `/actuator/refresh` is exposed; a throwaway-repo smoke
+  (`scripts/cloud_refresh.sh`) writes a temp repo, boots the config server against it, proves
+  `/cloud/info` carries the v1 label, rewrites the file to v2, POSTs the refresh and re-reads v2 —
+  same gateway pid throughout (`PASS: a config-repo edit landed at the edge with no restart`). The
+  gateway jar now rebuilds with the refresh scope; CI's `cloud` job runs the refresh smoke after the
+  lb smoke. The commit repo stays untouched (the smoke owns its repo).
 - **Deployment LANDED, deployment proof partial (D853/§853):** the three images build from the
   host-verified jars (`Dockerfile`; `Dockerfile.build` is the self-contained source build for CI or a warm
   network); the `cloud` compose profile is validated (`docker compose config --services`), but the

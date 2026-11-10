@@ -106,7 +106,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        # D857: refresh is exposed so config changes land without a restart (the refresh smoke
+        # POSTs /actuator/refresh after rewriting the served file).
+        include: health,info,gateway,refresh
   endpoint:
     gateway:
       access: unrestricted
