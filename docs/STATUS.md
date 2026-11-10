@@ -37842,3 +37842,24 @@ Anything about production auth (the demo door is the seeded demo login, gated by
 
 - readers: `tests/e2e/specs/consumer/ask-merchant.spec.ts`, `apps/web/src/components/signin-actions.tsx`
   (the `submit()` hydration hook), `tests/e2e/playwright.config.ts` (`baseURL`, the mobile project profile).
+
+## 869. D869 — TESTING.md §8.3 stops quoting October numbers
+
+**What changed and why.** `docs/TESTING.md` §8.3 (the three suites and what they measured) still quoted
+2026-11-09 measurements: `specs/api` "4/4 passed" and "8/8 consumer, 5/5 merchant". Both had moved on
+2026-11-10 without the doc moving with them — exactly the staleness this project's own rule calls a bug:
+prose that survives by quoting stale measurements reads as "these are the current numbers" to a reviewer.
+
+**Now says:**
+- `specs/api` → "measured 2026-11-10: 21 passed, 3 skipped"
+- `specs/merchant` → "10/10 merchant" (the §46/§48 shell test rewritten to the shipped sign-in prompt),
+- `specs/consumer` → "22 passed" plus the new `ask-merchant.spec.ts` 4/4 — including the mobile
+  hydration-race fix (D868) — with a dedicated row for that spec so the §142 loop is visible as a thing
+  the suite measures.
+
+**Not claimed.** That every §8.3 row is re-verified this unit (visual mock gate deliberately untouched;
+the CJK timings note stays the 2026-11-09 measurement); that the live-DB `pytest -q` row is re-stated —
+the full suite only completed under CI this session, not locally (CI gates it). That this edit changes
+any reader or suite — it is the known-good command set corrected, not the gate.
+
+- readers: `docs/TESTING.md` (§8.3).

@@ -104,8 +104,9 @@ The web (live mode) serves from the same tree: `cd apps/web; $env:NEXT_PUBLIC_DA
 cd tests/e2e
 $env:NEXUS_WEB_URL='http://127.0.0.1:3002'; $env:NEXUS_PLATFORM_URL='http://127.0.0.1:8090'; $env:NEXUS_AI_URL='http://127.0.0.1:8010'
 $env:NEXUS_TEST_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_verify2'
-npx playwright test specs/api --reporter=list      # measured 2026-11-09: 4/4 passed
-npx playwright test specs/consumer specs/merchant specs/consumer/card-media.spec.ts   # measured 2026-11-09: 8/8 consumer, 5/5 merchant, 3/3 card-media (1 documented skip)
+npx playwright test specs/api --reporter=list      # measured 2026-11-10: 21 passed, 3 skipped
+npx playwright test specs/merchant specs/consumer  # measured 2026-11-10: 10/10 merchant, 22 passed + ask-merchant.spec.ts 4/4 (2 desktop + 2 mobile)
+npx playwright test specs/consumer/ask-merchant.spec.ts   # measured 2026-11-10: mobile hydration-race fixed (pressSequentially + toBeEnabled before click) — 4/4
 cd ..\..\apps\ai; uv run pytest -q                  # the live-DB suite against the verify DB
 ```
 The visual project asserts the mock plane's demo notice (`[data-nexus-demo-notice="mock"]`);
