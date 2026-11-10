@@ -75,6 +75,8 @@ const ADMIN_SMOKE = 'scripts/insight_admin_smoke.sh';
 const ADMIN_FALSIFIER = 'scripts/falsify_insight_admin_smoke.sh';
 const CIRCUIT_SMOKE = 'scripts/insight_circuit_smoke.sh';
 const CIRCUIT_FALSIFIER = 'scripts/falsify_insight_circuit_smoke.sh';
+const BREAKER_CONFIG_SMOKE = 'scripts/insight_breaker_config_smoke.sh';
+const BREAKER_CONFIG_FALSIFIER = 'scripts/falsify_insight_breaker_config_smoke.sh';
 
 for (const [rel, label] of [
   [POM, 'the module pom'], [APP, 'the application class'],
@@ -93,6 +95,8 @@ for (const [rel, label] of [
   [ADMIN_FALSIFIER, 'the admin smoke absence-arm falsifier (D892)'],
   [CIRCUIT_SMOKE, 'the breaker-state smoke (D895)'],
   [CIRCUIT_FALSIFIER, 'the breaker smoke no-drive falsifier (D895)'],
+  [BREAKER_CONFIG_SMOKE, 'the tuned-threshold breaker smoke (D899)'],
+  [BREAKER_CONFIG_FALSIFIER, 'the raised-threshold breaker falsifier (D899)'],
 ]) exists(rel, label);
 
 has(REACTOR, '<module>insight-service</module>', 'the reactor builds the fifth module');
@@ -219,6 +223,34 @@ has(CIRCUIT_FALSIFIER, 'NEXUS_CIRCUIT_SKIP_DRIVE=1', 'the falsifier actually rem
 has(CLOUD_DOC, 'D895', 'CLOUD.md records the breaker-state unit');
 has(ATLAS, 'scripts/insight_circuit_smoke.sh', 'the atlas lists the breaker smoke');
 has(ATLAS, 'scripts/falsify_insight_circuit_smoke.sh', 'the atlas lists the no-drive falsifier');
+
+/* D899 — the per-instance tuning must reach the SAME breakers Feign actually opens. D895 measured
+ * that the registry-name instances were never used; a yaml edit that merely renames them is not
+ * enough, so the smoke's call-by-call state sequence and its raised-threshold arm are wired here. */
+if (!/PlatformHealthClienthealth:\s*\n\s+baseConfig: default\s*\n\s+minimumNumberOfCalls: 5\s*\n\s+failureRateThreshold: 60/.test(read(YAML))) {
+  offenders.push('D899 — the platform instance is not declared under its REAL Feign name with 5 / 60 tuning');
+} else notes.push('held D899 platform breaker bound with 5 / 60');
+if (!/AiHealthClienthealth:\s*\n\s+baseConfig: default\s*\n\s+minimumNumberOfCalls: 3\s*\n\s+failureRateThreshold: 40/.test(read(YAML))) {
+  offenders.push('D899 — the AI instance is not declared under its REAL Feign name with 3 / 40 tuning');
+} else notes.push('held D899 AI breaker bound with 3 / 40');
+if (/^\s+NEXUS-PLATFORM:\s*$/m.test(read(YAML)) || /^\s+NEXUS-AI:\s*$/m.test(read(YAML))) {
+  offenders.push('STALE CONFIG — yaml still declares instances under the registry names D895 measured as unused');
+} else notes.push('held yaml no longer declares the unused registry-name instances');
+has(BREAKER_CONFIG_SMOKE, 'actuator: aligned names', 'the smoke reads the tuned thresholds from the actuator');
+has(BREAKER_CONFIG_SMOKE, 'AI breaker did not open at its tuned minimumNumberOfCalls=3', 'the smoke requires AI to open on call 3');
+has(BREAKER_CONFIG_SMOKE, 'platform breaker did not open at its tuned minimumNumberOfCalls=5', 'the smoke requires platform to open on call 5');
+has(BREAKER_CONFIG_SMOKE, 'NEXUS_BREAKER_FALSIFY', 'the smoke has a raised-threshold arm');
+has(BREAKER_CONFIG_SMOKE, 'both rows still non-UP', 'the degraded view stays honest after both breakers open');
+has(BREAKER_CONFIG_FALSIFIER, 'NEXUS_BREAKER_FALSIFY=1', 'the falsifier raises both thresholds');
+has(BREAKER_CONFIG_FALSIFIER, 'AI breaker did not open at its tuned minimumNumberOfCalls=3', 'the falsifier attributes the red to the raised threshold');
+has(CI, 'scripts/insight_breaker_config_smoke.sh', 'CI runs the tuned-threshold smoke (D899)');
+has(CI, 'scripts/falsify_insight_breaker_config_smoke.sh', 'CI runs the raised-threshold falsifier (D899)');
+has(CLOUD_DOC, 'D899', 'CLOUD.md records the breaker-name reconciliation');
+has(ATLAS, 'scripts/insight_breaker_config_smoke.sh', 'the atlas lists the tuned-threshold smoke');
+has(ATLAS, 'scripts/falsify_insight_breaker_config_smoke.sh', 'the atlas lists the raised-threshold falsifier');
+if (read(CLOUD_DOC).includes('the per-name instances are unused declarative config on this plane')) {
+  offenders.push('STALE CLAIM — CLOUD.md still says the per-name instances are unused; D899 aligned them');
+} else notes.push('held CLOUD.md no longer calls the per-name instances unused');
 
 /* R1-shaped live question: a new host coordinate must be free or answered by OUR service only. */
 const bound = (port) => new Promise((done) => {

@@ -63,11 +63,24 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
         permittedNumberOfCallsInHalfOpenState: 2
+    # D899: OpenFeign names its breakers <ClientClass><method> — `PlatformHealthClienthealth`
+    # and `AiHealthClienthealth` (measured on /actuator/circuitbreakers by D895). D885 declared
+    # the instances under the REGISTRY names, so those two were NEVER used and every Feign breaker
+    # silently ran on configs.default. Declaring the REAL names is what makes a per-instance
+    # threshold reach the breaker that actually opens. The two DIFFERENT minimumNumberOfCalls
+    # values are deliberate: scripts/insight_breaker_config_smoke.sh drives exactly 1..5 calls
+    # and requires AI to open on call 3 and platform on call 5, so a config edit that only looks
+    # right cannot pass. failureRateThreshold is different per instance too, and is visible on
+    # the actuator for the SAME names — proof that the tuning reached the live breakers.
     instances:
-      NEXUS-PLATFORM:
+      PlatformHealthClienthealth:
         baseConfig: default
-      NEXUS-AI:
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 60
+      AiHealthClienthealth:
         baseConfig: default
+        minimumNumberOfCalls: 3
+        failureRateThreshold: 40
 
 management:
   endpoints:

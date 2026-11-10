@@ -39012,3 +39012,61 @@ real-provider eval lane remain open.
 
 - readers: `docs/cloud_claims.yaml`, `scripts/check_cloud_claims.mjs`, `docs/CLOUD.md`,
   `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 899. D899 — the tuned breaker thresholds reach the breakers that actually open
+
+**What was still open.** D895 measured a mismatch and deliberately did NOT fix it: `application.yaml`
+declared `resilience4j.circuitbreaker.instances` under the REGISTRY names `NEXUS-PLATFORM` /
+`NEXUS-AI`, while `/actuator/circuitbreakers` showed Feign opening
+`PlatformHealthClienthealth` / `AiHealthClienthealth`. So the per-name tuning was dead config and
+every Feign breaker silently ran on `configs.default`. Phase G's G7 demanded that a threshold
+change be proved on the SAME instance that opens — not a config edit that only looks right.
+
+**What shipped.** `services/cloud/insight-service/src/main/resources/application.yaml` renames the
+two declared instances to the REAL Feign names and gives them different, measurable tuning:
+platform `minimumNumberOfCalls: 5` / `failureRateThreshold: 60`, AI `3` / `40` (both still
+`baseConfig: default`). `scripts/insight_breaker_config_smoke.sh` boots the rebuilt jar with Eureka
+DISABLED, reads `/actuator/circuitbreakers` at boot and requires the aligned names, the exact
+visible `60.0%` / `40.0%` thresholds, a CLOSED baseline and the ABSENCE of the old registry-name
+instances. It then drives `/insight/plane` exactly five times (each call exercises both Feign
+clients) and requires the state to follow the tuning call by call: calls 1–2 both CLOSED, call 3
+`AI OPEN` while platform stays CLOSED, call 4 platform CLOSED, call 5 `platform OPEN`. Finally it
+requires both plane rows still non-`UP`. `scripts/falsify_insight_breaker_config_smoke.sh` raises
+both `minimumNumberOfCalls` to 10 from the command line and requires the unchanged call-3
+assertion to FAIL while the actuator still shows the aligned names and 60/40 thresholds.
+`scripts/check_cloud_insight.mjs` gained the D899 wiring assertions, including a stale-claim check
+that reddens if CLOUD.md goes back to calling the per-name instances unused. No new Java source:
+the actuator already exposes everything this unit measures.
+
+**Measured.** `mvn -q -B -o -f services/cloud/pom.xml -pl insight-service -DskipTests package`
+exit 0. Main smoke, exit 0: `actuator: aligned names, thresholds 60.0% / 40.0%, both CLOSED`, then
+`call 1: AI=CLOSED(buffered=1) platform=CLOSED(buffered=1)`,
+`call 2: AI=CLOSED(buffered=2) platform=CLOSED(buffered=2)`,
+`call 3: AI=OPEN(buffered=3) platform=CLOSED(buffered=3)`,
+`call 4: AI=OPEN(buffered=3) platform=CLOSED(buffered=4)`,
+`call 5: AI=OPEN(buffered=3) platform=OPEN(buffered=5)`, and
+`both rows still non-UP: [('NEXUS-PLATFORM', 'unavailable'), ('NEXUS-AI', 'unavailable')]`.
+Falsifier arm, exit 0: with both thresholds at 10, calls 1–3 stayed CLOSED and the run failed with
+`AI breaker did not open at its tuned minimumNumberOfCalls=3 (state=CLOSED, buffered=3)` after the
+aligned-name baseline; all seven attribution markers present. A config edit that only looks right
+(old names, both on `default` minimum 3) would open platform on call 3 and is rejected by the
+call-4 assertion.
+
+**A host/config trap, measured and worked around.** The first falsifier attempt supplied only
+`--resilience4j.circuitbreaker.instances[...].minimumNumberOfCalls=10`; Spring Boot REPLACED the
+whole `instances` map and both `failureRateThreshold` values fell back to `50.0%`, so the arm
+failed for the wrong reason. The arm now restates every instance property and changes EXACTLY one
+value per instance, which keeps the red attributable to the threshold alone. This is why the
+baseline assertion reads the thresholds rather than trusting the yaml.
+
+**Not claimed.** Recovery to `CLOSED`, half-open transition timing, metrics persistence, production
+thresholds, that `NEXUS-PLATFORM` / `NEXUS-AI` were ever valid breaker names, that a real platform
+or AI product failed (Eureka was disabled so every `lb://` lookup had no instance), or that the
+OpenFeign naming is stable across a Spring Cloud BOM upgrade — the smoke reads the names at
+runtime and would redden on a rename. Docker (D853), Spring Cloud Bus (G4), OTLP export (G6),
+CJK recall, `btree_gist` and the real-provider eval lane remain open.
+
+- readers: `services/cloud/insight-service/src/main/resources/application.yaml`,
+  `scripts/insight_breaker_config_smoke.sh`, `scripts/falsify_insight_breaker_config_smoke.sh`,
+  `scripts/check_cloud_insight.mjs`, `docs/cloud_claims.yaml`, `docs/CLOUD.md`, `docs/ATLAS.md`,
+  `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

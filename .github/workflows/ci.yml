@@ -182,8 +182,8 @@ jobs:
           NEXUS_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
           NEXUS_PLATFORM_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
         run: bash scripts/cloud_monolith_refresh.sh
-      - name: retry + trace smokes (D875 retries; D884 mint/continue/reject; D896 200/503/429; D897 HA failover)
-        run: bash scripts/cloud_retry_smoke.sh && bash scripts/cloud_trace_smoke.sh && bash scripts/insight_smoke.sh && bash scripts/insight_registry_smoke.sh && bash scripts/insight_feign_smoke.sh && bash scripts/insight_config_smoke.sh && bash scripts/insight_admin_smoke.sh && bash scripts/falsify_insight_admin_smoke.sh && bash scripts/eureka_ha_smoke.sh && bash scripts/falsify_eureka_ha_smoke.sh && bash scripts/insight_circuit_smoke.sh && bash scripts/falsify_insight_circuit_smoke.sh && bash scripts/cloud_trace_fallback_smoke.sh && bash scripts/falsify_cloud_trace_fallback_smoke.sh && bash scripts/cloud_ha_failover_smoke.sh && bash scripts/falsify_cloud_ha_failover_smoke.sh
+      - name: retry + trace + plane smokes (D875 retries; D884/D896 trace; D897 HA failover; D899 breaker tuning)
+        run: bash scripts/cloud_retry_smoke.sh && bash scripts/cloud_trace_smoke.sh && bash scripts/insight_smoke.sh && bash scripts/insight_registry_smoke.sh && bash scripts/insight_feign_smoke.sh && bash scripts/insight_config_smoke.sh && bash scripts/insight_admin_smoke.sh && bash scripts/falsify_insight_admin_smoke.sh && bash scripts/eureka_ha_smoke.sh && bash scripts/falsify_eureka_ha_smoke.sh && bash scripts/insight_circuit_smoke.sh && bash scripts/falsify_insight_circuit_smoke.sh && bash scripts/cloud_trace_fallback_smoke.sh && bash scripts/falsify_cloud_trace_fallback_smoke.sh && bash scripts/cloud_ha_failover_smoke.sh && bash scripts/falsify_cloud_ha_failover_smoke.sh && bash scripts/insight_breaker_config_smoke.sh && bash scripts/falsify_insight_breaker_config_smoke.sh
       - name: ai-admin smoke — the FastAPI service shows UP in the Spring Boot Admin window
         env:
           NEXUS_DATABASE_URL: postgresql://postgres:ci_secret@127.0.0.1:5433/nexus_test

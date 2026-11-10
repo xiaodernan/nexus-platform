@@ -116,7 +116,7 @@
   smoke: insight_circuit_smoke.sh
   falsifier: falsify_insight_circuit_smoke.sh
   gate: check_cloud_insight.mjs
-  not_claimed: No recovery to CLOSED, half-open timing, metrics persistence, or per-name threshold tuning was measured
+  not_claimed: D895 measured no recovery to CLOSED, half-open timing, metrics persistence, or per-name tuning; D899 later reconciled the names
   honesty_anchor: D895 does not claim
 
 - id: D896
@@ -134,6 +134,14 @@
   gate: check_cloud_ha_failover.mjs
   not_claimed: Not a deployed pair, no sub-second failover, no in-flight retry, and the shipped gateway has ONE defaultZone
   honesty_anchor: D897's failover is a throwaway measurement
+
+- id: D899
+  claim: The tuned per-instance breaker thresholds reach the Feign breakers that actually open
+  smoke: insight_breaker_config_smoke.sh
+  falsifier: falsify_insight_breaker_config_smoke.sh
+  gate: check_cloud_insight.mjs
+  not_claimed: No recovery to CLOSED, half-open timing, production thresholds, or a real platform/AI product failure was measured
+  honesty_anchor: D899's breaker tuning is measured on ONE throwaway process
 
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane
