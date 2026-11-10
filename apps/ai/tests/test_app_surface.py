@@ -25,6 +25,7 @@ REQUIRED_PATHS = {
     "/ai/v1/conversations/{conversation_id}",
     "/ai/v1/feedback",
     "/ai/v1/health",
+    "/ai/v1/agent/plan",
     "/ai/v1/merchant-agent/chat",
     "/ai/v1/query/understand",
     "/ai/v1/rag/retrieve",
