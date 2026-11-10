@@ -38414,3 +38414,41 @@ actuator/eureka surface is as unauthenticated as the rest of this dev plane.
   `scripts/insight_smoke.sh`, `scripts/check_cloud_insight.mjs`,
   `infra/docker-compose.yml`, `.github/workflows/ci.yml`, `docs/CLOUD.md`, `docs/ATLAS.md`,
   `README.md`.
+
+## 886. D886 — the fifth service really joins the registry, and the runner stops mistaking load for a verdict
+
+**What was still open.** D885's `insight_smoke.sh` disables Eureka on purpose to prove the fallback
+half, and its "not claimed" paragraph says so. That left the other half — that
+`@EnableDiscoveryClient` + the `instance-id`/lease shape actually REGISTER anything — unproven on
+this host. Separately, the second full `verify_all.mjs` sweep (26 readers) returned
+**22 PASS / 0 FAIL / 2 UNCHECKED / 2 TIMEOUT**: `check_comment_citations.mjs` had taken 12.8s in
+the first sweep but "timed out" at 360s in the second, while Maven builds and live JVMs shared the
+host. A timeout under load is not a verdict about the plane.
+
+**What shipped.** `scripts/insight_registry_smoke.sh` boots a throwaway Eureka on :18762, boots
+`nexus-insight` on :19557 with registration ON and an explicit
+`--eureka.client.service-url.defaultZone`, then polls `/eureka/apps` (JSON) until the registry
+lists `NEXUS-INSIGHT` with `status=UP` and an instance-id carrying the port. **Measured PASS**:
+`registry lists NEXUS-INSIGHT UP, instanceId=nexus-insight:19557`. The CI smoke chain, `CLOUD.md`'s
+gate table and honesty clause, `ATLAS.md`'s smoke table and `check_cloud_insight.mjs` all name it.
+`CLOUD.md`'s D885 honesty clause was NARROWED rather than deleted: registration is now proven,
+while a Feign call reaching a REAL upstream is still explicitly not claimed.
+
+`scripts/verify_all.mjs` now gives an ordinary reader ONE retry after a timeout (the ultra-slow
+900s reader is exempt — retrying that budget buys nothing), prints `PASS*` for a retry that passed,
+and states what the mark means. A lone `check_comment_citations.mjs` run was measured at **14s,
+PASS, 195 citations across 65 files**, which is the evidence that the 360s result was load, not a
+regression. `check_citation_supports_sentence.mjs` still exceeded 900s; it remains a known-long
+reader with its own budget and is listed in `docs/CONTINUITY_PLAN.md` Phase D for a performance
+pass — not skipped, not called green.
+
+**Not claimed.** That a Feign client resolved `NEXUS-PLATFORM` or `NEXUS-AI` to a live instance
+(neither service runs in either smoke, so the only observed `lb://` outcome is still a fallback),
+that Spring Boot Admin was booted against this member, that Eureka HA replication works here (D858),
+that the Docker path was exercised (D853), or that the two TIMEOUT rows became passes. The full
+sweep's verdict is "NO OFFENDER — every reader that judged its plane passed", which is exactly what
+22 PASS + 2 UNCHECKED + 2 TIMEOUT earns; it is not "all green".
+
+- readers: `scripts/insight_registry_smoke.sh`, `scripts/verify_all.mjs`,
+  `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
+  `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

@@ -145,6 +145,7 @@ Runtime verifiers (need a live plane, **not** part of the default read-only swee
 | `scripts/cloud_retry_smoke.sh` | GET retries twice, POST never retries, honest 503 + 5xx counter |
 | `scripts/cloud_trace_smoke.sh` | D884: W3C `traceparent` minted / continued / rejected honestly, measured against `scripts/fixture_trace_echo.py` |
 | `scripts/insight_smoke.sh` | D885: with Eureka disabled, `/insight/plane` reports both upstreams `unavailable`, never a faked `UP` |
+| `scripts/insight_registry_smoke.sh` | D886: with Eureka up, `NEXUS-INSIGHT` appears in `/eureka/apps` as `UP` with the plane's `instance-id` shape |
 | `scripts/cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in Spring Boot Admin |
 | `scripts/check_launcher_log_mode.sh` | launcher log mode |
 | `scripts/demo_live.sh` | the §142 consumer↔merchant loop in one command |

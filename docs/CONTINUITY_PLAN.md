@@ -62,6 +62,7 @@ window. Nothing here asks the platform to split its database or its transactions
 | C1 | **D884 W3C distributed trace**: `EdgeTracingFilter` mints/propagates `traceparent` at the gateway; FastAPI accepts and echoes `X-Trace-Id` | JUnit + pytest + `cloud_trace_smoke.sh` + static reader |
 | C2 | **D885 `nexus-insight`**: a fifth, genuinely separate service — Eureka member, OpenFeign declarative calls to `NEXUS-PLATFORM` / `NEXUS-AI` via Spring Cloud LoadBalancer, resilience4j fallback that reports `unavailable` rather than faking health | Maven build + unit tests + `insight_smoke.sh` + static reader |
 | C3 | Plane-wide reconciliation: port map, compose `cloud` profile, CI `cloud` job, `CLOUD.md`, `check_cloud_plane.mjs`, `README.md`, `ROADMAP.md`, `STATUS.md` | all readers PASS; one commit per unit |
+| C4 | **D886 registry membership**: `insight_registry_smoke.sh` closes D885's largest "not claimed" gap by booting a throwaway Eureka and proving `NEXUS-INSIGHT` registers — plus `verify_all.mjs` stops reporting load-induced timeouts as verdicts | smoke PASS; full sweep 22 PASS / 0 FAIL / 2 UNCHECKED / 2 TIMEOUT, honestly reported |
 
 ### Phase D — Keep expanding (no terminal state)
 

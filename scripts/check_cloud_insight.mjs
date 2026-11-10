@@ -120,6 +120,7 @@ has(COMPOSE, '${NEXUS_INSIGHT_HOST_PORT:-19555}:8080', 'compose publishes the sa
 has(COMPOSE, 'depends_on: [eureka]', 'compose orders the registry before the member');
 has(CI, 'scripts/check_cloud_insight.mjs', 'CI runs this reader');
 has(CI, 'scripts/insight_smoke.sh', 'CI runs the honesty smoke');
+has(CI, 'scripts/insight_registry_smoke.sh', 'CI runs the registry-membership smoke (D886)');
 has(CLOUD_DOC, 'nexus-insight', 'CLOUD.md documents the service');
 has(CLOUD_DOC, 'OpenFeign', 'CLOUD.md names the declarative client');
 has(CLOUD_DOC, '19555', 'CLOUD.md port map carries the coordinate');

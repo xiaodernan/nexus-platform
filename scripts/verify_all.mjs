@@ -92,19 +92,33 @@ if (scripts.length === 0) {
     const abs = join(ROOT, 'scripts', f);
     const budget = ULTRA_SLOW.has(f) ? ULTRA_MS : (SLOW.has(f) ? SLOW_MS : TIMEOUT_MS);
     const started = Date.now();
-    const res = spawnSync(process.execPath, [abs], {
+    const verdictOf = (res) => {
+      if (res.error?.code === 'ETIMEDOUT' || res.signal) return 'TIMEOUT';
+      if (res.status === 0) return 'PASS';
+      if (res.status === 1) return 'FAIL';
+      if (res.status === 2) return 'UNCHECKED';
+      return 'ERROR';
+    };
+    const invoke = () => spawnSync(process.execPath, [abs], {
       cwd: ROOT, encoding: 'utf8', timeout: budget, maxBuffer: 16 * 1024 * 1024, windowsHide: true,
     });
-    let verdict;
-    if (res.error?.code === 'ETIMEDOUT' || res.signal) verdict = 'TIMEOUT';
-    else if (res.status === 0) verdict = 'PASS';
-    else if (res.status === 1) verdict = 'FAIL';
-    else if (res.status === 2) verdict = 'UNCHECKED';
-    else verdict = 'ERROR';
+    let res = invoke();
+    let verdict = verdictOf(res);
+    // D886: measured during the D885 sweep — `check_comment_citations.mjs` took 14s alone but
+    // TIMED OUT at 360s in a sweep that shared the host with Maven builds and live JVMs. A timeout
+    // under load is not a verdict about the plane, so ordinary readers get ONE retry. The ultra-slow
+    // reader is exempt: retrying a 900s budget buys nothing and would double the run.
+    let retried = false;
+    if (verdict === 'TIMEOUT' && !ULTRA_SLOW.has(f)) {
+      retried = true;
+      res = invoke();
+      verdict = verdictOf(res);
+    }
     const out = lastLine(res.stdout || res.stderr);
-    rows.push({ f, verdict, ms: Date.now() - started, out });
-    console.log(`  ${verdict.padEnd(9)} ${f.padEnd(46)} ${String(rows.at(-1).ms).padStart(7)}ms`);
-    if (VERBOSE || verdict === 'FAIL' || verdict === 'ERROR') console.log(`            ${out}`);
+    rows.push({ f, verdict, ms: Date.now() - started, out, retried });
+    const tag = retried && verdict === 'PASS' ? 'PASS*   ' : verdict.padEnd(9);
+    console.log(`  ${tag} ${f.padEnd(46)} ${String(rows.at(-1).ms).padStart(7)}ms`);
+    if (VERBOSE || verdict === 'FAIL' || verdict === 'ERROR' || retried) console.log(`            ${out}`);
   }
 
   const tally = (v) => rows.filter((r) => r.verdict === v).length;
@@ -114,6 +128,7 @@ if (scripts.length === 0) {
     for (const r of rows.filter((x) => x.verdict === v)) console.log(`  ${v.padEnd(9)} ${r.f} — ${r.out}`);
   }
   console.log('');
+  console.log('  PASS* = timed out once under host load, then passed on one retry (a timeout is not a verdict).');
   console.log('WHAT THIS DOES NOT SAY: UNCHECKED/TIMEOUT are not passes and are not listed as failures —');
   console.log('they are readers that did not judge anything. Smokes, services and the live plane were not run.');
   const red = tally('FAIL') + tally('ERROR');
