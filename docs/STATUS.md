@@ -37989,3 +37989,18 @@ because the next import-check failure will look inexplicable otherwise.
   `services/cloud/config-server/src/main/resources/config-repo/nexus-platform.yml`,
   `scripts/cloud_monolith_refresh.sh`, `.github/workflows/ci.yml` (the monolith refresh step),
   `docs/PLAN.md` (cloud queue, D872 row), `docs/CLOUD.md` (monolith config section + gate table).
+
+## 873. D873 — TESTING.md re-measures after D871/D872
+
+**Small, by design.** `docs/TESTING.md`: §8.3's numbers moved again this session — merchant went from
+"10/10" to **14/14** (10 journey + 4 reply spec, D871), consumer unchanged at 22 + ask-merchant 4/4
+(D868), and §8.5's known-good command set gains the plane's three smokes (`cloud_smoke.sh`,
+`\tcloud_lb_smoke.sh` was not added — kept to the two it names, plus the new `cloud_monolith_refresh.sh`,
+the monolith config-server round trip shipped in D872).
+
+**Not claimed.** That every row of §8.3 has been re-measured this unit (the live-DB suite and the CJK
+timings rows are untouched from their 2026-11-09/10 measurements); that the demo plane was verified
+after edits — it was (`scripts/demo_live.sh --compact` exit 0 through web/platform/AI); prose only, no
+code, no reader, no suite.
+
+- readers: `docs/TESTING.md` (§8.3, §8.5).

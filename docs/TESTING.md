@@ -105,8 +105,9 @@ cd tests/e2e
 $env:NEXUS_WEB_URL='http://127.0.0.1:3002'; $env:NEXUS_PLATFORM_URL='http://127.0.0.1:8090'; $env:NEXUS_AI_URL='http://127.0.0.1:8010'
 $env:NEXUS_TEST_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_verify2'
 npx playwright test specs/api --reporter=list      # measured 2026-11-10: 21 passed, 3 skipped
-npx playwright test specs/merchant specs/consumer  # measured 2026-11-10: 10/10 merchant, 22 passed + ask-merchant.spec.ts 4/4 (2 desktop + 2 mobile)
+npx playwright test specs/merchant specs/consumer  # measured 2026-11-10: 14/14 merchant (10 journey + 4 reply), 22 passed consumer + ask-merchant.spec.ts 4/4 (2 desktop + 2 mobile)
 npx playwright test specs/consumer/ask-merchant.spec.ts   # measured 2026-11-10: mobile hydration-race fixed (pressSequentially + toBeEnabled before click) — 4/4
+npx playwright test specs/merchant/reply.spec.ts          # measured 2026-11-10: merchant replies land in the thread as merchant_user — 4/4 (desktop + mobile)
 cd ..\..\apps\ai; uv run pytest -q                  # the live-DB suite against the verify DB
 ```
 The visual project asserts the mock plane's demo notice (`[data-nexus-demo-notice="mock"]`);
@@ -130,6 +131,8 @@ python scripts/verify_consumer_slice.py            # 14/14 against the live plan
 node scripts/verify_served_reads.mjs --base http://127.0.0.1:8090   # PASS, 611 checks
 node scripts/verify_payload_conformance.mjs        # 39 payloads validated, 0 rejected
 bash scripts/demo_live.sh                  # §142 round trip live: consumer asks -> agent answers -> merchant inbox
+bash scripts/cloud_smoke.sh                # eureka + config + gateway + admin (the plane)
+bash scripts/cloud_monolith_refresh.sh     # the monolith config-server round trip (D872): v1 -> repo rewrite -> POST refresh -> v2
 
 python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1,tool_selection_v1 --fail-on-gate  # PASS, 206 cases (all five suites)
 cd apps/web; npm run evidence                      # 5/5 surfaces, manifest ok=true
