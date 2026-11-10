@@ -4133,5 +4133,17 @@ normal boot unchanged unless a profile opts in.
   network); the `cloud` compose profile is validated (`docker compose config --services`), but the
   containers never left `Created` on this saturated host this session — the running-plane proof remains
   open. The smoke does NOT belong in `db_gate_fresh.sh` (§845(e)); its gate is the CI `cloud` job.
+- **D858 (§858): the two-node Eureka HA experiment did NOT converge on this host — the plane keeps one
+  registry.**
+  The mandate asked for Spring Cloud elements, and a registry surviving a node death is the textbook one.
+  Three configurations were tried on throwaway ports (18961/18962/18089, nothing of the plane's deployment
+  touched): a comma-separated zone (both nodes log "The replica size seems to be empty"; the default
+  instance-id collision then made one node overwrite the other), a LAN-IP zone (replicas detected, but the
+  replication socket times out to 192.168.1.5 — the LAN segment has no hairpin route back to this host),
+  and distinct loopback hostnames (127.0.0.1 vs 127.0.0.2 — replicas resolve, but the sync flaps: node1
+  showed both instances while node2 showed zero, then self-evicts oscillate). The instance-id fix now
+  ships (same-artifact nodes no longer collide on one identity) plus opt-in peer wiring
+  (`NEXUS_EUREKA_PEER`/`NEXUS_EUREKA_ZONE`, default off). The single-node plane is unchanged and re-verified
+  (cloud_smoke / lb / refresh PASS). The HA item stays open with the measured evidence, not as a claim.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).

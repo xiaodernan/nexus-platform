@@ -37478,3 +37478,54 @@ the config-bound values, and only values bound through `@RefreshScope` re-read.
   `services/cloud/gateway/src/main/resources/application.yaml`,
   `scripts/cloud_refresh.sh`, `.github/workflows/ci.yml` (the cloud job's refresh step),
   `docs/PLAN.md` (the cloud-plane queue, D857 row).
+
+## 858. D858 — the two-node Eureka HA experiment, measured on this host, does not converge (honest negative; the plane keeps one registry)
+
+**The item attempted (mandate: Spring Cloud elements).** A registry a service can fail over to — the textbook
+Eureka HA shape. This unit built a two-node pair on throwaway ports (18961/18962/18089, nothing of the plane's
+deployment touched) and measured what actually converges here. It does not; the evidence is recorded instead of
+a claim.
+
+**Deltas in between.** The eureka-server still runs the single-node config by default; opt-in peer wiring now
+exists (`NEXUS_EUREKA_PEER=true` / `NEXUS_EUREKA_ZONE` — same artifact, same name, port-suffixed instance-id,
+loopback alias 127.0.0.2 for the second node). That is the only shippable part of the attempt.
+
+**Measured failures, in order tried.**
+1. Comma-separated `NEXUS_EUREKA_ZONE` on both nodes: both log `PeerEurekaNodes — The replica size seems to be
+   empty`, and each registers into only ONE of the two URLs (first node 18961 registered the other node into
+   18962, only; non-deterministic views between runs). Adding `instance-id` (currently a shared
+   `nexus-eureka` default — nodes overwriting each other) resolved the id collision but not the zone issue.
+2. LAN-IP `192.168.1.5` in the zone (the resolver's preferred spelling for this host): replica detected, but
+   the replication path is dead — `ConnectTimeoutException: Connect to 192.168.1.5:18962`. The LAN address has
+   no hairpin route back to this host (Tomcat listens on `::` for all, yet 192.168.1.5 is not reachable from
+   loopback here; the same symptom would break any two-node Eureka topology on this machine).
+3. Distinct loopback hostnames (127.0.0.1 = n2, 127.0.0.2 = n1): replicas now resolve (no empty-replica WARN),
+   but the sync flaps — after 45s node1 showed both instances while node2 showed ZERO; a minute later the
+   single-instance views oscillate (self entries evicting) — an unstable pair, not a plane to deploy on.
+
+**Net.** The instance-id collision is real and fixed by this unit (same-artifact co-existence impossible before);
+resolving the replica resolver's host-vs-ip matching produced a working replica set, but the replication
+transport does not complete convergence on this host. Three configurations, three measured failure modes, no
+shippable HA pair. The honest outcome: a SINGLE-node registry with fast-expiring
+leases (self-preservation off, eviction-interval 5s) plus the D850 edge breaker/fallback — a dead upstream
+produces an honest 503 `edge_upstream_unavailable` (verified live on every cloud_smoke run). Two-node Eureka
+stays open with the measured evidence, not as a claim.
+
+**Verification this unit did earn.** Single-node behavior unchanged and re-verified on the shipped bytes:
+`cloud_smoke.sh` PASS, `cloud_lb_smoke.sh` PASS (NEXUS-PLATFORM + NEXUS-AI both registered, both proxied by
+name, correlation echoed, limiter deterministic), `cloud_refresh.sh` PASS (a repo edit lands at the edge with
+no restart). The live plane re-verified end-to-end after the platform restart: web (:3002) serves the merchant
+console at 91,899 bytes with `basil-leaf-0419` at 36,204 and `v_merchant_funnel` at 38,225; platform :8090
+200 (dev, verify2); AI :8010 200 (mock).
+
+**Not claimed.** (a) Any working peer replication, stale-replicas-gone-evicted, consistent instance membership,
+or gateway failover between nodes — none of it demonstrated on this host. (b) The LAN address being unroutable
+is measured from loopback; a different vSwitch layout might change it — explicitly out of this unit's scope.
+(c) The 1794284xxx-era measurements under /tmp and the temp repos are not retained as artifacts; the
+application.yaml delta and this ledger entry are. (d) CI-runner results for the rebuilt eureka jar are not
+observable this session; all three smokes ran green locally.
+
+- readers: `services/cloud/eureka-server/src/main/resources/application.yaml`,
+  `scripts/check_cloud_discovery.mjs` (the single-node gates, unchanged),
+  `scripts/cloud_smoke.sh`, `scripts/cloud_lb_smoke.sh`, `scripts/cloud_refresh.sh`,
+  `docs/PLAN.md` (the cloud-plane queue, D858 row).

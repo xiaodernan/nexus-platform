@@ -13,11 +13,15 @@ spring:
 eureka:
   instance:
     hostname: ${NEXUS_EUREKA_HOST:127.0.0.1}
+    # D858: two nodes run the SAME artifact — the default instance-id would make them collide.
+    instance-id: ${spring.application.name}:${server.port}
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    # D858: single-node dev registry by default; the HA pair sets NEXUS_EUREKA_PEER=true and a
+    # comma-separated NEXUS_EUREKA_ZONE listing both nodes, and the same jar becomes a peer.
+    register-with-eureka: ${NEXUS_EUREKA_PEER:false}
+    fetch-registry: ${NEXUS_EUREKA_PEER:false}
     service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+      defaultZone: ${NEXUS_EUREKA_ZONE:http://${eureka.instance.hostname}:${server.port}/eureka/}
   server:
     # A local/dev registry must reflect reality: a killed gateway should disappear quickly instead
     # of being kept alive by self-preservation.
