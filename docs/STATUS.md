@@ -38904,3 +38904,59 @@ decomposed. Docker (D853), Spring Cloud Bus, a deployed HA pair, breaker-name re
   `scripts/check_cloud_trace_fallback.mjs`, `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeTracingFilter.java`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java`,
   `docs/CLOUD.md`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 897. D897 — a gateway really fails over between two Eureka registries
+
+**What was still open.** D894 closed D858's SERVER-side blocker: two Eureka nodes with explicit
+zones replicate registrations in both directions. But `docs/CLOUD.md` still said "no gateway was
+failed over between registries" — not one client had ever been given both URLs. Phase G's G3 asked
+for the client half, with permission to record a measured blocker instead of declaring a victory.
+
+**What shipped.** `scripts/cloud_ha_failover_smoke.sh` boots D894's two-node pair, starts a
+throwaway gateway with `--spring.profiles.active=cloud` and
+`--eureka.client.service-url.defaultZone=<primary>,<secondary>`, then kills the primary and
+proves `lb://NEXUS-PLATFORM` still resolves. `scripts/falsify_cloud_ha_failover_smoke.sh` gives
+the gateway ONLY the dead primary URL and requires the SAME assertion to FAIL.
+`scripts/check_cloud_ha_failover.mjs` guards the wiring and reddens on nine planted corruptions.
+No product configuration file changed; the two CI lines were edited in place.
+
+**Why the design is stronger than "200 before, 200 after".** Spring Cloud's DiscoveryClient keeps
+a local registry cache, so a gateway that answered 200 after its only registry died could be
+serving STALE MEMORY and would prove no failover at all. Here both registries are asserted EMPTY
+of `NEXUS-PLATFORM` BEFORE the gateway boots, so its cache never held the upstream. Only AFTER
+the primary is confirmed dead does D887's `scripts/fixture_insight_upstream.py` register with the
+SECONDARY node (and the secondary is asserted to list it UP). A subsequent 200 whose body is the
+fixture's own answer is therefore possible only if the gateway's Eureka client moved to the
+second URL and fetched a registry it had never seen. The single-URL arm is the control: with the
+second URL removed, the identical sequence ends in `no lb://NEXUS-PLATFORM answer after the
+primary died` while both registries, the gateway and the secondary's UP registration are proven
+live. The fixture's `SERVE /api/v1/health` log line is required, so neither arm can pass on a
+fabricated or cached payload.
+
+**Measured.** Presence arm, exit 0: `both eureka nodes up (:18963, :18964)`, both baselines
+`clean registry — no NEXUS-PLATFORM (apps: 0)`, `defaultZone=http://127.0.0.1:18963/eureka/,
+http://127.0.0.2:18964/eureka/`, `route table carries lb://NEXUS-PLATFORM`,
+`primary node is down (:18963 no longer answers)`, `secondary node is still UP on :18964`,
+`NEXUS-PLATFORM UP, instanceId=nexus-platform:19121`, then
+`200 from the fixture through lb://: {"status": "UP", "fixture": "NEXUS-PLATFORM", "instance":
+"nexus-platform:19121"}` and `fixture access log proves the request really arrived`. Falsifier
+arm, exit 0: with `defaultZone=http://127.0.0.1:18965/eureka/` the same run failed with the
+attributable message after `secondary node lists NEXUS-PLATFORM UP`; all seven markers present.
+
+**Declared isolation, not hidden.** This one throwaway gateway raises
+`resilience4j.circuitbreaker.instances.platform.minimumNumberOfCalls` to 100 and fetches every
+3s, so a DISCOVERY delay during polling cannot be misread as a breaker trip. D850/D895 own the
+real breaker claim. `docs/CLOUD.md`'s HA clause was NARROWED, not deleted: a throwaway gateway
+did fail over, but the shipped yaml still has one `defaultZone`.
+
+**Not claimed.** A deployed HA pair, sub-second failover, zero stale-replica eviction, an
+in-flight request retried to the surviving node, a third Eureka node, authenticated transport,
+that `nexus-insight` failed over, that the gateway's own heartbeat/lease behaviour was measured,
+or that `NEXUS-PLATFORM` here was the real monolith (it was D887's self-registering fixture).
+Docker (D853), Spring Cloud Bus, breaker-name reconciliation (G7), an OTLP exporter and the
+real-provider eval lane remain open.
+
+- readers: `scripts/cloud_ha_failover_smoke.sh`,
+  `scripts/falsify_cloud_ha_failover_smoke.sh`, `scripts/check_cloud_ha_failover.mjs`,
+  `scripts/eureka_ha_smoke.sh`, `scripts/fixture_insight_upstream.py`, `docs/CLOUD.md`,
+  `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

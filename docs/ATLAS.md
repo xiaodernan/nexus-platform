@@ -112,6 +112,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_cloud_edge.mjs` | breakers, limiter, request-id, five-method fallbacks, smoke assertions |
 | `scripts/check_cloud_trace.mjs` | D884: W3C filter, strict grammar, Python participant, unit tests, smoke, CI step, honesty clause |
 | `scripts/check_cloud_trace_fallback.mjs` | D896: the 200/503/429 trace smoke, its no-degrade falsifier, the filter ORDER (tracing before the limiter), CI/ATLAS/ledger wiring, and a self-test that plants eight corruptions |
+| `scripts/check_cloud_ha_failover.mjs` | D897: the empty-cache anti-false-positive design, the primary kill, the LATE registration on the secondary, the single-registry falsifier, the NOT-SHIPPED honesty clause, and nine planted corruptions |
 | `scripts/check_cloud_insight.mjs` | D885–D889: fifth reactor module, Feign-by-name clients, honest fallbacks, registry/lease shape, D887 live-upstream smoke assertions, D889 config import/`@RefreshScope`, compose, CI, docs, free-or-ours probe of :19555 |
 | `scripts/check_plane_coordinates.mjs` | the URLs the browser harness reads |
 | `scripts/check_reader_reachability.mjs` | every shipped reader is reachable from a runner |
@@ -159,6 +160,8 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/cloud_trace_smoke.sh` | D884: W3C `traceparent` minted / continued / rejected honestly, measured against `scripts/fixture_trace_echo.py` |
 | `scripts/cloud_trace_fallback_smoke.sh` | D896: ONE inbound `traceparent` survives all three gateway answers — healthy 200, breaker 503 fallback and limiter 429 — with the same trace id and a fresh child span on each |
 | `scripts/falsify_cloud_trace_fallback_smoke.sh` | D896: with the AI route pointed at the healthy fixture, no 503 exists and the unchanged trace assertion MUST fail while the fixture, gateway and 200 control are all proven up |
+| `scripts/cloud_ha_failover_smoke.sh` | D897: the gateway gets BOTH Eureka URLs but boots with an EMPTY upstream registry; after the primary is killed the upstream registers ONLY with the secondary, so a 200 through `lb://` can only come from real client failover |
+| `scripts/falsify_cloud_ha_failover_smoke.sh` | D897: with only the dead primary URL given to the gateway, the same `lb://` assertion MUST fail while both registries, the gateway and the secondary's UP registration are proven live |
 | `scripts/insight_smoke.sh` | D885: with Eureka disabled, `/insight/plane` reports both upstreams `unavailable`, never a faked `UP` |
 | `scripts/insight_registry_smoke.sh` | D886: with Eureka up, `NEXUS-INSIGHT` appears in `/eureka/apps` as `UP` with the plane's `instance-id` shape |
 | `scripts/insight_feign_smoke.sh` | D887: two self-registered fixtures answer `lb://NEXUS-PLATFORM` / `lb://NEXUS-AI`; a runtime switch to a non-UP status is copied verbatim, and the fixtures' access logs prove the calls arrived |
