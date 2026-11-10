@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:381` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:383` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:377-387)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:379-389)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:368), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:370), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -24855,9 +24855,9 @@ counted one file short of the reader's — the root `Makefile` its extension tes
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
 `.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
-written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:381` (the
-`--report` run), `.github/workflows/ci.yml:377-387` (the three steps that pipe a reader into `tee`),
-`.github/workflows/ci.yml:368` (the note that says why they declare `shell: bash`). Each was read at the commit
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:383` (the
+`--report` run), `.github/workflows/ci.yml:379-389` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:370` (the note that says why they declare `shell: bash`). Each was read at the commit
 that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
 included (276 at `3d4820e` is 282 at HEAD).
 
@@ -25126,9 +25126,9 @@ reader filed all ten MOVED against the commit that carried them, which is the re
 a new one: a citation is EXACT while the line it names still holds the text it held when its row was
 written, so a commit that shifts a cited file invalidates the rows that cite it even when the ledger itself
 did not move. The ten are re-aimed from the same `--reaim` output, the three range ends moving with their
-starts, and every target was read by hand first: `.github/workflows/ci.yml:381` is the `--report` run,
-`.github/workflows/ci.yml:377-387` is the three steps that pipe a checker into `tee`,
-`.github/workflows/ci.yml:368` is the note that says why they declare `shell: bash`,
+starts, and every target was read by hand first: `.github/workflows/ci.yml:383` is the `--report` run,
+`.github/workflows/ci.yml:379-389` is the three steps that pipe a checker into `tee`,
+`.github/workflows/ci.yml:370` is the note that says why they declare `shell: bash`,
 `.github/workflows/ci.yml:266-270` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
 3000 and waits on all three, `scripts/falsify_reader_reachability.mjs:169-175` is the arm that used to
 resolve last-wins, and `scripts/db_gate_fresh.sh:579` and `scripts/db_gate_fresh.sh:567` are step 16's
@@ -25248,7 +25248,7 @@ That is the next unit: derive each collection's membership from its claim the wa
 - `tai-wai-under-100` — 全部成員都喺大圍區，人均低於100蚊。清單共有9間。全部商戶均為虛構。 — 9 members, all in Tai Wai, all below HK$100. Its members also include a `service`, and the copy does not name kinds: the sentence says what the list supports and stays silent about what it does not;
 - `weekend-family-sha-tin` (itinerary) — 由午餐、活動同晚餐組成嘅示範一日行程。全部成員都係親子嘅商戶。行程包含週末供求時段。全線共9個站。全部商戶均為虛構。 — 9 members, kinds restaurant/activity/experience, all in Sha Tin, all carrying `family_occasion`, all with Sunday slots and Saturday-and-Sunday pairs.
 
-**Wiring, and the CI step that was failing on its own command line.** Gate step 3 runs the census and then its arms immediately after generation (`scripts/db_gate_fresh.sh:172`, `:175`), placed after the `if` so it also runs under `--skip-generate` — the census judges the bytes step 4 loads, so a plane someone else generated is exactly the plane worth checking. CI runs it in both jobs that load the seed: `ai` after its generate (`.github/workflows/ci.yml:185` — the ai job's generate step, which needed a `setup-node` step because that job had none) and `e2e` before `load.sh` (`:257` → `:262`); the `changes` filter now counts `data/seed/` as an input to the `ai` job (`:48`) because the seed *is* that job's input. While wiring `e2e` this unit read the generate command already there and found it dead: `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200`. `--counts` takes a preset NAME — `full|ci|smoke` — so argparse refused the value, the step failed on its own command line, and the "Start data stores + schema + demo data" step was generating nothing for the suite that followed it. The three separate scale flags carry the numbers that line meant, and the plane they produce now self-checks PASS and reads PASS through the census.
+**Wiring, and the CI step that was failing on its own command line.** Gate step 3 runs the census and then its arms immediately after generation (`scripts/db_gate_fresh.sh:172`, `:175`), placed after the `if` so it also runs under `--skip-generate` — the census judges the bytes step 4 loads, so a plane someone else generated is exactly the plane worth checking. CI runs it in both jobs that load the seed: `ai` after its generate (`.github/workflows/ci.yml:187` — the ai job's generate step, which needed a `setup-node` step because that job had none) and `e2e` before `load.sh` (`:257` → `:262`); the `changes` filter now counts `data/seed/` as an input to the `ai` job (`:48`) because the seed *is* that job's input. While wiring `e2e` this unit read the generate command already there and found it dead: `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200`. `--counts` takes a preset NAME — `full|ci|smoke` — so argparse refused the value, the step failed on its own command line, and the "Start data stores + schema + demo data" step was generating nothing for the suite that followed it. The three separate scale flags carry the numbers that line meant, and the plane they produce now self-checks PASS and reads PASS through the census.
 
 **What it does not do, stated rather than implied.**
 
@@ -25278,7 +25278,7 @@ That is the next unit: derive each collection's membership from its claim the wa
 
 **The fix, and what it gives up.** Blame at HEAD. `blameByLine(git, path, rev = 'HEAD')` (`scripts/check_line_cite_drift.mjs:117`), one call site passing it (`:208`), so the basis and the text are one reading again and the strict classes can no longer be emptied by an edit. What the edit represents is then counted instead of judged: the census walks the disk copy of each ledger against HEAD's copy line by line (`:218`) and prints one number per run (`:355`) — `ledger lines differing between disk and HEAD: N (the census grades HEAD's copy, so a number edited on disk is not judged until it is committed)` — with a second clause naming how many of the ledgers have no disk copy at all, because on a plane like an archive tree their divergence is unknown rather than zero. It read 1 on the plane that produced the false green and 0 after this unit's re-aim was committed. This is a disclosure, not a verdict: the numbers a lane is typing are simply not graded yet, and nothing here pretends to know what they will mean once they are.
 
-**The harness had the seam in the other direction.** Every arm of `scripts/falsify_line_cite_drift.mjs` spawns the reader as it sits on disk, while the gate runs the file as committed (`scripts/db_gate_fresh.sh:567` for the census, `:579` for the strict one, `:566` for the arms; CI runs the census at `.github/workflows/ci.yml:426` and the arms at `:431`). So an arm battery green against an uncommitted reader is a green for a file nobody has installed. The harness now compares that one path's worktree bytes with its HEAD blob (`scripts/falsify_line_cite_drift.mjs:64`) and refuses with exit 2, printing the diff line and the stat, when they differ. Measured: run while D577's reader edit was still uncommitted it printed `RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD`, with `1 file changed, 44 insertions(+), 10 deletions(-)`, and no arm ran; after the reader landed the same command runs its full battery. The check is scoped to the reader's own path and not to `git status`, because in a worktree several lanes write to, the status line names every one of them and the only divergence that changes what an arm proves is this file's bytes.
+**The harness had the seam in the other direction.** Every arm of `scripts/falsify_line_cite_drift.mjs` spawns the reader as it sits on disk, while the gate runs the file as committed (`scripts/db_gate_fresh.sh:567` for the census, `:579` for the strict one, `:566` for the arms; CI runs the census at `.github/workflows/ci.yml:428` and the arms at `:431`). So an arm battery green against an uncommitted reader is a green for a file nobody has installed. The harness now compares that one path's worktree bytes with its HEAD blob (`scripts/falsify_line_cite_drift.mjs:64`) and refuses with exit 2, printing the diff line and the stat, when they differ. Measured: run while D577's reader edit was still uncommitted it printed `RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD`, with `1 file changed, 44 insertions(+), 10 deletions(-)`, and no arm ran; after the reader landed the same command runs its full battery. The check is scoped to the reader's own path and not to `git status`, because in a worktree several lanes write to, the status line names every one of them and the only divergence that changes what an arm proves is this file's bytes.
 
 **Arm 13 changes the one property no earlier arm touched** — whether the citing line exists as a commit (`scripts/falsify_line_cite_drift.mjs:292`). Three readings of the same repository: a clean plane whose committed citation is stale, `MOVED 1` and `diverges 0`; that plane with the correct number typed into the ledger on disk, still `MOVED 1`, `--strict MOVED` exit 1, `diverges 1`; those same bytes committed, `EXACT 1` and `diverges 0`. Predicted before the run, and held — 13 of 13.
 
@@ -36820,7 +36820,7 @@ authentication: a squatter answering our exact JSON would read as ours.
   `services/cloud/eureka-server/src/main/resources/application.yaml:2-7`,
   `services/cloud/config-server/src/main/resources/application.yaml:2-5`,
   `services/cloud/gateway/src/main/resources/application.yaml:13`,
-  `services/cloud/gateway/src/main/resources/application.yaml:96`, `infra/docker-compose.yml:180`,
+  `services/cloud/gateway/src/main/resources/application.yaml:108`, `infra/docker-compose.yml:180`,
   `infra/docker-compose.yml:195`, `infra/docker-compose.yml:222`.
 
 ## 848. D848 — the merchant console's live identity: the caller's own merchant, not the mock fixture (D843 follow-through)
