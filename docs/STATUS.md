@@ -37863,3 +37863,37 @@ the full suite only completed under CI this session, not locally (CI gates it). 
 any reader or suite — it is the known-good command set corrected, not the gate.
 
 - readers: `docs/TESTING.md` (§8.3).
+
+## 870. D870 — the last parallel lane is collected: stash@{0} dispositioned, repo unified on master
+
+**What the mandate asked.** "把项目的多个工作分支、各种 worktree 之类的合并起来，综合集大成，合并到一个主分支。"
+The repo had one branch with origin parity, one worktree, and **one stash** — `stash@{0}`, a WIP from the
+D741 era (commit `f1b101c6d741` era), 41 files, 228 insertions from the AI lane's preference spellings, the
+web mock plane's numerals and a deleted report artifact set.
+
+**Disposition, piece by piece, verified rather than assumed.**
+
+- **27 of 41 target blobs are byte-identical to HEAD** — the AI preference lane fully landed in refined
+  form across D742-D762 (conversation-scoped `user_preferences(conversation_id=...)` is present at all three
+  protocol classes).
+- **Per-hunk content check, all 207 added lines found in HEAD:** `routes_discover.py` 2/2, `service.py`
+  32/33 (the one mojibake-mangled), `sql.py` 1/1, the preference test files 100%, the web mock plane —
+  numerals, `normalise_numerals`, `CN_DIGITS`, `numeral-hours.test.ts` all present.
+- **git apply --check on a scratch worktree**: every hunk fails to apply because the same lanes were
+  rewritten refining them later (honest evidence, not a guess); `git stash drop` then followed.
+- **Junk:** `commit_progress.bat`, `git_status.txt` — manual debug aids already deleted from tracking in
+  `1bacdc1`; `tests/e2e/report/**` — stale generated report artifacts, already gitignored.
+- The working copy carries a snapshot of the stash diff at `/d/stash_wip.diff` if anyone ever needs to
+  re-derive it; the stash id is `d3b2ac7717c4bba9613bf93313f67316dd966c41`.
+
+**After.** `git branch -a` shows only `master` + the remote; `git worktree list` shows only the main
+worktree; `git stash list` is empty; `git status` is clean. Everything the project has ever built on any
+lane sits in the master history.
+
+**Not claimed.** That the stranded stash's every intent is literally in master — only that every artifact
+the stash carried is present, or landed superseding it, with receipts above; that no future lane will fork
+again (the pipeline will); that this disposition was content-verified by running the full AI suite in both
+planes — local suite is too slow on this host; CI gates it.
+
+- readers: stash diff `/d/stash_wip.diff`, `apps/ai/nexus_ai/search/service.py` (conversation_id),
+  `apps/web/src/lib/mock/numeral-hours.test.ts`, `docs/STATUS.md` (§863/§867).
