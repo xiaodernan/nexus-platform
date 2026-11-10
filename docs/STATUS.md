@@ -37206,7 +37206,7 @@ cannot honestly read.
   `apps/ai/nexus_ai/eval/cli.py`,
   `apps/ai/tests/test_the_orchestrator_plans_the_min_necessary_steps.py`,
   `apps/ai/tests/test_the_eval_case_files_keep_their_shape.py`,
-  `.github/workflows/ci.yml:258`,
+  `.github/workflows/ci.yml:263`,
   `docs/AGENT_CONTRACT.md`, `docs/AI.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md`, `docs/ROADMAP.md`.
 
 ## 852. D852 — the mock plane read a word the service already retired: 午市 out of the noon band
