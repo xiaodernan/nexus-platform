@@ -128,6 +128,8 @@ background-suite contention).
 python scripts/verify_consumer_slice.py            # 14/14 against the live plane
 node scripts/verify_served_reads.mjs --base http://127.0.0.1:8090   # PASS, 611 checks
 node scripts/verify_payload_conformance.mjs        # 39 payloads validated, 0 rejected
+bash scripts/demo_live.sh                  # §142 round trip live: consumer asks -> agent answers -> merchant inbox
+
 python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1,tool_selection_v1 --fail-on-gate  # PASS, 206 cases (all five suites)
 cd apps/web; npm run evidence                      # 5/5 surfaces, manifest ok=true
 ```
