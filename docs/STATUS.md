@@ -29870,7 +29870,7 @@ does not. Both were run from their own tree against a directory holding `6145c6c
     this unit's reader, same bytes      RESULT: FAIL — 20 simplified character(s) in 5 literal(s) of 4 zh block(s)   rc 1
           WRONG-SCRIPT apps/web/src/lib/prompts.ts:18 :19 :20 :21 :22 — five of five starter prompts
 
-The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2208`) and
+The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2211`) and
 `BY_LOCALE` (`apps/web/src/lib/prompts.ts:20-35`), both locale-keyed maps: what was missing was the
 population, not the copy. The reader prints such a map's span one line EARLIER than its declaration —
 `2051-2052`, and 2051 is empty — so a row that copies the printed span verbatim draws the BLANK LINE
@@ -36647,7 +36647,7 @@ live request exercised in this session: the platform was not running when the su
 - readers: `app/signin/page.tsx:26-37`, `src/components/signin-actions.tsx:25-56`, `:59-71`, `:73-80`,
   `app/api/nexus/auth/route.ts:42-91`, `:93-96`, `src/lib/api/base.ts:194-215`,
   `src/lib/api/base.test.ts:80-99`, `src/lib/console-admin.ts:227`, `src/lib/console-merchant.ts:67`,
-  `src/lib/i18n/dict.ts:671-685`, `:1372-1387`, `:2084-2099`,
+  `src/lib/i18n/dict.ts:672-686`, `:1372-1387`, `:2084-2099`,
   `src/components/console/console-parts.tsx:63-81`, `src/components/console/admin-shell.tsx:35-43`.
 ## 844. D844 · the two remaining worktrees were stale checkouts, not lanes - removed (`docs/STATUS.md`)
 
@@ -36757,7 +36757,7 @@ would add a Maven build to every gate run.
 
 **Not claimed.** (a) No laptop end-to-end run with a real `NEXUS_AI_INTERNAL_TOKEN` against a seeded database: the platform door and the AI relay are proven by their suites, and the web route by a mocked jar, but the three were not started together in this unit. (b) The widget keeps its transcript in memory only; a reload does not rehydrate the thread from the platform read. (c) A mock answer is not grounded - it says so. (d) The first question publishes the existing `LeadCaptured` event once; follow-ups do not add leads.
 
-- readers: `services/platform/src/main/java/com/nexus/conversation/ConversationService.java:218-247`, `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java:175-215`, `apps/ai/nexus_ai/adapters/platform.py:74-84`, `apps/ai/nexus_ai/adapters/platform.py:195-206`, `apps/ai/nexus_ai/api/routes_stream.py:73`, `apps/ai/nexus_ai/api/routes_stream.py:138-142`, `apps/ai/nexus_ai/api/routes_stream.py:160-180`, `apps/ai/tests/test_merchant_agent_dialogue.py:1-97`, `apps/web/src/components/ask-merchant.tsx:31-108`, `apps/web/src/components/merchant-view.tsx:161`, `apps/web/src/lib/api/ask-route.test.ts:1-131`, `apps/web/src/lib/i18n/dict.ts:134-161`, `apps/ai/tests/test_doc_paths_are_real.py:72-78`, `docs/PLAN.md:68`, `docs/PLAN.md:337`.
+- readers: `services/platform/src/main/java/com/nexus/conversation/ConversationService.java:219-248`, `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java:175-215`, `apps/ai/nexus_ai/adapters/platform.py:74-84`, `apps/ai/nexus_ai/adapters/platform.py:195-206`, `apps/ai/nexus_ai/api/routes_stream.py:73`, `apps/ai/nexus_ai/api/routes_stream.py:138-142`, `apps/ai/nexus_ai/api/routes_stream.py:160-180`, `apps/ai/tests/test_merchant_agent_dialogue.py:1-97`, `apps/web/src/components/ask-merchant.tsx:41-118`, `apps/web/src/components/merchant-view.tsx:161`, `apps/web/src/lib/api/ask-route.test.ts:1-131`, `apps/web/src/lib/i18n/dict.ts:134-161`, `apps/ai/tests/test_doc_paths_are_real.py:72-78`, `docs/PLAN.md:68`, `docs/PLAN.md:337`.
 ## 847. D847 · the cloud plane's default registry belongs to another project: the host face moves to a measured-free block, and one gate asks who owns every coordinate (`scripts/check_cloud_plane_ports.mjs`, `scripts/cloud_smoke.sh`, `services/cloud/eureka-server/src/main/resources/application.yaml`)
 
 **The gap, measured read-only.** §845 landed the plane on the canonical defaults 8761/8888/8088 while the
