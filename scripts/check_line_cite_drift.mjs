@@ -98,6 +98,9 @@ export const FLAGS = {
   '--strict': { kind: 'value', unit: 'MOVED,NOT-UNIQUE,GONE' },
   '--reaim': { kind: 'switch' },
   '--resolve-basenames': { kind: 'switch' },
+  // D890: disable the batch blob prefetch and use the original one-`git show`-per-key path. Kept so the
+  // optimisation can be compared against the behaviour it replaced instead of being trusted.
+  '--no-prefetch': { kind: 'switch' },
 };
 
 /** Blame `path` AT `rev` and return Map<lineNumber, commitSha>. Porcelain headers carry the line number and each
@@ -126,7 +129,7 @@ export function blameByLine(git, path, rev = 'HEAD') {
   return map;
 }
 
-export function census({ repo, ledgers, limit, resolveBasenames = false }) {
+export function census({ repo, ledgers, limit, resolveBasenames = false, prefetch = true }) {
   // stderr is dropped on purpose: `git show` writes a `fatal: path ... does not exist` for every citation into a
   // file that is not at this ref, which this reader has already classified. Left attached it printed 63 fatal
   // lines over a run whose own report says the same thing in three rows.
@@ -177,6 +180,73 @@ export function census({ repo, ledgers, limit, resolveBasenames = false }) {
     return index;
   })();
 
+  /**
+   * D890 — why this reader took 500 seconds. `linesAt` caches by `${ref}|${path}`, but `ref` is the
+   * BLAME COMMIT of the ledger line holding each citation. Thousands of (commit × cited file) pairs
+   * therefore meant thousands of `git show` process spawns. Measured in the D889 full sweep:
+   * `check_line_cite_drift.mjs` 502137ms, i.e. 8 of the sweep's 9 minutes.
+   *
+   * This prefetch resolves the ledger plane ONCE (HEAD text + blame), walks the citations to collect
+   * every key the main loop could ask for, and reads them all through ONE `git cat-file --batch`
+   * (its input accepts `rev:path`). Anything not covered still falls through to the original
+   * `git show`, so an incomplete prefetch is slower, never wrong. `--no-prefetch` keeps the old path
+   * for a byte-for-byte comparison instead of an optimisation nobody checked.
+   */
+  const ledgerPlane = new Map();
+  const wanted = new Set();
+  if (prefetch) {
+    for (const ledger of ledgers) {
+      let headText;
+      try { headText = git('show', `HEAD:${ledger}`); } catch { continue; }
+      ledgerPlane.set(ledger, { text: headText.replace(/\r\n/g, '\n'), map: blameByLine(git, ledger, 'HEAD') });
+    }
+    for (const plane of ledgerPlane.values()) {
+      plane.text.split('\n').forEach((l, i) => {
+        const writer = plane.map.get(i + 1);
+        if (!writer) return;
+        for (const m of l.matchAll(CITE)) {
+          // A `file:LINE:COL` frame is skipped by the main loop; do not spend a blob read on it.
+          if (/^:\d/.test(l.slice(m.index + m[0].length))) continue;
+          const file = m[1];
+          wanted.add(`HEAD|${file}`);
+          wanted.add(`${writer}|${file}`);
+          const hits = suffixIndex.get(file) ?? [];
+          if (hits.length === 1) {
+            // Both spellings are collected: the main loop may use the raw path or the resolved one.
+            wanted.add(`HEAD|${hits[0]}`);
+            wanted.add(`${writer}|${hits[0]}`);
+          }
+        }
+      });
+    }
+    const keys = [...wanted];
+    if (keys.length) {
+      try {
+        const input = `${keys.map((k) => {
+          const bar = k.indexOf('|');
+          return `${k.slice(0, bar)}:${k.slice(bar + 1)}`;
+        }).join('\n')}\n`;
+        const buf = execFileSync('git', ['cat-file', '--batch'], {
+          cwd: repo, input, maxBuffer: 1 << 28, stdio: ['pipe', 'pipe', 'ignore'],
+        });
+        let off = 0;
+        for (const k of keys) {
+          const nl = buf.indexOf(10, off);
+          if (nl < 0) break;
+          const header = buf.subarray(off, nl).toString('utf8');
+          off = nl + 1;
+          if (header.endsWith(' missing')) { blobCache.set(k, null); continue; }
+          const size = Number(header.split(' ')[2]);
+          if (!Number.isFinite(size) || size < 0 || off + size > buf.length) break;
+          blobCache.set(k, buf.subarray(off, off + size).toString('utf8').replace(/\r\n/g, '\n').split('\n'));
+          off += size + 1; // every --batch record ends with one newline after the payload
+        }
+      } catch {
+        // an unreadable batch leaves the cache empty; linesAt falls back to git show, unchanged
+      }
+    }
+  }
+
   const rows = [];
   const counts = { EXACT: 0, MOVED: 0, 'NOT-UNIQUE': 0, GONE: 0, 'NO-BASE': 0, UNPATHED: 0, 'NOT-AT-HEAD': 0, AMBIGUOUS: 0 };
   // Every MOVED citation, uncapped by `--limit`: this is the list `--reaim` prints and a capped list would let a
@@ -202,11 +272,18 @@ export function census({ repo, ledgers, limit, resolveBasenames = false }) {
   let absentLedgers = 0;
 
   for (const ledger of ledgers) {
-    let headText;
-    try { headText = git('show', `HEAD:${ledger}`); } catch { headText = null; }
-    if (headText === null) { noLedger += 1; keep({ verdict: 'NO-BASE', site: ledger, detail: 'committed ledger unreadable on this plane' }); continue; }
-    const map = blameByLine(git, ledger, 'HEAD');
-    const lines = headText.replace(/\r\n/g, '\n').split('\n');
+    // D890: reuse the ledger text and blame map the prefetch already computed. With --no-prefetch
+    // (or a ledger the prefetch could not read) this is exactly the original two git reads.
+    const plane = ledgerPlane.get(ledger);
+    let headText = plane ? plane.text : null;
+    let map = plane ? plane.map : null;
+    if (!plane) {
+      try { headText = git('show', `HEAD:${ledger}`); } catch { headText = null; }
+      if (headText === null) { noLedger += 1; keep({ verdict: 'NO-BASE', site: ledger, detail: 'committed ledger unreadable on this plane' }); continue; }
+      headText = headText.replace(/\r\n/g, '\n');
+      map = blameByLine(git, ledger, 'HEAD');
+    }
+    const lines = headText.split('\n');
     // The editor's own bytes, counted rather than judged: they have no basis commit, so nothing here can say what
     // they will mean once committed. Printed as one number per run so a PASS cannot be read as a verdict on the
     // working copy — which is what this census's reader used to invite by blaming that copy and dating its lines
@@ -341,7 +418,8 @@ export function main(argv) {
   if (reaim && strict.length) { console.log('RESULT: NOT CHECKED — --reaim prints a derived list and passes no verdict, so it does not combine with --strict'); return 2; }
 
   const r = census({ repo: parsed.value['--repo'] ?? REPO, ledgers, limit,
-    resolveBasenames: Boolean(parsed.flag['--resolve-basenames']) });
+    resolveBasenames: Boolean(parsed.flag['--resolve-basenames']),
+    prefetch: !parsed.flag['--no-prefetch'] });
   // The refusal vocabulary is one list; the classes the census actually emits are another. If they ever stop
   // agreeing, the run stops — a `--strict` aimed at a class the reader no longer counts would else PASS forever.
   const unemitted = STRICT_CLASSES.filter((c) => !(c in r.counts));

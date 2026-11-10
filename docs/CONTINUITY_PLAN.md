@@ -81,10 +81,12 @@ picked up (none is promised here):
 - **Reservation exclusion constraint** (`btree_gist`), **CJK recall measurement**, and the
   **real-provider eval lane** stay on `ROADMAP.md`'s open-questions list; they are product work, not
   cloud-plane work.
-- **Citation/ledger readers that take minutes** on the 38k-line `STATUS.md` — D888 solved the worst
-  one (1316 `git show` spawns → two git calls, 4053ms, byte-for-byte parity). The remaining readers
-  that walk the corpus linearly (`check_line_cite_drift.mjs`, `check_comment_citations.mjs`) may
-  deserve the same treatment; none is promised here.
+- **Citation/ledger readers that take minutes** on the 38k-line `STATUS.md` — D888 solved
+  `check_citation_supports_sentence.mjs` (>900s → 4053ms) and D890 solved
+  `check_line_cite_drift.mjs` (502s → 9.6s), both by replacing per-key `git show` spawns with one
+  `git cat-file --batch`, and both with a byte-for-byte comparison against the old path. What still
+  walks the corpus linearly (`check_ledger_citations.mjs` at ~22s, `check_status_citations.mjs`
+  at ~13s) may deserve the same treatment; none is promised here.
 
 ### Phase E — the next three units (D887–D889), picked from the seams above
 
@@ -93,6 +95,8 @@ picked up (none is promised here):
 | E1 | **D887 Feign reaches a LIVE upstream.** D885/D886 left the load-bearing claim unproven: `@FeignClient(name=...)` resolving `lb://` to a registered instance. Two throwaway upstreams register themselves by name, insight boots LAST, and `/insight/plane` must report both rows `UP`/`upstream`; then one upstream switches to a non-`UP` status at runtime and the view must copy THAT value (nothing cached, nothing faked) | `insight_feign_smoke.sh` PASS, fixture access logs show both health paths requested, `CLOUD.md`'s honesty clause narrowed again |
 | E2 | **D888 the slow reader becomes a tool.** `check_citation_supports_sentence.mjs` spawned `git show` once per citation (1316 of them, >900s). Replace with one `git ls-tree` + one `git cat-file --batch`, keep `--engine=legacy` verbatim, and prove byte-for-byte parity on a real ledger excerpt | full sweep measured in seconds, `verify_citation_engine_parity.mjs` PASS + self-falsifying, `verify_all.mjs` drops the 900s exemption |
 | E3 | **D889 the fifth service joins the config plane.** Every other member imports the Config Server; `nexus-insight` did not. Add the optional config import, a `@RefreshScope` view of the resolved label, a config-repo entry and an `actuator/refresh` endpoint, then prove a repo edit lands WITHOUT a restart | `insight_config_smoke.sh` PASS (v1 -> repo rewrite -> refresh -> v2, same pid), `check_cloud_insight.mjs` extended |
+
+| E4 | **D890 the last 500-second reader.** The D889 full sweep (9m23s) spent 8m22s in `check_line_cite_drift.mjs`, whose blob cache is keyed by (blame commit × cited file) and thus still spawned thousands of `git show` processes. Prefetch those keys through one `git cat-file --batch`, keep `--no-prefetch` for comparison | full census 9.6s, byte-identical output on a real ledger subset, `verify_all.mjs` SLOW set shrinks again |
 
 Still open after Phase E, re-judged at pickup time (none promised): D858 HA Eureka with explicit zones, D853 Docker plane, Spring Cloud Bus (needs a broker and a measured second instance), an OTLP exporter (propagation is not a collector), `btree_gist` reservation exclusion, CJK recall, the real-provider eval lane, and Spring Boot Admin listing the fifth member.
 

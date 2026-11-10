@@ -55,11 +55,14 @@ const ULTRA_MS = flag('ultra-ms', 900000);
 /** Readers that walk the 38k-line STATUS.md; measured to need more than the default budget. */
 const SLOW = new Set([
   'check_ledger_citations.mjs',
-  'check_line_cite_drift.mjs',
   'check_comment_citations.mjs',
   'check_status_citations.mjs',
   'check_ledger_numbers.mjs',
 ]);
+// D890: `check_line_cite_drift.mjs` used to be here with a 360s budget and still needed a retry
+// (measured 502137ms in the D889 sweep). Its batch blob prefetch brought the FULL census to 9.6s,
+// with byte-for-byte parity against `--no-prefetch`. It now runs under the ordinary budget; the
+// reader keeps its own fallback to `git show` if a batch ever fails, so a slow plane is slow, not wrong.
 
 /** D888 — the 900s special case is GONE, not merely enlarged. `check_citation_supports_sentence.mjs`
  *  used to spawn `git show` once per citation (1316 of them, ~440ms each) and exceeded 900s. Its

@@ -38560,3 +38560,38 @@ rest of this dev plane.
   `services/cloud/config-server/src/main/resources/config-repo/nexus-insight.yml`,
   `scripts/insight_config_smoke.sh`, `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`,
   `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`, `README.md`.
+
+## 890. D890 — the last 500-second reader, and a sweep that finishes in one minute
+
+**What was still open.** The D889 full `verify_all.mjs` sweep returned an honest
+24 PASS / 0 FAIL / 2 UNCHECKED / 0 TIMEOUT, but it took **9m23s**: `check_line_cite_drift.mjs`
+alone was **502137ms** and only passed on the runner's load-retry (`PASS*`). D888 had fixed the
+other citation reader; this one was still spawning `git show` per key because its `blobCache` is
+keyed by `${blame commit}|${cited path}` — the blame commit differs per citing line, so the cache
+has thousands of distinct keys. A gate that needs eight minutes is a gate people route around.
+
+**What shipped.** Before the census walks the citations, a prefetch resolves the ledger plane ONCE
+(HEAD text + `blameByLine`), collects every `(ref, path)` key the main loop could request — both the
+raw spelling and a unique suffix resolution — and reads them all through ONE `git cat-file --batch`,
+whose input accepts `rev:path`. The ledger text and blame map are reused by the main loop instead
+of being recomputed. A key the prefetch did not cover still falls through to the original
+`git show`, so an incomplete batch is slower, never wrong. `--no-prefetch` keeps the old path
+verbatim for comparison. `verify_all.mjs` removes `check_line_cite_drift.mjs` from its SLOW set,
+so it runs under the ordinary budget.
+
+**Measured.** FULL census **9604ms** (was 502137ms, ~52x), with the SAME verdicts: `544/568`
+citations still name their line, `EXACT 544 · MOVED 2 · GONE 21 · NO-BASE 1 · UNPATHED 555 ·
+NOT-AT-HEAD 1`, `judged by content: 568`. On `docs/DECISIONS.md` alone the two engines'
+stdout is **byte-for-byte identical (2728 bytes)** — prefetch 4s vs legacy 14s, `82/86`.
+`--no-prefetch` is a switch, not a promise: anyone can re-run that diff.
+
+**Not claimed.** That the census is CORRECT (it is a REPORT with `strict=none`, and GONE is a queue
+for a human), that the prefetch covers every possible flag combination (`--resolve-basenames`
+widens the suffix lookup; uncovered keys fall back rather than fail), or that a cold-cache CI host
+is as fast as this one. The falsifier `scripts/falsify_line_cite_drift.mjs` refuses to grade a
+dirty reader, so it is re-run from the clean committed plane rather than reported here as a green
+it did not earn.
+
+- readers: `scripts/check_line_cite_drift.mjs`, `scripts/verify_all.mjs`,
+  `scripts/falsify_line_cite_drift.mjs`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`,
+  `.github/workflows/ci.yml`.

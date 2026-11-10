@@ -128,7 +128,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_ledger_numbers.mjs` | numeric claims by noun (needs `--expect`; UNCHECKED by design) |
 | `scripts/check_ledger_citations.mjs` | citations inside the ledger text |
 | `scripts/check_status_citations.mjs` | every spelled `STATUS §NN` resolves at HEAD |
-| `scripts/check_line_cite_drift.mjs` | file:line citations still name their line |
+| `scripts/check_line_cite_drift.mjs` | file:line citations still name their line; D890 batch-prefetches the (blame commit × cited file) blobs through one `git cat-file --batch`, with `--no-prefetch` kept for byte-for-byte comparison |
 | `scripts/check_citation_supports_sentence.mjs` | a cited line supports the sentence quoting it |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
