@@ -95,6 +95,15 @@ OpenFeign + Spring Cloud LoadBalancer, with a resilience4j fallback that reports
 instead of faking health (D885). `docs/CLOUD.md` is still the plane's one page;
 `docs/CONTINUITY_PLAN.md` is the forward plan. Neither the monolith nor its database was decomposed.
 
+D886–D889 keep extending that plane: the fifth service really appears in `/eureka/apps` (D886);
+`lb://` name resolution is measured against two LIVE self-registered fixtures whose own status
+values — including a runtime-switched non-`UP` one — are copied verbatim by `/insight/plane` (D887);
+the slowest citation reader went from a >900s timeout to 4.05s on the full 1316-citation sweep,
+with byte-for-byte engine parity (D888); and the fifth member now imports the Config Server and
+hot-refreshes through `POST /actuator/refresh` without a restart (D889). Four more smokes plus
+`scripts/verify_citation_engine_parity.mjs` are wired into the `cloud` CI job; `docs/CLOUD.md`
+keeps the explicit "not claimed" list, which narrows rather than disappears.
+
 ## Non-negotiable product rules
 
 - Real data or nothing: every price, rating, hour and distance shown to a user traces to a `facts` row

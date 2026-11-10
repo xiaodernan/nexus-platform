@@ -61,10 +61,14 @@ const SLOW = new Set([
   'check_ledger_numbers.mjs',
 ]);
 
-/** Measured: still running at 360s in the D883 sweep. It cross-checks every cited sentence, so it
- *  reads far more of the corpus than the other ledger readers. Given its own budget rather than
+/** D888 — the 900s special case is GONE, not merely enlarged. `check_citation_supports_sentence.mjs`
+ *  used to spawn `git show` once per citation (1316 of them, ~440ms each) and exceeded 900s. Its
+ *  batch engine reads the HEAD tree once and the cited blobs through one `git cat-file --batch`:
+ *  measured 4.05s for the FULL 1316-citation sweep, and byte-for-byte parity with the legacy
+ *  engine on `scripts/verify_citation_engine_parity.mjs`. It now runs under the ordinary budget.
+ *  The hook stays (empty) so a future genuinely-long reader has a named place to go rather than
  *  being skipped — a runner that quietly omits its slowest gate is lying about the plane. */
-const ULTRA_SLOW = new Set(['check_citation_supports_sentence.mjs']);
+const ULTRA_SLOW = new Set();
 
 const scripts = (() => {
   try {

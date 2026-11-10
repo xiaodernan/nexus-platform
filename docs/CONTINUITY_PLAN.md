@@ -81,8 +81,20 @@ picked up (none is promised here):
 - **Reservation exclusion constraint** (`btree_gist`), **CJK recall measurement**, and the
   **real-provider eval lane** stay on `ROADMAP.md`'s open-questions list; they are product work, not
   cloud-plane work.
-- **Citation/ledger readers that take minutes** on the 38k-line `STATUS.md`: a performance pass so
-  `verify_all.mjs` is a tool a person will actually run.
+- **Citation/ledger readers that take minutes** on the 38k-line `STATUS.md` — D888 solved the worst
+  one (1316 `git show` spawns → two git calls, 4053ms, byte-for-byte parity). The remaining readers
+  that walk the corpus linearly (`check_line_cite_drift.mjs`, `check_comment_citations.mjs`) may
+  deserve the same treatment; none is promised here.
+
+### Phase E — the next three units (D887–D889), picked from the seams above
+
+| # | Unit | Acceptance |
+|---|---|---|
+| E1 | **D887 Feign reaches a LIVE upstream.** D885/D886 left the load-bearing claim unproven: `@FeignClient(name=...)` resolving `lb://` to a registered instance. Two throwaway upstreams register themselves by name, insight boots LAST, and `/insight/plane` must report both rows `UP`/`upstream`; then one upstream switches to a non-`UP` status at runtime and the view must copy THAT value (nothing cached, nothing faked) | `insight_feign_smoke.sh` PASS, fixture access logs show both health paths requested, `CLOUD.md`'s honesty clause narrowed again |
+| E2 | **D888 the slow reader becomes a tool.** `check_citation_supports_sentence.mjs` spawned `git show` once per citation (1316 of them, >900s). Replace with one `git ls-tree` + one `git cat-file --batch`, keep `--engine=legacy` verbatim, and prove byte-for-byte parity on a real ledger excerpt | full sweep measured in seconds, `verify_citation_engine_parity.mjs` PASS + self-falsifying, `verify_all.mjs` drops the 900s exemption |
+| E3 | **D889 the fifth service joins the config plane.** Every other member imports the Config Server; `nexus-insight` did not. Add the optional config import, a `@RefreshScope` view of the resolved label, a config-repo entry and an `actuator/refresh` endpoint, then prove a repo edit lands WITHOUT a restart | `insight_config_smoke.sh` PASS (v1 -> repo rewrite -> refresh -> v2, same pid), `check_cloud_insight.mjs` extended |
+
+Still open after Phase E, re-judged at pickup time (none promised): D858 HA Eureka with explicit zones, D853 Docker plane, Spring Cloud Bus (needs a broker and a measured second instance), an OTLP exporter (propagation is not a collector), `btree_gist` reservation exclusion, CJK recall, the real-provider eval lane, and Spring Boot Admin listing the fifth member.
 
 ## Cadence
 
@@ -94,7 +106,7 @@ blocker in its "not claimed" paragraph and the plan moves to the next item — w
 
 ## What this plan does NOT claim
 
-That any Phase B/C/D item is shipped at the time this page is written (see `STATUS.md` for the
-shipped ledger), that the Spring Cloud plane is production-ready (it is a dev sidecar with no auth
+That any Phase B/C/D/E item is shipped at the time this page is written (see `STATUS.md` for the
+shipped ledger — §887–§889 record Phase E's measurements), that the Spring Cloud plane is production-ready (it is a dev sidecar with no auth
 or TLS on its admin/eureka surface), or that the monolith has been decomposed. It also does not
 claim a schedule: units are ordered by dependency, not by date.

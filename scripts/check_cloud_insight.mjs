@@ -2,16 +2,19 @@
 /**
  * NEXUS D885 — the independent service's wiring and its host coordinate.
  *
- * The behaviour is proved by `insight_smoke.sh` (a live process with no registry, asserting that
- * both upstreams are reported `unavailable` and none is faked as UP) and by `PlaneControllerTest`.
+ * The behaviour is proved by FOUR live smokes: `insight_smoke.sh` (no registry -> both rows
+ * honestly `unavailable`), `insight_registry_smoke.sh` (the member registers), `insight_feign_smoke.sh`
+ * (D887: two registered fixtures really ANSWER through `lb://`, and a non-UP status is copied), and
+ * `insight_config_smoke.sh` (D889: a config-repo edit lands without a restart) — plus the unit tests.
  * THIS reader holds the parts that could silently disappear: the reactor module, the declarative
- * clients, the honest fallbacks, the registry shape, the compose profile, the CI step, the two docs,
- * and the unit-test population. It also asks the one live question a new host coordinate must
+ * clients, the honest fallbacks, the registry/config shape, the compose profile, the CI steps, the
+ * docs, and the unit-test population. It also asks the one live question a new host coordinate must
  * answer: is :19555 free, or answered by a service THIS repository declares?
  *
- * WHAT THIS DOES NOT SAY: that the registry had any instance, that a real platform/AI service
- * answered, that Docker was exercised, or that this service is a decomposition of the monolith. It
- * is a read-only source census plus one GET; it registers, starts and stops nothing.
+ * WHAT THIS DOES NOT SAY: that the REAL platform or AI product answered (D887's upstreams are
+ * throwaway fixtures registering under the product names), that Spring Boot Admin listed the member,
+ * that Eureka HA replication works (D858), that Docker was exercised (D853), or that the monolith
+ * was decomposed. It is a read-only source census plus one GET; it registers, starts and stops nothing.
  *
  * Usage:  node scripts/check_cloud_insight.mjs [--no-probe] [--report]
  * Exit:   0 every claim holds · 1 an offender · 2 the plane could not be read.
@@ -56,6 +59,13 @@ const CI = '.github/workflows/ci.yml';
 const CLOUD_DOC = 'docs/CLOUD.md';
 const ATLAS = 'docs/ATLAS.md';
 const SMOKE = 'scripts/insight_smoke.sh';
+const REGISTRY_SMOKE = 'scripts/insight_registry_smoke.sh';
+const FEIGN_SMOKE = 'scripts/insight_feign_smoke.sh';
+const FIXTURE = 'scripts/fixture_insight_upstream.py';
+const CONFIG_SMOKE = 'scripts/insight_config_smoke.sh';
+const CONFIG_VIEW = 'services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/ConfigViewController.java';
+const CONFIG_VIEW_TEST = 'services/cloud/insight-service/src/test/java/com/nexus/cloud/insight/ConfigViewControllerTest.java';
+const CONFIG_REPO = 'services/cloud/config-server/src/main/resources/config-repo/nexus-insight.yml';
 
 for (const [rel, label] of [
   [POM, 'the module pom'], [APP, 'the application class'],
@@ -63,6 +73,13 @@ for (const [rel, label] of [
   [PLATFORM_FB, 'the platform fallback'], [AI_FB, 'the AI fallback'],
   [CONTROLLER, 'the plane controller'], [YAML, 'the module application.yaml'],
   [TEST, 'the controller unit tests'], [SMOKE, 'the insight smoke'],
+  [REGISTRY_SMOKE, 'the registry-membership smoke (D886)'],
+  [FEIGN_SMOKE, 'the live-upstream Feign smoke (D887)'],
+  [FIXTURE, 'the registered-upstream fixture (D887)'],
+  [CONFIG_SMOKE, 'the config hot-refresh smoke (D889)'],
+  [CONFIG_VIEW, 'the @RefreshScope config view (D889)'],
+  [CONFIG_VIEW_TEST, 'the config view unit tests (D889)'],
+  [CONFIG_REPO, 'the insight config-repo entry (D889)'],
 ]) exists(rel, label);
 
 has(REACTOR, '<module>insight-service</module>', 'the reactor builds the fifth module');
@@ -121,6 +138,36 @@ has(COMPOSE, 'depends_on: [eureka]', 'compose orders the registry before the mem
 has(CI, 'scripts/check_cloud_insight.mjs', 'CI runs this reader');
 has(CI, 'scripts/insight_smoke.sh', 'CI runs the honesty smoke');
 has(CI, 'scripts/insight_registry_smoke.sh', 'CI runs the registry-membership smoke (D886)');
+has(CI, 'scripts/insight_feign_smoke.sh', 'CI runs the live-upstream Feign smoke (D887)');
+has(CI, 'scripts/insight_config_smoke.sh', 'CI runs the config hot-refresh smoke (D889)');
+has(CI, 'scripts/verify_citation_engine_parity.mjs', 'CI runs the D888 engine-parity gate');
+
+/* D887 — the smoke must prove MORE than "both rows are UP", or a cached/faked answer would pass. */
+has(FEIGN_SMOKE, 'phase B: switch the AI instance to a non-UP status', 'the smoke flips an upstream at runtime');
+has(FEIGN_SMOKE, 'a["status"]=="DEGRADED"', 'the view must copy the non-UP value verbatim');
+has(FEIGN_SMOKE, 'SERVE /api/v1/health', 'the fixture access log proves the platform call arrived');
+has(FEIGN_SMOKE, 'SERVE /ai/v1/health', 'the fixture access log proves the AI call arrived');
+has(FIXTURE, "'status': 'UP'", 'the fixture registers UP');
+has(FIXTURE, 'dataCenterInfo', 'the fixture uses Eureka\'s registration shape');
+has(FIXTURE, 'def heartbeat()', 'the fixture keeps its lease alive');
+
+/* D889 — the fifth member imports the Config Server and can rebind without a restart. */
+has(POM, '<artifactId>spring-cloud-starter-config</artifactId>', 'the module imports the Config Server client');
+has(YAML, 'optional:configserver:', 'the config import is optional, so the observer still boots');
+has(YAML, 'include: health,info,metrics,refresh', 'POST /actuator/refresh is exposed');
+has(CONFIG_VIEW, '@RefreshScope', 'the config view is refresh-scoped');
+has(CONFIG_VIEW, '@Value("${nexus.insight.label:local}")', 'the label has an honest local default');
+has(CONFIG_VIEW, '@GetMapping("/insight/config")', 'the resolved label has a read-only view');
+has(CONFIG_VIEW, "'local' means no Config Server answered", 'the view says what local means');
+has(CONFIG_VIEW_TEST, 'theLocalDefaultIsNamedHonestly', 'unit test: the local default');
+has(CONFIG_VIEW_TEST, 'aResolvedLabelIsCopiedVerbatim', 'unit test: the resolved label is copied');
+has(CONFIG_REPO, 'label: cloud-smoke', 'the config repo carries the smoke marker');
+has(CONFIG_SMOKE, 'nexus.insight.label', 'the refresh smoke checks the changed key');
+has(CONFIG_SMOKE, 'same pid', 'the refresh smoke asserts no restart happened');
+has(CLOUD_DOC, 'D887', 'CLOUD.md records the live-upstream proof');
+has(CLOUD_DOC, 'D889', 'CLOUD.md records the config-plane unit');
+has(ATLAS, 'scripts/insight_feign_smoke.sh', 'the atlas lists the Feign smoke');
+has(ATLAS, 'scripts/insight_config_smoke.sh', 'the atlas lists the config smoke');
 has(CLOUD_DOC, 'nexus-insight', 'CLOUD.md documents the service');
 has(CLOUD_DOC, 'OpenFeign', 'CLOUD.md names the declarative client');
 has(CLOUD_DOC, '19555', 'CLOUD.md port map carries the coordinate');
@@ -167,12 +214,12 @@ const main = async () => {
   if (offenders.length) {
     console.log(`\nOFFENDERS (${offenders.length}):`);
     for (const o of offenders) console.log(`  - ${o}`);
-    console.log('\nWHAT THIS DOES NOT SAY: a registry had instances, a real upstream answered, or Docker ran.');
+    console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), SBA listed the member, HA/Docker ran, or the monolith was split.');
     console.log(`\nRESULT: ${REPORT_ONLY ? 'REPORT' : 'FAIL'} — ${offenders.length} offender(s)`);
     process.exitCode = REPORT_ONLY ? 0 : 1;
     return;
   }
-  console.log('\nWHAT THIS DOES NOT SAY: a registry had instances, a real upstream answered, or Docker ran.');
+  console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), SBA listed the member, HA/Docker ran, or the monolith was split.');
   console.log('\nRESULT: PASS — the fifth module is wired, honest, and its host coordinate is free or ours');
   process.exitCode = 0;
 };

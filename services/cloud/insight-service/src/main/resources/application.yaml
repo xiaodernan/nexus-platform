@@ -7,6 +7,11 @@ server:
 spring:
   application:
     name: nexus-insight
+  config:
+    # D889: optional on purpose, exactly like the edge. When the Config Server is up this service
+    # resolves `nexus.insight.label` from config-repo/nexus-insight.yml; when it is down the local
+    # default ("local") keeps the observer bootable and the /insight/config view honest about it.
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
   cloud:
     openfeign:
       circuitbreaker:
@@ -68,7 +73,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        # D889: `refresh` is the endpoint the hot-refresh smoke POSTs. It is NOT exposed by default;
+        # without this entry the config-repo round trip is decoration that cannot be demonstrated.
+        include: health,info,metrics,refresh
   endpoint:
     health:
       probes:

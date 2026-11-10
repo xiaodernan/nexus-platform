@@ -1,0 +1,6 @@
+# Served to `nexus-insight` over the config server (D889). The value is deliberately a smoke marker:
+# /insight/config shows the label this service actually resolved, so a passing refresh smoke proves
+# the config-server round trip and the @RefreshScope rebind, not the local default ("local").
+nexus:
+  insight:
+    label: cloud-smoke

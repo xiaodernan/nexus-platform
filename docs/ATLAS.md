@@ -77,10 +77,13 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/PlatformHealthClient.java` and
 `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/AiHealthClient.java`, honest
 fallbacks, and the read-only `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/PlaneController.java`.
-Its D885 smoke proves the fallback path only; it does not claim a live discovery round-trip.
+D885's smoke proves the fallback path, D886 proves registry membership, D887 proves that `lb://`
+resolves to LIVE registered fixtures (not the real products), and D889 adds the
+`@RefreshScope` view `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/ConfigViewController.java`.
 
-Config repo files: `services/cloud/config-server/src/main/resources/config-repo/nexus-gateway.yml`
-and `services/cloud/config-server/src/main/resources/config-repo/nexus-platform.yml`.
+Config repo files: `services/cloud/config-server/src/main/resources/config-repo/nexus-gateway.yml`,
+`services/cloud/config-server/src/main/resources/config-repo/nexus-platform.yml` and
+`services/cloud/config-server/src/main/resources/config-repo/nexus-insight.yml` (D889).
 
 Trace plane (D884): `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeTracingFilter.java`
 mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it on the FastAPI side;
@@ -108,7 +111,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_cloud_discovery.mjs` | opt-in registration of platform + AI and `lb://` routing by profile |
 | `scripts/check_cloud_edge.mjs` | breakers, limiter, request-id, five-method fallbacks, smoke assertions |
 | `scripts/check_cloud_trace.mjs` | D884: W3C filter, strict grammar, Python participant, unit tests, smoke, CI step, honesty clause |
-| `scripts/check_cloud_insight.mjs` | D885: fifth reactor module, Feign-by-name clients, honest fallbacks, registry/lease shape, compose, CI, docs, free-or-ours probe of :19555 |
+| `scripts/check_cloud_insight.mjs` | D885–D889: fifth reactor module, Feign-by-name clients, honest fallbacks, registry/lease shape, D887 live-upstream smoke assertions, D889 config import/`@RefreshScope`, compose, CI, docs, free-or-ours probe of :19555 |
 | `scripts/check_plane_coordinates.mjs` | the URLs the browser harness reads |
 | `scripts/check_reader_reachability.mjs` | every shipped reader is reachable from a runner |
 | `scripts/check_contract_drift.mjs` | undocumented routes, client-only routes, missing served paths |
@@ -133,6 +136,9 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 Runtime verifiers (need a live plane, **not** part of the default read-only sweep):
 `scripts/verify_contract_runtime.mjs`, `scripts/verify_served_reads.mjs`,
 `scripts/verify_payload_conformance.mjs`, `scripts/verify_consumer_slice.py`.
+`scripts/verify_citation_engine_parity.mjs` (D888) is different: it needs no live plane, runs both
+citation engines over a real ledger excerpt and diffs their stdout byte for byte — CI invokes it in
+the wiring-reads step, while `scripts/verify_all.mjs` is the one-command read-only sweep.
 
 ## Smokes (a claim about behaviour needs one of these)
 
@@ -146,6 +152,8 @@ Runtime verifiers (need a live plane, **not** part of the default read-only swee
 | `scripts/cloud_trace_smoke.sh` | D884: W3C `traceparent` minted / continued / rejected honestly, measured against `scripts/fixture_trace_echo.py` |
 | `scripts/insight_smoke.sh` | D885: with Eureka disabled, `/insight/plane` reports both upstreams `unavailable`, never a faked `UP` |
 | `scripts/insight_registry_smoke.sh` | D886: with Eureka up, `NEXUS-INSIGHT` appears in `/eureka/apps` as `UP` with the plane's `instance-id` shape |
+| `scripts/insight_feign_smoke.sh` | D887: two self-registered fixtures answer `lb://NEXUS-PLATFORM` / `lb://NEXUS-AI`; a runtime switch to a non-UP status is copied verbatim, and the fixtures' access logs prove the calls arrived |
+| `scripts/insight_config_smoke.sh` | D889: a config-repo edit (v1 → v2) lands at `/insight/config` after `POST /actuator/refresh`, same pid, no restart |
 | `scripts/cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in Spring Boot Admin |
 | `scripts/check_launcher_log_mode.sh` | launcher log mode |
 | `scripts/demo_live.sh` | the §142 consumer↔merchant loop in one command |

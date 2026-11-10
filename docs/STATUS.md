@@ -38452,3 +38452,111 @@ sweep's verdict is "NO OFFENDER — every reader that judged its plane passed", 
 - readers: `scripts/insight_registry_smoke.sh`, `scripts/verify_all.mjs`,
   `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
   `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 887. D887 — a declarative Feign call reaches LIVE registered instances
+
+**What was still open.** D885's smoke disables Eureka on purpose, and D886's proves only that
+`nexus-insight` ITSELF joins the registry. `docs/CLOUD.md` therefore still said, honestly, that
+"the only observed `lb://` outcome is a fallback" — the plane's single largest unproven claim was
+the declarative service-to-service call that the fifth module exists to make.
+
+**What shipped.** `scripts/fixture_insight_upstream.py` is a throwaway upstream that registers
+itself with Eureka's REST API (instance shape, lease heartbeat, runtime status switch through
+`__control`, and an unbuffered access log for every served health request); it runs twice, once per
+application name and port. `scripts/insight_feign_smoke.sh` boots Eureka with the read-only
+response cache OFF, registers BOTH fixtures BEFORE insight starts, then asserts two phases. Phase A:
+`/insight/plane` returns `all_up=true` and both rows `status=UP`, `source=upstream`,
+`route=lb://NEXUS-*`. Phase B: the AI fixture is switched to `DEGRADED` at runtime and the view
+must report exactly `DEGRADED` (still `source=upstream`) with `all_up=false` — a cached answer, a
+fallback or a hardcoded UP cannot survive it. Finally the fixtures' own logs must show the two
+health paths were really requested. **Measured PASS**: both names visible in `/eureka/apps`, both
+phase assertions `OK`, both `SERVE` lines present. The `cloud` CI job, `CLOUD.md`'s gate/smoke
+tables and narrowed honesty clause, `ATLAS.md`, and `check_cloud_insight.mjs` (now 95 claims) all
+name it.
+
+Four host-specific defects were found and fixed on the way, each measured rather than guessed: a
+trailing slash in `EUREKA_URL` produced `/eureka//apps` → a measured 404; Git Bash rewrote the
+`/api/v1/health` env value into a Windows path, so the fixture listened on the wrong URL; Python's
+`json.dumps` writes `"app": "NAME"` with a space, which the tight readiness grep could not match;
+and a saturated host (another worktree running Maven + vitest concurrently) made `fork` fail, so the
+smoke gained a guarded `NEXUS_FEIGN_SKIP_BUILD=1` rerun path that refuses to skip when either jar
+is absent. The readiness probe now uses `/actuator/health`, the cheap servlet endpoint every other
+cloud smoke uses, instead of the lazily-initialised Jersey endpoint.
+
+**Not claimed.** That the REAL platform or FastAPI AI product answered — the upstreams are throwaway
+fixtures registering under those names, and neither product was booted. That the gateway on :18088
+took part (it did not), that Spring Boot Admin listed the member, that Eureka HA replication works
+(D858), that Docker was exercised (D853), or that the circuit breaker was exercised on the success
+path. The monolith was not decomposed. The skip-build flag changes nothing in CI, which always builds.
+
+- readers: `scripts/fixture_insight_upstream.py`, `scripts/insight_feign_smoke.sh`,
+  `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
+  `.github/workflows/ci.yml`, `README.md`.
+
+## 888. D888 — the slowest citation reader becomes a tool a person will run
+
+**What was still open.** `scripts/check_citation_supports_sentence.mjs` called `git show HEAD:path`
+once PER CITATION. Measured on this host: 1316 citations over the two ledgers, 313 distinct paths,
+and roughly 440ms per process spawn — about 580s of pure process startup, which is why the reader
+exceeded even `verify_all.mjs`'s 900s ultra-slow budget in two consecutive sweeps and was reported
+as TIMEOUT, not green. A gate nobody can afford to run is not a gate.
+
+**What shipped.** A `batch` engine (now the default) resolves the HEAD tree once with
+`git ls-tree -r -z`, works out which distinct blobs the ledgers actually cite, reads them all
+through ONE `git cat-file --batch`, and keeps `git ls-files` for the basename index. The census
+loop, its counters, its ordering and every printed byte are unchanged; only the blob lookup behind
+them is swapped. `--engine=legacy` preserves the old path verbatim. Measured: the FULL 1316-citation
+sweep is **4053ms** (the unmodified reader was killed at **411s** on just `docs/DECISIONS.md`'s 304
+citations, RC=124); `docs/DECISIONS.md` alone is 2950ms. `scripts/verify_citation_engine_parity.mjs`
+runs both engines over the same real 3600-line DECISIONS excerpt and diffs stdout byte for byte:
+**0 differing lines**, legacy 12714ms vs batch 1514ms (**8.4x**), and its own comparator is
+falsified by planting one changed word (detected). `verify_all.mjs` drops the 900s exemption —
+`ULTRA_SLOW` is now an empty, documented hook — so this reader runs under the ordinary budget. CI
+invokes the parity verifier in the wiring-reads step.
+
+**Not claimed.** That the census is CORRECT (it is explicitly a census, not a verdict), that every
+flag combination was diffed, or that the full 38k-line `STATUS.md` was ever run through the legacy
+engine — it cannot finish. The parity proof says the two engines agree on the measured excerpt,
+byte for byte; a fast reader with a different answer would have been a regression, not an
+optimisation.
+
+- readers: `scripts/check_citation_supports_sentence.mjs`,
+  `scripts/verify_citation_engine_parity.mjs`, `scripts/verify_all.mjs`,
+  `docs/CLOUD.md`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`,
+  `.github/workflows/ci.yml`, `README.md`.
+
+## 889. D889 — the fifth member joins the Config Server and hot-refreshes
+
+**What was still open.** The gateway (D857) and the monolith (D872) both import the Config Server
+and prove a repo edit lands without a restart. `nexus-insight`, added in D885, did neither — it was
+the only registry member outside the config plane. A config server that serves a file at boot is a
+snapshot; config you cannot flip at runtime is decoration.
+
+**What shipped.** `services/cloud/insight-service/pom.xml` adds `spring-cloud-starter-config` (which
+supplies `spring-cloud-context`, the `POST /actuator/refresh` endpoint and `@RefreshScope`);
+`application.yaml` adds the same `optional:configserver:` import the edge uses plus `refresh` in the
+actuator exposure list. `ConfigViewController` is a `@RefreshScope` read-only `/insight/config` that
+reports the label the process ACTUALLY resolved, with an honest `local` default when no server
+answered. `config-repo/nexus-insight.yml` carries the smoke marker, and three unit tests pin the
+verbatim copy and the read-only shape. `scripts/insight_config_smoke.sh` boots a Config Server
+against a THROWAWAY repo, boots insight with Eureka off, reads `refresh-v1`, rewrites the repo to
+`refresh-v2`, POSTs `/actuator/refresh` and asserts the changed-key list contains
+`nexus.insight.label` before reading `refresh-v2` from the SAME pid. **Measured PASS** (1m6s):
+Maven offline `BUILD SUCCESS`, **7/7** unit tests (3 new + 4 existing), and every smoke step green.
+`check_cloud_insight.mjs`, `CLOUD.md`, `ATLAS.md`, CI and the README all name the unit.
+
+**Not claimed.** That there is a Spring Cloud Bus, a broker, a broadcast to other instances,
+encrypted config, Config Server HA, or a second instance that refreshed — no. That `optional:`
+means anything other than "a down Config Server leaves this observer on its `local` default", which
+the view reports rather than inventing a label. That the real platform/AI services were started,
+that SBA listed the member, that HA replication (D858) or Docker (D853) was exercised, or that the
+monolith was decomposed. The actuator surface, now including `refresh`, is as unauthenticated as the
+rest of this dev plane.
+
+- readers: `services/cloud/insight-service/pom.xml`,
+  `services/cloud/insight-service/src/main/resources/application.yaml`,
+  `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/ConfigViewController.java`,
+  `services/cloud/insight-service/src/test/java/com/nexus/cloud/insight/ConfigViewControllerTest.java`,
+  `services/cloud/config-server/src/main/resources/config-repo/nexus-insight.yml`,
+  `scripts/insight_config_smoke.sh`, `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`,
+  `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`, `README.md`.

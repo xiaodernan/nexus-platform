@@ -37,8 +37,21 @@
  * the ledger section each row sits in, for every sharing-nothing row — `--limit` does not truncate the list,
  * because the point of the mode is to be read whole.
  *
+ * D888 — THE SAME CENSUS, ~THREE ORDERS OF MAGNITUDE FEWER PROCESSES. The original asked
+ * `git show HEAD:<path>` once PER CITATION. Measured on this host: 1316 citations, 313 distinct
+ * paths, ~440ms per spawn — about 580s of process startup alone, which is why the reader kept
+ * exceeding even a 900s budget. The `batch` engine (now the default) resolves the HEAD tree once
+ * (`git ls-tree -r -z`), works out which distinct blobs the ledgers actually cite, and reads them
+ * all through ONE `git cat-file --batch`. `git ls-files` still builds the basename index once.
+ * The census loop, its counters, its ordering and every printed byte are unchanged; only the blob
+ * lookup behind them is swapped. `--engine=legacy` keeps the old path verbatim so
+ * `scripts/verify_citation_engine_parity.mjs` can diff the two engines on the same ledger — a
+ * performance change that cannot be compared against the behaviour it replaced is not a change
+ * that was verified.
+ *
  * USAGE
  *   node scripts/check_citation_supports_sentence.mjs [--window N] [--ledger path] [--limit N] [--list]
+ *   node scripts/check_citation_supports_sentence.mjs --engine=legacy   # the pre-D888 behaviour
  */
 
 import { execFileSync } from 'node:child_process';
@@ -54,9 +67,15 @@ const parsed = parseFlags(process.argv.slice(2), {
   '--limit': { kind: 'value', unit: 'N rows of the census to print' },
   '--list': { kind: 'switch' },
   '--verbose': { kind: 'switch' },
+  '--engine': { kind: 'value', unit: 'batch | legacy (default: batch)' },
 });
 if (!parsed.ok) {
   console.log(`RESULT: NOT CHECKED — ${parsed.reason}`);
+  process.exit(2);
+}
+const ENGINE = parsed.value['--engine'] ?? 'batch';
+if (ENGINE !== 'batch' && ENGINE !== 'legacy') {
+  console.log(`RESULT: NOT CHECKED — unknown --engine ${JSON.stringify(ENGINE)}; expected batch or legacy`);
   process.exit(2);
 }
 const WINDOW = Number(parsed.value['--window'] ?? 3);
@@ -180,6 +199,89 @@ function basenameIndex() {
   return map;
 }
 
+/**
+ * D888's blob access. `git show HEAD:<path>` and `git cat-file blob <sha>` return the SAME bytes:
+ * both read the committed blob and neither applies the working tree's eol conversion. What changed
+ * is the number of processes (1316 -> 2) and that only blobs are considered — `ls-tree -r` lists
+ * blobs, which is what a `file.ext:NN` citation can legitimately name. An absent path stays
+ * unresolved, exactly as a thrown `git show` made it.
+ */
+let TREE = null;
+function treeIndex() {
+  if (TREE) return TREE;
+  const map = new Map();
+  try {
+    const raw = execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], {
+      cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 27, stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    for (const rec of raw.split('\0')) {
+      if (!rec) continue;
+      const tab = rec.indexOf('\t');
+      if (tab < 0) continue;
+      const meta = rec.slice(0, tab).split(' ');
+      if (meta.length >= 3 && meta[1] === 'blob') map.set(rec.slice(tab + 1), meta[2]);
+    }
+  } catch {
+    // an unreadable tree leaves the map empty: every lookup becomes unresolved, never guessed
+  }
+  TREE = map;
+  return map;
+}
+
+let BLOBS = null;
+function blobStore(ledgers) {
+  if (BLOBS) return BLOBS;
+  const tree = treeIndex();
+  const basenames = basenameIndex();
+  const wanted = new Set();
+  for (const ledger of ledgers) {
+    let text;
+    try { text = readFileSync(isAbsolute(ledger) ? ledger : join(ROOT, ledger), 'utf8'); }
+    catch { continue; }
+    for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
+      for (const m of line.matchAll(citePattern())) {
+        const p = m[1];
+        if (tree.has(p)) wanted.add(p);
+        else if (!p.includes('/')) {
+          const hits = basenames.get(p) ?? [];
+          if (hits.length === 1 && tree.has(hits[0])) wanted.add(hits[0]);
+        }
+      }
+    }
+  }
+  const paths = [...wanted];
+  const map = new Map();
+  if (paths.length) {
+    try {
+      const input = `${paths.map((p) => tree.get(p)).join('\n')}\n`;
+      const buf = execFileSync('git', ['cat-file', '--batch'], {
+        cwd: ROOT, input, maxBuffer: 1 << 28, stdio: ['pipe', 'pipe', 'ignore'],
+      });
+      let off = 0;
+      for (const p of paths) {
+        const nl = buf.indexOf(10, off);
+        if (nl < 0) break;
+        const size = Number(buf.subarray(off, nl).toString('utf8').split(' ')[2]);
+        if (!Number.isFinite(size) || size < 0 || nl + 1 + size > buf.length) break;
+        map.set(p, buf.subarray(nl + 1, nl + 1 + size).toString('utf8'));
+        off = nl + 1 + size + 1; // each --batch record ends with one newline after the payload
+      }
+    } catch {
+      // no blobs: the census becomes all-unresolved, which is printed, not silently green
+    }
+  }
+  BLOBS = map;
+  return map;
+}
+
+/** The ONE seam the two engines differ on. Everything downstream of it is shared verbatim. */
+function contentFor(path) {
+  if (ENGINE === 'legacy') {
+    try { return git('show', `HEAD:${path}`); } catch { return null; }
+  }
+  return blobStore(LEDGERS).get(path) ?? null;
+}
+
 const rows = [];
 let citations = 0;
 // The discriminator that settles a counting gap: the same pattern, scanned directly, with no walk in
@@ -209,18 +311,13 @@ for (const ledger of LEDGERS) {
       const [, path, numStr] = m;
       citations += 1;
       const num = Number(numStr);
-      let target = null;
+      let target = contentFor(path);
       let resolved = path;
-      try {
-        target = git('show', `HEAD:${path}`);
-      } catch {
-        target = null;
-      }
       if (target === null && !path.includes('/')) {
         const hits = basenameIndex().get(path) ?? [];
         if (hits.length === 1) {
           resolved = hits[0];
-          try { target = git('show', `HEAD:${resolved}`); } catch { target = null; }
+          target = contentFor(resolved);
           if (target !== null) basenameResolved += 1;
         } else if (hits.length > 1) {
           ambiguousBasename += 1;
