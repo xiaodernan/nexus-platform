@@ -5,9 +5,10 @@
  * The behaviour is proved by FIVE live smokes: `insight_smoke.sh` (no registry -> both rows
  * honestly `unavailable`), `insight_registry_smoke.sh` (the member registers), `insight_feign_smoke.sh`
  * (D887: two registered fixtures really ANSWER through `lb://`, and a non-UP status is copied),
- * `insight_config_smoke.sh` (D889: a config-repo edit lands without a restart), and
- * `insight_admin_smoke.sh` (D892: Spring Boot Admin lists THAT instance as UP) — plus the unit tests
- * and D892's absence-arm falsifier, which proves the admin smoke reddens with its subject missing.
+ * `insight_config_smoke.sh` (D889: a config-repo edit lands without a restart),
+ * `insight_admin_smoke.sh` (D892: Spring Boot Admin lists THAT instance as UP), and
+ * `insight_circuit_smoke.sh` (D895: a Feign breaker's REAL actuator state opens) — plus the unit
+ * tests and the absence/no-drive/no-peer falsifiers that keep those smokes falsifiable.
  * THIS reader holds the parts that could silently disappear: the reactor module, the declarative
  * clients, the honest fallbacks, the registry/config shape, the compose profile, the CI steps, the
  * docs, and the unit-test population. It also asks the one live question a new host coordinate must
@@ -72,6 +73,8 @@ const CONFIG_VIEW_TEST = 'services/cloud/insight-service/src/test/java/com/nexus
 const CONFIG_REPO = 'services/cloud/config-server/src/main/resources/config-repo/nexus-insight.yml';
 const ADMIN_SMOKE = 'scripts/insight_admin_smoke.sh';
 const ADMIN_FALSIFIER = 'scripts/falsify_insight_admin_smoke.sh';
+const CIRCUIT_SMOKE = 'scripts/insight_circuit_smoke.sh';
+const CIRCUIT_FALSIFIER = 'scripts/falsify_insight_circuit_smoke.sh';
 
 for (const [rel, label] of [
   [POM, 'the module pom'], [APP, 'the application class'],
@@ -88,6 +91,8 @@ for (const [rel, label] of [
   [CONFIG_REPO, 'the insight config-repo entry (D889)'],
   [ADMIN_SMOKE, 'the Spring Boot Admin visibility smoke (D892)'],
   [ADMIN_FALSIFIER, 'the admin smoke absence-arm falsifier (D892)'],
+  [CIRCUIT_SMOKE, 'the breaker-state smoke (D895)'],
+  [CIRCUIT_FALSIFIER, 'the breaker smoke no-drive falsifier (D895)'],
 ]) exists(rel, label);
 
 has(REACTOR, '<module>insight-service</module>', 'the reactor builds the fifth module');
@@ -150,6 +155,8 @@ has(CI, 'scripts/insight_feign_smoke.sh', 'CI runs the live-upstream Feign smoke
 has(CI, 'scripts/insight_config_smoke.sh', 'CI runs the config hot-refresh smoke (D889)');
 has(CI, 'scripts/insight_admin_smoke.sh', 'CI runs the admin visibility smoke (D892)');
 has(CI, 'scripts/falsify_insight_admin_smoke.sh', 'CI runs the admin absence-arm falsifier (D892)');
+has(CI, 'scripts/insight_circuit_smoke.sh', 'CI runs the breaker-state smoke (D895)');
+has(CI, 'scripts/falsify_insight_circuit_smoke.sh', 'CI runs the breaker no-drive falsifier (D895)');
 has(CI, 'scripts/verify_citation_engine_parity.mjs', 'CI runs the D888 engine-parity gate');
 
 /* D887 — the smoke must prove MORE than "both rows are UP", or a cached/faked answer would pass. */
@@ -201,6 +208,17 @@ has(ATLAS, 'scripts/falsify_insight_admin_smoke.sh', 'the atlas lists the absenc
 if (read(CLOUD_DOC).includes('was not booted against this member')) {
   offenders.push('STALE CLAIM — CLOUD.md still says SBA was never booted against the member; D892 proved otherwise');
 } else notes.push('held CLOUD.md no longer claims SBA was never booted against the member');
+
+/* D895 — an honest fallback ANSWER is not proof a breaker opened. The state must be readable from
+ * the actuator, and the smoke must still be falsifiable when the failures that open it are removed. */
+has(YAML, 'include: health,info,metrics,refresh,circuitbreakers', 'the breaker actuator endpoint is exposed');
+has(CIRCUIT_SMOKE, 'REQUIRE_OPEN', 'the smoke reads a real OPEN state from the actuator');
+has(CIRCUIT_SMOKE, 'NEXUS_CIRCUIT_SKIP_DRIVE', 'the smoke has a no-drive arm');
+has(CIRCUIT_SMOKE, 'a fallback impersonated health', 'the degraded view is still judged honest');
+has(CIRCUIT_FALSIFIER, 'NEXUS_CIRCUIT_SKIP_DRIVE=1', 'the falsifier actually removes the driving calls');
+has(CLOUD_DOC, 'D895', 'CLOUD.md records the breaker-state unit');
+has(ATLAS, 'scripts/insight_circuit_smoke.sh', 'the atlas lists the breaker smoke');
+has(ATLAS, 'scripts/falsify_insight_circuit_smoke.sh', 'the atlas lists the no-drive falsifier');
 
 /* R1-shaped live question: a new host coordinate must be free or answered by OUR service only. */
 const bound = (port) => new Promise((done) => {

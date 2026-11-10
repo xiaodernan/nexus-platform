@@ -75,7 +75,10 @@ management:
       exposure:
         # D889: `refresh` is the endpoint the hot-refresh smoke POSTs. It is NOT exposed by default;
         # without this entry the config-repo round trip is decoration that cannot be demonstrated.
-        include: health,info,metrics,refresh
+        # D895: `circuitbreakers` exposes resilience4j's REAL state, so a unit can prove a breaker
+        # actually OPENED instead of inferring it from a fallback answer. An answer that says
+        # `unavailable` is honest either way; only the actuator says which mechanism produced it.
+        include: health,info,metrics,refresh,circuitbreakers
   endpoint:
     health:
       probes:

@@ -38799,3 +38799,51 @@ single node.
 - readers: `scripts/eureka_ha_smoke.sh`, `scripts/falsify_eureka_ha_smoke.sh`,
   `scripts/check_cloud_plane.mjs`, `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`,
   `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 895. D895 — a Feign breaker's REAL state opens, and the discovery that the configured names do not
+
+**What was still open.** D885 shipped `resilience4j` fallbacks and `insight_smoke.sh` proved the
+ANSWER is honest: with no registry, `/insight/plane` says `unavailable`, never `UP`. But an honest
+answer is consistent with a client that has no breaker at all — nothing in D885 ever observed the
+circuit breaker's state. Phase G's G1 asked for the mechanism to be measurable, not just the words.
+
+**What shipped.** `services/cloud/insight-service/src/main/resources/application.yaml` adds
+`circuitbreakers` to the actuator exposure, so resilience4j's own endpoint is reachable.
+`scripts/insight_circuit_smoke.sh` boots the rebuilt jar with Eureka DISABLED, asserts the endpoint
+is readable and that a fresh process has no open breaker, drives 12 `/insight/plane` calls (each
+exercising both `lb://` clients), then requires at least one breaker's REAL state to be `OPEN` or
+`HALF_OPEN` — and, after that, requires both plane rows to STILL be non-`UP` with `all_up=false`.
+`scripts/falsify_insight_circuit_smoke.sh` boots the same jar with ZERO driving calls and runs the
+unchanged OPEN assertion; it must FAIL while the process and actuator are both up, with five
+attribution markers checked. `scripts/check_cloud_insight.mjs` gained the D895 wiring assertions,
+CI's existing smoke line gained both scripts without adding or removing a line, `docs/ATLAS.md`
+names both, and `docs/CLOUD.md`'s honesty clause was extended rather than softened.
+
+**Measured.** `mvn -q -B -o ... -pl insight-service -DskipTests package` rebuilt the jar (exit 0).
+Presence arm, exit 0: `baseline: 2 breaker(s), none open: {'NEXUS-AI': 'CLOSED',
+'NEXUS-PLATFORM': 'CLOSED'}`, 12 calls completed, then
+`breaker(s) opened: {'AiHealthClienthealth': 'OPEN', 'PlatformHealthClienthealth': 'OPEN'}` and
+`both rows still non-UP: [('NEXUS-PLATFORM', 'unavailable', 'fallback'), ('NEXUS-AI',
+'unavailable', 'fallback')]`. Falsifier arm, exit 0: the no-drive run fails with `no breaker
+reached OPEN or HALF_OPEN — the state never moved` after `insight up`, a readable actuator and a
+clean baseline; all five markers were present. All static gates re-run PASS.
+
+**A discovery recorded, not hidden.** The two breakers the yaml pre-configures
+(`resilience4j.circuitbreaker.instances.NEXUS-PLATFORM` / `NEXUS-AI`) are NOT the breakers Feign
+opens. The actuator names the live ones `PlatformHealthClienthealth` and `AiHealthClienthealth`
+(Spring Cloud OpenFeign's class-plus-method naming). So on this plane those per-name instances are
+unused declarative config and Feign is running on `default`; the OPEN state is real, but any
+per-name threshold tuning would not reach it. Phase G gained **G7** as the seam to reconcile the
+names, and `docs/CLOUD.md` says the same in its not-claimed paragraph. No config was silently
+"fixed" here, because changing a threshold's target without measuring it would be a new claim.
+
+**Not claimed.** Recovery to `CLOSED`, half-open transition timing, metrics counter persistence,
+production thresholds, that the yaml's per-name instances tune the Feign breakers, that a REAL
+platform or AI product failed (the upstreams were deliberately absent), that the no-drive arm says
+anything about another host, or that Phase G is finished. Docker (D853), Spring Cloud Bus, OTLP
+export and the real-provider eval lane remain open.
+
+- readers: `services/cloud/insight-service/src/main/resources/application.yaml`,
+  `scripts/insight_circuit_smoke.sh`, `scripts/falsify_insight_circuit_smoke.sh`,
+  `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
+  `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

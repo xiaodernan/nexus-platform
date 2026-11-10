@@ -162,6 +162,8 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/insight_config_smoke.sh` | D889: a config-repo edit (v1 → v2) lands at `/insight/config` after `POST /actuator/refresh`, same pid, no restart |
 | `scripts/insight_admin_smoke.sh` | D892: a clean `/instances` baseline, then the fifth member is visible UP in Spring Boot Admin; status read from THAT instance's `statusInfo` |
 | `scripts/falsify_insight_admin_smoke.sh` | D892: boots the plane with insight deliberately absent and requires the admin smoke to FAIL while both servers are up |
+| `scripts/insight_circuit_smoke.sh` | D895: after repeated upstream failures a Feign breaker's REAL actuator state is OPEN, while the plane view still says `unavailable` |
+| `scripts/falsify_insight_circuit_smoke.sh` | D895: with the driving calls removed the "a breaker must be OPEN" assertion must FAIL |
 | `scripts/eureka_ha_smoke.sh` | D894: explicit zones + non-self-registering nodes; registrations cross the wire in BOTH directions with `actionType=ADDED` |
 | `scripts/falsify_eureka_ha_smoke.sh` | D894: with peer wiring removed the replication assertion must FAIL while both nodes are up |
 | `scripts/cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in Spring Boot Admin |
