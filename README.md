@@ -26,6 +26,7 @@ this README is only the door.
 apps/web            Next.js 15 — consumer (merchant dashboard + admin land here too, route groups)
 apps/ai             FastAPI — query understanding, hybrid search, RAG, agent orchestrator, eval, UCP/MCP
 services/platform   Spring Boot modular monolith — identity, merchant, catalog, commerce, payments, events
+services/cloud      Spring Cloud sidecar — Eureka / Config / Gateway / Admin / nexus-insight (D885)
 packages/ui         design system primitives + EntityCard/fact-rendering components
 packages/types      shared TS types + JSON Schemas generated from the contracts
 infra               docker compose, Flyway/SQL migrations, ranking weights, DB roles
@@ -80,6 +81,19 @@ consumer **22 passed** + `ask-merchant` 4/4 + `ask-merchant-history` 4/4; mercha
 `STATUS.md` (874+ entries) is the unit ledger; `docs/CLOUD.md` is the one page for the sidecar;
 `docs/TESTING.md` §8 lists every measured command; every spec of the §142 loop is under
 `tests/e2e/specs/merchant|consumer/`.
+
+**Since 2026-11-11 (D882–D885).** The tree is one branch — `master`, no worktrees and no stashes
+(D870 collected the last parallel lane). Three gates that were red against correct code or missing
+documentation were closed (D882). `docs/ATLAS.md` is now the one map of every module, contract, port,
+reader and smoke, held honest by `scripts/check_atlas.mjs` (108 cited paths, a reverse census and a
+two-way self-falsifier); `scripts/verify_all.mjs` runs every read-only reader in one command and
+prints PASS / FAIL / UNCHECKED / TIMEOUT without collapsing a refusal into green (D883). The Spring
+Cloud plane grew two elements: W3C `traceparent` propagation from the Java edge into the FastAPI
+service (D884), and `services/cloud/insight-service` — a fifth, genuinely separate service on
+:19555 that registers with Eureka and calls `NEXUS-PLATFORM` / `NEXUS-AI` **by name** through
+OpenFeign + Spring Cloud LoadBalancer, with a resilience4j fallback that reports `unavailable`
+instead of faking health (D885). `docs/CLOUD.md` is still the plane's one page;
+`docs/CONTINUITY_PLAN.md` is the forward plan. Neither the monolith nor its database was decomposed.
 
 ## Non-negotiable product rules
 

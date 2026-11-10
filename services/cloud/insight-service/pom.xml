@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.nexus</groupId>
+    <artifactId>nexus-cloud</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-insight</artifactId>
+  <name>NEXUS Insight Service</name>
+  <description>D885: a separate Eureka-registered Spring Boot service that calls the platform and AI by name through declarative OpenFeign clients, with an honest circuit-breaker fallback</description>
+
+  <!--
+    This is the FIRST service on the plane that actually CALLS another service. The gateway routes
+    to lb:// names, but that is Spring Cloud Gateway's own filter; nothing in the repository used a
+    declarative client. This module is servlet/blocking (spring-boot-starter-web) on purpose:
+    OpenFeign is a blocking abstraction, and mixing it into the WebFlux edge would be a lie about
+    the threading model. It stays a separate jar, separate port, separate registry member.
+
+    It is NOT a decomposition of the monolith: it has no database, no schema, no write path and no
+    business data. It reads two health endpoints and aggregates what it actually observed.
+  -->
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <!-- Declarative service-to-service calls, resolved BY NAME, not by a hardcoded URL. -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-openfeign</artifactId>
+    </dependency>
+    <!-- The name resolver behind every @FeignClient(name=...). -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    </dependency>
+    <!-- Feign's `fallback` needs a CircuitBreakerFactory on the classpath (the servlet, not
+         the reactor, implementation — this module is blocking). -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>app</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

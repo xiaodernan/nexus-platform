@@ -32,7 +32,16 @@ async def actuator_info():
                 "version": "0.1.0",
                 "stack": "fastapi",
                 "health_profile": "mock",  # live demo plane runs mock; this is a fact of the deploy, not a promise
-            }
+            },
+            # D884: what this service actually does with trace context. Participant, not origin:
+            # it parses the W3C header the gateway propagates and echoes its trace id; it mints
+            # nothing, samples nothing and exports nothing.
+            "tracing": {
+                "propagation": "w3c-traceparent",
+                "role": "participant",
+                "mints_trace_ids": False,
+                "exports_spans": False,
+            },
         }
     )
 

@@ -1,0 +1,79 @@
+server:
+  # D885: the fifth host coordinate on the plane, measured FREE on this dev machine before it was
+  # declared (see docs/CLOUD.md's port map). It is NOT one of the three coordinates
+  # scripts/check_cloud_plane_ports.mjs owns; scripts/check_cloud_insight.mjs probes it instead.
+  port: ${NEXUS_INSIGHT_PORT:19555}
+
+spring:
+  application:
+    name: nexus-insight
+  cloud:
+    openfeign:
+      circuitbreaker:
+        # Without a CircuitBreakerFactory on the classpath Feign's `fallback=` is dead config;
+        # spring-cloud-starter-circuitbreaker-resilience4j supplies the servlet implementation.
+        enabled: true
+      client:
+        config:
+          default:
+            # Short on purpose: a name with no instance must reach the fallback promptly, not hang
+            # the aggregated view. This is a read-only observer, not a retrying writer.
+            connectTimeout: 1500
+            readTimeout: 2500
+    loadbalancer:
+      retry:
+        enabled: false
+
+# Older OpenFeign releases read `feign.circuitbreaker.enabled`; keeping both spellings means the
+# fallback fires whichever property this BOM resolves. Neither is a claim about production tuning.
+feign:
+  circuitbreaker:
+    enabled: true
+
+eureka:
+  client:
+    # Default ON: this service is a registry member. `insight_smoke.sh` boots it with this flag
+    # false so the fallback path can be proven with no registry running at all.
+    enabled: ${NEXUS_INSIGHT_EUREKA_ENABLED:true}
+    service-url:
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+    register-with-eureka: ${NEXUS_INSIGHT_EUREKA_ENABLED:true}
+    fetch-registry: ${NEXUS_INSIGHT_EUREKA_ENABLED:true}
+  instance:
+    # The plane's standing rule (docs/CLOUD.md): same instance-id shape and lease as every member.
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+    health-check-url-path: /actuator/health
+    status-page-url-path: /actuator/info
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 3
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 2
+    instances:
+      NEXUS-PLATFORM:
+        baseConfig: default
+      NEXUS-AI:
+        baseConfig: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    com.nexus.cloud.insight: INFO

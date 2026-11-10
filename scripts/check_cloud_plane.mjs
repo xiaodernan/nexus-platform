@@ -10,7 +10,8 @@
  *
  * What it asserts (each row independent; every failure is printed with the file and expected token):
  *
- *   1. services/cloud/pom.xml modules === { eureka-server, config-server, gateway, admin-server }.
+ *   1. services/cloud/pom.xml carries the four original modules plus D885's insight-service —
+ *      the fifth, genuinely separate Eureka member that calls the others through OpenFeign.
  *   2. each module application.yaml carries the expected app name, port and — where the plane decided
  *      it is load-bearing — the exact guard token:
  *        eureka:  instance-id: ${spring.application.name}:${server.port}   (D858, same-artifact co-existence)
@@ -56,6 +57,10 @@ for (const m of ['eureka-server', 'config-server', 'gateway', 'admin-server']) {
 for (const m of ['analytics', 'auth', 'billing', 'worker']) {
   check(`no unplanned module ${m}`, 'services/cloud/pom.xml', !pom.includes(`<module>${m}</module>`));
 }
+/* D885: the plane's first independent service is part of the reactor, not a loose directory. */
+check('reactor carries insight-service (D885)', 'services/cloud/pom.xml',
+      pom.includes('<module>insight-service</module>')
+      && existsSync(join(root, 'services/cloud/insight-service/pom.xml')));
 
 /* 2 ━ each module still carries the load-bearing token */
 const EU = 'services/cloud/eureka-server/src/main/resources/application.yaml';

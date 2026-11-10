@@ -38278,3 +38278,139 @@ it is a plan, and this section is the ledger for the three gates plus the D881 b
 - readers: `scripts/check_cloud_edge.mjs`, `scripts/check_console_a11y.mjs`,
   `apps/web/src/components/console/reply-composer.tsx`, `docs/API_CONTRACT.md` §11,
   `docs/CONTINUITY_PLAN.md`, `services/platform/src/main/java/com/nexus/platform/CloudInfoController.java`.
+
+## 883. D883 — the repository gets one door: ATLAS, a falsifiable atlas gate, and `verify_all.mjs`
+
+**What was missing.** The tree had 30 design pages, 24 `check_*.mjs` readers, 15 shell smokes and
+four cloud modules, with no single page that said where anything lives and no single command that
+asked all of them. `README.md` points at contracts; `CLOUD.md` is one plane; `STATUS.md` is a ledger,
+not a map. A new operator (or a new lane) had to know the readers by name.
+
+**What shipped.** `docs/ATLAS.md` — the shape, the host coordinates, every module, all 30 design
+pages, every reader, every smoke, the ledger numbering and the CI wiring, on one page.
+`scripts/check_atlas.mjs` checks it in BOTH directions: forward, every backticked token that looks
+like a repository-relative file path must exist (108 distinct paths at D885); reverse, a census of
+every `scripts/check_*.mjs`, `scripts/verify_*.mjs`, `scripts/*.sh`, `docs/*.md` and cloud module pom
+must be named on the page, so adding a reader without adding its row reddens the gate instead of
+rotting silently. `--self-test` falsifies both halves in memory (corrupt one path; erase one reader
+name) and asserts each produces an offender — measured PASS on both.
+`scripts/verify_all.mjs` runs every read-only reader in its own process and prints ONE honest table:
+PASS / FAIL / UNCHECKED / TIMEOUT / ERROR, never collapsing a refusal into green. Slow ledger
+readers get 360s, and the sentence-cross-checker its own 900s budget rather than being skipped.
+
+**The first full sweep found a real defect, and this unit fixed it.** 24 readers → 20 PASS, 1 FAIL,
+2 UNCHECKED (no `--db` / no `--expect`, by design), 1 TIMEOUT. The FAIL was
+`check_reader_reachability.mjs`: `check_atlas.mjs` was invoked by no surface — "a reader nothing
+runs is a measurement, not a gate". It was wired into the CI `cloud` job's reader line and the gate
+went PASS. The TIMEOUT was `check_citation_supports_sentence.mjs` at 360s; it was given its own
+budget, not quietly excluded. `check_atlas.mjs` itself was wired in too, so the census that caught
+it now sees all three new readers.
+
+**Citation discipline.** `.github/workflows/ci.yml` carries many `file:line` citations in this
+ledger, so new readers and smokes were chained onto EXISTING `run:` lines (text changed, line count
+unchanged) instead of inserting steps. `infra/docker-compose.yml`'s cited lines all sit at or before
+:222; the D885 service block was inserted AFTER them. `check_line_cite_drift.mjs` was not re-run
+against a shifted CI file because no line shifted.
+
+**Not claimed.** That the atlas says anything about whether a listed gate is green (that is
+`verify_all.mjs`'s job), that any smoke ran in this unit, that UNCHECKED/TIMEOUT are passes, or that
+the first full sweep was green — it was not, and the table above is the record. That a second full
+sweep with the longer budget was observed green at the time this section was written.
+
+- readers: `docs/ATLAS.md`, `scripts/check_atlas.mjs`, `scripts/verify_all.mjs`,
+  `scripts/check_reader_reachability.mjs`, `docs/CONTINUITY_PLAN.md`.
+
+## 884. D884 — W3C `traceparent` crosses the Java edge and the FastAPI service
+
+**What was missing.** The plane correlated requests with one opaque `X-Request-Id`, minted at the
+edge and echoed by the monolith. That joins two log lines but says nothing about a trace/span tree,
+and the Python service has no Spring instrumentation to inherit. Nothing on the plane propagated a
+standard trace context.
+
+**What shipped.** `EdgeTracingFilter` (`HIGHEST_PRECEDENCE + 1`, immediately after the request-id
+filter) is the plane's ONLY trace-id origin: strict lowercase W3C version-00 grammar
+(`00-<32 hex>-<16 hex>-<2 hex>`, all-zero ids and unknown versions refused); a valid caller keeps
+its trace-id and flags under a NEW child span-id; a missing or malformed header gets a fresh context.
+It injects `traceparent` + `X-Trace-Id` downstream, echoes `X-Trace-Id` / `X-Trace-Span-Id` on the
+response, and deliberately does NOT echo `traceparent` on responses (W3C propagates it on requests).
+The FastAPI side is a **participant, not an origin**: `apps/ai/nexus_ai/api/tracing.py` uses the
+same strict grammar, `app.py` echoes the edge-minted id and mints nothing when a caller brought no
+header, and `/actuator/info` declares `role: participant`, `mints_trace_ids: false`,
+`exports_spans: false` so the Spring Boot Admin window cannot be read as a claim of instrumentation.
+
+**Measured.** `mvn -B -o -f services/cloud/pom.xml -pl gateway test` → 11 tests PASS (6 new
+`EdgeTracingFilterTest` + 5 `TokenBucketTest`). `uv run pytest -q tests/test_tracing.py
+tests/test_actuator_shim.py` → 9 passed (6 new + 3 existing). `bash scripts/cloud_trace_smoke.sh`
+→ **PASS**, three arms against `scripts/fixture_trace_echo.py`, which echoes what the downstream
+actually received: no header → minted `567d0a40f68c43ddbb3880249b7ab055` / span
+`b3a8f77416ea4f52` and the fixture saw the same context; a valid inbound context → trace-id and
+flags preserved, child span `ff85396bf7734a69`; an uppercase malformed header → fresh trace-id
+`3a8063909a574ca0bbe7379e82de3fbb`, never the caller's bad one. `check_cloud_trace.mjs` holds 41
+wiring claims; `check_cloud_plane.mjs` grew to 53 checks.
+
+**Not claimed.** **No trace collector** — no OTLP exporter, no span storage, no sampling decision
+beyond carrying the caller's flags, no span tree anyone can query. The AI service parses and echoes;
+it has no Micrometer/Spring instrumentation. The smoke routes to a fixture, not to the live
+platform/AI services. Nothing here changes `X-Request-Id`, and no browser was opened.
+
+- readers: `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeTracingFilter.java`,
+  `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/EdgeTracingFilterTest.java`,
+  `apps/ai/nexus_ai/api/tracing.py`, `apps/ai/nexus_ai/api/app.py`,
+  `apps/ai/nexus_ai/api/routes_actuator.py`, `apps/ai/tests/test_tracing.py`,
+  `scripts/cloud_trace_smoke.sh`, `scripts/fixture_trace_echo.py`,
+  `scripts/check_cloud_trace.mjs`, `docs/CLOUD.md`.
+
+## 885. D885 — a fifth Spring Cloud module that actually calls another service: `nexus-insight`
+
+**What was missing.** Every Spring Cloud element so far was a sidecar AROUND the monolith. The
+gateway routes to `lb://` names, but that is Spring Cloud Gateway's own filter — no component in
+this repository used a declarative service-to-service client. There was no second, independently
+deployable service, no service-discovery CONSUMER, and no resilience4j fallback owned by a caller.
+
+**What shipped.** `services/cloud/insight-service` joins the reactor as the fifth module: a
+servlet/blocking Spring Boot jar (OpenFeign is blocking; putting it inside the WebFlux edge would be
+a lie about the threading model), `@EnableDiscoveryClient` + `@EnableFeignClients`, registered as
+`NEXUS-INSIGHT` on :19555 with the plane's own `instance-id: name:port` and 5s/10s lease shape.
+`@FeignClient(name = "NEXUS-PLATFORM")` and `@FeignClient(name = "NEXUS-AI")` carry **no host or
+port literal** — both resolve by name through Eureka + Spring Cloud LoadBalancer.
+`spring-cloud-starter-circuitbreaker-resilience4j` gives Feign's `fallback=` a real
+`CircuitBreakerFactory`; each fallback returns an explicit `insight_fallback: true` marker and
+`status: unavailable`, never `UP`. `GET /insight/plane` copies only the upstream's own `status`
+(the rest of its payload is deliberately not forwarded), calls a status-less answer `unknown`,
+reports exceptions as `unavailable`, and sets `all_up` only when both rows answered exactly `UP`.
+It owns no database, no schema and no write path. The monolith was NOT decomposed.
+
+**Measured.** `mvn -B -o -f services/cloud/pom.xml -pl insight-service test` → 4 tests PASS
+(`PlaneControllerTest`). `bash scripts/insight_smoke.sh` → **PASS** with Eureka deliberately
+disabled: `/actuator/health` UP in ~16s, `/insight/plane` returned
+`all_up=false` and exactly two rows — `('NEXUS-PLATFORM','unavailable','fallback')` and
+`('NEXUS-AI','unavailable','fallback')` — with the service log recording
+`No servers available for service: NEXUS-PLATFORM / NEXUS-AI` before the breaker answered.
+`check_cloud_insight.mjs` holds 61 wiring claims and probes :19555 (FREE on this host); its
+"never claims UP" rule was falsified in memory (a planted `status: UP` is caught, while a javadoc
+quoting `{"status":"UP"}` as a counter-example is not misjudged). `check_cloud_plane.mjs` grew from
+52 to **53 checks**; `check_atlas.mjs` grew to 108 cited paths; `check_reader_reachability.mjs`
+stays PASS because both new readers were chained into the existing CI wiring line.
+
+**One real surprise, recorded rather than hidden.** The first smoke run TIMED OUT. The service log
+said `Tomcat initialized with port 65245 ... Port 65245 was already in use`: passing the port only
+through `${NEXUS_INSIGHT_PORT:19555}` left `server.port` empty on this Windows host, so Boot chose a
+random high port and collided. The smoke now uses Spring's `--server.port=` command-line argument
+(the same shape `cloud_retry_smoke.sh` already uses), every curl has a `--max-time`, and the
+readiness loop is 60 x 1s. The rerun passed. The module's YAML keeps the env default; the smoke
+does not claim that env override works on this host.
+
+**Not claimed.** That a LIVE registry resolved either name (the smoke disables Eureka on purpose —
+it proves the FALLBACK half, not a discovery round trip), that the platform or AI services answered,
+that the Docker image or compose `cloud` profile was exercised (D853 still holds), that this service
+is a health authority for production routing, or that the monolith was split into microservices. Its
+actuator/eureka surface is as unauthenticated as the rest of this dev plane.
+
+- readers: `services/cloud/pom.xml`, `services/cloud/insight-service/pom.xml`,
+  `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/InsightServiceApplication.java`,
+  `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/PlaneController.java`,
+  `services/cloud/insight-service/src/main/resources/application.yaml`,
+  `services/cloud/insight-service/src/test/java/com/nexus/cloud/insight/PlaneControllerTest.java`,
+  `scripts/insight_smoke.sh`, `scripts/check_cloud_insight.mjs`,
+  `infra/docker-compose.yml`, `.github/workflows/ci.yml`, `docs/CLOUD.md`, `docs/ATLAS.md`,
+  `README.md`.

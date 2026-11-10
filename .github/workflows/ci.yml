@@ -153,12 +153,12 @@ jobs:
       # The lb smoke also boots the Python AI service with the opt-in registration.
       - uses: astral-sh/setup-uv@v5
       - run: bash scripts/cloud_smoke.sh
-      - name: Edge wiring reads (D849 discovery + D850 resilience + D847/D878 plane guards)
+      - name: Edge wiring reads (D849 discovery, D850 resilience, D847/D878 plane, D884 W3C trace)
         run: |
           node scripts/check_cloud_discovery.mjs
           node scripts/check_cloud_edge.mjs
           node scripts/check_cloud_plane_ports.mjs
-          node scripts/check_cloud_plane.mjs
+          node scripts/check_cloud_plane.mjs && node scripts/check_cloud_trace.mjs && node scripts/check_atlas.mjs && node scripts/check_cloud_insight.mjs
       - name: Apply migrations (the same files the platform job applies)
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client
@@ -182,8 +182,8 @@ jobs:
           NEXUS_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
           NEXUS_PLATFORM_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
         run: bash scripts/cloud_monolith_refresh.sh
-      - name: retry smoke — idempotent GETs retry twice past a transient upstream 5xx; POSTs never retried
-        run: bash scripts/cloud_retry_smoke.sh
+      - name: retry + W3C trace smokes (D875 retries; D884 traceparent mint/continue/reject on the wire)
+        run: bash scripts/cloud_retry_smoke.sh && bash scripts/cloud_trace_smoke.sh && bash scripts/insight_smoke.sh
       - name: ai-admin smoke — the FastAPI service shows UP in the Spring Boot Admin window
         env:
           NEXUS_DATABASE_URL: postgresql://postgres:ci_secret@127.0.0.1:5433/nexus_test

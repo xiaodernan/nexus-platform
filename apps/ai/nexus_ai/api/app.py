@@ -24,6 +24,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from nexus_ai.api import errors, runs
 from nexus_ai.api.deps import Deps, build_deps
+from nexus_ai.api.tracing import parse_traceparent
 from nexus_ai.api.routes_conversations import router as conversations_router
 from nexus_ai.api.routes_discover import router as discover_router
 from nexus_ai.api.routes_rag import router as rag_router
@@ -87,6 +88,13 @@ def create_app(settings: Any | None = None) -> FastAPI:
         finally:
             pass
         response.headers["x-request-id"] = rid
+        # D884: echo the trace the EDGE minted, never invent one of our own. A caller that reached
+        # the AI directly (no gateway hop) brought no traceparent and gets no x-trace-id — an
+        # absent correlation id is honest, a fabricated one is not.
+        trace = parse_traceparent(request.headers.get("traceparent"))
+        if trace:
+            response.headers["x-trace-id"] = trace["trace_id"]
+            response.headers["x-trace-parent-id"] = trace["parent_id"]
         if deps.backend_degraded():
             # D451: the backend being down degrades EVERY answer, whatever the route said
             # about its own response.

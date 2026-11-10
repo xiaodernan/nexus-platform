@@ -38,6 +38,10 @@
     <module>config-server</module>
     <module>gateway</module>
     <module>admin-server</module>
+    <!-- D885: the first genuinely separate service on the plane. It registers with Eureka and
+         calls the two existing services by NAME through OpenFeign + Spring Cloud LoadBalancer,
+         with a resilience4j fallback that reports `unavailable` instead of inventing health. -->
+    <module>insight-service</module>
   </modules>
 
   <dependencyManagement>
