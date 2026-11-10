@@ -38847,3 +38847,60 @@ export and the real-provider eval lane remain open.
   `scripts/insight_circuit_smoke.sh`, `scripts/falsify_insight_circuit_smoke.sh`,
   `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
   `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 896. D896 — trace context survives degradation: 200, 503 and 429 all echo the caller's W3C id
+
+**What was still open.** D884 proved W3C `traceparent` propagation on exactly ONE path: a healthy
+200 from `scripts/fixture_trace_echo.py`. Yet `EdgeTracingFilter`'s own javadoc claims more —
+"a limiter's 429, a breaker's 503 and a route miss all carry the id" — because it sets the
+response headers BEFORE delegating at `HIGHEST_PRECEDENCE + 1`. A sentence in a comment is not a
+measurement, and `scripts/check_cloud_trace.mjs` only reads wiring. Phase G's G2 asked for the
+degraded answers to be observed on the wire.
+
+**What shipped.** No product code changed: the filter already did the right thing, so this unit
+adds the missing PROOF rather than inventing a feature. `scripts/cloud_trace_fallback_smoke.sh`
+boots one echo fixture and two throwaway gateway processes that differ only in their token-bucket
+budget (1000 tokens vs 1 token, no replenish), then sends the SAME inbound context
+`00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01` down three answers: a healthy 200
+(`/api/v1/health`), a breaker's 503 fallback (`/ai/v1/health` against a deliberately closed
+port) and the limiter's 429 (`/api/v1/health` after the single token is spent). Each response is
+required to carry `X-Trace-Id` equal to the caller's trace id and a fresh 16-hex child span that
+is NOT the caller's span; the 503/429 bodies must also be the honest error envelopes. Case A
+additionally checks the downstream fixture really received the injected `traceparent`, so the
+control is not a header-only tautology. `scripts/falsify_cloud_trace_fallback_smoke.sh` points the
+AI route at the healthy fixture (no 503 exists) and requires the UNCHANGED case-B assertion to
+exit non-zero, with markers proving the fixture, gateway and 200 control were all up.
+`scripts/check_cloud_trace_fallback.mjs` guards the wiring: all three scenarios, the falsifier's
+red requirement, `HttpStatus.SERVICE_UNAVAILABLE`, the literal `+1 < +10` filter ORDER (if the
+tracing filter ran after the limiter a 429 would have NO trace id), CI/ATLAS/CLOUD/ledger
+registration, and a `--self-test` that plants eight corruptions plus an empty plane. CI's two
+existing lines were edited IN PLACE so no `ci.yml:NN` citation in the ledger moves.
+
+**Measured.** Presence arm, exit 0. Case A: `200`, `trace=4bf92f3577b34da6a3ce929d0e0e4736
+child_span=5869e438b99f45b3`, downstream saw the same context. Case B: `503`,
+`child_span=c4eba11482f44120`, `request_id=1bc3a126-aadd-4194-b32c-36944aede585`,
+`error.code=edge_upstream_unavailable`. Case C: `429`, `child_span=7d7150df20a045c5`,
+`error.code=edge_rate_limited`. Falsifier arm, exit 0: the no-degrade run failed with
+`case B returned 200, expected an honest 503 fallback` after `fixture up on :18104`,
+`gateway healthy on :18097` and a passing case A; all six attribution markers present and no
+`FAIL: case A`. Reader: PASS with all eight planted corruptions caught and the empty plane
+refused.
+
+**Why the ORDER check matters.** `EdgeRateLimitFilter` uses `HIGHEST_PRECEDENCE + 10`, so the
+tracing filter at `+1` has already put both ids on the exchange's response when the limiter
+writes its 429. The reader compares the two numbers instead of trusting the prose; moving the
+tracing filter to `+20` is one of the planted corruptions and reddens the gate.
+
+**Not claimed.** A collector, OTLP export, span storage or a queryable span tree; that a degraded
+response carries a span INTO another service (a 503/429 has no downstream hop); that a REAL
+platform or AI product failed (the dead upstream was a closed port and the healthy one a fixture);
+that an incident was correlated in logs; that trace ids survive a route miss (not measured here);
+that the 429 arm says anything about a horizontally deployed limiter; or that the monolith was
+decomposed. Docker (D853), Spring Cloud Bus, a deployed HA pair, breaker-name reconciliation
+(G7) and the real-provider eval lane remain open.
+
+- readers: `scripts/cloud_trace_fallback_smoke.sh`,
+  `scripts/falsify_cloud_trace_fallback_smoke.sh`,
+  `scripts/check_cloud_trace_fallback.mjs`, `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeTracingFilter.java`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java`,
+  `docs/CLOUD.md`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
