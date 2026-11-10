@@ -181,6 +181,8 @@ jobs:
           NEXUS_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
           NEXUS_PLATFORM_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
         run: bash scripts/cloud_monolith_refresh.sh
+      - name: retry smoke — idempotent GETs retry twice past a transient upstream 5xx; POSTs never retried
+        run: bash scripts/cloud_retry_smoke.sh
 
   ai:
     needs: changes

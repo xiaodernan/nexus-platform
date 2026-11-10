@@ -38049,3 +38049,49 @@ between platforms — the re-aim work is tracked separately.
   `services/platform/src/main/java/com/nexus/conversation/ConversationService.java`,
   `services/platform/src/main/java/com/nexus/conversation/ConversationRepository.java` (the whitelist clause),
   `apps/web/src/lib/i18n/dict.ts` (`ask.merchant`), `tests/e2e/specs/consumer/ask-merchant-history.spec.ts`.
+
+## 875. D875 — the edge retries idempotent GETs past a transient upstream, and the fallback stops 405-ing POST
+
+**Two defects, one lane.** The mandate asked for Spring Cloud elements; the edge had a breaker and a limiter
+and no retry discipline, and its honest fallback answered **405** for every failing non-GET — both measured,
+both fixed.
+
+**Defect 1 (405).** A failing upstream (5xx) routed to the `forward:/fallback/platform` → the gate's own
+fallback controller was `@GetMapping`-only → Spring WebFlux resolved the POST to
+`MethodNotAllowedException` → **405 METHOD NOT ALLOWED** with Spring's error body, never the 503
+`edge_upstream_unavailable` the contract promises. Reproduced deterministically (fresh boot, first failing
+POST → 405; Spring's own DEBUG logs showed `Resolved [MethodNotAllowedException … "Request method 'POST' is
+not supported."]`). Fix: the three fallback handlers accept GET/POST/PUT/PATCH/DELETE at the WebFlux layer
+(method-agnostic, expected transit for the gateway's own fallback forward always lands on the safe answer).
+
+**Defect 2 (no retry discipline).** Idempotent GETs across `/api/v1/**` and `/ai/v1/**` now carry a
+`Retry` filter (`retries: 2`, statuses 500/502/503/504, `methods: [GET]`), placed inside the CircuitBreaker
+so transient 5xx upstreams are absorbed before the breaker judges. POSTs/PATCH/DELETEs are never retried,
+by `methods: [GET]`.
+
+**Proven, deterministic, no mocks in the gateway itself.**
+`scripts/cloud_retry_smoke.sh` (new; `scripts/fixture_flaky_upstream.py` (new) — a scripted, countable
+fixture upstream, never installed in production): one GET → 200 after exactly THREE hits (500+500+200);
+one POST → exactly ONE hit and the honest 503 `edge_upstream_unavailable` envelope — a 405 appears **never**.
+An open breaker still behaves as D850 measured (PASS) and D847's plane boot remains green: `cloud_smoke.sh`
+PASS, `cloud_lb_smoke.sh` PASS (lb routes + limiter deterministic), `cloud_refresh.sh` PASS, D875 re-verified
+after the rebuild.
+
+- readers: `services/cloud/gateway/src/main/resources/application.yaml` (the Retry filters, both routes),
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeFallbackController.java`,
+  `scripts/fixture_flaky_upstream.py`,
+  `scripts/cloud_retry_smoke.sh`,
+  `docs/CLOUD.md` (gate table + bring-up).
+
+**Not claimed.** That the retry makes 5xx upstreams faster (only calls already failing get retried; a fast
+500 four times still answers failure); that retry is feasible on the AI route for streaming/SSE responses
+(methods GET | payload SSE — supported, unmeasured on this host, no claim); that the fallback masks anything —
+it intercepts only upstream 5xx/exception paths; that any CI run of the suite passed — all proofs this unit
+happened on this host, like every other gate this session.
+
+**Verification timeline.** (a) Defect 1 reproduced fresh: a failing POST → 405 with Spring DEBUG frames
+showing `MethodNotAllowedException` resolve. (b) Fix applied. (c) Gateway rebuilt (`mvn -pl gateway clean
+package -DskipTests` exit 0), retry smoke re-run: **PASS** (GET 200 after 3 fixture hits; POST 503
+`edge_upstream_unavailable` after exactly 1 hit).
+(d) Full plane re-verified against D850/D857/D872: all three PASS. CI runs the retry smoke in the `cloud`
+job after the monolith-refresh smoke.

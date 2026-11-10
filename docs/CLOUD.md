@@ -1,6 +1,6 @@
 # NEXUS cloud plane — what it is and how to run it
 
-Status: **built and locally verified**. Eureka (registry), Config Server, Gateway, Spring Boot Admin, and the discovery lane for both services are on master and re-verified end-to-end by three smokes. Two items do NOT hold (HA replication on this host — D858, container run — D853); this page says exactly what is real.
+Status: **built and locally verified**. Eureka (registry), Config Server, Gateway, Spring Boot Admin, and the discovery lane for both services are on master and re-verified end-to-end by five smokes (plane, LB, edge refresh, monolith refresh, retry). Two items do NOT hold (HA replication on this host — D858, container run — D853); this page says exactly what is real.
 
 ## What the plane is
 
@@ -77,9 +77,10 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | `cloud_lb_smoke.sh` | one REAL `/api/v1/health` through lb://NEXUS-PLATFORM, one through lb://NEXUS-AI; X-Request-Id echo; deterministic limiter |
 | `cloud_refresh.sh` | config edit lands at the edge with no restart (`POST /actuator/refresh`) |
 | `cloud_monolith_refresh.sh` | config edit lands ON THE MONOLITH with no restart (v1 → repo rewrite → POST refresh → v2 banner, same pid) |
+| `cloud_retry_smoke.sh` | idempotent GET retries twice past a transient 5xx upstream; POSTs never retried; failing POST lands `edge_upstream_unavailable` (503) |
 | `db_gate_fresh.sh` | the seeded database gate (unrelated plane; not the cloud job's dependency) |
 
-The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, both readers, applies migrations, `cloud_lb_smoke.sh`, then the refresh smoke and the monolith-refresh smoke. The gate `needs.cloud` is in the `required` job's `needs`.
+The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, both readers, applies migrations, `cloud_lb_smoke.sh`, then the refresh smoke, the monolith-refresh smoke and the retry smoke. The gate `needs.cloud` is in the `required` job's `needs`.
 
 ## What this plane does NOT claim (read this)
 

@@ -29,6 +29,13 @@ spring:
               filters:
                 - name: CircuitBreaker
                   args: { name: platform, fallbackUri: forward:/fallback/platform }
+                # D875 (§875): idempotent GETs get exactly two retries BEFORE the breaker judg­es —
+                # transient 5xx upstreams recover in place. POST/PATCH/DELETE are never retried.
+                - name: Retry
+                  args:
+                    retries: 2
+                    statuses: [INTERNAL_SERVER_ERROR, BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT]
+                    methods: [GET]
             - id: ai
               # D856: the AI route resolves by name under the cloud profile (lb://NEXUS-AI),
               # same shape as the platform route: env override wins, then the profile's
@@ -39,6 +46,11 @@ spring:
               filters:
                 - name: CircuitBreaker
                   args: { name: ai, fallbackUri: forward:/fallback/ai }
+                - name: Retry
+                  args:
+                    retries: 2
+                    statuses: [INTERNAL_SERVER_ERROR, BAD_GATEWAY, SERVICE_UNAVAILABLE, GATEWAY_TIMEOUT]
+                    methods: [GET]
             - id: web
               uri: ${NEXUS_WEB_URI:http://127.0.0.1:3000}
               predicates:

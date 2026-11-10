@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,19 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class EdgeFallbackController {
 
-    @GetMapping("/fallback/platform")
+    @RequestMapping(path = "/fallback/platform", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<Map<String, Object>> platform(
             @RequestHeader(value = EdgeRequestIdFilter.HEADER, required = false) String requestId) {
         return unavailable("edge_upstream_unavailable", "the platform is not reachable; try again shortly", requestId);
     }
 
-    @GetMapping("/fallback/ai")
+    @RequestMapping(path = "/fallback/ai", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<Map<String, Object>> ai(
             @RequestHeader(value = EdgeRequestIdFilter.HEADER, required = false) String requestId) {
         return unavailable("edge_upstream_unavailable", "the ai service is not reachable; try again shortly", requestId);
     }
 
-    @GetMapping("/fallback/web")
+    @RequestMapping(path = "/fallback/web", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE})
     public ResponseEntity<Map<String, Object>> web(
             @RequestHeader(value = EdgeRequestIdFilter.HEADER, required = false) String requestId) {
         return unavailable("edge_upstream_unavailable", "the web app is not reachable; try again shortly", requestId);
