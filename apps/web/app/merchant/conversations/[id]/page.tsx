@@ -10,6 +10,7 @@ import { merchantThreadRead } from '@/lib/console-merchant';
 import { LocaleDemoBadge } from '@/components/locale-badges';
 import { ConsoleSection, ReadFailure, SourceStamp } from '@/components/console/console-parts';
 import { ConfirmAction } from '@/components/console/confirm-action';
+import { ReplyComposer } from '@/components/console/reply-composer';
 import { MerchantChrome, MerchantSignInStop, merchantSession } from '@/components/console/merchant-shell';
 
 const HANDOFF_ENDPOINT = 'POST /api/v1/conversations/{id}/handoff-resolve';
@@ -150,6 +151,12 @@ export default async function MerchantThreadPage(props: {
               ) : (
                 <p className="text-sm text-ink-muted">{copy.statuses.closed}</p>
               )}
+            </ConsoleSection>
+          ) : null}
+
+          {!detail.demo ? (
+            <ConsoleSection id="reply" title={copy.replyLabel} icon="quote">
+              <ReplyComposer conversationId={detail.id} locale={session.locale} />
             </ConsoleSection>
           ) : null}
         </>

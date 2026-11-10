@@ -284,6 +284,12 @@ export interface Dict {
       handoffOpen: string;
       modes: Record<string, string>;
       statuses: Record<string, string>;
+      replyLabel: string;
+      replyHint: string;
+      replyPlaceholder: string;
+      replySubmit: string;
+      replySubmitting: string;
+      replyFailed: (code: string) => string;
     };
     listings: {
       empty: string;
@@ -1004,6 +1010,12 @@ const zhHK: Dict = {
       handoffOpen: '需要人工介入',
       modes: { ai: 'AI 應答', hybrid: 'AI+人工', human: '人工應答' },
       statuses: { open: '進行中', handoff: '已轉人工', closed: '已結束', archived: '已歸檔' },
+      replyLabel: '回覆這個顧客',
+      replyHint: '你的回覆會立即寫進這條會話，以商戶團隊身份出現在線程中；顧客下次打開時就會看到。',
+      replyPlaceholder: '寫給顧客的回覆…',
+      replySubmit: '送出回覆',
+      replySubmitting: '送出中…',
+      replyFailed: (code) => `送出失敗（${code}）：平台沒有接受這次回覆，請稍後再試。`,
     },
     listings: {
       empty: '這個演示商戶還沒有已發佈的商品或服務。',
@@ -1740,6 +1752,12 @@ const en: Dict = {
       handoffOpen: 'Needs a human reply',
       modes: { ai: 'AI agent', hybrid: 'AI + human', human: 'Human staff' },
       statuses: { open: 'Open', handoff: 'Handed off', closed: 'Closed', archived: 'Archived' },
+      replyLabel: 'Reply to this customer',
+      replyHint: 'Your reply is written into the conversation as a team member, and the customer will see it the next time they open the thread.',
+      replyPlaceholder: 'Write your reply to the customer…',
+      replySubmit: 'Send reply',
+      replySubmitting: 'Sending…',
+      replyFailed: (code) => `Reply failed (${code}): the platform did not accept it — please try again.`,
     },
     listings: {
       empty: 'This demo merchant has no published offerings yet.',

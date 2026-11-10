@@ -37897,3 +37897,49 @@ planes — local suite is too slow on this host; CI gates it.
 
 - readers: stash diff `/d/stash_wip.diff`, `apps/ai/nexus_ai/search/service.py` (conversation_id),
   `apps/web/src/lib/mock/numeral-hours.test.ts`, `docs/STATUS.md` (§863/§867).
+
+## 871. D871 — the merchant team member's answer lands in the thread: §142's return half
+
+**What was missing.** The consumer could ask basil-leaf-0419 and read the merchant-agent's grounded answer
+in the same thread the BFF opened; the merchant could open `/merchant/conversations/:id`, see the question,
+the citations and the handoff — and could only resolve the handoff. **There was no way for the human
+merchant team to actually speak in the thread.** The platform's own door (`POST /api/v1/conversations/{id}/reply`,
+RBAC `send_message` scoped to the thread's merchant, `merchant_user`/`assistant`, mode flipped to `hybrid`,
+mode `Human` audit row + `HandoffResolved` event published) had never been called by this repo's UI or by
+any test. §142's loop was a one-way pipe.
+
+**The lane this unit ships.**
+- `apps/web/app/api/nexus/conversations/[id]/reply/route.ts` (new) — the session-gated BFF door: rejects
+  non-uuids (422), unsigned callers (401), and never answers in mock mode (501 `not_implemented` — a reply
+  the merchant believes was sent must not vanish silently); the demo CSRF rides the same cookie jar the
+  ask route uses; `MAX_MESSAGE_LENGTH = 2000`.
+- `apps/web/src/components/console/reply-composer.tsx` (new) — the console reply panel: one textarea, one
+  send button, `aria-live` via `role=alert` on failure, `maxLength 2000`, disabled while pending,
+  `router.refresh()` on success so the merchant sees their own turn rendered as `merchant_user`.
+- `app/merchant/conversations/[id]/page.tsx` renders the composer after the turns section (icon
+  `quote` — the icon set has no `send`, the name was adjusted, not faked) — only on live (non-demo)
+  threads. Demo/mock origin threads never show the composer at all; demo mode is stated, not hidden.
+- `dict.ts` gains `replyLabel/replyHint/replyPlaceholder/replySubmit/replySubmitting/replyFailed` under
+  `console.conversations` in both locales (zh-HK Traditional, en) and the type block — console i18n gate
+  stays PASS (`RESULT: PASS — every page carries its copy in the dictionary`).
+- Web rebuilt (`next build`) and the production `next start -p 3002` restarted on the new build; anonymous
+  `POST .../reply` answers **401** (verified by curl) with the cookie unset.
+- `tests/e2e/specs/merchant/reply.spec.ts` (new, 4 cases, desktop+mobile): signs in as consumer through
+  the BFF, asks (x-conversation-id), signs in as merchant, opens the thread, types the reply and asserts it
+  renders — **4/4 pass** (mobile 30.7s). The platform confirmed the writes with two real
+  `merchant_user` rows in `messages` (timestamped 2026-11-10).
+
+**Regression.** Merchant suite: **14/14 pass** (10 journey + 4 reply). i18n console gate: PASS.
+**Not claimed.** That the consumer-side UI surfacing the merchant's reply is pixel-verified — the consumer
+sees the reply in the same thread by construction (same `messages` rows), not yet asserted by a browser spec.
+That delivery notifications fire: the `HandoffResolved` event publishes, but no push/email is wired —
+consumers see it on next page load. That the mock plane's reply path is exercised anywhere — it is
+deliberately 501; the demo never fakes a human answering. That RBAC was re-verified beyond the spec's
+merchant session — the scope check (`conversation:id`) lives in the platform and is unchanged.
+
+- readers: `apps/web/app/api/nexus/conversations/[id]/reply/route.ts`,
+  `apps/web/src/components/console/reply-composer.tsx`,
+  `apps/web/app/merchant/conversations/[id]/page.tsx` (the reply section),
+  `apps/web/src/lib/i18n/dict.ts` (`console.conversations.reply*`),
+  `tests/e2e/specs/merchant/reply.spec.ts`,
+  `services/platform/src/main/java/com/nexus/conversation/ConversationService.java` (`merchantReply`).
