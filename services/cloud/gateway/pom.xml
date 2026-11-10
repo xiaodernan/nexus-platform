@@ -27,6 +27,12 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-config</artifactId>
     </dependency>
+    <!-- D850: the CircuitBreaker gateway filter runs on resilience4j (the spring-cloud circuitbreaker
+         implementation both rounds agree on for WebFlux). Without it the fallback URI is dead config. -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>

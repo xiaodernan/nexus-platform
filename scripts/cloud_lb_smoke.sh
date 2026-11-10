@@ -103,6 +103,10 @@ done
 echo "  NEXUS-PLATFORM registered"
 
 echo "== start gateway with cloud profile =="
+# D850: the limiter runs at its documented defaults (burst 10, replenish 5/s) for this smoke;
+# the correlation and limiter phases below are part of the proof, not an afterthought.
+export NEXUS_GATEWAY_RATE_BURST=10
+export NEXUS_GATEWAY_RATE_REPLENISH=5
 start gateway "$CLOUD/gateway/target/app.jar" --server.port="$GATEWAY_PORT" \
     --spring.profiles.active=cloud
 wait_up gateway "http://127.0.0.1:$GATEWAY_PORT/actuator/health"
@@ -118,4 +122,30 @@ routes="$(curl -fsS "http://127.0.0.1:$GATEWAY_PORT/actuator/gateway/routes" 2>/
 echo "$routes" | grep -q 'lb://NEXUS-PLATFORM' || fail "gateway does not carry lb://NEXUS-PLATFORM in its route table"
 echo "  gateway route table carries lb://NEXUS-PLATFORM"
 
-echo "PASS: cloud lb smoke — eureka + config + platform(cloud profile) + gateway(lb://)"
+echo "== the end-to-end request id survives both hops (D850) =="
+corr="lbcorr-$$"
+rid="$(curl -fsS -D - -o /dev/null -H "X-Request-Id: $corr" "http://127.0.0.1:$GATEWAY_PORT/api/v1/health" \
+    | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^x-request-id:/{print $2}')"
+[ "$rid" = "$corr" ] || fail "the platform did not echo the gateway's X-Request-Id (got '$rid', want '$corr')"
+echo "  gateway -> platform correlation: $corr"
+
+echo "== the edge rate limiter answers bursts with 429 + Retry-After (D850) =="
+# burst=10, and the loop is fast enough that refill never reaches a token: the first ~10 calls pass,
+# the rest are refused. Header capture of every call proves the 429s carry Retry-After: 1.
+ok=0; limited=0
+for i in $(seq 1 25); do
+    code="$(curl -sS -D "$LOG_DIR/d850_hdr_$i" -o /dev/null -w '%{http_code}' \
+        -H "X-Request-Id: lbcorr-burst-$i" "http://127.0.0.1:$GATEWAY_PORT/api/v1/health")"
+    case "$code" in
+        200) ok=$((ok + 1)) ;;
+        429) limited=$((limited + 1)) ;;
+    esac
+done
+[ "$limited" -ge 1 ] || fail "no 429 in 25 rapid calls (the limiter admitted all of them)"
+[ "$ok" -ge 1 ] || fail "no 200 in 25 rapid calls (the limiter refused everything; burst=10)"
+retry_after="$(grep -il '^retry-after:' "$LOG_DIR"/d850_hdr_* | head -1 \
+    | xargs grep -i '^retry-after:' | awk '{print $2}' | tr -d '\r')"
+[ "$retry_after" = "1" ] || fail "a 429 is missing Retry-After: 1 (saw: '${retry_after:-none}')"
+echo "  25 rapid calls -> $ok admitted, $limited refused; a 429 carries Retry-After: 1"
+
+echo "PASS: cloud lb smoke — eureka + config + platform(cloud profile) + gateway(lb://, limiter, correlation)"

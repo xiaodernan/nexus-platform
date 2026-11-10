@@ -4074,16 +4074,21 @@ measured-free 18761/18888/18088 block and left `scripts/check_cloud_plane_ports.
 coordinate on each run. The queue below is the order the evidence justifies; each step keeps the monolith's
 normal boot unchanged unless a profile opts in.
 
-- **NEXT - D848: the platform registers, and the edge routes by name.** The platform jar carries no
-  eureka/actuator library and `:8090/actuator/health` is a 404 (measured, `tmp/d847_measure.txt`), so the
-  gateway can only route by hardcoded host:port. Add an opt-in `cloud` profile (eureka client + actuator,
-  disabled by default), switch the platform route to `lb://NEXUS-PLATFORM`, and prove one REAL proxied
-  request through the edge to the registered live platform. Closes §845(b) and §845(c). The loadbalancer
-  starter is already on the gateway classpath; nothing of ours is registered yet.
-- **Then - the edge earns its keep:** circuit breaker/fallback and request rate limiting at the gateway,
-  `X-Request-Id` propagation into the platform's MDC (Micrometer/tracing), and a decision on TLS/auth at the
-  edge. §845 "Not claimed" (d) and §847 (d) are the open receipts.
-- **Then - deployment:** build the three Docker images and start the `cloud` compose profile end to end
+- **Landed - D849 (§849): the platform registers by opt-in, and the edge routes by name.** An opt-in
+  `dev,cloud` profile carries the eureka client + actuator (disabled by default); the platform registers
+  as NEXUS-PLATFORM on the D847 block; the gateway routes the platform route by `lb://NEXUS-PLATFORM`
+  under its own `cloud` profile with the env override intact. `scripts/check_cloud_discovery.mjs` gates the
+  wiring; `scripts/cloud_lb_smoke.sh` proves one real proxied request through the registry to the live
+  monolith. Closes §845(b) and §845(c).
+- **Landed - D850 (§850): the edge earns its keep.** Circuit breaker (resilience4j, three routes, three
+  instances) with an honest 503 fallback (`edge_upstream_unavailable` + request id); a per-client token
+  bucket rate limiter (429 + `Retry-After: 1` + `edge_rate_limited`, ordered after the request-id filter);
+  end-to-end X-Request-Id correlation proven through both hops; the duplicate correlation header deduped
+  at the edge. TLS/auth ruling: the edge terminates neither - TLS belongs to the deployment ingress, auth
+  stays on the monolith; the limiter is per gateway process by design. `scripts/check_cloud_edge.mjs`
+  gates the wiring; the smokes carry the behavioural assertions (the breaker is tripped live on the
+  dead-port fixture, the limiter is hammered live through the lb smoke).
+- **NEXT - deployment:** build the three Docker images and start the `cloud` compose profile end to end
   (§845(a)); decide whether the smoke belongs in `db_gate_fresh.sh` (§845(e) says why it does not today).
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).

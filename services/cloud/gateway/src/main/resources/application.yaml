@@ -16,7 +16,9 @@ spring:
       server:
         webflux:
           default-filters:
-            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+            # D850: X-Request-Id is minted at the edge and echoed by the platform, so both hops add
+            # one; RETAIN_UNIQUE keeps a single copy for the caller instead of two identical headers.
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials X-Request-Id, RETAIN_UNIQUE
           routes:
             - id: platform
               # D848: env override still wins; without it the cloud profile's nexus.edge.platform-uri
@@ -24,14 +26,23 @@ spring:
               uri: ${NEXUS_PLATFORM_URI:${nexus.edge.platform-uri:http://127.0.0.1:8090}}
               predicates:
                 - Path=/api/v1/**
+              filters:
+                - name: CircuitBreaker
+                  args: { name: platform, fallbackUri: forward:/fallback/platform }
             - id: ai
               uri: ${NEXUS_AI_URI:http://127.0.0.1:8010}
               predicates:
                 - Path=/ai/v1/**
+              filters:
+                - name: CircuitBreaker
+                  args: { name: ai, fallbackUri: forward:/fallback/ai }
             - id: web
               uri: ${NEXUS_WEB_URI:http://127.0.0.1:3000}
               predicates:
                 - Path=/**
+              filters:
+                - name: CircuitBreaker
+                  args: { name: web, fallbackUri: forward:/fallback/web }
           globalcors:
             cors-configurations:
               '[/**]':
@@ -39,6 +50,42 @@ spring:
                 allowedMethods: "*"
                 allowedHeaders: "*"
                 allowCredentials: true
+
+# D850: the edge's rate limit and its circuit breakers. The limiter is per client address, per
+# gateway process (see EdgeRateLimitFilter's javadoc and DECISIONS D850); the breakers trip after
+# 5 calls in a window of 10 with a 50% failure rate and stay open for 10s before a half-open probe.
+nexus:
+  edge:
+    rate-limit-burst: ${NEXUS_GATEWAY_RATE_BURST:10}
+    rate-limit-replenish: ${NEXUS_GATEWAY_RATE_REPLENISH:5}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      platform:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      ai:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+      web:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
 
 eureka:
   client:
@@ -63,10 +110,16 @@ management:
     health:
       probes:
         enabled: true
+      # D850: show-details on this dev edge exposes breaker state (already health-only exposure);
+      # the smoke asserts the platform breaker reports OPEN after a burst of failed upstream calls.
+      show-details: always
 
 logging:
   level:
     org.springframework.cloud.gateway: INFO
+    # D850: DEBUG flips the breaker's state-transition lines on (the smoke sets NEXUS_CB_LOG=DEBUG
+    # and greps for the CLOSED->OPEN transition on the dead-port fixture); INFO stays the default.
+    io.github.resilience4j.circuitbreaker: ${NEXUS_CB_LOG:INFO}
 
 ---
 # D848: with the `cloud` profile the platform route resolves BY NAME through the registry instead of

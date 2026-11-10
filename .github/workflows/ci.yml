@@ -151,8 +151,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
       - run: bash scripts/cloud_smoke.sh
-      - name: Discovery wiring reads
-        run: node scripts/check_cloud_discovery.mjs
+      - name: Edge wiring reads (D849 discovery + D850 resilience)
+        run: |
+          node scripts/check_cloud_discovery.mjs
+          node scripts/check_cloud_edge.mjs
       - name: Apply migrations (the same files the platform job applies)
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client

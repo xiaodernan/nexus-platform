@@ -123,6 +123,10 @@ export NEXUS_CONFIG_URI="http://127.0.0.1:$CONFIG_PORT"
 export NEXUS_PLATFORM_URI="http://127.0.0.1:$DEAD_PORT"
 export NEXUS_AI_URI="http://127.0.0.1:$DEAD_PORT"
 export NEXUS_WEB_URI="http://127.0.0.1:$DEAD_PORT"
+# D850: isolate the breaker from the rate limiter (proven in cloud_lb_smoke.sh) and flip the
+# breaker's DEBUG transition lines on - the smoke greps the log for CLOSED->OPEN on the dead port.
+export NEXUS_GATEWAY_RATE_BURST=1000
+export NEXUS_CB_LOG=DEBUG
 start gateway "$CLOUD/gateway/target/app.jar" --server.port="$GATEWAY_PORT"
 wait_health gateway "$GATEWAY_PORT"
 
@@ -148,6 +152,22 @@ echo "== the edge mints X-Request-Id =="
 headers="$(curl -sS -D - -o /dev/null "http://127.0.0.1:$GATEWAY_PORT/cloud/nope" 2>/dev/null || true)"
 echo "$headers" | grep -qi '^x-request-id:' || fail "no X-Request-Id on a routed miss"
 echo "  routed miss carries X-Request-Id"
+
+echo "== the breaker opens on a dead upstream (D850) =="
+# Every call fails on the closed port; resilience4j counts them (minimumNumberOfCalls=5, failure
+# threshold 50%) and opens the platform breaker. Later calls short-circuit to the fallback (fast,
+# no upstream touch). The DEBUG log names the transition; the answer body carries the fallback code.
+for _ in $(seq 1 8); do
+    curl -sS -o /dev/null "http://127.0.0.1:$GATEWAY_PORT/api/v1/health" || true
+done
+grep -q "CircuitBreaker 'platform'" "$LOG_DIR/gateway.log" \
+    || fail "the platform breaker never recorded a failure (see $LOG_DIR/gateway.log)"
+grep -q "STATE_TRANSITION" "$LOG_DIR/gateway.log" \
+    || fail "no circuit breaker state transition in the gateway log (see $LOG_DIR/gateway.log)"
+body="$(curl -sS "http://127.0.0.1:$GATEWAY_PORT/api/v1/health" || true)"
+echo "$body" | grep -q 'edge_upstream_unavailable' \
+    || fail "the fallback body is not what the edge serves on an open breaker: $body"
+echo "  platform breaker OPENED and the fallback answer carries edge_upstream_unavailable"
 
 echo "== eureka lists the gateway =="
 registered=0
