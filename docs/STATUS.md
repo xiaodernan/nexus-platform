@@ -37148,3 +37148,63 @@ The pair does NOT drift here — §851 and D851 agree — which is the exception
   (the re-measurement at `43acb97`), `tmp/d721_web_suite.txt` and `tmp/d721_tsc.txt` (the suite and the
   type check), and `scripts/check_ledger_sections.mjs` (the heading plane this section's number was
   chosen against).
+
+## 851. D851 — the orchestrator's first honest turn: a deterministic planner, an executor, and tool_selection_v1
+
+**The shape §10 names, half built and said so.** AGENT_CONTRACT §10 (`receive → classify → build plan →
+execute DAG → collect`) always named `apps/ai/nexus_ai/orchestrator/{planner,executor}.py`. This unit lands
+exactly that half. What did NOT land, and says so everywhere: the roster agents, the LLM-level plan, and any
+HTTP exposure of the loop. A model deciding tools was never the plan; §10 rule 1 is "a greeting or a bare
+`what's open now` must not trigger retrieval+rerank+summary".
+
+**The planner (`orchestrator/planner.py`).** The turn is split into clauses (`？`, `?`, `!`, `，`, `,`, `;`,
+`：`, newline). Each clause is matched independently, in a fixed order — hours, price, preferences, search —
+at most one rule per kind per clause. Per-clause evaluation is the honest answer to this unit's first design
+error: an earlier whole-turn strip put the hours clause into the search query (`幾點開？同埋搵咖啡` searched
+for `幾點開 咖啡`). Longest-trigger-first stripping consumes plural hints whole (`products`, never `s
+skincare`). Arguments come only from the caller's turn `context` and the clause text; anything unresolvable
+is a step with `missing=(keys...)` — never a guessed `merchant_id`, never a fabricated query. `MAX_STEPS = 6`
+(§10 rule 2). A turn no rule matched returns `Plan.refused` with the reason; greetings plan nothing.
+
+**The executor (`orchestrator/executor.py`).** Runs the plan through the one registry the process actually
+holds (`tools/registry.py`) — §3's pipeline (permission → validation → timeout/retry → execute → audit) is
+reused, never re-implemented. A missing-context step is **skipped with the key named**; a denied / unknown /
+invalid tool is a failed step carrying the registry's verdict (`PermissionDenied: ...`), not a crash;
+remaining steps still run (all v1 tools are independent reads). `answerable` is true only when a step
+produced a result — the caller renders tool-backed content under no other condition. The registry's own
+audit events are the log; the executor does not double-log.
+
+**`tool_selection_v1` (40 cases, both halves judged).** The suite judges the full planned tool sequence
+(order included — the planner's rule order is deterministic) AND the arguments each step carries. Kind
+`exact` plans both; kind `refusal` requires no steps and a `Plan.refused`. Gate: `exact_match >= 0.9`;
+measured **1.0000 (40/40)**. The five-suite CLI gate now holds 206 cases across all five suites, all green
+(`intent_v1` 69/69, `rag_faithfulness_v1` 25/25, `safety_injection_v1` 47/47, `personalization_v1` 25/25,
+`tool_selection_v1` 40/40). Wired into the CI eval gate (`.github/workflows/ci.yml`: the eval step now runs
+`…personalization_v1,tool_selection_v1 --fail-on-gate`).
+
+**MEASURED.** Orchestrator unit tests **23 passed** (clause splitting, missing-context skip, refusal,
+denied → failed step, unknown tool → failed step, MAX_STEPS cap, bare-`open now` is hours never retrieval,
+mixed multi-ask ordering). Case-file census tests updated to five files: **42 passed** (40/40 counted, LF-only,
+slug ids, known keys, `expected_tools` must name registered tools, `expected_args` keys must name planned
+tools, refusal cases must carry `[]` + no args). Blast radius: **165 passed** (orchestrator + tools + eval +
+case files + app surface + health/tools). The five-suite CLI run recorded above was executed on the committed
+bytes.
+
+**Not claimed.** (a) Generalization — the suite is authored alongside the rules it judges; it locks
+behaviour, it does not prove it on unseen phrasings; the AI lane's honest-labels limit stands (unchanged:
+`search_relevance_v1` remains specified-not-built). (b) §10's LLM-level loop, roster agents and 12s request
+budget; only the planner cap and the registry's per-step timeout are enforced. (c) No HTTP route dispatches
+a plan to a user — the loop is library + tests, not a surface. (d) Multi-entity turns are out of shape in
+v1: one call; each clause fires its own search step, subject arguments come from one `context`. (e) Negation
+and counterfactual phrasings are not rules (no "not open" branch); the planner stays silent on what it
+cannot honestly read.
+
+- readers: `apps/ai/nexus_ai/orchestrator/planner.py:28`, `:30`, `:89`, `:107`, `:151`,
+  `apps/ai/nexus_ai/orchestrator/executor.py:6-11`, `:59-71`,
+  `apps/ai/nexus_ai/eval/tool_selection_v1.py:28`, `:31-76`,
+  `apps/ai/nexus_ai/eval/data/tool_selection_v1.jsonl`,
+  `apps/ai/nexus_ai/eval/cli.py`,
+  `apps/ai/tests/test_the_orchestrator_plans_the_min_necessary_steps.py`,
+  `apps/ai/tests/test_the_eval_case_files_keep_their_shape.py`,
+  `.github/workflows/ci.yml:254`,
+  `docs/AGENT_CONTRACT.md`, `docs/AI.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md`, `docs/ROADMAP.md`.
