@@ -38588,9 +38588,14 @@ stdout is **byte-for-byte identical (2728 bytes)** — prefetch 4s vs legacy 14s
 **Not claimed.** That the census is CORRECT (it is a REPORT with `strict=none`, and GONE is a queue
 for a human), that the prefetch covers every possible flag combination (`--resolve-basenames`
 widens the suffix lookup; uncovered keys fall back rather than fail), or that a cold-cache CI host
-is as fast as this one. The falsifier `scripts/falsify_line_cite_drift.mjs` refuses to grade a
-dirty reader, so it is re-run from the clean committed plane rather than reported here as a green
-it did not earn.
+is as fast as this one. **The full falsifier `scripts/falsify_line_cite_drift.mjs` is NOT reported
+as green:** re-run from the clean committed plane it timed out at 400s (RC=124, no output). Its own
+header records a previous fifteen-minute run on this host, and its per-arm `spawnSync` has no
+timeout, so a slow host can outlast the budget without a single verdict. What WAS measured instead:
+both engines return instantly and identically inside the falsifier's throwaway repositories, and
+across all **16** scratch arm directories their stdout AND exit codes are byte-for-byte identical
+(`rc=0` and the designed `rc=2` refusals alike, 0 drift). Earlier in this unit the same falsifier
+correctly refused to grade the uncommitted reader, which is a green it did not give either.
 
 - readers: `scripts/check_line_cite_drift.mjs`, `scripts/verify_all.mjs`,
   `scripts/falsify_line_cite_drift.mjs`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`,

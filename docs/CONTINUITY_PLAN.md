@@ -100,6 +100,18 @@ picked up (none is promised here):
 
 Still open after Phase E, re-judged at pickup time (none promised): D858 HA Eureka with explicit zones, D853 Docker plane, Spring Cloud Bus (needs a broker and a measured second instance), an OTLP exporter (propagation is not a collector), `btree_gist` reservation exclusion, CJK recall, the real-provider eval lane, and Spring Boot Admin listing the fifth member.
 
+### Phase F — the next pickup list (planned, not started)
+
+Ordered by what the plane can prove next, not by date. Each is a seam a fresh session can start from
+without re-doing a census of the repository.
+
+| # | Unit | Acceptance |
+|---|---|---|
+| F1 | **The fifth member in the admin window.** D886/D887 both leave "Spring Boot Admin was not booted against this member" in `CLOUD.md`. Boot Admin + Eureka, register `nexus-insight`, and assert `/instances` lists it | a smoke that FAILS when the instance is absent; `CLOUD.md`'s not-claimed list narrows again |
+| F2 | **One shared blob reader.** D888 and D890 each implemented `ls-tree` + `cat-file --batch` parsing. Extract it into one `scripts/git_blobs.mjs` with both readers as callers | both parity checks still PASS byte-for-byte, no third copy of the parser |
+| F3 | **HA Eureka, re-approached (D858).** Explicit availability zones and loopback-resolvable replica URLs, not the LAN address that was unroutable here | two nodes actually replicate a registration, or a measured blocker recorded — never a declared victory |
+| F4 | **The remaining linear readers.** `check_ledger_citations.mjs` (~22s) and `check_status_citations.mjs` (~13s) still walk the 38k-line ledger | each under 5s with an unchanged census, or a written reason why the walk is inherent |
+
 ## Cadence
 
 Every unit ends with: run its gate and smoke → append the numbered `STATUS.md` section with a
