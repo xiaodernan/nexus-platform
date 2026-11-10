@@ -37149,7 +37149,7 @@ The pair does NOT drift here — §851 and D851 agree — which is the exception
   type check), and `scripts/check_ledger_sections.mjs` (the heading plane this section's number was
   chosen against).
 
-## 851. D851 — the orchestrator's first honest turn: a deterministic planner, an executor, and tool_selection_v1
+## 862. D862 — the orchestrator's first honest turn: a deterministic planner, an executor, and tool_selection_v1
 
 **The shape §10 names, half built and said so.** AGENT_CONTRACT §10 (`receive → classify → build plan →
 execute DAG → collect`) always named `apps/ai/nexus_ai/orchestrator/{planner,executor}.py`. This unit lands
@@ -37300,7 +37300,7 @@ config only, never by a probe. (e) CI does not build the images and does not run
 
 ## 854. D854 — the orchestrator's first user-reachable agent surface: POST /ai/v1/agent/plan
 
-**What was missing.** D851 built the planner and executor; nothing could call them. §10's loop was a
+**What was missing.** D862 built the planner and executor; nothing could call them. §10's loop was a
 library with tests, not a surface — an agent lane nobody's caller could invoke, and a tool registry with no
 request-driven path to the audit ledger.
 
@@ -37662,3 +37662,46 @@ the AI before `_persist_turn` runs does not write anything).
   `services/platform/src/main/java/com/nexus/platform/TenantFilter.java` (the SQL slug → tenant resolution),
   `services/platform/src/main/java/com/nexus/conversation/AiServiceTokenGuard.java` (constant-time token check),
   `docs/PLAN.md` (the cloud-plane queue, D861 row).
+
+## 863. D863 — the duplicate heading the census cannot tolerate: 851 retires into 862, and the citation index learns XML
+
+**Why this exists.** Running the full fresh gate after a long session surfaced three errors that together
+blocked PASS. Each was a small, mechanical fix in the plane nobody writes code in — the ledgers themselves.
+
+**The duplicate.** `docs/STATUS.md` had TWO sections numbered 851: `## 851. D851 — the hour a visitor
+speaks was read by nobody on the mock plane` (the parallel lane's printer/experiment, commit 9e24292 at the
+head of this unit) and `## 851. D851 — the orchestrator's first honest turn…` (this session's orchestrator
+unit, commit 2ded267). The ledger gate counts a duplication as a HARD fail — two sections claim one
+citation. The fix retires the duplicate heading to 862 in the caller's own entry, updates back-citations in
+TRACEABILITY.md and in-place STATUS references, and the parallel lane's 851 remains untouched at HEAD
+while this session's orchestrator unit moves to `## 862. D862 — the orchestrator's first honest turn…`.
+
+**The missing claim.** A blank-line citation inside `apps/web/src/lib/platform-guides.ts:30` pointed at
+`docs/API_CONTRACT.md:398` — a line which holds only an empty row. The audit row NOW reads
+`docs/API_CONTRACT.md:405`, the line that actually shows the schema claim it names (§8 guides / collections
+titles). The comment citation census passes strict with 0 offenders.
+
+**The invisible extension.** The ledger citation census (`LEDGER_EXT`) accepts `.java|py|ts|tsx|mjs|cjs|sql|
+sh|md|ya?ml|json|toml|txt|properties|cfg|ini` — every XML file the ledger cites (`services/platform/pom.xml`,
+`services/cloud/pom.xml`, `services/cloud/gateway/pom.xml`) had been silently un-indexed; the falsifier
+showed `60 arms · 58 held · 2 missed`, i.e., the gate was actually broken for the two planes of `pom.xml`
+and the census could not see them. Adding `xml` to `LEDGER_EXT` (only extension the ledgers cite, no
+matching file under `tmp/`/`.scratch/` etc.) restores the citation plane: `LEDGER CITATIONS — every
+citation-shaped token resolves to one file, by name, within its bounds`, `60 arms · 60 held · 0 missed`.
+
+**Verification.** `falsify_ledger_text.mjs` runs clean after the xml extension fix. All four cited files
+resolve; `check_ledger_sections.mjs` clears the duplicate and reads clean at HEAD. The comment plane
+(`falsify_comment_plane.mjs`, 57/57; `check_comment_citations.mjs`, 0 offenders), `check_ledger_eols.mjs`,
+and `check_jsonb_reads.mjs` all print RESULT: PASS. The commit-replace preserves everyone else's section
+order and numbering.
+
+**Not claimed.** (a) That every citation in the ledgers now holds — gate step 8 and step 13's checks are
+the proper proof (re-verification per commit follows). (b) Anything about the 8 prior units across two
+parallel lanes — D846/848-853/855-857 all landed in parallel with this session; two of them already collided
+on the 851 slot (both committed in 9e24292 and this working tree) and this honest renumber is the record of
+the collision. (c) The word `D851` itself — it still refers strongly to the numerals lane's section on the
+commit 9e24292 / 2ded267.
+
+- readers: `scripts/source_index.mjs` (LEDGER_EXT with xml), `apps/web/src/lib/platform-guides.ts:30`,
+  `docs/STATUS.md` (§863, the retirement of the duplicate 851), `docs/TRACEABILITY.md`, `docs/STATUS.md`
+  (`## 862. D862 — the orchestrator's first honest turn…`).

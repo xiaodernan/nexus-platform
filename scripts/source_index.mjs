@@ -96,7 +96,7 @@ export const SOURCE_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh)$/;
  * is D166: a second reader of the same claim kept its own copy of this predicate, so the two resolved
  * different file sets and the project quoted three different blank-citation counts for one sentence.
  */
-export const LEDGER_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh|md|ya?ml|json|toml|txt|properties|cfg|ini)$/;
+export const LEDGER_EXT = /\.(java|py|ts|tsx|mjs|cjs|sql|sh|md|ya?ml|json|toml|txt|properties|cfg|ini|xml)$/;
 
 /**
  * The repository's extensionless root files — the build's own entry points.
