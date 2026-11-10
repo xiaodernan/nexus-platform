@@ -38960,3 +38960,55 @@ real-provider eval lane remain open.
   `scripts/falsify_cloud_ha_failover_smoke.sh`, `scripts/check_cloud_ha_failover.mjs`,
   `scripts/eureka_ha_smoke.sh`, `scripts/fixture_insight_upstream.py`, `docs/CLOUD.md`,
   `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 898. D898 — the cloud plane's claims become machine-readable, with a two-way census
+
+**What was still open.** `docs/CLOUD.md` is the one human-facing page for the cloud plane, and its
+"What this plane does NOT claim" section is prose. Nothing mechanically stopped a claim from
+gaining a "proved" sentence with no smoke, a gate that no longer existed, a not-claimed clause
+deleted from the page, or a new smoke that no reader had ever heard of. Phase G's G5 asked for a
+machine-readable index without demoting the prose page.
+
+**What shipped.** `docs/cloud_claims.yaml` names 16 claims. Each record binds five elements:
+`claim` (what is asserted), `smoke` (the live proof, comma-separated where one claim has several),
+`gate` (the always-runnable wiring reader), `not_claimed` (the boundary) and `honesty_anchor` (an
+EXACT phrase in CLOUD.md's honesty section); `falsifier` is optional and `none` when there is no
+absence/no-drive/no-peer arm. The grammar is deliberately restricted (one `- id: D###` line then
+two-space `key: value` lines, plain single-line scalars, no colon-space/quotes/`#`) so the reader
+needs no YAML dependency and a malformed line is itself an offender.
+`scripts/check_cloud_claims.mjs` checks: every record has all four load-bearing elements plus a
+unique `D###` id; every named script/reader exists on disk and is invoked by CI, listed in
+CLOUD.md and in ATLAS; every anchor really appears in CLOUD.md and the honesty section still
+exists; and a REVERSE census — every `check_*.mjs` and every cloud `*.sh` named in CLOUD.md must
+be bound by some claim, so the prose page cannot quietly gain a proof the index does not know.
+The census reader is self-referential and is deliberately excluded from the reverse gate census
+(CI/ATLAS still bind it). CI's existing wiring line was edited in place; no `ci.yml:NN` citation
+in the ledger moved.
+
+**Measured.** `node scripts/check_cloud_claims.mjs` PASS: 16 claims, 21 distinct smokes/
+falsifiers and 8 gates indexed; the reverse census reviewed every gate and smoke named in
+CLOUD.md (excluding `db_gate_fresh.sh`, which belongs to the unrelated database plane).
+`--self-test` PASS with 13 planted corruptions all reddening: a claim losing its smoke, its gate
+or its boundary; an anchor that no longer exists; a smoke pointing at a nonexistent script; a
+duplicated id; a malformed census line; CLOUD.md losing an anchor; CI dropping a claim's smoke;
+ATLAS dropping a claim's gate; CLOUD.md dropping a gate; CLOUD.md gaining an UNBOUND smoke; and
+an emptied census. An empty plane is refused too, and the real plane reports zero offenders.
+
+**A real defect the self-test found, not a planted one.** The first `--self-test` run FAILED:
+`CI drops a claim's smoke` was not caught. The cause was a genuine hole in this reader, not in
+the test — a plain `ci.includes('cloud_ha_failover_smoke.sh')` is satisfied by the substring
+inside `falsify_cloud_ha_failover_smoke.sh`, so removing the MAIN smoke from CI would still look
+wired. The reader now uses a `mentions(text, name)` predicate requiring a non-identifier
+character on both sides of every script and reader name; the same arm reddens, and the fix is
+applied to CI, CLOUD.md and ATLAS checks alike. This is recorded because a self-test that never
+finds anything is decoration.
+
+**Not claimed.** That any smoke ran today, that any indexed claim is TRUE (this is a wiring census,
+not a truth oracle), that CLOUD.md's prose is exhaustive, that the YAML is general-purpose, that
+`verify_*` parity runners are cloud claim gates (they are cross-plane tools), or that the census
+replaces the human page. It is an index that reddens on drift. Docker (D853), Spring Cloud Bus,
+breaker-name reconciliation (G7), an OTLP exporter, CJK recall, `btree_gist` and the
+real-provider eval lane remain open.
+
+- readers: `docs/cloud_claims.yaml`, `scripts/check_cloud_claims.mjs`, `docs/CLOUD.md`,
+  `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

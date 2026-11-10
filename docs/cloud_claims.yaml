@@ -1,0 +1,144 @@
+# NEXUS D898 (Phase G / G5) — machine-readable census of the cloud plane's claims.
+#
+# docs/CLOUD.md stays the human-facing page. THIS file is the machine-readable index that
+# scripts/check_cloud_claims.mjs judges. Every behaviour claim must name four things at once:
+#   claim          what is asserted
+#   smoke          the live proof (comma-separated when one claim has several)
+#   gate           the always-runnable wiring reader
+#   not_claimed    the boundary that stops the claim from being read as more than it is
+#   honesty_anchor an EXACT phrase in CLOUD.md's "What this plane does NOT claim" section
+# falsifier is optional ("none" when the claim has no absence/no-drive/no-peer arm).
+#
+# Grammar is deliberately RESTRICTED so the reader needs no YAML dependency: one "- id:" line
+# starts a record, two-space "key: value" lines extend it, values are plain single-line scalars
+# with no colon-space, no quote and no '#'. A line that breaks the grammar reddens the gate.
+# The reader also runs a REVERSE census: every check_*.mjs and every cloud *.sh named in CLOUD.md
+# must appear here, so the prose page cannot quietly gain a proof the census does not know about.
+
+- id: D848
+  claim: The gateway resolves the platform and AI routes by service name through the registry
+  smoke: cloud_lb_smoke.sh
+  falsifier: none
+  gate: check_cloud_discovery.mjs
+  not_claimed: No claim that the monolith was split, that a second route table exists, or that name resolution is authenticated
+  honesty_anchor: No auth / TLS / rate limiting for the admin and eureka surface
+
+- id: D850
+  claim: The edge retries idempotent GETs twice, refuses honestly with 503, and limits clients with 429
+  smoke: cloud_smoke.sh, cloud_retry_smoke.sh
+  falsifier: none
+  gate: check_cloud_edge.mjs
+  not_claimed: The gateway Retry filter is Spring's own and emits no resilience4j meter; the limiter is per process only
+  honesty_anchor: No service mesh, no circuit-breaker restart, no transactional outbox on the edge
+
+- id: D857
+  claim: A config-repo edit lands on the edge and on the monolith without a restart
+  smoke: cloud_refresh.sh, cloud_monolith_refresh.sh
+  falsifier: none
+  gate: check_cloud_plane.mjs
+  not_claimed: Refresh is manual and per process; no Spring Cloud Bus, no broker, no broadcast, no encrypted config
+  honesty_anchor: Config refresh is scoped and manual (D889)
+
+- id: D877
+  claim: The FastAPI AI service appears UP in the Spring Boot Admin window
+  smoke: cloud_ai_admin_smoke.sh
+  falsifier: none
+  gate: check_cloud_discovery.mjs
+  not_claimed: The Python service has no Spring instrumentation and no Micrometer meters
+  honesty_anchor: No auth / TLS / rate limiting for the admin and eureka surface
+
+- id: D878
+  claim: The whole sidecar plane is wired and every host coordinate belongs to a declared service
+  smoke: cloud_smoke.sh
+  falsifier: none
+  gate: check_cloud_plane_ports.mjs
+  not_claimed: A wiring reader is not a running plane; ports are checked statically plus one live probe
+  honesty_anchor: No auth / TLS / rate limiting for the admin and eureka surface
+
+- id: D884
+  claim: W3C traceparent is minted at the edge, continued across hops and echoed by the AI participant
+  smoke: cloud_trace_smoke.sh
+  falsifier: none
+  gate: check_cloud_trace.mjs
+  not_claimed: No OTLP exporter, no span storage, no sampling decision and no queryable span tree
+  honesty_anchor: No trace collector
+
+- id: D885
+  claim: nexus-insight reports an unreachable upstream as unavailable and never fakes UP
+  smoke: insight_smoke.sh
+  falsifier: none
+  gate: check_cloud_insight.mjs
+  not_claimed: No real platform or AI product answered; the fifth service owns no database and is not a decomposition
+  honesty_anchor: is not a health authority and not a decomposition
+
+- id: D886
+  claim: The fifth member registers with Eureka and is listed UP with the plane's instance-id shape
+  smoke: insight_registry_smoke.sh
+  falsifier: none
+  gate: check_cloud_insight.mjs
+  not_claimed: A throwaway Eureka was booted for the measurement, not the deployed registry
+  honesty_anchor: is not a health authority and not a decomposition
+
+- id: D887
+  claim: Declarative lb calls reach LIVE registered instances and copy their own status verbatim
+  smoke: insight_feign_smoke.sh
+  falsifier: none
+  gate: check_cloud_insight.mjs
+  not_claimed: The upstreams are throwaway fixtures under the product names, not the real monolith or FastAPI product
+  honesty_anchor: Those instances are THROWAWAY FIXTURES
+
+- id: D889
+  claim: A config-repo edit lands at /insight/config after POST refresh with no restart
+  smoke: insight_config_smoke.sh
+  falsifier: none
+  gate: check_cloud_insight.mjs
+  not_claimed: One process rebinds one label manually; no bus, no second instance, no Config Server HA
+  honesty_anchor: Config refresh is scoped and manual (D889)
+
+- id: D892
+  claim: Spring Boot Admin lists THAT fifth instance as UP after a clean zero-member baseline
+  smoke: insight_admin_smoke.sh
+  falsifier: falsify_insight_admin_smoke.sh
+  gate: check_cloud_insight.mjs
+  not_claimed: No SECOND insight instance was ever listed and the admin surface is unauthenticated
+  honesty_anchor: D892 DID boot Spring Boot Admin against this member
+
+- id: D894
+  claim: Two Eureka nodes with explicit availability zones replicate registrations in both directions
+  smoke: eureka_ha_smoke.sh
+  falsifier: falsify_eureka_ha_smoke.sh
+  gate: check_cloud_plane.mjs
+  not_claimed: The deployed plane still boots ONE node; stale-replica eviction and a third node were not measured
+  honesty_anchor: HA is PROVEN IN AN EXPERIMENT, NOT SHIPPED
+
+- id: D895
+  claim: Repeated failed lb calls open a REAL Feign breaker while the plane view stays honest
+  smoke: insight_circuit_smoke.sh
+  falsifier: falsify_insight_circuit_smoke.sh
+  gate: check_cloud_insight.mjs
+  not_claimed: No recovery to CLOSED, half-open timing, metrics persistence, or per-name threshold tuning was measured
+  honesty_anchor: D895 does not claim
+
+- id: D896
+  claim: One inbound trace id is echoed on a healthy 200, a breaker 503 and a limiter 429
+  smoke: cloud_trace_fallback_smoke.sh
+  falsifier: falsify_cloud_trace_fallback_smoke.sh
+  gate: check_cloud_trace_fallback.mjs
+  not_claimed: No collector, no span into a downstream, no real product failure, no route-miss case, no log correlation
+  honesty_anchor: D896 does not claim
+
+- id: D897
+  claim: A gateway given BOTH registry URLs still resolves lb after its primary registry dies
+  smoke: cloud_ha_failover_smoke.sh
+  falsifier: falsify_cloud_ha_failover_smoke.sh
+  gate: check_cloud_ha_failover.mjs
+  not_claimed: Not a deployed pair, no sub-second failover, no in-flight retry, and the shipped gateway has ONE defaultZone
+  honesty_anchor: D897's failover is a throwaway measurement
+
+- id: D853
+  claim: The compose cloud profile and image recipe are defined for the whole plane
+  smoke: cloud_smoke.sh
+  falsifier: none
+  gate: check_cloud_plane.mjs
+  not_claimed: Containers never left Created on this host, so the Docker run is NOT verified
+  honesty_anchor: Docker deployment is not verified

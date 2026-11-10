@@ -113,6 +113,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_cloud_trace.mjs` | D884: W3C filter, strict grammar, Python participant, unit tests, smoke, CI step, honesty clause |
 | `scripts/check_cloud_trace_fallback.mjs` | D896: the 200/503/429 trace smoke, its no-degrade falsifier, the filter ORDER (tracing before the limiter), CI/ATLAS/ledger wiring, and a self-test that plants eight corruptions |
 | `scripts/check_cloud_ha_failover.mjs` | D897: the empty-cache anti-false-positive design, the primary kill, the LATE registration on the secondary, the single-registry falsifier, the NOT-SHIPPED honesty clause, and nine planted corruptions |
+| `scripts/check_cloud_claims.mjs` | D898: the machine-readable claim census — restricted-YAML grammar, four-element completeness, script/reader existence, CI/CLOUD/ATLAS wiring, honesty anchors, a reverse census, and 13 planted corruptions |
 | `scripts/check_cloud_insight.mjs` | D885–D889: fifth reactor module, Feign-by-name clients, honest fallbacks, registry/lease shape, D887 live-upstream smoke assertions, D889 config import/`@RefreshScope`, compose, CI, docs, free-or-ours probe of :19555 |
 | `scripts/check_plane_coordinates.mjs` | the URLs the browser harness reads |
 | `scripts/check_reader_reachability.mjs` | every shipped reader is reachable from a runner |
@@ -186,7 +187,10 @@ and the `required` job gates on it.
 ## Ledger and numbering
 
 `docs/STATUS.md` holds one numbered section per shipped unit (796 sections at D882), with a
-"not claimed" paragraph; `docs/DECISIONS.md` holds 300 binding decisions.
+"not claimed" paragraph; `docs/DECISIONS.md` holds 300 binding decisions. `docs/cloud_claims.yaml`
+(D898) is the MACHINE-READABLE index of the cloud plane: every claim names its smoke, gate,
+not-claimed boundary and an exact anchor in `docs/CLOUD.md`'s honesty section. The prose page
+stays the human-facing one; `scripts/check_cloud_claims.mjs` keeps the two in sync.
 `docs/TESTING.md` §8 is the measured live-verification runbook. Numbers in prose are pinned by
 `scripts/check_ledger_numbers.mjs` against a real gate run — never by assertion alone.
 
