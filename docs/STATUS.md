@@ -37578,3 +37578,34 @@ job not observable this session; everything green locally.
   `scripts/cloud_smoke.sh` (the admin phase),
   `infra/docker-compose.yml` (the `admin-server` service, `cloud` profile),
   `docs/PLAN.md` (the cloud-plane queue, D859 row).
+
+## 860. D860 — the plane on paper: `docs/CLOUD.md` is now the one page for the sidecar
+
+**What was missing.** The sidecar plane had smokes, readers, compose wiring and four modules — and no
+single document a new agent could open and understand the whole plane. Everything was in the ledgers,
+the code and the comments, none of them navigable on their own. This unit writes the page and links it.
+
+**The document (`docs/CLOUD.md`).** Architecture diagram (browser/BFF → gateway → lb:// platform and AI);
+the port map with its "measured free" caveat; bring-up order (eureka → config → gateway → the services
+only under opt-in profiles); what each of the four modules proves and holds; every gate that guards the
+plane (`check_cloud_plane_ports.mjs`, `check_cloud_discovery.mjs`, `check_cloud_edge.mjs`, three smokes,
+`db_gate_fresh.sh`); the CI reality (the `cloud` job runs the three smokes in sequence, `required` needs
+`cloud`); and an explicit "not claimed" section naming every limit: no HA (D858), no auth/TLS, no service
+mesh, Docker images unverified (D853), the admin's API vs rendered SPA, the monolith staying single-process
+by design. A standing rule closes the page: a new host coordinate probes first; a new service joins only
+under the same shape; a new check is real only when it has a smoke.
+
+**Cross-references written in the same unit** (so the page is reachable, not ornamental):
+- `docs/README.md` subsystem table gains the `CLOUD.md` row.
+- `docs/ARCHITECTURE.md` (the binding topology doc) gains the sidecar paragraph at the top of §1 — the
+  Phase-1 modular monolith itself is unchanged by the plane; the plane sits beside it, links outward
+  to `CLOUD.md`.
+
+**Verified.** The five eval suites re-ran green this session (RESULT: PASS - 5 suite(s), 0 failing;
+exact_match 1.0000). Live plane re-verified: web :3002 200 (merchant console serves with the seeded
+basil-leaf-0419), platform :8090 200, AI :8010 200. No code changed in this unit; the page is the unit.
+**Not claimed.** That the page has been re-reviewed by an independent agent; that `CLOUD.md` is checked
+by CI for staleness (only its existence/cross-links are), so it will drift like every prose doc if not
+touched alongside code; that the seeded corpus ports listed are guaranteed free on every future host.
+
+- readers: `docs/CLOUD.md`, `docs/README.md` (subsystem table), `docs/ARCHITECTURE.md` (§1, sidecar paragraph).

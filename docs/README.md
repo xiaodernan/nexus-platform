@@ -28,6 +28,7 @@ contract disagree, the contract wins and the prose is a bug.
 | [SECURITY.md](SECURITY.md) | authn/z, RBAC, injection defense, privacy, audit |
 | [TESTING.md](TESTING.md) | pyramid, E2E, visual, agent eval, performance |
 | [OBSERVABILITY.md](OBSERVABILITY.md) | four signals, AI replay, cost ledgers, alerts |
+| [CLOUD.md](CLOUD.md) | the Spring Cloud plane: registry, config, gateway, admin, discovery, env, limits |
 | [UCP.md](UCP.md) / [MCP.md](MCP.md) | external-agent surfaces and adapters |
 
 ## Execution & status
