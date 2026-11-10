@@ -36904,3 +36904,79 @@ rebuilt bytes this session (both smokes PASS).
   `services/cloud/gateway/src/main/resources/application.yaml:24`, `:72-82`,
   `scripts/check_cloud_discovery.mjs:16-29`, `scripts/cloud_lb_smoke.sh:76-121`,
   `.github/workflows/ci.yml:50`, `:134-170`, `:482`, `:489`.
+
+## 850. D850 — the edge earns its keep: three breakers, an honest fallback, a per-client limiter, one request id
+
+**What was missing.** §845 gave the plane a route table, §849 gave it a registered monolith to route, and
+nothing made the edge survivable. A proxy that forwards into a dead upstream turns one sick service into an
+edge that 503s or hangs through every retry; a limiter that exists only in a note is a refusal nobody can
+observe; a correlation id that dies at the second hop is a log nobody can join. §845/§847/§849 each carried
+"no TLS, auth, rate limit or circuit breaker on the edge" as an open receipt; this unit closes the
+rate-limit, breaker and correlation half of it.
+
+**The lane.** The gateway pom gains `spring-cloud-starter-circuitbreaker-reactor-resilience4j` 3.3.3
+(resilience4j 2.2.0). Three routes, three breakers, three fallbacks, one copy each: the platform/ai/web
+routes in `application.yaml` carry a `CircuitBreaker` filter with `fallbackUri: forward:/fallback/<id>`;
+`EdgeFallbackController` answers all three with 503 and the contract error shape
+`{"error":{"code":"edge_upstream_unavailable","message":…,"request_id":…}}`; resilience4j declares the
+`platform`/`ai`/`web` instances with `slidingWindowSize: 10`, `minimumNumberOfCalls: 5`,
+`failureRateThreshold: 50`, `waitDurationInOpenState: 10s`, `registerHealthIndicator: true`. The limiter is
+`EdgeRateLimitFilter`: a per-client-address token bucket (`TokenBucket`, env-tuned by
+`NEXUS_GATEWAY_RATE_BURST` default 10 and `NEXUS_GATEWAY_RATE_REPLENISH` default 5, bounded map at 10k
+clients) ordered at `HIGHEST_PRECEDENCE + 10` — after the request-id filter, so even a 429 carries the
+correlation id — answering 429 with `Retry-After: 1` and `edge_rate_limited` in the same error shape.
+Deliberately per gateway process: a shared store is deployment work, not edge wiring (ruling below).
+
+**`show-details:` note.** Health now answers with details on this dev edge; the resilience4j health
+indicator does NOT surface a `circuitBreakers` component under it on this stack (resilience4j-spring-boot3
+2.2.0 is on the classpath, verified by `dependency:list`) — the trip proof is the DEBUG transition greps in
+the smokes, not the health endpoint.
+
+**The live measurements.** The spring-cloud reactor rebuilds clean; gateway tests 5/5 (bucket spend,
+refill, capacity cap, degenerate args, fallback body shape + 503). With the platform route pointed at the
+closed port: all calls short-circuit to the fallback (503 `edge_upstream_unavailable`), and the DEBUG log
+records the real trip — `CircuitBreaker 'platform' recorded an exception as failure` x5, then
+`FAILURE_RATE_EXCEEDED`, `STATE_TRANSITION published`, and `NOT_PERMITTED` on the trailing calls. X-Request-Id
+survived both hops on every response — including the fallback path — visible in raw headers; both hops emit
+`X-Request-Id`, so the edge now dedupes them (`DedupeResponseHeader=… X-Request-Id, RETAIN_UNIQUE`) and the
+caller sees exactly one. The first correlation assertion failed honestly on the duplicate (`got
+'lbcorr-243841\nlbcorr-243841'`), which is what found the duplication.
+
+**The smokes carry the behavioural assertions, so a gutted reader cannot read as green.**
+`cloud_smoke.sh` (dead-port fixture) isolates the breaker from the limiter (`NEXUS_GATEWAY_RATE_BURST=1000`),
+flips `NEXUS_CB_LOG=DEBUG`, hammers `/api/v1/health` and fails unless the log holds
+`CircuitBreaker 'platform'` + `STATE_TRANSITION`, and asserts the fallback code in the answer body — PASS,
+both runs after the rebuild. `cloud_lb_smoke.sh` (live platform via `dev,cloud` on :18099) now asserts the
+end-to-end id (`lbcorr-$$` echoed by the platform through `lb://NEXUS-PLATFORM`) and hammers the gateway:
+25 rapid calls → 23 admitted, 2 refused (`burst=10`, replenish 5/s stays briefly behind a fast loop), a 429
+with `Retry-After: 1` — PASS. `scripts/check_cloud_edge.mjs` (new, E1-E6, exit 0/1/2, `--dir/--report/
+--verbose`) gates the wiring statically: resilience4j on the classpath, three breaker filters with matching
+fallback URIs, the five trip thresholds on all three instances, the fallback's 503/contract shape, the
+limiter's order/env knobs/429/Retry-After, and both smokes' proof markers. `RESULT: PASS — 11 checks`.
+CI: the `cloud` job gains `Edge wiring reads (D849 discovery + D850 resilience)` running both readers; YAML
+re-parsed clean.
+
+**TLS/auth ruling (the §847(d) receipt).** The edge terminates no TLS and adds no auth in this phase, by
+decision: TLS belongs to the deployment ingress (§845(a) deployment unit, next in the queue), and auth stays
+on the monolith (`/api/v1/me` and the `read_analytics` gate family). The edge is a trusted-hop proxy inside
+the deployment boundary; it does not hold a secret, mint a principal or invent a user. When the plane gets a
+public ingress, TLS terminates there and the edge stays plain HTTP on the private network — revisit only if
+the edge ever carries traffic across a trust boundary. The limiter is per gateway process by design; a shared
+limiter (redis or otherwise) is deployment work, deliberately not this unit.
+
+**Not claimed.** (a) The breaker's half-open recovery path (10s `waitDurationInOpenState` → probe → close)
+was not exercised; only CLOSED→OPEN was observed live. (b) The limiter's bucket-refill after idle was unit
+tested, not observed at the edge under sustained load. (c) `show-details: always` exposes breaker health to
+anyone who can reach the actuator — acceptable on this dev edge, not a shape to deploy as-is. (d) CI-runner
+results for the new `Edge wiring reads` step are not observable this session; both readers were run locally
+on the committed bytes. (e) The duplicate-header fix is verified by the smoke's single-id assertion, not by
+a browser retrace of the pre-fix world.
+
+- readers: `services/cloud/gateway/pom.xml:30-34`,
+  `services/cloud/gateway/src/main/resources/application.yaml:21`, `:30-45`, `:59-60`, `:63-88`, `:113-122`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:38`, `:48`, `:80`, `:85`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeFallbackController.java:21-46`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/TokenBucket.java:1-41`,
+  `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/TokenBucketTest.java`,
+  `scripts/cloud_smoke.sh:126-128`, `:156-170`, `scripts/cloud_lb_smoke.sh:106-107`, `:125-151`,
+  `scripts/check_cloud_edge.mjs`, `.github/workflows/ci.yml:154-158`.
