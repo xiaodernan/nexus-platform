@@ -160,6 +160,8 @@ excerpt and diff stdout byte for byte — CI invokes both in the wiring-reads st
 | `scripts/insight_registry_smoke.sh` | D886: with Eureka up, `NEXUS-INSIGHT` appears in `/eureka/apps` as `UP` with the plane's `instance-id` shape |
 | `scripts/insight_feign_smoke.sh` | D887: two self-registered fixtures answer `lb://NEXUS-PLATFORM` / `lb://NEXUS-AI`; a runtime switch to a non-UP status is copied verbatim, and the fixtures' access logs prove the calls arrived |
 | `scripts/insight_config_smoke.sh` | D889: a config-repo edit (v1 → v2) lands at `/insight/config` after `POST /actuator/refresh`, same pid, no restart |
+| `scripts/insight_admin_smoke.sh` | D892: a clean `/instances` baseline, then the fifth member is visible UP in Spring Boot Admin; status read from THAT instance's `statusInfo` |
+| `scripts/falsify_insight_admin_smoke.sh` | D892: boots the plane with insight deliberately absent and requires the admin smoke to FAIL while both servers are up |
 | `scripts/cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in Spring Boot Admin |
 | `scripts/check_launcher_log_mode.sh` | launcher log mode |
 | `scripts/demo_live.sh` | the §142 consumer↔merchant loop in one command |
@@ -167,8 +169,9 @@ excerpt and diff stdout byte for byte — CI invokes both in the wiring-reads st
 | `scripts/e2e_fresh.sh` · `scripts/seed_truncate_probe.sh` · `scripts/run_platform_dev.sh` | E2E harness, seed probe, dev launcher |
 | `scripts/falsify_gate_selftest.sh` | a gate can be falsified |
 
-CI wiring lives in `.github/workflows/ci.yml`; the `cloud` job runs the six cloud smokes plus the
-discovery/edge/ports/plane readers, and the `required` job gates on it.
+CI wiring lives in `.github/workflows/ci.yml`; the `cloud` job runs the cloud smokes (including
+D892's admin smoke and its absence-arm falsifier) plus the discovery/edge/ports/plane readers,
+and the `required` job gates on it.
 
 ## Ledger and numbering
 

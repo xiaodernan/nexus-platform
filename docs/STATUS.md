@@ -38645,3 +38645,46 @@ parity runners, not by the static gate.
   `scripts/verify_line_cite_parity.mjs`, `scripts/check_citation_supports_sentence.mjs`,
   `scripts/check_line_cite_drift.mjs`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`,
   `.github/workflows/ci.yml`.
+
+## 892. D892 — the fifth member appears in the admin window, and the smoke fails without it
+
+**What was still open.** D886 proved `NEXUS-INSIGHT` REGISTERS with Eureka; D877 proved the Python
+service appears in Spring Boot Admin. Neither says the fifth member is VISIBLE. Admin watches the
+registry but probes each instance itself, and a service whose actuator shape it cannot parse never
+reaches `/instances`. `docs/CLOUD.md` still carried the honest line that Admin "was not booted
+against this member". Registration is not visibility, and Phase F's F1 asked for a smoke that
+FAILS when the instance is absent — not merely one that passes when it is present.
+
+**What shipped.** `scripts/insight_admin_smoke.sh` boots a throwaway Eureka (:18764), an Admin
+(:19452) pointed at it, and asserts a CLEAN BASELINE (`/instances` names no `NEXUS-INSIGHT`),
+then boots `nexus-insight` (:19560) with registration ON and polls until the `NEXUS-INSIGHT`
+instance's OWN `statusInfo` is `UP`. The predicate is a JSON parse over that instance, not a
+body-wide grep for `"status":"UP"` — the shape D877's AI smoke left open, where any other healthy
+member would have satisfied it. `NEXUS_INSIGHT_ADMIN_ABSENT=1` skips the member and runs the SAME
+assertion with a short budget, so it must fail. `scripts/falsify_insight_admin_smoke.sh` runs that
+absence arm on separate coordinates (:18765 / :19453), requires a non-zero exit, and checks five
+markers — Eureka up, Admin up, clean baseline, absence arm entered, and the specific
+"never surfaced NEXUS-INSIGHT as UP" reason — so a red caused by a dead server cannot masquerade as
+a red caused by a missing subject. `scripts/check_cloud_insight.mjs` gained the D892 assertions and
+a stale-claim arm that reddens if `CLOUD.md` ever says Admin was never booted; its own "not claimed"
+paragraph now names the remaining gap (a SECOND instance) instead of this one. CI's existing smoke
+line gained both scripts without adding or removing a line, `docs/ATLAS.md` lists both, and
+`docs/CLOUD.md`'s honesty clause was NARROWED rather than deleted.
+
+**Measured.** Presence arm: `eureka up`, `admin up`, `baseline: /instances has no NEXUS-INSIGHT
+(registry members: 0)`, `insight up`, then `admin lists NEXUS-INSIGHT UP, id=fdfed968ab3c`, exit 0.
+Absence arm: the same Eureka/Admin readiness and clean baseline, `ABSENCE ARM` entered, then
+`FAIL: the admin never surfaced NEXUS-INSIGHT as UP` (non-zero). The falsifier verified all five
+markers and exited 0. `bash -n` clean on both scripts; `check_cloud_insight.mjs` and the atlas
+self-test still PASS.
+
+**Not claimed.** That the REAL platform or FastAPI product answered (D887's upstreams remain
+throwaway fixtures), that a SECOND `nexus-insight` instance was ever listed or refreshed, that SBA
+persists, notifies or authenticates anything, that Eureka HA replication works (D858), that a Docker
+image was exercised (D853), that the falsifier proves the presence arm is green on any other host,
+or that the monolith was decomposed. The Admin surface stays unauthenticated like the rest of this
+dev plane. The absence arm proves falsifiability, not portability.
+
+- readers: `scripts/insight_admin_smoke.sh`, `scripts/falsify_insight_admin_smoke.sh`,
+  `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
+  `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

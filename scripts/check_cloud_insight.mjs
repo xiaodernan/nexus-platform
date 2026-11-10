@@ -2,19 +2,22 @@
 /**
  * NEXUS D885 — the independent service's wiring and its host coordinate.
  *
- * The behaviour is proved by FOUR live smokes: `insight_smoke.sh` (no registry -> both rows
+ * The behaviour is proved by FIVE live smokes: `insight_smoke.sh` (no registry -> both rows
  * honestly `unavailable`), `insight_registry_smoke.sh` (the member registers), `insight_feign_smoke.sh`
- * (D887: two registered fixtures really ANSWER through `lb://`, and a non-UP status is copied), and
- * `insight_config_smoke.sh` (D889: a config-repo edit lands without a restart) — plus the unit tests.
+ * (D887: two registered fixtures really ANSWER through `lb://`, and a non-UP status is copied),
+ * `insight_config_smoke.sh` (D889: a config-repo edit lands without a restart), and
+ * `insight_admin_smoke.sh` (D892: Spring Boot Admin lists THAT instance as UP) — plus the unit tests
+ * and D892's absence-arm falsifier, which proves the admin smoke reddens with its subject missing.
  * THIS reader holds the parts that could silently disappear: the reactor module, the declarative
  * clients, the honest fallbacks, the registry/config shape, the compose profile, the CI steps, the
  * docs, and the unit-test population. It also asks the one live question a new host coordinate must
  * answer: is :19555 free, or answered by a service THIS repository declares?
  *
  * WHAT THIS DOES NOT SAY: that the REAL platform or AI product answered (D887's upstreams are
- * throwaway fixtures registering under the product names), that Spring Boot Admin listed the member,
- * that Eureka HA replication works (D858), that Docker was exercised (D853), or that the monolith
- * was decomposed. It is a read-only source census plus one GET; it registers, starts and stops nothing.
+ * throwaway fixtures registering under the product names), that a SECOND insight instance was ever
+ * listed, that Eureka HA replication works (D858), that Docker was exercised (D853), or that the
+ * monolith was decomposed. It is a read-only source census plus one GET; it registers, starts and
+ * stops nothing — the smokes are the ones that boot JVMs.
  *
  * Usage:  node scripts/check_cloud_insight.mjs [--no-probe] [--report]
  * Exit:   0 every claim holds · 1 an offender · 2 the plane could not be read.
@@ -66,6 +69,8 @@ const CONFIG_SMOKE = 'scripts/insight_config_smoke.sh';
 const CONFIG_VIEW = 'services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/ConfigViewController.java';
 const CONFIG_VIEW_TEST = 'services/cloud/insight-service/src/test/java/com/nexus/cloud/insight/ConfigViewControllerTest.java';
 const CONFIG_REPO = 'services/cloud/config-server/src/main/resources/config-repo/nexus-insight.yml';
+const ADMIN_SMOKE = 'scripts/insight_admin_smoke.sh';
+const ADMIN_FALSIFIER = 'scripts/falsify_insight_admin_smoke.sh';
 
 for (const [rel, label] of [
   [POM, 'the module pom'], [APP, 'the application class'],
@@ -80,6 +85,8 @@ for (const [rel, label] of [
   [CONFIG_VIEW, 'the @RefreshScope config view (D889)'],
   [CONFIG_VIEW_TEST, 'the config view unit tests (D889)'],
   [CONFIG_REPO, 'the insight config-repo entry (D889)'],
+  [ADMIN_SMOKE, 'the Spring Boot Admin visibility smoke (D892)'],
+  [ADMIN_FALSIFIER, 'the admin smoke absence-arm falsifier (D892)'],
 ]) exists(rel, label);
 
 has(REACTOR, '<module>insight-service</module>', 'the reactor builds the fifth module');
@@ -140,6 +147,8 @@ has(CI, 'scripts/insight_smoke.sh', 'CI runs the honesty smoke');
 has(CI, 'scripts/insight_registry_smoke.sh', 'CI runs the registry-membership smoke (D886)');
 has(CI, 'scripts/insight_feign_smoke.sh', 'CI runs the live-upstream Feign smoke (D887)');
 has(CI, 'scripts/insight_config_smoke.sh', 'CI runs the config hot-refresh smoke (D889)');
+has(CI, 'scripts/insight_admin_smoke.sh', 'CI runs the admin visibility smoke (D892)');
+has(CI, 'scripts/falsify_insight_admin_smoke.sh', 'CI runs the admin absence-arm falsifier (D892)');
 has(CI, 'scripts/verify_citation_engine_parity.mjs', 'CI runs the D888 engine-parity gate');
 
 /* D887 — the smoke must prove MORE than "both rows are UP", or a cached/faked answer would pass. */
@@ -176,6 +185,21 @@ has(ATLAS, 'scripts/insight_smoke.sh', 'the atlas lists the smoke');
 has(ATLAS, 'services/cloud/insight-service/pom.xml', 'the atlas lists the module');
 has(SMOKE, 'all_up must be false', 'the smoke asserts the aggregated verdict');
 has(SMOKE, 'never a faked UP', 'the smoke states what it proves');
+
+/* D892 — registration is not visibility. The admin claim is about ONE instance's own status, and
+ * the smoke must be falsifiable when that instance is deliberately not booted. */
+has(ADMIN_SMOKE, 'REQUIRE_UP', "the admin smoke reads the NEXUS-INSIGHT instance's own status");
+has(ADMIN_SMOKE, 'REQUIRE_ABSENT', 'the admin smoke asserts a clean baseline before booting the member');
+has(ADMIN_SMOKE, 'ABSENCE ARM', 'the smoke can be run with its subject deliberately absent');
+has(ADMIN_SMOKE, 'statusInfo', "the status comes from Spring Boot Admin's statusInfo, not a body-wide grep");
+has(ADMIN_FALSIFIER, 'never surfaced NEXUS-INSIGHT as UP', 'the falsifier requires the absence arm to fail');
+has(ADMIN_FALSIFIER, 'NEXUS_INSIGHT_ADMIN_ABSENT=1', 'the falsifier actually runs the absence arm');
+has(CLOUD_DOC, 'D892', 'CLOUD.md records the admin-window unit');
+has(ATLAS, 'scripts/insight_admin_smoke.sh', 'the atlas lists the admin smoke');
+has(ATLAS, 'scripts/falsify_insight_admin_smoke.sh', 'the atlas lists the absence-arm falsifier');
+if (read(CLOUD_DOC).includes('was not booted against this member')) {
+  offenders.push('STALE CLAIM — CLOUD.md still says SBA was never booted against the member; D892 proved otherwise');
+} else notes.push('held CLOUD.md no longer claims SBA was never booted against the member');
 
 /* R1-shaped live question: a new host coordinate must be free or answered by OUR service only. */
 const bound = (port) => new Promise((done) => {
@@ -214,12 +238,12 @@ const main = async () => {
   if (offenders.length) {
     console.log(`\nOFFENDERS (${offenders.length}):`);
     for (const o of offenders) console.log(`  - ${o}`);
-    console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), SBA listed the member, HA/Docker ran, or the monolith was split.');
+    console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), a SECOND insight instance was listed, HA/Docker ran, or the monolith was split.');
     console.log(`\nRESULT: ${REPORT_ONLY ? 'REPORT' : 'FAIL'} — ${offenders.length} offender(s)`);
     process.exitCode = REPORT_ONLY ? 0 : 1;
     return;
   }
-  console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), SBA listed the member, HA/Docker ran, or the monolith was split.');
+  console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), a SECOND insight instance was listed, HA/Docker ran, or the monolith was split.');
   console.log('\nRESULT: PASS — the fifth module is wired, honest, and its host coordinate is free or ours');
   process.exitCode = 0;
 };
