@@ -38004,3 +38004,48 @@ after edits — it was (`scripts/demo_live.sh --compact` exit 0 through web/plat
 code, no reader, no suite.
 
 - readers: `docs/TESTING.md` (§8.3, §8.5).
+
+## 874. D874 — the consumer sees the loop close: history hydrates on mount, and RBAC holds for strangers
+
+**What was missing.** The §142 circle closed merchant-side (D871) but not consumer-side: a consumer who
+closed the tab and reopened the merchant page saw an empty ask panel ("還沒有對話") — the prior thread,
+the agent's answer, each citation and the merchant-team reply were all in the database and invisible to
+its owner. The demo could show a perfect merchant flow and a blank customer side.
+
+**The lane.**
+- **Platform**: `GET /api/v1/conversations?merchant_id=<uuid>` (optional param, whitelisted UUID, 422 on
+  blank/invalid). `listForUser`/`countForUser` gained an assembled whitelist clause (the same
+  `statusClause` shape `listForMerchant` already used); `?merchant_id=` does not exist anywhere in
+  `me/*` otherwise. **Two defects found and fixed during the same build**: the continuation text blocks
+  trim their leading newline, so an assembled `:merchant_id` fragment glued to `order by`
+  (`SqlParameter 'merchant_idorder': No value registered`, 500 at runtime) — the exact `:status` case the
+  file's own comment documents; fragments now end with a trailing space.
+- **BFF**: `GET /api/nexus/conversations/latest?merchant_id=<uuid>` — the caller's newest thread with this
+  merchant plus its messages (list → read, both owner-scoped; 401 without session, 200
+  `{conversation: null}` when none, 422 on a bad UUID).
+- **Consumer UI** (`ask-merchant.tsx`): on mount, hydrates `[...history, ...live]` into the same turn list —
+  user questions paired with their `ai_agent` answers (degraded from the persisted `handoff` flag;
+  citations from the persisted `payload.retrieval` ids — the honest count, never invented), merchant-team
+  `merchant_user` turns rendered as the team's plain voice (own label, no agent styling), system rows
+  skipped. `transition` happens before paint of the live form; the live SSE path is untouched.
+  `reset()` also clears hydrated history ("開始新對話" now honestly starts a new thread AND hides the old).
+- **i18n**: `ask.merchant` ('商戶團隊' / 'Merchant team') in both catalogues + the type block —
+  console i18n gate stays PASS.
+
+**Measured (this session).** The E2E spec `ask-merchant-history.spec.ts` verifies the whole loop by
+reloading the page: consumer asks → merchant replies through the same BFF→RBAC door → reload →
+**the earlier question, the agent answer and the merchant reply all render**; 4/4 pass desktop+mobile.
+An **anonymous** visitor sees the ask surface but never a signed-in consumer's thread — 4/4.
+Regressions: consumer suite **29 passed** (the one "card-media" failure re-ran isolated as 3/3 mobile —
+a flake, not a regression), merchant suite **14/14**, `demo_live.sh` exit 0, i18n gate PASS.
+**Not claimed.** History across ALL merchants on other consumer screens (this read is merchant-scoped by
+design); live updates without a reload (still a page turn); payload citations' CONTENT (we render the
+count only, the wire never shipped the ids, by contract); anything about the workspace locking/var unification
+between platforms — the re-aim work is tracked separately.
+
+- readers: `apps/web/src/components/ask-merchant.tsx` (hydration + merchant render),
+  `apps/web/app/api/nexus/conversations/latest/route.ts` (the BFF owner read),
+  `services/platform/src/main/java/com/nexus/conversation/ConversationController.java` (merchant_id param),
+  `services/platform/src/main/java/com/nexus/conversation/ConversationService.java`,
+  `services/platform/src/main/java/com/nexus/conversation/ConversationRepository.java` (the whitelist clause),
+  `apps/web/src/lib/i18n/dict.ts` (`ask.merchant`), `tests/e2e/specs/consumer/ask-merchant-history.spec.ts`.

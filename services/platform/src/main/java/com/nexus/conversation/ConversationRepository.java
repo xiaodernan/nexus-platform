@@ -85,18 +85,40 @@ public class ConversationRepository {
 
     /** Consumer thread list (API_CONTRACT §3 {@code GET /api/v1/me/conversations}). */
     public List<Map<String, Object>> listForUser(TenantContext tenant, UUID userId, int limit, int offset) {
-        return jdbc.forTenant(tenant, THREAD_SELECT + """
-                where c.tenant_id = :tenant_id and c.user_id = :user_id
+        return listForUser(tenant, userId, limit, offset, null);
+    }
+
+    public List<Map<String, Object>> listForUser(TenantContext tenant, UUID userId, int limit, int offset,
+                                                 UUID merchantId) {
+        String where = """
+                where c.tenant_id = :tenant_id and c.user_id = :user_id""";
+        Map<String, Object> params = Json.map("user_id", userId, "limit", limit, "offset", offset);
+        if (merchantId != null) {
+            where = where + " and c.merchant_id = :merchant_id ";
+            params = Json.map("user_id", userId, "merchant_id", merchantId, "limit", limit,
+                    "offset", offset);
+        }
+        return jdbc.forTenant(tenant, THREAD_SELECT + where + """
                 order by coalesce(c.last_message_at, c.created_at) desc, c.id desc
                 limit :limit offset :offset
-                """, Json.map("user_id", userId, "limit", limit, "offset", offset));
+                """, params);
     }
 
     public long countForUser(TenantContext tenant, UUID userId) {
+        return countForUser(tenant, userId, null);
+    }
+
+    public long countForUser(TenantContext tenant, UUID userId, UUID merchantId) {
+        String where = """
+                where c.tenant_id = :tenant_id and c.user_id = :user_id""";
+        Map<String, Object> params = Json.map("user_id", userId);
+        if (merchantId != null) {
+            where = where + " and c.merchant_id = :merchant_id ";
+            params = Json.map("user_id", userId, "merchant_id", merchantId);
+        }
         return jdbc.countForTenant(tenant, """
                 select count(*) from conversations c
-                where c.tenant_id = :tenant_id and c.user_id = :user_id
-                """, Json.map("user_id", userId));
+                """ + where, params);
     }
 
     /** Merchant inbox (API_CONTRACT §5): newest activity first, `status` filter whitelisted. */

@@ -114,10 +114,11 @@ public class ConversationService {
     }
 
     /** {@code GET /api/v1/me/conversations}. */
-    public Map<String, Object> myThreads(TenantContext tenant, HttpServletRequest request, int limit, int offset) {
+    public Map<String, Object> myThreads(TenantContext tenant, HttpServletRequest request, int limit, int offset,
+                                         UUID merchantId) {
         UUID userId = Req.userId(request);
-        List<Map<String, Object>> rows = conversations.listForUser(tenant, userId, limit, offset);
-        long total = conversations.countForUser(tenant, userId);
+        List<Map<String, Object>> rows = conversations.listForUser(tenant, userId, limit, offset, merchantId);
+        long total = conversations.countForUser(tenant, userId, merchantId);
         return paging.page(rows.stream().map(r -> summary(r)).toList(), offset, limit, total);
     }
 

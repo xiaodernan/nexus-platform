@@ -74,14 +74,23 @@ public class ConversationController {
         return conversations.thread(tenant, request, uuidOr422(id), size, paging.offset(cursor));
     }
 
-    /** The caller's own threads. Same pagination envelope as §1. */
+    /**
+     * The caller's own threads. Same pagination envelope as §1.
+     *
+     * <p>{@code merchant_id} (optional) narrows the list to the caller's threads with one
+     * merchant — the ask-merchant widget needs exactly that window: its own prior conversation
+     * with this page's merchant, not the caller's whole inbox. Whitelisted UUID, anything else
+     * is a 422 like every other parameter on this controller.
+     */
     @GetMapping("/conversations")
     @RequiresAuth
     public Map<String, Object> mine(@RequestParam(required = false) String limit,
                                     @RequestParam(required = false) String cursor,
+                                    @RequestParam(required = false) String merchant_id,
                                     HttpServletRequest request) {
         int size = paging.limit(limit);
-        return conversations.myThreads(Req.tenant(request), request, size, paging.offset(cursor));
+        return conversations.myThreads(Req.tenant(request), request, size, paging.offset(cursor),
+                uuidOrNull(merchant_id, "merchant_id"));
     }
 
     /** (c) human {@code merchant_user} reply. RBAC: {@code send_message} on the thread's merchant. */
@@ -125,6 +134,19 @@ public class ConversationController {
         if (parsed == null) {
             throw com.nexus.platform.ApiException.validation("Path parameter 'id' must be a uuid",
                     Json.map("field", "id"));
+        }
+        return parsed;
+    }
+
+    /** {@code null} when absent or blank; 422 when present and not a uuid (like every other parameter). */
+    private static UUID uuidOrNull(String raw, String field) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        UUID parsed = Json.uuidOrNull(raw);
+        if (parsed == null) {
+            throw com.nexus.platform.ApiException.validation("Query parameter '" + field + "' must be a uuid",
+                    Json.map("field", field));
         }
         return parsed;
     }

@@ -145,6 +145,7 @@ export interface Dict {
     reading: string;
     you: string;
     agent: string;
+    merchant: string;
     empty: string;
     handoffTitle: string;
     handoffBody: string;
@@ -842,6 +843,7 @@ const zhHK: Dict = {
     reading: '查閱商戶知識庫…',
     you: '你',
     agent: '商戶助理',
+    merchant: '商戶團隊',
     empty: '還沒有對話。問一個關於營業時間、價格或預約的問題。',
     handoffTitle: '已轉交商戶團隊',
     handoffBody: '知識庫沒有足夠資料回答這題；商戶可在收件箱看到這條對話並接手回覆。',
@@ -1584,6 +1586,7 @@ const en: Dict = {
     reading: 'Reading the merchant knowledge base…',
     you: 'You',
     agent: 'Merchant assistant',
+    merchant: 'Merchant team',
     empty: 'No conversation yet. Ask about opening hours, prices or reservations.',
     handoffTitle: 'Handed to the merchant team',
     handoffBody: 'The knowledge base does not hold enough to answer this; the merchant can see this thread in their inbox and reply.',
