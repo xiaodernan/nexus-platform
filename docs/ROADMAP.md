@@ -13,10 +13,10 @@ conversational search with deterministic fallback; trust layer (fact verificatio
 passes 21/21 on the live stack; the visual suite 21/21 on the mock plane; web unit suites 209
 green; the platform suite 288 green (`mvn -o test`, BUILD SUCCESS 2026-11-09); the live-verification
 runbook is
-[TESTING.md](TESTING.md) §8. **Honest gaps still open:** the merchant console sign-in
-(§46/§48 — the page renders its shell and discloses it; §142 unbuilt), the vector lane's real
-embeddings (mock hashing embeds only on this plane), `tool_selection_v1` and the
-`search_relevance_v1` suite (the orchestrator and honest labels are not built), and visual-baseline
+[TESTING.md](TESTING.md) §8. **Honest gaps still open:** the vector lane's real
+embeddings (mock hashing embeds only on this plane), the `search_relevance_v1` suite (honest labels
+are not built), the merchant agent loop (§142 — the question box exists (D846), the loop answering a
+real customer question end-to-end remains), and visual-baseline
 parity across platforms (win32 snapshots; CI runs chromium projects only). The vertical-slice path
 is proven at the API-contract and browser-suite level, not yet recorded as a filmed §170 run this
 session.

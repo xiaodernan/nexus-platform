@@ -19,7 +19,13 @@ import json
 import sys
 from typing import Any
 
-from nexus_ai.eval import intent_v1, personalization_v1, rag_faithfulness_v1, safety_injection_v1
+from nexus_ai.eval import (
+    intent_v1,
+    personalization_v1,
+    rag_faithfulness_v1,
+    safety_injection_v1,
+    tool_selection_v1,
+)
 
 #: The suites this repository ships, by the name the CI step uses.
 SUITES = {
@@ -27,6 +33,7 @@ SUITES = {
     personalization_v1.SUITE: personalization_v1.run,
     rag_faithfulness_v1.SUITE: rag_faithfulness_v1.run,
     safety_injection_v1.SUITE: safety_injection_v1.run,
+    tool_selection_v1.SUITE: tool_selection_v1.run,
 }
 
 

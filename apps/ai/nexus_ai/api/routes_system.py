@@ -37,7 +37,8 @@ SERVICE_VERSION = "0.1.0"
 CANONICAL_TOOLS: tuple[str, ...] = CANONICAL_TOOL_NAMES
 
 #: read-only tools this HTTP layer already answers *through its endpoints*
-#: (still `implemented: false` for dispatch purposes — there is no registry yet).
+#: read-only tools the dispatch registry registers today (tools/builtin.py) — the
+#: HTTP layer answers them through its endpoints and the manifest reads the live registry.
 _DATA_PATH_TOOLS = frozenset({
     "search_merchants", "get_business_hours", "get_price", "get_user_preferences",
     "search_products", "search_services",

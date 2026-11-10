@@ -22,7 +22,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 | § | Requirement | Owner artifact | Verify | Status |
 |---|---|---|---|---|
 | 10 | Query understanding → Intent (uncertain fields allowed) | `apps/ai/nexus_ai/nlu/understand.py`, `AGENT_CONTRACT` §7.1 | eval `intent_v1` | building |
-| 11-14 | Multi-agent roster + orchestrator (dynamic plan, not blind tool calls) | `apps/ai/nexus_ai/orchestrator/{planner,executor}.py`, `agents/*` | unit + eval `tool_selection_v1` | building |
+| 11-14 | Multi-agent roster + orchestrator (dynamic plan, not blind tool calls) | `apps/ai/nexus_ai/orchestrator/{planner,executor}.py`, `agents/*` | unit + eval `tool_selection_v1` | building (planner/executor + 40-case suite landed D851; the roster agents and §10's LLM-level loop remain) |
 | 15-17 | Tool registry: schema/validation/timeout/retry/logging/auth/errors | `apps/ai/nexus_ai/tools/registry.py` | unit + `GET /ai/v1/tools` | building |
 | 18-20 | RAG pipeline (parse→chunk→embed→hybrid→rerank→pack→LLM) | `apps/ai/nexus_ai/rag/*` | eval `rag_faithfulness_v1` | building |
 | 21 | Hybrid search = keyword + vector + metadata + geo + ranking | `apps/ai/nexus_ai/search/sql.py` | integration + eval `search_relevance_v1` | building |

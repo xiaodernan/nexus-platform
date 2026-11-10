@@ -101,8 +101,9 @@ price/inventory/availability.
 
 `suites` — **shipped and CI-gated now**: `intent_v1` (69 cases), `rag_faithfulness_v1` (25 cases, ≤2% hallucination
 bound), `safety_injection_v1` (47 cases, 100% containment bound), `personalization_v1` (25 cases,
-preference-lift bound = 1.0). **Specified, not yet built**: `search_relevance_v1`, `tool_selection_v1`
-(the orchestrator that `tool_selection_v1` would judge does not exist yet). `eval_suites`/`eval_cases` tables are the aspirational store; the shipped harness lives in `apps/ai/nexus_ai/eval/` and is the CI enforcement point.
+preference-lift bound = 1.0), `tool_selection_v1` (40 cases, exact tool-selection ≥ 0.9 — the deterministic
+planner in `orchestrator/planner.py`, AGENT_CONTRACT §10). **Specified, not yet built**: `search_relevance_v1`
+(its honest labels are an open task — ROADMAP.md). `eval_suites`/`eval_cases` tables are the aspirational store; the shipped harness lives in `apps/ai/nexus_ai/eval/` and is the CI enforcement point.
 Per-run metrics in `eval_runs.metrics` (aspired): task success, tool success, precision@10,
 relevance nDCG, **hallucination rate**, p50/p95 latency, cost, human-intervention rate.
 

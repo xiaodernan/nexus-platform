@@ -11,7 +11,7 @@ integration → build → E2E → security scan. Honesty is testable here, not j
 | Integration | Testcontainers (Postgres+pgvector, Redis) | repositories (tenant predicate enforced), Flyway migrations, tool dispatch, hybrid search SQL | every PR |
 | API / **contract** | schema tests vs generated OpenAPI ([API.md](API.md)) | every documented shape; error envelope codes; `Idempotency-Key`; no-store headers; SSE event names | every PR |
 | RAG | `rag_faithfulness_v1` | retrieval precision, citation resolution, answer-without-retrieval refusal | AI merge |
-| Agent | `intent_v1` (69) · `safety_injection_v1` (47) · `rag_faithfulness_v1` (25) · `personalization_v1` (25) · `tool_selection_v1` | task/tool success, hallucination, injection containment | **release gate** (§5) |
+| Agent | `intent_v1` (69) · `safety_injection_v1` (47) · `rag_faithfulness_v1` (25) · `personalization_v1` (25) · `tool_selection_v1` (40) | task/tool success, hallucination, injection containment | **release gate** (§5) |
 | Browser E2E | Playwright (§74) | full journeys (§2) | nightly + pre-release |
 | Visual | Playwright screenshot diff (§75) | major UI changes → regression detect | on UI PR |
 | Security | §50 checklist + injection | tenancy 404, RBAC denial audit, SSRF allow-list | PR + scan |
@@ -128,7 +128,7 @@ background-suite contention).
 python scripts/verify_consumer_slice.py            # 14/14 against the live plane
 node scripts/verify_served_reads.mjs --base http://127.0.0.1:8090   # PASS, 611 checks
 node scripts/verify_payload_conformance.mjs        # 39 payloads validated, 0 rejected
-python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1 --fail-on-gate  # PASS, 166 cases
+python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1,tool_selection_v1 --fail-on-gate  # PASS, 206 cases (all five suites)
 cd apps/web; npm run evidence                      # 5/5 surfaces, manifest ok=true
 ```
 When the live plane serves NOW-anchored data, these are the confirmations the plane is honest;

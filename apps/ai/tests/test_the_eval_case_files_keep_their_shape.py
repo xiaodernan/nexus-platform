@@ -7,7 +7,7 @@ that contradicts the expectation are all instructions to a reader to trust the t
 and they survive every pure-logic test in `test_eval_suites.py` untouched.
 
 Measured 2026-11-09 at HEAD: `intent_v1` 69 cases, `safety_injection_v1` 47 cases,
-`rag_faithfulness_v1` 25 cases, `personalization_v1` 25 cases — all four files decode as UTF-8,
+`rag_faithfulness_v1` 25 cases, `personalization_v1` 25 cases, `tool_selection_v1` 40 cases — all five files decode as UTF-8,
 no duplicate ids, no `expect`/`must_not` overlap, every `expect` key resolvable to a key the
 extractor emits (`extract_intent_dict('anything').keys()`), no unexpected top-level keys, every id a
 lowercase slug.
@@ -205,18 +205,60 @@ def test_the_case_files_are_the_counts_measured():
     assert len(_load("safety_injection_v1")) == 47
     assert len(_load("rag_faithfulness_v1")) == 25
     assert len(_load("personalization_v1")) == 25
+    assert len(_load("tool_selection_v1")) == 40
 
 
-def test_all_four_files_decode_as_utf_8():
-    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1", "personalization_v1"):
+def test_all_five_files_decode_as_utf_8():
+    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1", "personalization_v1",
+                  "tool_selection_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         raw.decode("utf-8")
 
 
-def test_all_four_case_files_are_lf_only():
+def test_all_five_case_files_are_lf_only():
     # Mixed line endings silently parse but corrupt byte-level gates that compare against HEAD
     # (e.g. tmp-census byte sums). The case files are LF-only in the store, pinned here so a
     # future stray CR byte fails the gate instead of drifting the file bytes unnoticed.
-    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1", "personalization_v1"):
+    for suite in ("intent_v1", "safety_injection_v1", "rag_faithfulness_v1", "personalization_v1",
+                  "tool_selection_v1"):
         raw = (Path(__file__).parent.parent / "nexus_ai" / "eval" / "data" / f"{suite}.jsonl").read_bytes()
         assert b"\r" not in raw, f"{suite}.jsonl carries a CR byte - the case file is not LF-only"
+
+
+def test_tool_selection_ids_are_unique_and_slugs():
+    ids = [c["id"] for c in _load("tool_selection_v1")]
+    assert len(ids) == len(set(ids)), (len(ids), set(ids))
+    assert all(_SLUG.match(i) for i in ids), [i for i in ids if not _SLUG.match(i)]
+
+
+def test_tool_selection_cases_carry_only_the_known_keys():
+    for case in _load("tool_selection_v1"):
+        extra = set(case) - {"id", "kind", "text", "context", "expected_tools", "expected_args"}
+        assert not extra, (case["id"], extra)
+
+
+def test_tool_selection_kind_is_exact_or_refusal():
+    for case in _load("tool_selection_v1"):
+        assert case["kind"] in ("exact", "refusal"), case["id"]
+
+
+def test_tool_selection_expected_tools_are_registered_and_typed():
+    registered = {"get_business_hours", "get_price", "get_user_preferences",
+                  "search_merchants", "search_products", "search_services"}
+    for case in _load("tool_selection_v1"):
+        tools = case["expected_tools"]
+        assert isinstance(tools, list), case["id"]
+        assert all(t in registered for t in tools), (case["id"], tools)
+        if case["kind"] == "refusal":
+            assert tools == [], f"{case['id']} is a refusal that plans tools"
+            assert not (case.get("expected_args") or {}), case["id"]
+        else:
+            assert tools, f"{case['id']} is an exact case with nothing planned"
+            assert isinstance(case.get("expected_args") or {}, dict), case["id"]
+
+
+def test_tool_selection_expected_args_name_planned_tools():
+    for case in _load("tool_selection_v1"):
+        for tool in (case.get("expected_args") or {}):
+            assert tool in case["expected_tools"], (
+                f"{case['id']}: expected_args names {tool!r}, which is not in expected_tools")

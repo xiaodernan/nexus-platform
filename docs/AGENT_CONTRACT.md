@@ -187,7 +187,7 @@ North-star derivation (§162): a `search` followed within 30 min by `reserve | p
 
 ## 11. Evaluation gate (§71-73)
 
-`suites`: `intent_v1` (1000 cases), `search_relevance_v1`, `rag_faithfulness_v1`, `tool_selection_v1`,
+`suites`: `intent_v1` (69 cases), `search_relevance_v1` (specified, not built), `rag_faithfulness_v1`, `tool_selection_v1` (40 cases),
 `safety_injection_v1`, `personalization_v1`. Metrics per run: task success, tool success, precision@10, relevance nDCG,
 **hallucination rate**, p50/p95 latency, cost, human-intervention rate.
 Release gate: hallucination rate < 2%, injection-suite containment = 100%, p95 search < 250ms,

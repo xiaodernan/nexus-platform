@@ -1,0 +1,45 @@
+// tool_selection_v1 — the orchestrator's planner judged against labelled turns (AGENT_CONTRACT §10).
+// kind=exact: the full planned tool sequence must match expected_tools (order included — the
+// planner's rule order is deterministic). kind=refusal: no steps may be planned.
+// Context is the caller's turn context (merchant/subject). All cases are authored alongside the
+// planner's rules — the suite locks behaviour, it does not prove generalisation (see STATUS §852).
+{"id": "ts-001", "kind": "exact", "text": "你們幾點開？", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}}}
+{"id": "ts-002", "kind": "exact", "text": "what time do you open?", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}}}
+{"id": "ts-003", "kind": "exact", "text": "營業時間", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}}}
+{"id": "ts-004", "kind": "exact", "text": "is it open now?", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}}}
+{"id": "ts-005", "kind": "exact", "text": "幾點開", "context": null, "expected_tools": ["get_business_hours"], "expected_args": {"get_business_hours": {}}}
+{"id": "ts-006", "kind": "exact", "text": "幾錢啊", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_price"], "expected_args": {"get_price": {"subject_id": "m-1", "subject_type": "merchant"}}}
+{"id": "ts-007", "kind": "exact", "text": "how much is this?", "context": {"subject_id": "o-1", "subject_type": "offering"}, "expected_tools": ["get_price"], "expected_args": {"get_price": {"subject_id": "o-1", "subject_type": "offering"}}}
+{"id": "ts-008", "kind": "exact", "text": "價格是多少？", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_price"], "expected_args": {"get_price": {"subject_id": "m-1", "subject_type": "merchant"}}}
+{"id": "ts-009", "kind": "exact", "text": "多少錢", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_price"], "expected_args": {"get_price": {"subject_id": "m-1", "subject_type": "merchant"}}}
+{"id": "ts-010", "kind": "exact", "text": "how much", "context": null, "expected_tools": ["get_price"], "expected_args": {"get_price": {}}}
+{"id": "ts-011", "kind": "exact", "text": "my preferences", "context": null, "expected_tools": ["get_user_preferences"], "expected_args": {"get_user_preferences": {}}}
+{"id": "ts-012", "kind": "exact", "text": "我的偏好", "context": null, "expected_tools": ["get_user_preferences"], "expected_args": {"get_user_preferences": {}}}
+{"id": "ts-013", "kind": "exact", "text": "我的喜好", "context": null, "expected_tools": ["get_user_preferences"], "expected_args": {"get_user_preferences": {}}}
+{"id": "ts-014", "kind": "exact", "text": "check my taste preferences", "context": null, "expected_tools": ["get_user_preferences"], "expected_args": {"get_user_preferences": {}}}
+{"id": "ts-015", "kind": "exact", "text": "搵一間餐廳", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {"text": "一間餐廳"}}}
+{"id": "ts-016", "kind": "exact", "text": "find a quiet cafe", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {"text": "a quiet cafe"}}}
+{"id": "ts-017", "kind": "exact", "text": "search central restaurants", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {"text": "central restaurants"}}}
+{"id": "ts-018", "kind": "exact", "text": "尋找 海景餐廳", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {"text": "海景餐廳"}}}
+{"id": "ts-019", "kind": "exact", "text": "搵 咖啡", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {"text": "咖啡"}}}
+{"id": "ts-020", "kind": "exact", "text": "search", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {}}}
+{"id": "ts-021", "kind": "exact", "text": "find products skincare", "context": null, "expected_tools": ["search_products"], "expected_args": {"search_products": {"text": "skincare"}}}
+{"id": "ts-022", "kind": "exact", "text": "搵產品 潤膚霜", "context": null, "expected_tools": ["search_products"], "expected_args": {"search_products": {"text": "潤膚霜"}}}
+{"id": "ts-023", "kind": "exact", "text": "find products shampoo", "context": null, "expected_tools": ["search_products"], "expected_args": {"search_products": {"text": "shampoo"}}}
+{"id": "ts-024", "kind": "exact", "text": "尋找商品 潤膚霜", "context": null, "expected_tools": ["search_products"], "expected_args": {"search_products": {"text": "潤膚霜"}}}
+{"id": "ts-025", "kind": "exact", "text": "find services haircut", "context": null, "expected_tools": ["search_services"], "expected_args": {"search_services": {"text": "haircut"}}}
+{"id": "ts-026", "kind": "exact", "text": "搵服務 洗剪吹", "context": null, "expected_tools": ["search_services"], "expected_args": {"search_services": {"text": "洗剪吹"}}}
+{"id": "ts-027", "kind": "exact", "text": "find services按摩", "context": null, "expected_tools": ["search_services"], "expected_args": {"search_services": {"text": "按摩"}}}
+{"id": "ts-028", "kind": "exact", "text": "尋找服務 按摩", "context": null, "expected_tools": ["search_services"], "expected_args": {"search_services": {"text": "按摩"}}}
+{"id": "ts-029", "kind": "exact", "text": "幾點開？價格幾多？", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours", "get_price"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}, "get_price": {"subject_id": "m-1", "subject_type": "merchant"}}}
+{"id": "ts-030", "kind": "exact", "text": "my preferences and how much does this cost?", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_price", "get_user_preferences"], "expected_args": {"get_price": {"subject_id": "m-1", "subject_type": "merchant"}, "get_user_preferences": {}}}
+{"id": "ts-031", "kind": "exact", "text": "幾點開？同埋搵咖啡", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours", "search_merchants"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}, "search_merchants": {"text": "咖啡"}}}
+{"id": "ts-032", "kind": "refusal", "text": "你好", "context": null, "expected_tools": []}
+{"id": "ts-033", "kind": "refusal", "text": "hello", "context": null, "expected_tools": []}
+{"id": "ts-034", "kind": "refusal", "text": "幫我訂位", "context": null, "expected_tools": []}
+{"id": "ts-035", "kind": "refusal", "text": "whats the weather in central today", "context": null, "expected_tools": []}
+{"id": "ts-036", "kind": "refusal", "text": "草莓蛋糕好食嗎", "context": null, "expected_tools": []}
+{"id": "ts-037", "kind": "exact", "text": "my preference is sea view", "context": null, "expected_tools": ["get_user_preferences"], "expected_args": {"get_user_preferences": {}}}
+{"id": "ts-038", "kind": "exact", "text": "幾多錢", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_price"], "expected_args": {"get_price": {"subject_id": "m-1", "subject_type": "merchant"}}}
+{"id": "ts-039", "kind": "exact", "text": "尋找", "context": null, "expected_tools": ["search_merchants"], "expected_args": {"search_merchants": {}}}
+{"id": "ts-040", "kind": "exact", "text": "opening hours please", "context": {"merchant_id": "m-1"}, "expected_tools": ["get_business_hours"], "expected_args": {"get_business_hours": {"merchant_id": "m-1"}}}
