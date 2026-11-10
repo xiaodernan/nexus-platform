@@ -175,7 +175,7 @@ async def _persist_turn(deps: Any, *, body: Any, sender_type: str, content: str,
     try:
         await get_platform_client(deps.settings).append_conversation_message(
             conversation_id, sender_type=sender_type, content=content,
-            internal_token=token, tenant=deps.tenant_id(), **fields)
+            internal_token=token, tenant=deps.settings.tenant_slug, **fields)
     except Exception as exc:  # noqa: BLE001 - the answer outranks the ledger write
         log.warning("merchant-agent dialogue write failed for %s: %s", conversation_id, exc)
 

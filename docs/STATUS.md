@@ -37609,3 +37609,56 @@ by CI for staleness (only its existence/cross-links are), so it will drift like 
 touched alongside code; that the seeded corpus ports listed are guaranteed free on every future host.
 
 - readers: `docs/CLOUD.md`, `docs/README.md` (subsystem table), `docs/ARCHITECTURE.md` (§1, sidecar paragraph).
+
+## 861. D861 — the merchant sees the question and the answer as THEIR conversation
+
+**The feature the whole pipeline exists for.** §142 / the merchant agent loop's acceptance test requires the
+customer's question to show up in the merchant's inbox — in the same thread the consumer started, with the
+AI's answer and the citations it used. On this plane, it did not. The consumer signed in, the BFF opened a
+conversation (`system` row), the AI answered, and the merchant inbox showed the conversation headers but no
+messages. The missing half was the relay.
+
+**Measured symptom.** `docker exec nexus-platform-postgres psql -Ul... -d nexus_verify2` on the seed database
+returned: conversations = 18 system rows, zero `user` and zero `ai_agent` rows. The AI logs showed
+`merchant-agent dialogue write failed for <uuid>: platform POST /api/v1/internal/conversations/<id>/agent-message -> 404`.
+
+**Why.** The AI service passes `deps.tenant_id()` to its platform HTTP client's `X-Tenant` header — which is the
+internal tenant UUID (`DEFAULT_TENANT_ID = 00000000-0000-0000-0000-000000000001`), not the platform's slug. The
+platform's `TenantFilter.resolve(slug)` does a SQL lookup for `slug = :slug` on the `tenants` table — and
+`'00000000-0000-0000-0000-000000000001'` does not match any row, so the request died at 404 with `tenant_not_found`
+before the `/internal/conversations/{id}/agent-message` endpoint ever ran. Every single turn through the relay
+failed, silently from the consumer's view (the SSE answer still streamed back; the write failure is a warning in
+the AI logs, not a 5xx). Fix: `_persist_turn` passes `deps.settings.tenant_slug` (`"hong-kong"`) instead.
+
+**Not sufficient alone.** The relay also requires two env vars on BOTH services, this dev plane:
+`NEXUS_AI_INTERNAL_TOKEN` (the shared service token, ≥16 chars; dev-only value documented, never a real
+secret) and `NEXUS_PLATFORM_MODE=http` on the AI (the default is `stub`, which swallows writes without
+hitting the platform; `http` is what makes `HttpPlatformClient` actually reach the platform). The AI web BFF
+closes the consumer's SSE stream exactly once — a restart between turns loses only the in-flight answer, never
+the conversation, because the platform opens the conversation before the first token hits the wire.
+
+**Re-verified end-to-end (this session, live plane).** Consumer signs in (`POST /api/nexus/auth` role=consumer
+→ 200), POSTs `有BB椅嗎` against basil-leaf-0419 through `/api/nexus/conversations/ask` — SSE events
+status/understanding → status/summarizing → summary with four citations → done with `degraded:false`,
+`provider:mock` — 21ms latency. Platform `messages` table carries sender rows:
+`user | 有BB椅嗎…` → `ai_agent | 找到 4 個符合條件的選擇… 常見問題 / FAQ` for conversation
+`906a009e-1157-42b1-81c1-24b2f0ca3ca3`. Merchant signs in (`role=merchant`), `/merchant/conversations/<id>`
+renders the same thread: 200, 54,817 bytes, content contains `找到 4` twice. The merchant can now read
+exactly what the agent told their customer and which chunks it used.
+
+**Eval gate.** All five AI suites re-run green after the one-line fix (`RESULT: PASS - 5 suites, 0 failing`,
+`exact_match=1.0000`). Tool-selection / RAG / faithfulness / safety / personalization unchanged.
+
+**Not claimed.** (a) That the internal door is AUTH-Foundation-compliant: the token is symmetric and shared
+between two dev processes; it is exactly what the platform's `AiServiceTokenGuard` is designed to verify
+constant-time, but rotation/audit discipline is not in this unit. (b) Anything about the 502 body the AI
+answers when the platform is down — the answer still streams (per D846's explicit commit), the relay warning
+is logged, no retry. (c) That a consumer ASKING a question will definitely land in the inbox — only turns
+that reached the AI (i.e., grounded or degraded/ungrounded both reach `_persist_turn`; a network failure at
+the AI before `_persist_turn` runs does not write anything).
+
+- readers: `apps/ai/nexus_ai/api/routes_stream.py` (`_persist_turn`, the fixed call site),
+  `apps/ai/nexus_ai/adapters/platform.py` (`HttpPlatformClient`, `_headers` X-Tenant),
+  `services/platform/src/main/java/com/nexus/platform/TenantFilter.java` (the SQL slug → tenant resolution),
+  `services/platform/src/main/java/com/nexus/conversation/AiServiceTokenGuard.java` (constant-time token check),
+  `docs/PLAN.md` (the cloud-plane queue, D861 row).

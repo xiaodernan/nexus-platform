@@ -4144,7 +4144,18 @@ normal boot unchanged unless a profile opts in.
   ingress). `cloud_smoke.sh` proves it end-to-end (started after the gateway, discovered it, showed it UP;
   PASS with the admin member), compose's `cloud` profile gains the `admin-server` service on
   `127.0.0.1:19444`, CI's `cloud` job covers it through the same smoke.
-
+- **D861 (§861): the merchant's own question lives in the merchant's own inbox.** The consumer asked
+  `有BB椅嗎` against basil-leaf-0419, the agent found grounded chunks, the answer was written back through
+  the platform's internal door, and the merchant's conversation detail page renders it: 200, 54,817 bytes,
+  sender rows `system`/`user`/`ai_agent`. The relay was silently broken before this unit: the AI service
+  sent the internal `X-Tenant` header its `DEFAULT_TENANT_ID` uuid (`00000000-0000-0000-0000-000000000001`)
+  instead of the platform slug (`hong-kong`) — the platform's `TenantFilter` SQL lookup for slug
+  `'00000000-0000-0000-0000-000000000001'` matched nothing, returned `tenant_not_found` 404. One-line fix
+  (`tenant=deps.settings.tenant_slug` in `_persist_turn`). `NEXUS_PLATFORM_MODE=http` on this dev plane
+  (the default stub swallows relays without touching the platform — it would have left the merchant
+  inbox empty forever). The internal door requires `NEXUS_AI_INTERNAL_TOKEN` on BOTH services (dev-only
+  token, not a secret); without it the door answers 501 `not_implemented` by design (DECISIONS D7).
+  All five eval suites re-run green after the fix (exact_match 1.0000).
   The mandate asked for Spring Cloud elements, and a registry surviving a node death is the textbook one.
   Three configurations were tried on throwaway ports (18961/18962/18089, nothing of the plane's deployment
   touched): a comma-separated zone (both nodes log "The replica size seems to be empty"; the default
