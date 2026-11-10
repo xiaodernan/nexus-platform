@@ -37438,3 +37438,43 @@ documented posture) — exempting it from the limiter is deliberate, not an endo
   `scripts/check_cloud_discovery.mjs:26`, `:192-228`,
   `scripts/cloud_lb_smoke.sh:98-131`, `:135-139`,
   `.github/workflows/ci.yml:154`.
+
+## 857. D857 — the edge picks up a config-repo edit without a restart (Spring Cloud refresh)
+
+**Why this unit.** §845 gave the plane a config server; §857 asks the next question: is the config flippable
+WITHOUT a restart? A config server that only serves v1 is a snapshot, not a config service. This unit closes
+the loop end-to-end and pins it in CI.
+
+**The mechanism.** `EdgeInfoController` is now `@RefreshScope`
+(`services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:30`) — on
+`POST /actuator/refresh` the bean is destroyed and re-created with fresh `@Value` bindings. The dev edge
+exposes `health,info,gateway,refresh` (`application.yaml` management block), and `POST /actuator/refresh` is
+a real round trip: it answers 200 and names the changed key (`["nexus.edge.label"]`), not a 204 no-op.
+
+**The proof (`scripts/cloud_refresh.sh`, throwaway repo, never the committed one).** Writes a temporary
+`nexus-gateway.yml` (`nexus.edge.label: refresh-v1`), boots the config server against it (command-line
+`--spring.cloud.config.server.native.search-locations` — the first attempt bound a path the JVM cannot see:
+Git Bash's `mktemp` dir lives in MSYS2's `/tmp`, which the JVM resolves against the current drive root, e.g.
+`D:\tmp\…` that does not exist; the fix is `cygpath -m` to the drive-letter spelling plus the `file:///`
+prefix, verified both at the probe step and in the shipped smoke), boots the gateway against it, and then:
+`/cloud/info` carries **refresh-v1**; the repo file is rewritten to **refresh-v2**; the config server serves
+v2 (`/nexus-gateway/default` names `refresh-v2`); `POST /actuator/refresh` answers **200 with
+`["nexus.edge.label"]`**; `/cloud/info` now carries **refresh-v2**; the gateway process is the **same pid**
+before and after. Measured PASS twice (both runs after the path fix). The smoke's cleanup removes the
+throwaway repo and every process; the committed `config-repo/nexus-gateway.yml` is never touched.
+
+**CI.** The `cloud` job gains `refresh smoke — a config-repo edit lands at the edge with no restart`
+immediately after the lb smoke (YAML parse verified). `cloud_smoke.sh` re-run green against the rebuilt
+`@RefreshScope` gateway jar. PLAN.md's cloud-plane queue records the unit.
+
+**Not claimed.** (a) No file watcher: the operator (or a pipeline) POSTs `/actuator/refresh` — a scheduled
+refresh needs a trigger this unit does not invent. (b) `/actuator/gateway/routes` remains publicly
+introspectable on this dev edge (D850 posture, unchanged). (c) The refresh trigger is manual; no spring-cloud-
+bus (no broker in this plane). (d) CI-runner results for the new step are not observable this session; locally
+everything above ran green. (e) Route lb-name re-resolution already works per request; refresh affects only
+the config-bound values, and only values bound through `@RefreshScope` re-read.
+
+- readers: `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java`,
+  `services/cloud/gateway/src/main/resources/application.yaml`,
+  `scripts/cloud_refresh.sh`, `.github/workflows/ci.yml` (the cloud job's refresh step),
+  `docs/PLAN.md` (the cloud-plane queue, D857 row).
