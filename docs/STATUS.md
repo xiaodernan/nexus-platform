@@ -37208,3 +37208,37 @@ cannot honestly read.
   `apps/ai/tests/test_the_eval_case_files_keep_their_shape.py`,
   `.github/workflows/ci.yml:254`,
   `docs/AGENT_CONTRACT.md`, `docs/AI.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md`, `docs/ROADMAP.md`.
+
+## 852. D852 — the mock plane read a word the service already retired: 午市 out of the noon band
+
+**Carried lane.** This work was found in the working tree when this session opened its units — authored
+outside it, landed here verified, and named D852 by its own comment. The mandate carries such lanes forward
+rather than leaving them to rot; the verification below is this session's, not the author's.
+
+**The defect.** `timeparse.MENU_OCCASION_TOKENS` holds 午市 in a table of its own (D677): the word names the
+lunch SERVICE — the meal occasion — and never a clock hour, so the service understands it and narrows nothing
+with it. The mock's `PART_OF_DAY_WINDOWS` noon band still carried it as a clock cue, so 「午市三點」 came back
+as 15:00 where the authority answers 03:00, and the invented hour survived into the next turn (the client posts
+`previous_intent`, and the mock merges the new words into it).
+
+**The fix (as landed).** The mock's noon band drops the word (`tokens: ['中午','正午','lunch','luncheon','noon','midday']`).
+`stated-time.test.ts` gains: band-for-band comparison of the mock roster against the service roster after the
+service's own canonicalisation (the direction the old one-way leg could not see — it asked only whether the
+mock carried what the service reads, and a retirement is invisible to that question), a no-retired-word sweep
+over `MENU_OCCASION_TOKENS`, behavioral legs proving a meal occasion publishes no hour
+(`type: 'none'`, `starts_at: null`) while the clock beside it reads as it stands (`午市三點` → 03:00, not 15:00;
+`中午三點` → 15:00 the way the service tilts it), and a merge-intent parity leg against `understandQuery`.
+
+**Verification.** `stated-time.test.ts` **15/15 passed** (vitest, this session, 2026-11-10). No other plane was
+re-measured; the author's own claim in the code comment stands unverified by this session and is disclosed as
+such.
+
+**Not claimed.** That the mock's other bands are retirement-clean beyond the one word this unit names — the
+band-for-band leg now held green on the shipped bytes, but a future service retirement will fail the gate loudly
+(which is the point of the leg). Whether a real user flow on the mock plane was re-run end-to-end after the
+change (the unit carries the behavioral assertions; no browser re-run was performed). Minimality of the
+canonicalisation reader (it mirrors `canonical.canonical` branch-for-branch as TEXT; a drift in the service's
+canonicalisation would redden, not silently mis-compare).
+
+- readers: `apps/web/src/lib/mock/index.ts` (PART_OF_DAY_WINDOWS, noon band),
+  `apps/web/src/lib/mock/stated-time.test.ts` (the band-for-band legs and the meal-occasion legs).
