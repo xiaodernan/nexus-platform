@@ -18,26 +18,45 @@ import { ConsoleNav, merchantNavItems } from './console-nav';
 export interface MerchantSession {
   locale: string;
   signedIn: boolean;
-  /** The `?business=` id when one was requested, else null. */
+  /** The query string id when one was requested, else null. */
   requested: string | null;
-  /** The id the reads should use — the requested one, or the demo identity in mock mode. */
+  /** The id the reads should use: requested; on live mode the caller's own first merchant; on mock mode the fixture. */
   businessId: string;
-  /** True ⇒ this render must not issue live reads. */
+  /** True; this render must not issue live reads. */
   blocked: boolean;
+}
+
+async function liveBusinessId(sessionToken: string | undefined): Promise<string | null> {
+  if (!sessionToken) return null;
+  try {
+    const base = process.env.PLATFORM_API_BASE_URL ?? 'http://127.0.0.1:8090';
+    const tenant = process.env.NEXUS_TENANT ?? process.env.NEXT_PUBLIC_TENANT ?? 'hong-kong';
+    const res = await fetch(`${base}/api/v1/me`, {
+      headers: { accept: 'application/json', 'x-tenant': tenant, cookie: `nexus_session=${sessionToken}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { memberships?: Array<{ merchant?: { id?: string } }> } | null;
+    return body?.memberships?.[0]?.merchant?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function merchantSession(searchParams: Record<string, string | string[] | undefined>): Promise<MerchantSession> {
   const locale = await currentLocale();
   const requested = typeof searchParams.business === 'string' && searchParams.business ? searchParams.business : null;
   const jar = await cookies();
-  const signedIn = Boolean(jar.get(SESSION_COOKIE)?.value);
-  return {
-    locale,
-    signedIn,
-    requested,
-    businessId: requested ?? DEMO_CONSOLE_BUSINESS,
-    blocked: !IS_MOCK && !signedIn,
-  };
+  const sessionToken = jar.get(SESSION_COOKIE)?.value;
+  const signedIn = Boolean(sessionToken);
+
+  let businessId = requested ?? DEMO_CONSOLE_BUSINESS;
+  if (!IS_MOCK && !requested) {
+    const live = await liveBusinessId(sessionToken);
+    if (live) businessId = live;
+  }
+
+  return { locale, signedIn, requested, businessId, blocked: !IS_MOCK && !signedIn };
 }
 
 /** The business picker shown in demo mode, so every demo identity (and the empty one) is reachable. */
