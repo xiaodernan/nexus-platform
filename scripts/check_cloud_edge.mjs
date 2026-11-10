@@ -19,8 +19,10 @@
  *       (slidingWindowSize, minimumNumberOfCalls, failureRateThreshold, waitDurationInOpenState)
  *       and registerHealthIndicator, and the rate-limit knobs NEXUS_GATEWAY_RATE_BURST /
  *       NEXUS_GATEWAY_RATE_REPLENISH are wired with the documented defaults (10 / 5).
- *   E4  EdgeFallbackController.java serves all three fallbacks as 503 with the contract error shape
- *       `edge_upstream_unavailable` and the request id from the edge filter.
+ *   E4  EdgeFallbackController.java serves all three fallbacks (platform/ai/web) as 503 with the
+ *       contract error shape `edge_upstream_unavailable` and the request id from the edge filter.
+ *       Since D875 each door is an @RequestMapping accepting GET/POST/PUT/PATCH/DELETE, so a
+ *       circuit-broken write lands on the honest 503 instead of a 405; all five methods are asserted.
  *   E5  EdgeRateLimitFilter.java runs ordered after EdgeRequestIdFilter, reads the two env knobs,
  *       and answers over-limit with 429 + Retry-After: 1 + `edge_rate_limited`.
  *   E6  The smokes carry the behavioural proofs, so a gutted assertion cannot read as green:
@@ -132,20 +134,41 @@ function main(value, flag) {
   if (!burst) charge('E3', 'the base YAML does not wire nexus.edge.rate-limit-burst to NEXUS_GATEWAY_RATE_BURST with default 10');
   if (!replenish) charge('E3', 'the base YAML does not wire nexus.edge.rate-limit-replenish to NEXUS_GATEWAY_RATE_REPLENISH with default 5');
 
-  /* E4 — the fallback body is the contract shape, with the id */
+  /* E4 — the fallback body is the contract shape, with the id.
+   *
+   * D875 replaced the three @GetMapping mappings with @RequestMapping(path=…, method={GET,POST,PUT,
+   * PATCH,DELETE}) so a POST that the breaker refuses no longer 405s at the fallback door. This reader
+   * used to grep the old annotation and went red against correct code. It now asserts the STRONGER
+   * property: all three doors exist and each one accepts all five methods, plus the 503/shape/id.
+   * A mapping that silently drops POST would redden here even though the old @GetMapping grep passed. */
   const fb = text[FALLBACK_JAVA];
   const fbChecks = [
-    ['@GetMapping("/fallback/platform")', 'the platform fallback mapping'],
-    ['@GetMapping("/fallback/ai")', 'the ai fallback mapping'],
-    ['@GetMapping("/fallback/web")', 'the web fallback mapping'],
     ['SERVICE_UNAVAILABLE', 'the 503 status'],
     ['edge_upstream_unavailable', 'the contract error code'],
     ['request_id', 'the request id in the body'],
   ];
+  const FALLBACK_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map((m) => `RequestMethod.${m}`);
+  let mappingsHeld = 0;
+  for (const upstream of ['platform', 'ai', 'web']) {
+    const hit = new RegExp(
+      `@RequestMapping\\(path\\s*=\\s*"/fallback/${upstream}"\\s*,\\s*method\\s*=\\s*\\{([^}]*)\\}`).exec(fb);
+    if (!hit) {
+      charge('E4', `EdgeFallbackController.java: the ${upstream} fallback mapping not found`);
+      continue;
+    }
+    const missing = FALLBACK_METHODS.filter((m) => !hit[1].includes(m));
+    if (missing.length) {
+      charge('E4', `EdgeFallbackController.java: the ${upstream} fallback does not accept ${missing.join(', ')}`);
+    } else {
+      mappingsHeld += 1;
+    }
+  }
   for (const [needle, label] of fbChecks) {
     if (!fb.includes(needle)) charge('E4', `EdgeFallbackController.java: ${label} not found`);
   }
-  note('E4 fallback contract shape', fbChecks.every(([n]) => fb.includes(n)), 'three mappings + 503 + edge_upstream_unavailable + request_id');
+  note('E4 fallback contract shape',
+       mappingsHeld === 3 && fbChecks.every(([n]) => fb.includes(n)),
+       'three mappings x five methods + 503 + edge_upstream_unavailable + request_id');
 
   /* E5 — the limiter is ordered, env-configured, and answers with 429 + Retry-After */
   const rl = text[RATE_JAVA];

@@ -69,6 +69,8 @@ export function ReplyComposer({
       <label htmlFor="merchant-reply" className="text-xs font-medium text-ink-faint">
         {copy.replyLabel}
       </label>
+      {/* Same focus-visible ring the design system's `field-classes.ts` gives every field control:
+          a bare `outline-none` erased the keyboard focus indicator here (console a11y gate). */}
       <textarea
         id="merchant-reply"
         rows={2}
@@ -77,7 +79,7 @@ export function ReplyComposer({
         disabled={pending}
         placeholder={copy.replyPlaceholder}
         onChange={(event) => setText(event.target.value)}
-        className="w-full resize-y rounded-md border border-line bg-canvas px-3 py-2 text-sm text-ink-strong outline-none placeholder:text-ink-faint focus:border-accent"
+        className="w-full resize-y rounded-md border border-line bg-canvas px-3 py-2 text-sm text-ink-strong outline-none placeholder:text-ink-faint focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/35"
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-prose text-2xs leading-relaxed text-ink-muted">{copy.replyHint}</p>

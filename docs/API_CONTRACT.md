@@ -541,3 +541,14 @@ All admin routes require `role IN (platform_admin, platform_ops)` and write `aud
 - All list endpoints support `ETag`/`Cache-Control` except availability/inventory/price (no-store, §103).
 - OpenAPI is generated from code annotations at `/v3/api-docs` and `/ai/openapi.json` — this document is the design
   input, generated specs are the build output; they must agree (contract test in CI).
+- **Config-plane probe (dev/cloud profile only, D872)**: `GET /api/v1/cloud/info` →
+  `{service, banner, config_source, profiles}`. The monolith's class-level
+  `@RequestMapping("/api/v1/cloud")` is the base path for this one read; `banner` is the
+  `nexus.platform.banner` value the platform resolved from the Spring Cloud Config server, and
+  `config_source` is `local-default` when that value is still the `unmanaged` default (no config
+  server answered), `config-server` otherwise. `profiles` lists the active Spring profiles. It carries
+  no user data, no row and no secret: it exists so `scripts/cloud_monolith_refresh.sh` can prove a
+  config-repo edit landed on the monolith without a restart, via the `@RefreshScope` bean that
+  `POST /actuator/refresh` re-reads (exposed under the cloud profile only). Opt-in by configuration,
+  not an auth boundary — a production overlay hides it. It is deliberately NOT one of the
+  liveness/readiness answers above: it reports where config came from, not whether a dependency is up.

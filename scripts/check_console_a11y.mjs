@@ -20,7 +20,10 @@
  *   NAMES        every `Input` / `Textarea` / `Select` composed in the tree must pass `label` or
  *                `aria-label` / `aria-labelledby`; every raw `<input|select|textarea>` must carry one of
  *                those, or an `id` that an `htmlFor` in the same file points at, or sit inside a
- *                `<label>...</label>`.
+ *                `<label>...</label>`. Both JSX spellings of the attribute value are read — the string
+ *                form `htmlFor="foo"` / `id="foo"` and the expression form `htmlFor={"foo"}` /
+ *                `id={"foo"}`; D871's reply composer uses the string form, which this reader used to
+ *                miss and reported as an unnamed control against a correctly labelled one.
  *
  *   FOCUS ORDER  no positive `tabIndex` anywhere -- a positive tabindex reorders the whole page's tab
  *                sequence, which is why this is the one focus rule with no exception; and every
@@ -342,9 +345,14 @@ const RAW_CONTROLS = new Set(['input', 'select', 'textarea']);
 const NAMED_BY_ATTR = /\baria-label(?:ledby)?\s*=/;
 let controlsCensused = 0;
 
+/** Both JSX attribute spellings resolve to the same id; quotes are not part of the name. */
+const attrValue = (raw) => String(raw ?? '').trim().replace(/^['"]|['"]$/g, '');
 for (const f of perFile) {
   const labels = labelSpans(f.tags);
-  const htmlFors = new Set([...f.text.matchAll(/htmlFor\s*=\s*\{([^}]*)\}/g)].map((m) => m[1].trim()));
+  const htmlFors = new Set([
+    ...[...f.text.matchAll(/htmlFor\s*=\s*\{([^}]*)\}/g)].map((m) => attrValue(m[1])),
+    ...[...f.text.matchAll(/htmlFor\s*=\s*["']([^"']+)["']/g)].map((m) => attrValue(m[1])),
+  ].filter(Boolean));
   for (const t of f.tags) {
     if (t.closing) continue;
     if (FIELD_PRIMITIVES.has(t.name)) {
@@ -358,8 +366,11 @@ for (const f of perFile) {
     controlsCensused += 1;
     if (NAMED_BY_ATTR.test(t.attrs)) continue;
     if (labels.some(([a, b]) => t.start > a && t.end < b)) continue;
-    const idExpr = /\bid\s*=\s*\{([^}]*)\}/.exec(t.attrs);
-    if (idExpr && htmlFors.has(idExpr[1].trim())) continue;
+    // Expression form id={expr} or string form id="literal". The expression form is accepted only
+    // when it resolves to a literal this file's htmlFor also names; a dynamic id stays unnamed.
+    const idExpr = /\bid\s*=\s*(?:\{([^}]*)\}|["']([^"']+)["'])/.exec(t.attrs);
+    const controlId = idExpr ? attrValue(idExpr[1] ?? idExpr[2]) : null;
+    if (controlId && htmlFors.has(controlId)) continue;
     note(`${site(f, t.start)} -- a raw <${t.name}> has no accessible name: no aria-label/aria-labelledby, no htmlFor pointing at it, and no <label> around it`);
   }
 }

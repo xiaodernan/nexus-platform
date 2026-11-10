@@ -38211,3 +38211,70 @@ timeouts without status) is captured — deliberately not. In the 5xx fallback p
   `scripts/cloud_retry_smoke.sh` (the counter assertion),
   `scripts/check_cloud_plane.mjs` (the 52nd check),
   `services/cloud/gateway/src/main/resources/application.yaml` (metrics exposure, D876).
+
+## 881. D881 — the degraded relay speaks the platform's whitelist
+
+**What was missing.** The merchant-agent stream relayed an ungrounded answer with
+`handoff_reason="no_grounded_chunks"`, but the platform's `send_message` door accepts only the four
+values `low_confidence`, `user_request`, `policy`, `refund` and answers 422 to anything else — so a
+degraded turn, exactly the one that most needs a handoff, was refused at the relay. `StubPlatformClient`
+also did not record the field, so a test could not see what had been sent.
+
+**What changed.** `apps/ai/nexus_ai/api/routes_stream.py` maps a degraded answer to `low_confidence`
+(a confidence problem, not a new vocabulary item); `apps/ai/nexus_ai/adapters/platform.py` records
+`handoff_reason` in the stub's call ledger; `apps/ai/tests/test_merchant_agent_dialogue.py` gains a
+test asserting the relayed value is inside the whitelist; `scripts/demo_live.sh` exercises the arm.
+
+**Not claimed.** That the degraded answer is grounded (it never is — that is the point of `handoff`),
+that the platform's whitelist was widened, or that a live merchant conversation was observed end to
+end in this unit. The commit shipped the code and the test; this section is the ledger entry it did
+not write at the time.
+
+- readers: `apps/ai/nexus_ai/api/routes_stream.py`, `apps/ai/nexus_ai/adapters/platform.py`,
+  `apps/ai/tests/test_merchant_agent_dialogue.py`, `scripts/demo_live.sh`.
+
+## 882. D882 — the three red gates close: the reader follows the code, the contract names the door, the reply box draws a ring
+
+**The census that started this unit.** A read-only sweep of all 23 `scripts/check_*.mjs` at D881
+printed 14 GREEN / 9 RED. Three were real offenders; the rest were NOT this unit's defects —
+`check_ledger_numbers.mjs` returns UNCHECKED without `--expect` by design, `check_falsifier_registry.mjs`
+needs `--db`, and the citation readers (`check_citation_supports_sentence.mjs`,
+`check_ledger_citations.mjs`, `check_line_cite_drift.mjs`, `check_comment_citations.mjs`) need more
+than the 40s sweep budget over the 38k-line ledger; run alone, `check_comment_citations.mjs` PASSED
+(190 citations) and `check_line_cite_drift.mjs` returned REPORT/PASS (544/568 sites still name their
+line). This unit fixes the three real ones, and does not claim the sweep became all-green.
+
+**E4 was the reader, not the code.** D875 replaced the three `@GetMapping("/fallback/*")` mappings
+with `@RequestMapping(path=…, method={GET,POST,PUT,PATCH,DELETE})` so a circuit-broken POST lands on
+an honest 503 instead of a 405. `check_cloud_edge.mjs` still grepped the old annotation and reddened
+against correct code. It now parses the `@RequestMapping` method list and asserts **all five methods
+on all three doors** — a stronger property than the old grep — plus the 503 / `edge_upstream_unavailable`
+/ `request_id` shape. PASS, 11 checks.
+
+**The contract was genuinely behind.** D872 added `CloudInfoController` at
+`@RequestMapping("/api/v1/cloud")` + `GET /info`; `check_contract_drift.mjs` reported both
+`/api/v1/cloud` and `/api/v1/cloud/info` as UNDOCUMENTED (2 offenders). `docs/API_CONTRACT.md` §11 now
+documents `GET /api/v1/cloud/info` — its exact payload, that `config_source` is `local-default` when
+no config server answered, that it carries no user data, and that it is opt-in by configuration and
+NOT a health answer. PASS: 119 routes parsed, 111 served, 0 UNDOCUMENTED.
+
+**One real UI defect, one reader limitation.** `reply-composer.tsx` (D871) carried `outline-none` with
+no `focus-visible:` ring, so keyboard focus on the merchant reply box drew nothing — a genuine a11y
+offence. It now uses the design system's own `field-classes.ts` ring
+(`focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/35`). The same reader
+also called the textarea *unnamed* although `<label htmlFor="merchant-reply">` and
+`id="merchant-reply"` pair correctly: `check_console_a11y.mjs` only parsed the expression form
+`htmlFor={…}` / `id={…}`, never the string form. It now reads both spellings (quotes stripped) and
+still requires a matching id, a wrapping label, or an aria name — no exception was added.
+`check_console_a11y.mjs` PASS (25 controls, 7 outline sites, 60 contrast cells recomputed) and
+`npx tsc --noEmit` in `apps/web` exits 0.
+
+**Not claimed.** That a browser was opened to look at the focus ring (the proof is the source reader
+and the typecheck, not a screenshot). That the slow citation readers were made fast, or that the
+design-level UNCHECKED verdicts were turned into passes. That every smoke in the repository was
+re-run. That `docs/CONTINUITY_PLAN.md` (written in this unit) ships any of its Phase B/C/D items —
+it is a plan, and this section is the ledger for the three gates plus the D881 backfill.
+
+- readers: `scripts/check_cloud_edge.mjs`, `scripts/check_console_a11y.mjs`,
+  `apps/web/src/components/console/reply-composer.tsx`, `docs/API_CONTRACT.md` §11,
+  `docs/CONTINUITY_PLAN.md`, `services/platform/src/main/java/com/nexus/platform/CloudInfoController.java`.
