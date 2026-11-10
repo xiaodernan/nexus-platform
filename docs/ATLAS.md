@@ -130,15 +130,21 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_status_citations.mjs` | every spelled `STATUS §NN` resolves at HEAD |
 | `scripts/check_line_cite_drift.mjs` | file:line citations still name their line; D890 batch-prefetches the (blame commit × cited file) blobs through one `git cat-file --batch`, with `--no-prefetch` kept for byte-for-byte comparison |
 | `scripts/check_citation_supports_sentence.mjs` | a cited line supports the sentence quoting it |
+| `scripts/check_shared_blob_reader.mjs` | D891: both citation readers call the one shared blob reader, no third parser; `--self-test` plants an erased import, a pasted parser and an empty plane |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
+
+`scripts/git_blobs.mjs` (D891) is the shared implementation those two readers import: `headTree`
+parses the NUL-delimited HEAD tree, `catFileBatch` reads a list of object expressions through one
+child process and returns raw Buffers, with missing objects distinguished from an unreached tail.
 
 Runtime verifiers (need a live plane, **not** part of the default read-only sweep):
 `scripts/verify_contract_runtime.mjs`, `scripts/verify_served_reads.mjs`,
 `scripts/verify_payload_conformance.mjs`, `scripts/verify_consumer_slice.py`.
-`scripts/verify_citation_engine_parity.mjs` (D888) is different: it needs no live plane, runs both
-citation engines over a real ledger excerpt and diffs their stdout byte for byte — CI invokes it in
-the wiring-reads step, while `scripts/verify_all.mjs` is the one-command read-only sweep.
+`scripts/verify_citation_engine_parity.mjs` (D888) and `scripts/verify_line_cite_parity.mjs`
+(D891) are different: they need no live plane, run both engines of their reader over a real ledger
+excerpt and diff stdout byte for byte — CI invokes both in the wiring-reads step, while
+`scripts/verify_all.mjs` is the one-command read-only sweep.
 
 ## Smokes (a claim about behaviour needs one of these)
 

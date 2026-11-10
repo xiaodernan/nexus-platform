@@ -78,6 +78,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseFlags } from './cli_args.mjs';
 import { SOURCE_EXT } from './source_index.mjs';
+import { catFileBatch, headTree } from './git_blobs.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..');
@@ -162,12 +163,9 @@ export function census({ repo, ledgers, limit, resolveBasenames = false, prefetc
    */
   const suffixIndex = (() => {
     const index = new Map();
-    let files = [];
-    try {
-      files = git('ls-tree', '-r', '--name-only', 'HEAD').split('\n').filter(Boolean);
-    } catch {
-      return index; // an unreadable tree leaves the index empty and every suffix refusal stands
-    }
+    // D891: the HEAD tree comes from the shared NUL-delimited reader, the same one the citation
+    // census uses. An unreadable tree leaves the index empty and every suffix refusal stands.
+    const files = [...headTree(repo).keys()];
     for (const p of files) {
       const parts = p.split('/');
       for (let i = 0; i < parts.length; i += 1) {
@@ -221,28 +219,20 @@ export function census({ repo, ledgers, limit, resolveBasenames = false, prefetc
     }
     const keys = [...wanted];
     if (keys.length) {
-      try {
-        const input = `${keys.map((k) => {
-          const bar = k.indexOf('|');
-          return `${k.slice(0, bar)}:${k.slice(bar + 1)}`;
-        }).join('\n')}\n`;
-        const buf = execFileSync('git', ['cat-file', '--batch'], {
-          cwd: repo, input, maxBuffer: 1 << 28, stdio: ['pipe', 'pipe', 'ignore'],
-        });
-        let off = 0;
-        for (const k of keys) {
-          const nl = buf.indexOf(10, off);
-          if (nl < 0) break;
-          const header = buf.subarray(off, nl).toString('utf8');
-          off = nl + 1;
-          if (header.endsWith(' missing')) { blobCache.set(k, null); continue; }
-          const size = Number(header.split(' ')[2]);
-          if (!Number.isFinite(size) || size < 0 || off + size > buf.length) break;
-          blobCache.set(k, buf.subarray(off, off + size).toString('utf8').replace(/\r\n/g, '\n').split('\n'));
-          off += size + 1; // every --batch record ends with one newline after the payload
-        }
-      } catch {
-        // an unreadable batch leaves the cache empty; linesAt falls back to git show, unchanged
+      // D891: the batch record walker lives in scripts/git_blobs.mjs now. A key the batch did not
+      // reach stays OUT of the cache, so linesAt falls back to `git show` — an incomplete batch
+      // is slower, never wrong. Missing objects are still cached as null, as before.
+      const expression = (k) => {
+        const bar = k.indexOf('|');
+        return `${k.slice(0, bar)}:${k.slice(bar + 1)}`;
+      };
+      const records = catFileBatch(repo, keys.map(expression));
+      for (const k of keys) {
+        const expr = expression(k);
+        if (!records.has(expr)) break;
+        const bytes = records.get(expr);
+        if (bytes === null) { blobCache.set(k, null); continue; }
+        blobCache.set(k, bytes.toString('utf8').replace(/\r\n/g, '\n').split('\n'));
       }
     }
   }

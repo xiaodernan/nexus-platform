@@ -38600,3 +38600,48 @@ correctly refused to grade the uncommitted reader, which is a green it did not g
 - readers: `scripts/check_line_cite_drift.mjs`, `scripts/verify_all.mjs`,
   `scripts/falsify_line_cite_drift.mjs`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`,
   `.github/workflows/ci.yml`.
+
+## 891. D891 — one blob reader instead of two, and a parity check anyone can repeat
+
+**What was still open.** D888 and D890 had each solved the same problem independently: read the HEAD
+tree once, then read the cited blobs through one `git cat-file --batch` instead of one `git show`
+per citation. Both shipped their own byte-offset walker for the batch stream. Two copies of a parser
+that later gets fixed in only one place is drift with a green light, and Phase F's F2 named the seam
+but offered no way to keep it closed. D890's line-drift equivalence was measured by hand (and across
+the falsifier's 16 scratch arms) but had no repeatable runner.
+
+**What shipped.** `scripts/git_blobs.mjs` owns the only parser: `headTree(repo)` walks the
+NUL-delimited `ls-tree` output into a path-to-sha Map, and `catFileBatch(repo, expressions)` reads
+an arbitrary list of object expressions (a blob sha or a `rev:path`) through ONE child process and
+returns raw Buffers. Its contract distinguishes `null` (git said missing) from an absent key (the
+parser did not reach that record), so a caller falls back to `git show` instead of concluding a file
+is gone. Both citation readers now import it; the line-drift reader's suffix index comes from
+`headTree` too. `scripts/check_shared_blob_reader.mjs` reads `scripts/*.mjs` and asserts the exports,
+the pipe-backed stdin (the `ignore` + `input` pair DECISIONS §253 censused), the explicit missing
+case, both callers' imports and calls, and the absence of a third copy of either literal. Its
+`--self-test` plants an erased import, a pasted parser and an empty plane and requires each to
+redden or refuse. `scripts/verify_line_cite_parity.mjs` runs `--no-prefetch` and prefetch over the
+same real ledger excerpt, diffs stdout byte for byte, and falsifies its own comparator with one
+planted word. Both new runners join CI's existing wiring-reads line without adding or removing a
+line (the ledger carries historical `ci.yml:NN` citations).
+
+**Measured.** Before and after the extraction, on the same clean tree: the sentence-support census
+stdout is **byte-identical (2150 bytes)**, the full line-drift census **byte-identical (4723 bytes)**
+and its DECISIONS-only `--no-prefetch` arm **byte-identical (2728 bytes)**. D888's
+`verify_citation_engine_parity.mjs` still PASS with 0 drift and a working planted-word falsifier.
+The new line-drift parity runner: **0 drift**, `21437ms` vs `2870ms` (**7.5x**), comparator detects
+the planted word. The shared-reader gate PASS, and `--self-test` reports all three corruptions
+caught with 0 offenders on the real plane. `node --check` clean on all three edited/new modules.
+
+**Not claimed.** That either census is CORRECT (both are reports, not verdicts), that the full
+38k-line ledger was diffed through the legacy engines, that the shared module covers blob access
+outside these two readers, that `check_shared_blob_reader.mjs`'s literal hunt finds a parser
+spelled differently, that `scripts/falsify_line_cite_drift.mjs` is green (D890 records its 400s
+timeout honestly), or that a cold-cache CI host measures 7.5x. The gate checks the shipped
+`scripts/*.mjs` text; a refactor that keeps both imports but changes behaviour is caught by the two
+parity runners, not by the static gate.
+
+- readers: `scripts/git_blobs.mjs`, `scripts/check_shared_blob_reader.mjs`,
+  `scripts/verify_line_cite_parity.mjs`, `scripts/check_citation_supports_sentence.mjs`,
+  `scripts/check_line_cite_drift.mjs`, `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`,
+  `.github/workflows/ci.yml`.

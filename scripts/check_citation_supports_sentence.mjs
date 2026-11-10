@@ -59,6 +59,7 @@ import { readFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 
 import { parseFlags } from './cli_args.mjs';
+import { catFileBatch, headTree } from './git_blobs.mjs';
 
 const ROOT = process.cwd();
 const parsed = parseFlags(process.argv.slice(2), {
@@ -208,24 +209,12 @@ function basenameIndex() {
  */
 let TREE = null;
 function treeIndex() {
+  // D891: the NUL-delimited ls-tree parser now lives in scripts/git_blobs.mjs, shared with the
+  // line-drift reader. Its empty-map-on-error behaviour is part of the contract: an unreadable
+  // tree leaves every lookup unresolved, never guessed.
   if (TREE) return TREE;
-  const map = new Map();
-  try {
-    const raw = execFileSync('git', ['ls-tree', '-r', '-z', 'HEAD'], {
-      cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 27, stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    for (const rec of raw.split('\0')) {
-      if (!rec) continue;
-      const tab = rec.indexOf('\t');
-      if (tab < 0) continue;
-      const meta = rec.slice(0, tab).split(' ');
-      if (meta.length >= 3 && meta[1] === 'blob') map.set(rec.slice(tab + 1), meta[2]);
-    }
-  } catch {
-    // an unreadable tree leaves the map empty: every lookup becomes unresolved, never guessed
-  }
-  TREE = map;
-  return map;
+  TREE = headTree(ROOT);
+  return TREE;
 }
 
 let BLOBS = null;
@@ -252,22 +241,15 @@ function blobStore(ledgers) {
   const paths = [...wanted];
   const map = new Map();
   if (paths.length) {
-    try {
-      const input = `${paths.map((p) => tree.get(p)).join('\n')}\n`;
-      const buf = execFileSync('git', ['cat-file', '--batch'], {
-        cwd: ROOT, input, maxBuffer: 1 << 28, stdio: ['pipe', 'pipe', 'ignore'],
-      });
-      let off = 0;
-      for (const p of paths) {
-        const nl = buf.indexOf(10, off);
-        if (nl < 0) break;
-        const size = Number(buf.subarray(off, nl).toString('utf8').split(' ')[2]);
-        if (!Number.isFinite(size) || size < 0 || nl + 1 + size > buf.length) break;
-        map.set(p, buf.subarray(nl + 1, nl + 1 + size).toString('utf8'));
-        off = nl + 1 + size + 1; // each --batch record ends with one newline after the payload
-      }
-    } catch {
-      // no blobs: the census becomes all-unresolved, which is printed, not silently green
+    // D891: the record walker is the shared one. A sha the batch did not reach is left absent,
+    // so the census becomes all-unresolved (printed, never silently green) exactly as before.
+    const records = catFileBatch(ROOT, paths.map((p) => tree.get(p)));
+    for (const p of paths) {
+      const sha = tree.get(p);
+      if (!records.has(sha)) break;
+      const bytes = records.get(sha);
+      if (bytes === null) break; // the old walker read NaN from a "missing" header and stopped
+      map.set(p, bytes.toString('utf8'));
     }
   }
   BLOBS = map;
