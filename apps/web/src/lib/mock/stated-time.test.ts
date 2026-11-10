@@ -55,6 +55,8 @@ function findRepoRoot(fromFile: string): string {
 const repoRoot = findRepoRoot(fileURLToPath(import.meta.url));
 const timeparsePath = join(repoRoot, 'apps', 'ai', 'nexus_ai', 'nlu', 'timeparse.py');
 const timeparseSource = readFileSync(timeparsePath, 'utf8');
+const canonicalPath = join(repoRoot, 'apps', 'ai', 'nexus_ai', 'nlu', 'canonical.py');
+const canonicalSource = readFileSync(canonicalPath, 'utf8');
 
 /**
  * `PART_OF_DAY` cut out of the service's source. Every branch that would return an empty table
@@ -127,6 +129,63 @@ const HK_OFFSET_MS = readHourOffset(timeparseSource) * 3_600_000;
 const ALL_TOKENS = WINDOWS.flatMap((window) => window.tokens.map((token) => ({ token, window })));
 const GUARDED = guardedCuePairs(ALL_TOKENS.map((entry) => entry.token), categorySurfaces(readFileSync(join(repoRoot, 'apps', 'ai', 'nexus_ai', 'nlu', 'lexicon.py'), 'utf8')));
 
+/** The mock's own source: the other side of every roster comparison below. */
+const MOCK_SOURCE = readFileSync(join(repoRoot, 'apps', 'web', 'src', 'lib', 'mock', 'index.ts'), 'utf8');
+
+/**
+ * The mock's roster, read from `index.ts` as TEXT — the side D646's leg could not see. That leg
+ * asked whether the mock CARRIED what the service reads, so a word the service RETIRED could
+ * stay in the mock's table forever: 午市 sat in the noon band for a unit after D677 took it out
+ * of the service's, and the door stayed green.
+ */
+function readMockWindows(source: string): ServiceWindow[] {
+  const open = source.indexOf('PART_OF_DAY_WINDOWS');
+  if (open < 0) throw new Error('no PART_OF_DAY_WINDOWS in the mock — there is no roster to compare');
+  const end = source.indexOf('\n];', open);
+  if (end < 0) throw new Error('PART_OF_DAY_WINDOWS did not close — the reader would be blind, not green');
+  const rows: ServiceWindow[] = [];
+  for (const match of source.slice(open, end).matchAll(/label:\s*'([a-z_]+)'[^}]*?tokens:\s*\[([^\]]*)\]/gs)) {
+    const tokens = [...(match[2] ?? '').matchAll(/'([^']*)'/g)].map((token) => token[1] as string);
+    rows.push({ label: match[1] as string, tokens, start: [0, 0], end: [0, 0] });
+  }
+  if (rows.length < 4) throw new Error(`only ${rows.length} mock bands were read out of the mock source`);
+  return rows;
+}
+
+/**
+ * `canonical.CANONICAL_FORMS`, read as TEXT: the service canonicalises its text BEFORE it reads
+ * (D446 canonicalises its own cue tables at import), so the question for a word is never "is it
+ * literally in the service's table" but "does the service READ it" — which is what
+ * canonical(word) being in that table means. The rows are written as \uXXXX escapes, and
+ * `JSON.parse` reads exactly that shape.
+ */
+function readCanonicalForms(source: string): Map<string, string> {
+  const open = source.indexOf('CANONICAL_FORMS');
+  if (open < 0) throw new Error('no CANONICAL_FORMS in the service canonicaliser');
+  const brace = source.indexOf('{', open);
+  const end = source.indexOf('\n}', brace);
+  if (brace < 0 || end < 0) throw new Error('CANONICAL_FORMS did not close — the reader would be blind, not green');
+  const forms = new Map<string, string>();
+  for (const row of source.slice(brace, end).matchAll(/"((?:\\u[0-9a-fA-F]{4})+)"\s*:\s*"((?:\\u[0-9a-fA-F]{4})+)"/g)) {
+    forms.set(JSON.parse(`"${row[1]}"`) as string, JSON.parse(`"${row[2]}"`) as string);
+  }
+  if (forms.size < 100) throw new Error(`only ${forms.size} canonical forms were read out of the canonicaliser`);
+  return forms;
+}
+
+/**
+ * `timeparse.MENU_OCCASION_TOKENS`, read as TEXT: the words the service took OUT of its clock
+ * tables (D677). They name a meal occasion, not an hour, so the service understands them and
+ * narrows nothing with them — a table of its own, not a row of any band.
+ */
+function readMenuOccasionTokens(source: string): string[] {
+  const match = /MENU_OCCASION_TOKENS\s*=\s*\(([^)]*)\)/.exec(source);
+  if (!match) throw new Error('no MENU_OCCASION_TOKENS in the service time parser');
+  const tokens = [...(match[1] ?? '').matchAll(/"([^"]+)"/g)].map((token) => token[1] as string);
+  if (tokens.length === 0) throw new Error('MENU_OCCASION_TOKENS was read as an empty table');
+  return tokens;
+}
+
 /** The Hong Kong wall clock of an instant, `dayShift` days later, as the published ISO string. */
 function hkInstant(now: Date, hour: number, minute: number, dayShift = 0): string {
   const shifted = new Date(now.getTime() + HK_OFFSET_MS + dayShift * 86_400_000);
@@ -180,8 +239,7 @@ describe('the mock plane publishes only the time a query states (D646)', () => {
       expect(window.tokens.length, `${window.label} carries no cue — the row was read wrong`).toBeGreaterThanOrEqual(3);
     }
     // The roster has to be in the shipped file, not only in the lane's behaviour.
-    const mockSource = readFileSync(join(repoRoot, 'apps', 'web', 'src', 'lib', 'mock', 'index.ts'), 'utf8');
-    const missing = ALL_TOKENS.filter(({ token }) => !mockSource.includes(`'${token}'`)).map(({ token }) => token);
+    const missing = ALL_TOKENS.filter(({ token }) => !MOCK_SOURCE.includes(`'${token}'`)).map(({ token }) => token);
     expect(missing, `the mock roster does not carry the words the service answers: ${missing.join(', ')}`).toEqual([]);
   });
 
@@ -218,9 +276,8 @@ describe('the mock plane publishes only the time a query states (D646)', () => {
   });
 
   it('reads a cue that only opens a category word as the thing, not the hour', () => {
-    const mockSource = readFileSync(join(repoRoot, 'apps', 'web', 'src', 'lib', 'mock', 'index.ts'), 'utf8');
     const surfaces = GUARDED.flatMap((pair) => pair.surfaces);
-    const uncarried = surfaces.filter((surface) => !mockSource.includes(`'${surface}'`));
+    const uncarried = surfaces.filter((surface) => !MOCK_SOURCE.includes(`'${surface}'`));
     expect(uncarried, `the service guards a cue with a surface this lane does not carry: ${uncarried.join(', ')}`).toEqual([]);
     for (const pair of GUARDED) {
       for (const surface of pair.surfaces) {
@@ -323,14 +380,96 @@ describe('the mock plane publishes only the time a query states (D646)', () => {
   });
 
   it('spells the clock every way the service spells it', () => {
-    const mockClockSource = readFileSync(join(repoRoot, 'apps', 'web', 'src', 'lib', 'mock', 'index.ts'), 'utf8')
-      .match(/const CLOCK_RE = (\/.*\/i)/)?.[1];
+    const mockClockSource = MOCK_SOURCE.match(/const CLOCK_RE = (\/.*\/i)/)?.[1];
     if (!mockClockSource) throw new Error('this lane no longer declares a CLOCK_RE the census can read');
     const markers = serviceClockMarkers(timeparseSource);
     expect(markers.length, 'no spelling was read out of the service CLOCK_RE').toBeGreaterThanOrEqual(10);
     // The mock clock carries the `i` flag, so AM and am are one spelling there and two in the table.
     const missing = markers.filter((marker) => !mockClockSource.toLowerCase().includes(marker.toLowerCase()));
     expect(missing, `the service reads a clock this lane cannot spell: ${missing.join(', ')}`).toEqual([]);
+  });
+});
+
+/**
+ * D852 — the mock plane read a word the service had already retired.
+ *
+ * THE DEFECT. `timeparse.MENU_OCCASION_TOKENS` holds 午市 in a table of its own (D677): the word
+ * names the lunch SERVICE — the meal occasion — and never a clock hour, so the service
+ * understands it and narrows nothing with it. The mock's noon band still carried it as a clock
+ * cue, so 「午市」 came back as an explicit 11:30 that nobody said, and 「午市三點」 as 15:00 where
+ * the authority answers 03:00: the band supplied the half of the day that a meal occasion has no
+ * opinion about. The invented hour survives into the next turn, because the client posts the
+ * last intent back as `previous_intent` and the mock merges the new words into it.
+ *
+ * WHY THE OLD DOOR DID NOT SEE IT. The roster leg above asks ONE direction: does the mock carry
+ * what the service reads? A word the service RETIRED is invisible to that question — the mock
+ * carrying 午市 was never "missing" anything. So this block compares the two rosters BAND FOR
+ * BAND after the service's own canonicalisation, which is the direction a retirement shows up in.
+ */
+describe('the mock plane reads no word the service retired (D852)', () => {
+  const MOCK_WINDOWS = readMockWindows(MOCK_SOURCE);
+  const CANONICAL_FORMS = readCanonicalForms(canonicalSource);
+  const MENU_OCCASION = readMenuOccasionTokens(timeparseSource);
+
+  /** `canonical.canonical`: one character in, one character out. */
+  const canonicalise = (text: string): string =>
+    [...text].map((character) => CANONICAL_FORMS.get(character) ?? character).join('');
+
+  it('carries the service roster band for band, after the service canonicalises its own', () => {
+    expect(MOCK_WINDOWS.map((window) => window.label).sort(), 'the mock and the service disagree on the bands themselves').toEqual(
+      WINDOWS.map((window) => window.label).sort(),
+    );
+    for (const window of WINDOWS) {
+      const service = [...new Set(window.tokens.map(canonicalise))].sort();
+      const mock = [...new Set((MOCK_WINDOWS.find((row) => row.label === window.label)?.tokens ?? []).map(canonicalise))].sort();
+      expect(mock, `the mock's ${window.label} band is not the service's`).toEqual(service);
+    }
+  });
+
+  it('reads no word the service took out of its clock tables', () => {
+    const clockWords = new Set(MOCK_WINDOWS.flatMap((window) => window.tokens.map(canonicalise)));
+    for (const token of MENU_OCCASION) {
+      expect(clockWords.has(canonicalise(token)), `"${token}" is a meal occasion on the service, never a clock`).toBe(false);
+    }
+  });
+
+  it('publishes no hour for a meal occasion, and reads the clock beside it as it stands', () => {
+    const silent = ['午市', '食午市', '想食午市', '午市有位吗', '有午市嘅餐廳', '食午市嘅地方', '午餐'];
+    for (const query of silent) {
+      const published = publishedTime(query, EARLY);
+      expect(published.type, `"${query}" names a meal occasion and must not be published as an hour`).toBe('none');
+      expect(published.starts_at, `"${query}" carried an invented instant`).toBeNull();
+    }
+    // The clock beside the occasion is read as it stands: no band, so no band to tilt its half.
+    const noon = publishedTime('午市12點', EARLY);
+    expect(noon.type, '"午市12點" names a clock and must be published as one').toBe('explicit');
+    expect(hkHourMinute(noon.starts_at as string), '"午市12點" was read as the wrong hour').toEqual([12, 0]);
+    const three = publishedTime('午市三點', EARLY);
+    expect(three.type, '"午市三點" names a clock and must be published as one').toBe('explicit');
+    expect(hkHourMinute(three.starts_at as string), '"午市三點" was tilted into the afternoon by a band that names no hour').toEqual([3, 0]);
+    // The noon band still supplies the half of the day for its OWN words.
+    expect(publishedTime('中午', EARLY).starts_at, '中午 opens the noon window the service opens').toBe(hkInstant(new Date(EARLY), 11, 30));
+    expect(hkHourMinute(publishedTime('中午三點', EARLY).starts_at as string), '"中午三點" was not tilted the way the service tilts it').toEqual([15, 0]);
+  });
+
+  it('merges a meal occasion the way the first turn reads it', () => {
+    for (const query of ['午市', '午市三點', '午市12點']) {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(EARLY));
+      let merged;
+      let firstTurn;
+      try {
+        merged = mergeIntent(null, query);
+        firstTurn = understandQuery(query);
+      } finally {
+        vi.useRealTimers();
+      }
+      expect(merged.time, `"${query}" is read one way by understandQuery and another by mergeIntent`).toEqual(firstTurn.time);
+      if (timeOf(merged, query).type === 'none') {
+        expect(merged.unknowns, `"${query}" published no hour and must still ask for one`).toContain('time');
+        expect(merged.confidence.time, `"${query}" published no hour and must not claim confidence in one`).toBe(0);
+      }
+    }
   });
 });
 

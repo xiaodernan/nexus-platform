@@ -223,10 +223,17 @@ type PartOfDayWindow = { label: string; start: [number, number]; end: [number, n
  * instead of the late-night subset. The test re-derives every token, label and window bound from
  * the Python source, so a row added on one plane and not the other is a red test, not a silent
  * drift.
+ * D852: the service RETIRED 午市 from this table (D677) — it names the lunch SERVICE, the meal
+ * occasion, never a clock hour — and this row still read it. So 「午市」 came back as an explicit
+ * 11:30 that nobody said, and 「午市三點」 as 15:00 where the authority answers 03:00: the band
+ * supplied the half of the day a meal occasion has no opinion about. The word narrows nothing on
+ * either plane now, and `stated-time.test.ts` compares the two rosters BAND FOR BAND after the
+ * service's own canonicalisation — the direction the old check could not see, because it asked
+ * only whether the mock carried what the service reads.
  */
 const PART_OF_DAY_WINDOWS: PartOfDayWindow[] = [
   { label: 'morning', start: [7, 0], end: [11, 30], tokens: ['朝早', '早上', '上午', '清晨', '早晨', 'morning', 'am'] },
-  { label: 'noon', start: [11, 30], end: [14, 30], tokens: ['中午', '正午', '午市', 'lunch', 'luncheon', 'noon', 'midday'] },
+  { label: 'noon', start: [11, 30], end: [14, 30], tokens: ['中午', '正午', 'lunch', 'luncheon', 'noon', 'midday'] },
   { label: 'afternoon', start: [14, 0], end: [18, 0], tokens: ['下晝', '下午', '午後', 'afternoon', 'pm'] },
   { label: 'evening', start: [17, 0], end: [19, 30], tokens: ['傍晚', '黃昏', '黄昏', 'evening', 'dusk'] },
   { label: 'night', start: [18, 0], end: [23, 0], tokens: ['夜晚', '晚間', '晚间', '晚上', '晚黑', '夜間', '夜间', '今晚', '今夜', 'tonight', 'night', 'midnight'] },
