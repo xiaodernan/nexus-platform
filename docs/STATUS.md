@@ -36822,3 +36822,33 @@ authentication: a squatter answering our exact JSON would read as ours.
   `services/cloud/gateway/src/main/resources/application.yaml:13`,
   `services/cloud/gateway/src/main/resources/application.yaml:44`, `infra/docker-compose.yml:180`,
   `infra/docker-compose.yml:195`, `infra/docker-compose.yml:222`.
+
+## 848. D848 — the merchant console's live identity: the caller's own merchant, not the mock fixture (D843 follow-through)
+
+**The live door, half-open.** D843 made the consoles render; what it did not fix was WHICH merchant the
+live render read for. `merchantSession` hardcoded `DEMO_CONSOLE_BUSINESS` (`m-lung-yuen`, a mock id), so
+every live `/api/v1/merchant/businesses/<mock-id>/overview` answered 401 for any real session and the
+console rendered the blocked state at 45,067 bytes. The fix is one resolve behind `IS_MOCK`: live mode
+with no `?business=` asks the caller's own `/api/v1/me` (the session cookie forwarded, an `x-tenant`
+header) and uses `memberships[0].merchant.id` — the same id the workspace walk signs in with. Mock mode
+and `?business=<id>` are unchanged.
+
+**Measured on the live plane** (this session; `:3002` web and `:8090` platform were both down after an
+earlier DB reload and were restarted before measuring): merchant sign-in -> 200; `/merchant` -> 200 at
+91,899 bytes (was 45,067 in the blocked render) carrying the live `v_merchant_funnel` read (index
+38,225) and the seeded flagship `basil-leaf-0419` (蓮薈導賞社; `merchant_users.role=owner` for the demo
+merchant) at index 36,204; admin sign-in -> 200, `/admin` -> 200 at 65,084 bytes carrying the moderation
+needles; consumer sign-in -> 200 (page renders; needles not captured). Web build compiled in 30.6s and
+31.2s; `/signin` (1.79 kB) is in the route table. Console unit suites: console-shared 54 + console-admin
+14 = 68 passed. A serialization incident double-spaced the working copy after the patch; the file was
+reconstructed byte-clean from HEAD before commit (the diff is 30/11 and touches only the session block),
+and the re-verified live render is byte-identical to the pre-reconstruction measurement (45,067 -> 91,899
+both times).
+
+**Not claimed.** (a) Consumer needle metrics were not captured (only the 200). (b) No browser automation
+was re-run for this surface; verification is HTTP SSR bytes. (c) The funnel shown is whatever the
+`nexus_verify2` corpus carries after its D842 reseed; the platform suite's pinned count reds stay pinned
+(D816 discipline) and do not move with this unit. (d) `?business=<id>` still trusts the requested id —
+cross-merchant authorisation is the platform's `read_analytics` check, not the console's.
+
+- readers: `apps/web/src/components/console/merchant-shell.tsx:18-27`, `:29-45`, `:46-61`, `:50-59`.
