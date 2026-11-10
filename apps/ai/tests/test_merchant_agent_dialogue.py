@@ -60,6 +60,27 @@ def test_the_chat_relays_the_question_and_the_answer_in_order():
     assert turns[0]["has_internal_token"] is True
 
 
+def test_each_turn_carries_the_tenant_slug_not_the_tenant_uuid():
+    """The platform's TenantFilter looks up tenants by `slug`; a uuid matches no row → 404."""
+    stub = StubPlatformClient()
+    set_platform_client(stub)
+    conversation = str(uuid.uuid4())
+    try:
+        with _client() as c:
+            r = c.post("/ai/v1/merchant-agent/chat", json={
+                "merchant_id": MERCHANT, "message": QUESTION,
+                "conversation_id": conversation})
+            assert r.status_code == 200, r.text
+    finally:
+        reset_platform_client()
+
+    turns = _turns(stub)
+    # deps.tenant_id() (the uuid) must not reach the X-Tenant header; deps.settings.tenant_slug must.
+    assert all("00000000-0000-0000-0000-000000000001"
+               not in (str(turn) or "") for turn in turns), turns
+    assert [turn["tenant"] for turn in turns] == ["hong-kong", "hong-kong"], turns
+
+
 def test_without_the_token_the_stream_is_unchanged_and_writes_nothing():
     stub = StubPlatformClient()
     set_platform_client(stub)

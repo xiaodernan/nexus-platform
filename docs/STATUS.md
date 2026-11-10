@@ -37773,3 +37773,36 @@ Anything about tenant administration beyond the demo path.
 
 - readers: `tests/e2e/specs/merchant/journey.spec.ts`, `apps/web/src/components/console/console-parts.tsx`,
   `apps/web/src/lib/i18n/dict.ts` (the `signInRequiredTitle` string).
+
+## 867. D867 — the relay that 404'd at the seam now cannot hide again
+
+**Why this exists.** D861's `_persist_turn` fix corrected the `X-Tenant` value the AI relay passes to the
+`/internal/conversations/{id}/agent-message` door from `deps.tenant_id()` (the internal tenant UUID) to
+`deps.settings.tenant_slug` (`"hong-kong"`). The seam was one wrong argument with one debug print plus one
+log line nobody read, on a path the consumer's stream completed anyway — so nothing in the normal test
+surface flashes red.
+
+**What this unit pins.** `tests/test_merchant_agent_dialogue.py` (new test
+`test_each_turn_carries_the_tenant_slug_not_the_tenant_uuid`):
+
+```python
+turns = _turns(stub)
+assert all("00000000-0000-0000-0000-000000000001" not in str(t) for t in turns)
+assert [turn["tenant"] for turn in turns] == ["hong-kong", "hong-kong"]
+```
+
+both the consumer's question turn and the agent's answer turn must carry `"hong-kong"` as the slug; neither
+may carry the internal UUID. A regression in `_persist_turn` that flips the argument back to
+`deps.tenant_id()` fails this test with the uuid visible in the recorded calls — the exact fingerprint of
+the D861 defect, never reachable through normal operation.
+
+Existing suite went from 3 → 4 tests. `uv run python -m pytest tests/test_merchant_agent_dialogue.py -q`
+4 passed in 1.44s.
+
+**Not claimed.** That the platform's own `tenant_id()` usage elsewhere in the AI service is correct in all
+places — only the `_persist_turn` call site is the focus; other call sites should be audited under a separate
+unit. That the bug was unlinked for more than one conversation — silence here means exactly that nobody was
+looking; this test is the look that was missing.
+
+- readers: `apps/ai/tests/test_merchant_agent_dialogue.py`, `apps/ai/nexus_ai/api/routes_stream.py`
+  (`_persist_turn`, the fixed call site).
