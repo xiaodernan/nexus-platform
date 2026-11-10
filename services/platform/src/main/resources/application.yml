@@ -51,6 +51,21 @@ logging:
     root: ${NEXUS_LOG_LEVEL:INFO}
     com.nexus: ${NEXUS_LOG_LEVEL:INFO}
 
+# D848: the eureka client is on the classpath but OFF by default — the normal monolith boot registers
+# nothing and fetches nothing. The `cloud` profile (application-cloud.yml) opts in; the edge then routes
+# lb://NEXUS-PLATFORM instead of a hardcoded address. Same opt-in shape as the redis/ratelimit knobs below.
+eureka:
+  client:
+    enabled: ${NEXUS_EUREKA_ENABLED:false}
+
+# D848: actuator arrived with the eureka client. Health only: the registry and the lb smoke ask
+# /actuator/health, and nothing else of the monolith's internals becomes an unauthenticated surface.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${NEXUS_MANAGEMENT_EXPOSURE:health}
+
 nexus:
   tenant:
     default-slug: ${NEXUS_TENANT:hong-kong}

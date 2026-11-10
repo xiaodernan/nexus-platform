@@ -19,7 +19,9 @@ spring:
             - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
           routes:
             - id: platform
-              uri: ${NEXUS_PLATFORM_URI:http://127.0.0.1:8090}
+              # D848: env override still wins; without it the cloud profile's nexus.edge.platform-uri
+              # (lb://NEXUS-PLATFORM, below) decides, and the base default stays the documented port.
+              uri: ${NEXUS_PLATFORM_URI:${nexus.edge.platform-uri:http://127.0.0.1:8090}}
               predicates:
                 - Path=/api/v1/**
             - id: ai
@@ -65,3 +67,16 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: INFO
+
+---
+# D848: with the `cloud` profile the platform route resolves BY NAME through the registry instead of
+# a hardcoded address. Only the one property moves — the routes list stays single, so the AI/web
+# routes cannot drift into a second copy. The name is the platform's spring.application.name
+# uppercased; scripts/check_cloud_discovery.mjs R4 compares the two and reddens on a rename.
+spring:
+  config:
+    activate:
+      on-profile: cloud
+nexus:
+  edge:
+    platform-uri: lb://NEXUS-PLATFORM

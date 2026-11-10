@@ -1,0 +1,25 @@
+# D848: the opt-in cloud profile. Activate ALONGSIDE dev (dev,cloud): dev supplies the localhost
+# credential chain, this file adds registration and nothing else. The monolith registers as
+# NEXUS-PLATFORM (spring.application.name, uppercased the way Eureka lists it) so the gateway's
+# cloud-profile route lb://NEXUS-PLATFORM can find it instead of a hardcoded host:port.
+#
+# The defaultZone is the SAME env name and the SAME port the gateway and D847's plane use
+# (services/cloud/eureka-server defaults to 18761 on this machine — the canonical 8761 belongs to
+# another checkout's registry). One port map: scripts/check_cloud_discovery.mjs R3 compares this
+# number with the eureka module's own default and reddens if they drift apart.
+eureka:
+  client:
+    enabled: true
+    service-url:
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+    register-with-eureka: true
+    # The monolith calls nothing by discovery — it only needs to BE found. Fetching the registry
+    # would add a startup dependency on the plane for a service that does not use it.
+    fetch-registry: false
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    # Fast leases, same shape as the gateway's: a killed instance leaves the registry in seconds,
+    # so the edge stops routing to it instead of 503-ing through a zombie lease.
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10

@@ -29,6 +29,7 @@ jobs:
       web: ${{ steps.f.outputs.web }}
       platform: ${{ steps.f.outputs.platform }}
       ai: ${{ steps.f.outputs.ai }}
+      cloud: ${{ steps.f.outputs.cloud }}
       docs: ${{ steps.f.outputs.docs }}
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +47,7 @@ jobs:
           # arms must run this job — otherwise the copy can go back to claiming what its members do not
           # support, and nothing would notice.
           p ai '^(apps/ai|infra/config|data/seed/|scripts/(check|falsify)_collection_claims\.mjs)'
+          p cloud '^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud))'
           p docs '^(docs/|README\.md)' | tee -a "$GITHUB_OUTPUT"
 
   lint-type:
@@ -128,6 +130,43 @@ jobs:
           NEXUS_REDIS_URL: redis://127.0.0.1:6380/0
           NEXUS_JWT_SECRET: ci_only_not_a_real_secret
         run: mvn -B -f services/platform/pom.xml test
+
+  cloud:
+    needs: changes
+    if: needs.changes.outputs.cloud == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_PASSWORD: ci_secret, POSTGRES_DB: nexus_test }
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      # One toolchain is enough: the sidecar compiles with --release 21, which JDK 25 supports,
+      # and the platform the lb smoke boots targets release 25.
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '25', cache: maven }
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - run: bash scripts/cloud_smoke.sh
+      - name: Discovery wiring reads
+        run: node scripts/check_cloud_discovery.mjs
+      - name: Apply migrations (the same files the platform job applies)
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y postgresql-client
+          for f in $(ls infra/db/migrations/*.sql | sort -V); do
+            psql "host=127.0.0.1 port=5433 user=postgres password=ci_secret dbname=nexus_test" \
+              -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+      - name: lb smoke — the monolith registers by opt-in and the edge routes it by name
+        env:
+          NEXUS_DB_USER: postgres
+          NEXUS_DB_PASSWORD: ci_secret
+          NEXUS_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
+          NEXUS_PLATFORM_DB_URL: jdbc:postgresql://127.0.0.1:5433/nexus_test
+        run: bash scripts/cloud_lb_smoke.sh
 
   ai:
     needs: changes
@@ -440,12 +479,13 @@ jobs:
           fi
 
   required:
-    needs: [lint-type, platform, ai, e2e, contract-drift, security]
+    needs: [lint-type, platform, ai, cloud, e2e, contract-drift, security]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: All gates green
         run: |
-          echo "results: lint-type=${{ needs.lint-type.result }} platform=${{ needs.platform.result }} ai=${{ needs.ai.result }} e2e=${{ needs.e2e.result }} contract-drift=${{ needs.contract-drift.result }} security=${{ needs.security.result }}"
+          echo "results: lint-type=${{ needs.lint-type.result }} platform=${{ needs.platform.result }} ai=${{ needs.ai.result }} cloud=${{ needs.cloud.result }} e2e=${{ needs.e2e.result }} contract-drift=${{ needs.contract-drift.result }} security=${{ needs.security.result }}"
+          test "${{ needs.cloud.result }}" != "failure"
           test "${{ needs.e2e.result }}" != "failure"
           test "${{ needs.contract-drift.result }}" != "failure"

@@ -16,6 +16,9 @@
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spring-boot.version>3.5.16</spring-boot.version>
+    <!-- D848: the same Spring Cloud train as services/cloud (2025.0.3 / Boot 3.5.16). The eureka client
+         below is opt-in: the base config keeps it disabled, the `cloud` profile registers the monolith. -->
+    <spring-cloud.version>2025.0.3</spring-cloud.version>
     <springdoc.version>2.8.17</springdoc.version>
     <archunit.version>1.4.2</archunit.version>
     <bouncycastle.version>1.80</bouncycastle.version>
@@ -27,6 +30,13 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
         <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -77,6 +87,19 @@
     <dependency>
       <groupId>io.lettuce</groupId>
       <artifactId>lettuce-core</artifactId>
+    </dependency>
+
+    <!-- D848: service discovery, OPT-IN. The base application.yml keeps eureka.client.enabled=false, so
+         the normal monolith boot registers nothing; the `cloud` profile (application-cloud.yml) turns it
+         on and the edge can then route lb://NEXUS-PLATFORM instead of a hardcoded host:port. Actuator
+         gives the registry a health endpoint to ask; exposure is health-only in the base config. -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
     <!-- OpenAPI -->
