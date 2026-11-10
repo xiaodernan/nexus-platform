@@ -135,10 +135,13 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
                           latency_ms=_ms_since(started), provider=provider,
                           usage=usage, llm_records=llm_records)
         # The run row exists before the answer references it (messages.agent_run_id -> agent_runs.id).
+        # The handoff reason must come from the platform's whitelist (low_confidence, user_request,
+        # policy, refund) — a degraded answer from missing retrieval is a confidence problem, and
+        # "no_grounded_chunks" is not in that vocabulary. Map honestly or the relay is rejected.
         await _persist_turn(
             deps, body=body, sender_type="ai_agent", content=answer_text,
             role="assistant", agent_run_id=run_id, handoff=not grounded,
-            handoff_reason=None if grounded else "no_grounded_chunks",
+            handoff_reason=None if grounded else "low_confidence",
             payload={"retrieval": all_cited})
     except Exception as exc:  # the same inside-stream error contract as search
         log.exception("merchant-agent stream failed")

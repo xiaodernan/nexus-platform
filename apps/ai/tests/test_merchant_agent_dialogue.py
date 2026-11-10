@@ -81,6 +81,27 @@ def test_each_turn_carries_the_tenant_slug_not_the_tenant_uuid():
     assert [turn["tenant"] for turn in turns] == ["hong-kong", "hong-kong"], turns
 
 
+def test_the_handoff_reason_is_in_the_platform_whitelist():
+    """The platform rejects unknown handoff_reason values with 422 — a degraded turn must
+    relay as a low_confidence escalation, never as an unknown string the door refuses."""
+    stub = StubPlatformClient()
+    set_platform_client(stub)
+    conversation = str(uuid.uuid4())
+    try:
+        with _client() as c:
+            r = c.post("/ai/v1/merchant-agent/chat", json={
+                "merchant_id": MERCHANT, "message": QUESTION,
+                "conversation_id": conversation})
+            assert r.status_code == 200, r.text
+    finally:
+        reset_platform_client()
+
+    turns = _turns(stub)
+    whitelist = {"low_confidence", "user_request", "policy", "refund"}
+    assert turns[1]["handoff"] is True
+    assert turns[1]["handoff_reason"] in whitelist, turns[1]
+
+
 def test_without_the_token_the_stream_is_unchanged_and_writes_nothing():
     stub = StubPlatformClient()
     set_platform_client(stub)

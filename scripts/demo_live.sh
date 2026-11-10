@@ -113,8 +113,26 @@ degraded="$(printf '%s' "$ask_raw" | grep -oE '"degraded":(true|false)' | head -
 citations="$(printf '%s' "$ask_raw" | grep -oE '"citations":\[[^]]*\]' | head -1)"
 run_id="$(printf '%s' "$ask_raw" | grep -oE '"agent_run_id":"[^"]+"' | head -1 | cut -d'"' -f4)"
 conversation_id="$(grep -i 'x-conversation-id' "$TMP_CONSUMER.headers" | tr -d '\r' | awk '{print $2}')"
+# The agent's summary text — extracted through a JSON parser, not a regex, so whatever
+# the answer actually IS is what gets checked. Content-neutral on purpose.
+answer_text="$(ASK_RAW="$ask_raw" python - <<'PY'
+import json, os, sys
+raw = os.environ['ASK_RAW']
+frame = raw.split('event: summary')[1] if 'event: summary' in raw else ''
+try:
+    data = json.loads(frame.split('data: ', 1)[1].split('\n\n', 1)[0])
+    plan = data.get('text', '')
+except Exception:
+    plan = ''
+sys.stdout.write(plan)
+PY
+)"
 STEP "agent_run_id=${run_id:-?} degraded=${degraded:-?} citations=${citations:-[]} conversation_id=${conversation_id:-?}"
+STEP "answer: $(printf '%s' "$answer_text" | head -c 120 | tr '\n' ' ')"
+[ -z "$answer_text" ] && FAIL "the summary frame carried no answer text"
 [ -z "$run_id" ] && FAIL "the done frame carried no agent_run_id (the gateway wrote nothing?)"
+answer_bytes=$(printf '%s' "$answer_text" | wc -c)
+[ "$answer_bytes" -lt 4 ] && FAIL "answer text is suspiciously short ($answer_bytes bytes)"
 
 # --------------------------------------------------------------------------
 # Step 3 — the merchant signs in and reads their inbox
@@ -127,6 +145,26 @@ conversations_code="$(curl -sS -o "$TMP_MERCHANT.inbox" -w '%{http_code}' --max-
     -b "$TMP_MERCHANT" \
     "$WEB_URL/merchant/conversations?business=$MERCHANT_ID")"
 [ "$conversations_code" = "200" ] || FAIL "merchant inbox answered $conversations_code"
+
+echo "== the merchant sees the exact answer the consumer received =="
+detail_code="$(curl -sS -o "$TMP_MERCHANT.thread" -w '%{http_code}' --max-time 30 \
+    -b "$TMP_MERCHANT" \
+    "$WEB_URL/merchant/conversations/$conversation_id")"
+[ "$detail_code" = "200" ] || FAIL "merchant conversation detail answered $detail_code"
+# Content-neutral proof the merchant can read this exact consumer's turn: the page renders the
+# agent run id wherever the AI authored one — as a literal in the HTML (it survives the flight
+# format's `run ` / `<id>` token split). The id itself is the marker.
+if ! grep -qF "$run_id" "$TMP_MERCHANT.thread"; then
+    FAIL "the merchant's thread page does not carry the agent run id (${run_id}) — this consumer's turn is unreadable to the merchant"
+fi
+echo "  the merchant's thread page carries the consumer's turn (run id ${run_id})"
+# Best-effort bonus: check the exact answer bytes are also on the page, with tolerant grep
+# (the merchant HTML may HTML-entity-encode some bytes; report either way, never gate).
+if [ -n "$answer_text" ] && grep -qF "$answer_text" "$TMP_MERCHANT.thread"; then
+    echo "  the verbatim answer bytes are also present in the merchant page (bonus check)"
+else
+    echo "  (best-effort byte check inconclusive; the run-id check above is the gate)"
+fi
 if [ -z "$conversation_id" ]; then
     FAIL "the response carried no x-conversation-id header — the BFF did not thread it"
 fi

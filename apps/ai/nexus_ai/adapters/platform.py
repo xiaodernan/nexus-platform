@@ -368,6 +368,7 @@ class StubPlatformClient:
             raise PlatformRejectedRequest("content is required", status=422)
         self._record("append_conversation_message", conversation_id=conversation_id,
                      sender_type=sender_type, content=content, handoff=handoff,
+                     handoff_reason=handoff_reason,
                      has_internal_token=bool(internal_token), tenant=tenant)
         return {"message_id": f"stub-msg-{len(self.calls)}", "handoff_id": None,
                 "stub": True}
