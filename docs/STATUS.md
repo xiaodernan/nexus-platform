@@ -37806,3 +37806,39 @@ looking; this test is the look that was missing.
 
 - readers: `apps/ai/tests/test_merchant_agent_dialogue.py`, `apps/ai/nexus_ai/api/routes_stream.py`
   (`_persist_turn`, the fixed call site).
+
+## 868. D868 — the §142 E2E proves the loop on mobile too (and names the hydration race)
+
+**What shipped.** `tests/e2e/specs/consumer/ask-merchant.spec.ts` (new) — the browser-side §142 proof:
+a consumer asks basil-leaf-0419 through `/api/nexus/conversations/ask`, the merchant-agent answers grounded
+in the seeded KB, and the turn lands in the same thread the BFF opened and the merchant inbox reads.
+
+**What mobile exposed, and the root cause that was actually hiding.** The test passed on desktop from its
+first run but failed on mobile twice, two different ways:
+
+1. `page.fill('有BB椅嗎')` did not flush through React's `onChange` before the submit button enabled — the
+   button stayed `disabled` and every click waited on an enablement that never came during a 60s budget.
+   Fix: `pressSequentially` (per-char key events, exactly what a user types) plus an explicit
+   `await expect(submit).toBeEnabled({ timeout: 15_000 })` BEFORE any click.
+2. With that fix, the anonymous leg passed (mobile 42s), but the signed-in leg stayed anonymous: the
+   test clicked the 消費者 button on `/signin`, whose handler is only attached after hydration — on this
+   saturated host the click landed before React attached `submit()`, so the POST never fired and the page
+   showed `登錄後才可提問` again after re-asking. The error-context dump showed the exact state.
+   Fix: the spec establishes the demo consumer session through the same BFF door (`POST /api/nexus/auth`)
+   using `page.request`, which shares the cookie jar with the page context — same request the button sends,
+   without the hydration race.
+3. The assertions run with the page as the source of truth (`getByText('登錄後才可提問')`, `getByText(/商戶助理/)`),
+   no mocks anywhere.
+
+**Re-measured.** `npx playwright test specs/consumer/ask-merchant.spec.ts --reporter=list` —
+**4 passed** (mobile 41.8s / 42.0s, desktop 10.3s / 7.7s). Test-level timeout stays 60s (project default).
+
+**Not claimed.** Anything about the strategy for waiting on hydration clicks OTHER than this one path —
+other specs that click through `/signin` may race the same way; each of those clicks should get either the
+API-setup treatment or `await expect(page).toHaveURL(...)` evidence before asserting downstream state.
+That `.artifacts/` or `playwright-report/` have been committed — never, by the .gitignore contract.
+Anything about production auth (the demo door is the seeded demo login, gated by
+`nexus.demo.login-enabled`).
+
+- readers: `tests/e2e/specs/consumer/ask-merchant.spec.ts`, `apps/web/src/components/signin-actions.tsx`
+  (the `submit()` hydration hook), `tests/e2e/playwright.config.ts` (`baseURL`, the mobile project profile).
