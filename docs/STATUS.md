@@ -37242,3 +37242,58 @@ canonicalisation would redden, not silently mis-compare).
 
 - readers: `apps/web/src/lib/mock/index.ts` (PART_OF_DAY_WINDOWS, noon band),
   `apps/web/src/lib/mock/stated-time.test.ts` (the band-for-band legs and the meal-occasion legs).
+
+## 853. D853 — the cloud plane deploys to images, half-proven: the images build, the containers never ran here
+
+**What §845(a) asked and what this unit answers.** §845(a) is "build the three Docker images and start the
+`cloud` compose profile end to end". This unit delivers the images and the profile validation, and NOT the
+end-to-end run: the two claims are kept apart below, because a compose profile that parses is not a plane
+that serves.
+
+**The images (built, verified by `docker images` this session).** `nexus/eureka:dev` 584 MB,
+`nexus/config:dev` 560 MB, `nexus/gateway:dev` 568 MB — all built from the exact jars the smokes verified
+(`services/cloud/*/target/app.jar`, spring-boot repackaged, Java 21 class target, temurin:25-jre runtime).
+`Dockerfile` (the deployment recipe compose uses) does exactly that: `COPY <module>/target/app.jar` — nothing
+inside the image rebuilds what the smokes ran, and `.dockerignore` keeps the context small
+(`**/target/**` with only `!**/target/app.jar` re-included). `Dockerfile.build` is the self-contained source
+build (Java 21 build container, BuildKit `.m2` cache mount): it compiles the reactor inside the image and
+needs a warm network — this host's docker daemon took 25+ minutes without completing a single module (Maven
+Central through this machine's docker network is not viable in-session), so the source build is documented,
+fixed (the file shipped unable to build anything — it never copied sources), and NOT measured end-to-end
+here.
+
+**Two defects this unit found in the deployment path.** (1) The original `Dockerfile` never copied the
+module sources — a pom-only build stage could produce nothing. (2) The host ports on the compose gateway
+defaults point at the `full` profile's assumed ports (8080/8000), which are not this machine's live dev
+ports (8090/8010/3002) — the override variables exist and compose's comment says so; nothing about the
+defaults was changed in this unit.
+
+**The half that did NOT close.** `docker compose --profile cloud config --services` answers
+(`postgres, redis, eureka, config-server, gateway`) — the profile is well-formed and its wiring resolves.
+The three containers were CREATED by `docker compose up -d` and never transitioned to running: every
+`docker start nexus-eureka` hung longer than five minutes, and the daemon stayed responsive only to
+metadata commands (`docker version` answers, `docker ps` lists the long-running neighbours — the live
+plane's DB and redis are unaffected). The cause is the host's docker state (30+ containers, WSL2 VM under
+pressure, aggravated by this session's killed builds including a 152 MB context transfer); restarting the
+daemon was refused because the live verification database (`nexus-platform-postgres`) lives on the same
+daemon and the mandate's whole value is a plane that stays reviewable. Neither the deployment smoke nor
+registry-isolation assertions for the containers were run.
+
+**db_gate_fresh ruling (the §845(e) receipt).** The cloud plane does NOT belong in `db_gate_fresh.sh`: that
+gate asserts the seeded-database plane (schema, collections, quality rows, ledger citations) and would fail
+for reasons unrelated to the database if the edge trips; the cloud plane's gate is the CI `cloud` job
+(`cloud_smoke.sh`, the D849/D850 readers, `cloud_lb_smoke.sh` with the `nexus_test` throwaway). Recorded
+here and in PLAN.md.
+
+**Not claimed.** (a) The deployment path serves a request — zero requests were made through the compose
+plane; the jars inside the images are the ones `cloud_lb_smoke.sh` verified over the loopback plane. (b)
+Image sizes are what `docker images` printed; no image was scanned, signed or pushed. (c) `Dockerfile.build`
+is unmeasured here (no warm network); it fixes a real defect but is not a proven recipe in this environment.
+(d) The container port map (8761/8888/8088 internal → 18761/18888/18088 host) was validated by compose
+config only, never by a probe. (e) CI does not build the images and does not run the deployment profile.
+
+- readers: `services/cloud/Dockerfile` (the `COPY ${MODULE}/target/app.jar` line),
+  `services/cloud/Dockerfile.build` (the reactor-build recipe),
+  `services/cloud/.dockerignore`,
+  `infra/docker-compose.yml` (the `cloud` profile: eureka/config/gateway services),
+  `docs/PLAN.md` (the cloud-plane queue's deployment item).
