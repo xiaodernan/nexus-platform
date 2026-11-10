@@ -37705,3 +37705,35 @@ commit 9e24292 / 2ded267.
 - readers: `scripts/source_index.mjs` (LEDGER_EXT with xml), `apps/web/src/lib/platform-guides.ts:30`,
   `docs/STATUS.md` (§863, the retirement of the duplicate 851), `docs/TRACEABILITY.md`, `docs/STATUS.md`
   (`## 862. D862 — the orchestrator's first honest turn…`).
+
+## 864. D864 — the fourth image exists too; four images, and the same saturated host refuses to run them
+
+**What changed.** `nexus/admin:dev` builds (`docker build -f services/cloud/Dockerfile --build-arg MODULE=admin-server -t nexus/admin:dev services/cloud` — unpack → done in ~5s on the host-verified jar); the
+pre-built `admin-server/target/app.jar` from the reactor is what went in, byte-clean, matching the smoke that
+already verified it (D859). The image set for the cloud profile is now complete and measured:
+
+```
+nexus/eureka:dev   584 MB
+nexus/config:dev   560 MB
+nexus/gateway:dev  568 MB
+nexus/admin:dev    built (image ~510 MB)
+```
+
+That completes the four-module image matrix the `cloud` compose profile declares.
+
+**What did NOT happen, re-measured.** `docker compose --profile cloud up -d eureka config-server admin-server
+  ` prints `Container nexus-eureka Starting / Container nexus-config Starting / Container nexus-admin Creating`
+and then the daemon cannot transition any of the three out of `Created`; the same wall recorded in D853 is
+still in place (the Docker Desktop WSL VM is saturated from this session's prior builds and the zombie
+`Created` containers persist). This is the same failure HANDOFF declared D853 "half-proven" — it remains
+half-proven, so this entry should be read as: the deployment recipe files are correct (they also pass a
+cold `mvn` build against a warm `.m2` — this session re-measured the reactor twice in a row on the clean
+paths); the running plane proof is still open on this machine, and the daemon/container path is owned by
+the host's Docker Desktop, not by anything this repository builds.
+
+**Not claimed.** That any cloud image works in a container, that `--profile cloud up` converges on this
+host (it has not yet in D853 or in this unit), or that pushing to a registry exists — none built/tested;
+that admin's image is signed, scanned, or proven reproducible beyond the single-build measurement above.
+
+- readers: `services/cloud/Dockerfile`, `services/cloud/Dockerfile.build`, `infra/docker-compose.yml`
+  (the `cloud` profile, admin-server service), `services/cloud/admin-server/pom.xml`.
