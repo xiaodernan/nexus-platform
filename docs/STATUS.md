@@ -38688,3 +38688,60 @@ dev plane. The absence arm proves falsifiability, not portability.
 - readers: `scripts/insight_admin_smoke.sh`, `scripts/falsify_insight_admin_smoke.sh`,
   `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`, `docs/ATLAS.md`,
   `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 893. D893 — the last slow ledger reader, and the third caller of the shared blob module
+
+**What was still open.** Phase F's F4 estimated `check_ledger_citations.mjs` at ~22s and
+`check_status_citations.mjs` at ~13s. The D892 full sweep measured them again: **36605ms** and
+**1787ms**. The second needed no change — its walk is a filesystem scan and the old estimate was
+stale. The first had the same disease D888 and D890 had already cured twice: `fileText(rel, true)`
+asked `git show HEAD:<path>` for every distinct cited target on the committed plane. Its `TEXT`
+cache is keyed by path, so the cache is correct but still costs hundreds of process spawns.
+
+**What shipped.** `check_ledger_citations.mjs` became the THIRD caller of
+`scripts/git_blobs.mjs`. The prefetch is PRECISE rather than a read of the whole 16 MB HEAD tree: it
+walks BOTH ledger planes (HEAD and the working copy — a new section can name a file the committed
+plane does not), asks this reader's own `citeTokens` / `isCitation` / `resolve` which paths those
+citations can name, and reads exactly those through ONE `git cat-file --batch`. A path the batch did
+not cover keeps the original `git show` fallback, so an incomplete batch is slower, never wrong.
+`--head-dir` still wins: a harness supplying a committed plane as files never reaches the prefetch.
+A small `LEDGER_TEXT` cache stops the prefetch and the census spawning `git show HEAD:<ledger>`
+twice for the same bytes, with the plane in the key. `--no-prefetch` keeps the old engine runnable,
+and `scripts/verify_ledger_cite_parity.mjs` diffs both engines' stdout byte for byte and falsifies
+its own comparator with one planted word.
+
+**Why the parity runner uses the FULL plane.** With `--text=<ledger>` this reader deliberately skips
+its committed-plane census (that mode exists for planted witnesses), so neither engine would read a
+HEAD blob and the comparison would prove nothing. `--report` keeps both sides at exit 0 so an
+offender in the census cannot be mistaken for an engine crash. This is a measured distinction, not
+a preference: the first draft of the runner used an excerpt and both engines returned in about a
+second with identical bytes — an empty proof.
+
+`scripts/check_shared_blob_reader.mjs` now covers the third caller (import + `catFileBatch` call +
+the `--no-prefetch` comparison switch) without falsely demanding `headTree` of a reader that owns
+its own tracked-file index; its self-test gained a FOURTH planted corruption that erases the third
+caller's import. `scripts/verify_all.mjs` drops both optimised readers from its 360s SLOW set, so a
+reader is not handed a budget it no longer needs. CI's existing wiring-reads line gained the new
+verifier without adding or removing a line, and `docs/ATLAS.md` names it.
+
+**Measured.** Full default census **36605ms → 3355ms** with a **byte-identical 3312-byte stdout**.
+Full-plane parity: `--no-prefetch` **21214ms** vs prefetch **2010ms** (**10.6x**), **0 differing
+lines**, comparator detects the planted word, exit 0. `check_status_citations.mjs` **1787ms** and
+unchanged. `check_comment_citations.mjs` (which calls the optimised reader as its step-8 resolver)
+still PASS with 195 citations across 65 files. `node --check` clean.
+
+**Not claimed.** That the census is CORRECT (it is a report with a stated backlog), that a fixture
+plane using `--head-dir` was diffed, that a cold-cache CI host shows 10.6x, that every flag
+combination was compared, or that the whole Phase F list is closed (F3, HA Eureka, remains open).
+`check_status_citations.mjs` was measured and left alone rather than "optimised" — writing a reason
+is the plan's other allowed outcome. **The three ledger falsifier arms are NOT reported as green:**
+`falsify_ledger_text.mjs`, `falsify_untracked_cites.mjs` and `falsify_status_citations.mjs` were
+launched as a separate battery and the first arm had produced no verdict after 2m31s when this
+unit was committed — the same slow, timeout-less spawn pattern D890 recorded for
+`falsify_line_cite_drift.mjs`. Their verdict (or its absence) is recorded in a later entry, never
+inferred. The evidence above is the byte-for-byte parity runner and the static gates, both of which
+did return verdicts.
+
+- readers: `scripts/check_ledger_citations.mjs`, `scripts/verify_ledger_cite_parity.mjs`,
+  `scripts/git_blobs.mjs`, `scripts/check_shared_blob_reader.mjs`, `scripts/verify_all.mjs`,
+  `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

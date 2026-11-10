@@ -52,11 +52,14 @@ const TIMEOUT_MS = flag('timeout-ms', 120000);
 const SLOW_MS = flag('slow-ms', 360000);
 const ULTRA_MS = flag('ultra-ms', 900000);
 
-/** Readers that walk the 38k-line STATUS.md; measured to need more than the default budget. */
+/** Readers that walk the 38k-line STATUS.md; measured to need more than the default budget.
+ *  D893: `check_ledger_citations.mjs` used to be here (36.6s in the D892 sweep, ~10x that with a
+ *  cold cache) and `check_status_citations.mjs` (13s in the Phase F estimate). The first now
+ *  batch-prefetches its HEAD blobs (3.4s, byte-identical census); the second measures 1.8s on the
+ *  same plane. Both run under the ordinary budget, so a reader is not handed 360s it no longer
+ *  needs. The other two keep the long budget until somebody measures them again. */
 const SLOW = new Set([
-  'check_ledger_citations.mjs',
   'check_comment_citations.mjs',
-  'check_status_citations.mjs',
   'check_ledger_numbers.mjs',
 ]);
 // D890: `check_line_cite_drift.mjs` used to be here with a 360s budget and still needed a retry

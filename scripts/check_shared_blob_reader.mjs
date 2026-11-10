@@ -9,12 +9,14 @@
  *   1. the shared module exists, exports headTree and catFileBatch, keeps stdin as a pipe (the
  *      `ignore` + `input` pair that silently delivers nothing is the defect DECISIONS §253 found),
  *      and handles the "missing" header explicitly;
- *   2. BOTH citation readers import it and call both functions;
+ *   2. the two citation readers import it and call both functions, and D893's ledger reader imports
+ *      it for the batch half while keeping its --no-prefetch comparison switch;
  *   3. no third scripts/*.mjs carries a second copy of the batch or the NUL-delimited tree token.
  *
- * SELF-TEST: the judge is pure over (path -> text), so --self-test plants three corruptions in
- * memory — an erased import, a pasted parser in a fake third file, and an empty plane — and requires
- * each to redden or to refuse. A gate that cannot be made red is not a gate.
+ * SELF-TEST: the judge is pure over (path -> text), so --self-test plants FOUR corruptions in
+ * memory — two erased imports (a full caller and the batch-only one), a pasted parser in a fake
+ * third file, and an empty plane — and requires each to redden or to refuse. A gate that cannot be
+ * made red is not a gate.
  *
  * WHAT THIS DOES NOT SAY: that either reader's census is CORRECT (verify_citation_engine_parity.mjs
  * and verify_line_cite_parity.mjs compare behaviour), that the readers are green right now, or
@@ -36,6 +38,9 @@ const CALLERS = [
   'scripts/check_citation_supports_sentence.mjs',
   'scripts/check_line_cite_drift.mjs',
 ];
+// D893: a third reader joined the shared module, but it owns its own tracked-file index and only
+// needs the batch reader. Requiring headTree of it would be a false demand, not a stricter gate.
+const BATCH_ONLY_CALLERS = ['scripts/check_ledger_citations.mjs'];
 // Split deliberately: this file must not itself spell the token it hunts for, or it would report
 // itself as the third parser. The concatenation is the only place the whole literal exists.
 const BATCH_TOKEN = "['cat-file', " + "'--batch']";
@@ -73,6 +78,19 @@ export function judge(files) {
     if (!/\bcatFileBatch\(/.test(text)) offenders.push(`NO catFileBatch CALL — ${caller} still parses the batch itself`);
     notes.push(`${caller}: import + both calls read`);
   }
+  for (const caller of BATCH_ONLY_CALLERS) {
+    const text = files.get(caller);
+    if (text === undefined) {
+      offenders.push(`MISSING CALLER — ${caller} does not exist; the batch reader lost a consumer`);
+      continue;
+    }
+    if (!/from '\.\/git_blobs\.mjs'/.test(text)) offenders.push(`NO IMPORT — ${caller} does not import ${SHARED}`);
+    if (!/\bcatFileBatch\(/.test(text)) offenders.push(`NO catFileBatch CALL — ${caller} still parses the batch itself`);
+    if (!text.includes('--no-prefetch')) {
+      offenders.push(`NO COMPARISON SWITCH — ${caller} lost its --no-prefetch path, so its speedup cannot be checked`);
+    }
+    notes.push(`${caller}: import + batch call + comparison switch read`);
+  }
   const duplicates = [...files.entries()]
     .filter(([p, t]) => p !== SHARED && (t.includes(BATCH_TOKEN) || t.includes(TREE_TOKEN)))
     .map(([p]) => p);
@@ -107,6 +125,11 @@ function main() {
     erased.set(victim, plane.get(victim).split("from './git_blobs.mjs'").join("from './elsewhere.mjs'"));
     const caughtImport = judge(erased).offenders.some((o) => o.includes('NO IMPORT'));
 
+    const erasedThird = new Map(plane);
+    const batchCaller = BATCH_ONLY_CALLERS[0];
+    erasedThird.set(batchCaller, plane.get(batchCaller).split("from './git_blobs.mjs'").join("from './elsewhere.mjs'"));
+    const caughtThird = judge(erasedThird).offenders.some((o) => o.includes('NO IMPORT') && o.includes(batchCaller));
+
     const pasted = new Map(plane);
     pasted.set('scripts/__fake_third_parser__.mjs', `const buf = execFileSync('git', ${BATCH_TOKEN});`);
     const caughtDuplicate = judge(pasted).offenders.some((o) => o.includes('DUPLICATE PARSER'));
@@ -115,14 +138,15 @@ function main() {
     const caughtEmpty = Boolean(empty.unchecked);
 
     console.log(`  self-test (import)    erased ${victim}'s import -> caught: ${caughtImport}`);
+    console.log(`  self-test (3rd user)  erased ${batchCaller}'s import -> caught: ${caughtThird}`);
     console.log(`  self-test (3rd copy)  planted a second parser -> caught: ${caughtDuplicate}`);
     console.log(`  self-test (no plane)  empty scripts plane -> refused: ${caughtEmpty}`);
     console.log(`  self-test (live)      real plane offenders: ${live.offenders.length}`);
-    if (!caughtImport || !caughtDuplicate || !caughtEmpty || live.offenders.length || live.unchecked) {
+    if (!caughtImport || !caughtThird || !caughtDuplicate || !caughtEmpty || live.offenders.length || live.unchecked) {
       console.log('\nSELF-TEST: FAIL — a corruption did not redden, or the real plane is already red');
       return 1;
     }
-    console.log('  self-test         all three corruptions redden and the real plane holds');
+    console.log('  self-test         all four corruptions redden and the real plane holds');
   }
 
   if (live.unchecked) {
@@ -137,7 +161,7 @@ function main() {
   }
   console.log('\nWHAT THIS DOES NOT SAY: that either census is correct, that the readers are green now,');
   console.log('or anything about files outside scripts/. Behaviour is compared by the two parity runners.');
-  console.log('\nRESULT: PASS — both citation readers call the one shared blob reader, no third parser');
+  console.log('\nRESULT: PASS — all three readers call the one shared blob reader, no third parser');
   return 0;
 }
 

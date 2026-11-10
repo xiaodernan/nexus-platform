@@ -78,6 +78,7 @@ import { readFileSync } from 'node:fs';
 import { join, isAbsolute } from 'node:path';
 import { LEDGER_EXT, LEDGER_FILE, VENDOR_DIRS, walkFiles } from './source_index.mjs';
 import { parseFlags } from './cli_args.mjs';
+import { catFileBatch } from './git_blobs.mjs';
 
 const ROOT = process.cwd();
 
@@ -124,6 +125,11 @@ const FLAGS = {
   // D203 — see the BLANK_JUDGED note below for why a whole-plane census needs this, and the LIMITS block for
   // what it does NOT turn off.
   '--untracked-backlog': { kind: 'switch' },
+  // D893 — keep the pre-optimisation path runnable. With this switch the batched HEAD-blob prefetch
+  // is skipped entirely and every cited target goes back through one `git show HEAD:<path>` spawn.
+  // scripts/verify_ledger_cite_parity.mjs diffs the two engines' stdout byte for byte; a speedup
+  // nobody can compare against its own baseline is not a verified speedup.
+  '--no-prefetch': { kind: 'switch' },
 };
 
 const parsed = parseFlags(process.argv.slice(2), FLAGS);
@@ -136,6 +142,7 @@ const ARGS = {
   worktree: Boolean(parsed.flag['--worktree']),
   verbose: Boolean(parsed.flag['--verbose']),
   untrackedBacklog: Boolean(parsed.flag['--untracked-backlog']),
+  noPrefetch: Boolean(parsed.flag['--no-prefetch']),
 };
 /**
  * `--text` replaces the ledger list with one file, read as written. It exists for the same reason
@@ -320,6 +327,49 @@ const TEXT = new Map();
  * than quietly answered from the disk.
  */
 const HEAD_FAILS = [];
+/**
+ * D893 — the third reader to stop spawning `git show` once per cited file. D888 and D890 already
+ * moved their blob reads into `scripts/git_blobs.mjs`; this one still asked `git show HEAD:<path>`
+ * for every distinct target on the committed plane, which is the bulk of its ~36s runtime.
+ *
+ * The prefetch is PRECISE, not a read of the whole 16 MB tree: it walks both ledger planes (HEAD and
+ * disk — the disk plane may name a file the committed one does not), asks this reader's OWN
+ * `citeTokens` / `isCitation` / `resolve` which paths the citations can name, and reads exactly those
+ * through ONE `git cat-file --batch`. A path the batch did not cover keeps the original `git show`
+ * fallback, so an incomplete batch is slower, never wrong. `--head-dir` still wins: when a harness
+ * supplies a committed plane as files, this function is never reached.
+ */
+let HEAD_BLOBS = null;
+function headBlobs() {
+  if (HEAD_BLOBS) return HEAD_BLOBS;
+  // `--no-prefetch` IS the old engine: an empty answer sends every lookup to the git show fallback.
+  if (ARGS.noPrefetch) { HEAD_BLOBS = new Map(); return HEAD_BLOBS; }
+  const names = new Set();
+  for (const ledger of LEDGERS) {
+    for (const committed of [true, false]) {
+      const { text } = ledgerText(ledger, committed);
+      if (text === null) continue;
+      for (const line of text.split(/\r?\n/)) {
+        for (const cite of citeTokens(line)) if (isCitation(cite.name)) names.add(cite.name);
+      }
+    }
+  }
+  const rels = new Set();
+  for (const name of names) {
+    const cands = resolve(name);
+    if (cands.length === 1) rels.add(cands[0]);
+  }
+  const paths = [...rels];
+  const records = catFileBatch(ROOT, paths.map((p) => `HEAD:${p}`));
+  const map = new Map();
+  for (const p of paths) {
+    const bytes = records.get(`HEAD:${p}`);
+    if (bytes === undefined || bytes === null) continue; // absent/missing -> the git show fallback decides
+    map.set(p, bytes.toString('utf8').split(/\r?\n/));
+  }
+  HEAD_BLOBS = map;
+  return map;
+}
 function fileText(rel, committed) {
   const key = `${committed ? 'head' : 'disk'}:${rel}`;
   if (TEXT.has(key)) return TEXT.get(key);
@@ -333,13 +383,19 @@ function fileText(rel, committed) {
       lines = null;                     // the supplied committed plane simply does not hold this file
     }
   } else {
-    try {
-      lines = execFileSync('git', ['show', `HEAD:${rel}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
-        .split(/\r?\n/);
-    } catch (error) {
-      lines = null;
-      if (TRACKED === null || TRACKED.has(rel)) {
-        HEAD_FAILS.push({ rel, reason: error.code ?? error.message });
+    // D893: the batched answer is already the split line array `git show HEAD:<path>` would give.
+    const prefetched = headBlobs().get(rel);
+    if (prefetched !== undefined) {
+      lines = prefetched;
+    } else {
+      try {
+        lines = execFileSync('git', ['show', `HEAD:${rel}`], { stdio: ['ignore', 'pipe', 'pipe'], cwd: ROOT, encoding: 'utf8', maxBuffer: 64 << 20 })
+          .split(/\r?\n/);
+      } catch (error) {
+        lines = null;
+        if (TRACKED === null || TRACKED.has(rel)) {
+          HEAD_FAILS.push({ rel, reason: error.code ?? error.message });
+        }
       }
     }
   }
@@ -487,7 +543,7 @@ function citeTokens(line) {
  * a tool reporting a crash where it owed a verdict. Reading a ledger is not the thing being checked, so a
  * failure here is now data the report carries, not an exception it throws.
  */
-function ledgerText(ledger, committed) {
+function ledgerTextUncached(ledger, committed) {
   if (committed && HEAD_DIR !== null) {
     // The committed plane supplied as files. This is the whole point of D163's seam: the red side of "a blank
     // line inside a section this run is writing" needs a head plane with one section and a disk plane with
@@ -514,6 +570,17 @@ function ledgerText(ledger, committed) {
   } catch (error) {
     return { text: null, reason: `could not read ${ledger} — ${error.code ?? error.message}` };
   }
+}
+
+/** D893 — a ledger's bytes do not change inside one process. The prefetch and the census read the
+ *  SAME four (ledger, plane) pairs; without this cache the two committed copies cost two extra
+ *  `git show HEAD:<ledger>` spawns for a 3 MB file. The key carries the plane, so a harness's
+ *  `--head-dir` copy can never be answered from the disk plane. */
+const LEDGER_TEXT = new Map();
+function ledgerText(ledger, committed) {
+  const key = `${committed ? 'head' : 'disk'}:${ledger}`;
+  if (!LEDGER_TEXT.has(key)) LEDGER_TEXT.set(key, ledgerTextUncached(ledger, committed));
+  return LEDGER_TEXT.get(key);
 }
 
 /**

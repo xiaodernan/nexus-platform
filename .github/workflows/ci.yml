@@ -158,7 +158,7 @@ jobs:
           node scripts/check_cloud_discovery.mjs
           node scripts/check_cloud_edge.mjs
           node scripts/check_cloud_plane_ports.mjs
-          node scripts/check_cloud_plane.mjs && node scripts/check_cloud_trace.mjs && node scripts/check_atlas.mjs && node scripts/check_cloud_insight.mjs && node scripts/verify_citation_engine_parity.mjs && node scripts/verify_line_cite_parity.mjs && node scripts/check_shared_blob_reader.mjs --self-test
+          node scripts/check_cloud_plane.mjs && node scripts/check_cloud_trace.mjs && node scripts/check_atlas.mjs && node scripts/check_cloud_insight.mjs && node scripts/verify_citation_engine_parity.mjs && node scripts/verify_line_cite_parity.mjs && node scripts/verify_ledger_cite_parity.mjs && node scripts/check_shared_blob_reader.mjs --self-test
       - name: Apply migrations (the same files the platform job applies)
         run: |
           sudo apt-get update -y && sudo apt-get install -y postgresql-client
