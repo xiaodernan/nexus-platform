@@ -31961,7 +31961,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `apps/web/src/lib/compare-row-labels.test.ts` already watches this grid from the web side by
   reading the AI's row list as text instead of importing it.
   - the second producer of this payload keeps the shift this unit removed. `mockCompare`
-  (`apps/web/src/lib/mock/index.ts:704-767`) maps the named ids over `SEED_MERCHANTS` and
+  (`apps/web/src/lib/mock/index.ts:703-767`) maps the named ids over `SEED_MERCHANTS` and
   `.filter(Boolean)`s the result, so an id the fixture lacks disappears and its neighbours slide left
   - unreachable today, because every mock card is `card_type: 'merchant'` (`:128`) and the demo
   search therefore only ever names ids the list holds. This unit read that file, it did not measure
@@ -36630,7 +36630,7 @@ helper, so a signed-in operator's session reaches `/api/v1/me`, the merchant rea
 live (`dict.ts:911`, `:913`, `:973`, `:1234`; `:1623`, `:1625`, `:1685`, `:1946`); each now names
 `/signin`. `SignInRequired` renders the link as its action (`console-parts.tsx:63-81`) and `AdminDenied`'s
 sign-in state renders it under the sentence (`admin-shell.tsx:35-43`). The new dictionary block is
-`dict.ts:662-679` (shape), `:1372-1387` (zh-HK), `:2084-2099` (en).
+`dict.ts:665-679` (shape), `:1372-1387` (zh-HK), `:2084-2099` (en).
 
 **Evidence.** `npm run typecheck:web` exit 0; `npm run test:web` 19 files / **212 passed** (209 before;
 `base.test.ts` 3 -> 6); `npm run lint:web` 0 errors, 6 pre-existing warnings. Commits 9cc03e8 (11 files,
@@ -36647,7 +36647,7 @@ live request exercised in this session: the platform was not running when the su
 - readers: `app/signin/page.tsx:26-37`, `src/components/signin-actions.tsx:25-56`, `:59-71`, `:73-80`,
   `app/api/nexus/auth/route.ts:42-91`, `:93-96`, `src/lib/api/base.ts:194-215`,
   `src/lib/api/base.test.ts:80-99`, `src/lib/console-admin.ts:227`, `src/lib/console-merchant.ts:67`,
-  `src/lib/i18n/dict.ts:662-679`, `:1372-1387`, `:2084-2099`,
+  `src/lib/i18n/dict.ts:665-679`, `:1372-1387`, `:2084-2099`,
   `src/components/console/console-parts.tsx:63-81`, `src/components/console/admin-shell.tsx:35-43`.
 ## 844. D844 · the two remaining worktrees were stale checkouts, not lanes - removed (`docs/STATUS.md`)
 
