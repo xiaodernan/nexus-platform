@@ -134,6 +134,26 @@ check('edge 5xx counter filter exists', 'services/cloud/gateway/src/main/java/co
       existsSync(join(root, 'services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeResponseMetricsFilter.java'))
       && read('services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeResponseMetricsFilter.java').includes('nexus.edge.response.5xx'));
 
+/* D894 — the HA experiment is a MEASURED claim, wired and honestly scoped. A smoke that can
+ * silently disappear, or a docs page that quietly goes back to "no HA at all", is drift. */
+const HA_SMOKE = 'scripts/eureka_ha_smoke.sh';
+const HA_FALSIFIER = 'scripts/falsify_eureka_ha_smoke.sh';
+check('D894 HA smoke ships', HA_SMOKE, existsSync(join(root, HA_SMOKE)));
+check('D894 HA falsifier ships', HA_FALSIFIER, existsSync(join(root, HA_FALSIFIER)));
+mustContain('D894 HA smoke uses explicit zones', HA_SMOKE, '--eureka.client.availability-zones.nexus=');
+mustContain('D894 HA smoke forbids self-registering server nodes', HA_SMOKE,
+  '--eureka.client.register-with-eureka=false');
+mustContain('D894 HA smoke requires an UP replicated instance', HA_SMOKE, 'REQUIRE_PRESENT');
+mustContain('D894 HA falsifier switches the peers off', HA_FALSIFIER, 'NEXUS_HA_NO_PEER=1');
+for (const s of ['eureka_ha_smoke.sh', 'falsify_eureka_ha_smoke.sh']) {
+  check(`CI cloud job invokes ${s}`, CI, ciText.includes(s));
+  check(`CLOUD.md lists ${s}`, 'docs/CLOUD.md', cm.includes(s));
+}
+mustContain('CLOUD.md records D894', 'docs/CLOUD.md', 'D894');
+check('CLOUD.md no longer claims "No HA" outright', 'docs/CLOUD.md', !cm.includes('- **No HA.**'));
+check('CLOUD.md keeps the pair out of the deployed plane', 'docs/CLOUD.md',
+  /HA is PROVEN IN AN EXPERIMENT, NOT SHIPPED/.test(cm));
+
 if (failures.length) {
   console.log('CLOUD PLANE — FAIL');
   for (const f of failures) console.log('  - ' + f);

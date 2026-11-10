@@ -58,7 +58,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | 18088 | `nexus-gateway` | `services/cloud/gateway/src/main/resources/application.yaml` |
 | 19444 | `nexus-admin` | `services/cloud/admin-server/src/main/resources/application.yaml` |
 | 19555 | `nexus-insight` (D885) | `services/cloud/insight-service/src/main/resources/application.yaml` |
-| 18961 / 18962 | reserved for the D858 HA experiment | `docs/CLOUD.md` |
+| 18961 / 18962 | D894's throwaway HA pair (loopback aliases, not in the cloud profile) | `docs/CLOUD.md` |
 
 3000 / 8000 / 8080 belong to other projects on this dev machine — see `README.md`.
 
@@ -162,6 +162,8 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/insight_config_smoke.sh` | D889: a config-repo edit (v1 → v2) lands at `/insight/config` after `POST /actuator/refresh`, same pid, no restart |
 | `scripts/insight_admin_smoke.sh` | D892: a clean `/instances` baseline, then the fifth member is visible UP in Spring Boot Admin; status read from THAT instance's `statusInfo` |
 | `scripts/falsify_insight_admin_smoke.sh` | D892: boots the plane with insight deliberately absent and requires the admin smoke to FAIL while both servers are up |
+| `scripts/eureka_ha_smoke.sh` | D894: explicit zones + non-self-registering nodes; registrations cross the wire in BOTH directions with `actionType=ADDED` |
+| `scripts/falsify_eureka_ha_smoke.sh` | D894: with peer wiring removed the replication assertion must FAIL while both nodes are up |
 | `scripts/cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in Spring Boot Admin |
 | `scripts/check_launcher_log_mode.sh` | launcher log mode |
 | `scripts/demo_live.sh` | the §142 consumer↔merchant loop in one command |

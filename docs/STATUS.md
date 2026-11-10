@@ -38745,3 +38745,57 @@ did return verdicts.
 - readers: `scripts/check_ledger_citations.mjs`, `scripts/verify_ledger_cite_parity.mjs`,
   `scripts/git_blobs.mjs`, `scripts/check_shared_blob_reader.mjs`, `scripts/verify_all.mjs`,
   `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+**D893 follow-up, recorded after the commit.** The three ledger falsifier arms were launched as a
+separate battery and produced ZERO verdicts in **14m17s** before being stopped; no arm is reported
+green, and none is reported as a failure either — a harness that never returned cannot be graded.
+This is the same timeout-less `spawnSync` pattern D890 recorded for `falsify_line_cite_drift.mjs`.
+The D893 evidence stands on the parity runner and the static gates, both of which did return.
+
+## 894. D894 — D858's HA Eureka blocker is solved by explicit zones, measured in both directions
+
+**What was still open.** D858 built a two-node Eureka pair and measured three failures: a
+comma-separated `defaultZone` left the replica set empty, a LAN-IP zone had no hairpin route from
+loopback, and distinct loopback hostnames with BOTH servers self-registering produced flapping
+views as self entries were evicted under the plane's 5s eviction. `docs/CLOUD.md` had carried
+"**No HA.**" ever since, and Phase F's F3 asked for a re-approach with explicit availability zones
+or a written blocker.
+
+**What shipped.** `scripts/eureka_ha_smoke.sh` changes TWO variables at once. (1) Each node gets an
+explicit `region=nexus` and ONE availability zone whose `service-url` is the OTHER node's loopback
+URL: node 1 is told `zone-b` (node 2), node 2 is told `zone-a` (node 1), so the replica resolver
+has no self URL to exclude. No LAN address is used; 127.0.0.1 and 127.0.0.2 are both
+loopback-resolvable here. (2) Both registry nodes set `register-with-eureka=false` and
+`fetch-registry=false`, removing the self-entry population that D858 saw evicting each other —
+peer replication is carried by `PeerEurekaNodes`, not by a server appearing in its peer's app list.
+The smoke asserts neither node logs "replica size seems to be empty", reads a CLEAN baseline on
+both registries, then registers one throwaway fixture into EACH node in turn and requires the OTHER
+node to list that instance with `status=UP`, its own `instanceId` and an `actionType=ADDED` row —
+two directions, so a shared cache or a misread cannot pass. `scripts/falsify_eureka_ha_smoke.sh`
+boots the same pair on separate coordinates WITHOUT the zone/peer wiring, registers the same
+fixture, and requires the unchanged replication assertion to FAIL while both JVMs are up and the
+baseline is clean. `scripts/check_cloud_plane.mjs` gained D894 wiring assertions plus a reverse
+check that `CLOUD.md` no longer says "No HA" outright; `docs/CLOUD.md`'s honesty clause was
+NARROWED (proven in an experiment, NOT shipped), not deleted; CI's existing smoke line gained both
+scripts without adding or removing a line; `docs/ATLAS.md` names them and Phase F's F3 is closed.
+`docs/CONTINUITY_PLAN.md` now carries a new **Phase G** pickup list so the lane has somewhere to go.
+
+**Measured.** Presence arm, exit 0: both nodes UP, "neither node reports an empty replica set",
+clean baselines (0 apps), phase A `NEXUS-HA-PROBE arrived UP, instanceId=nexus-ha-probe:19111,
+actionType=ADDED` on node 2, phase B `NEXUS-HA-PROBE-B arrived UP,
+instanceId=nexus-ha-probe-b:19112, actionType=ADDED` on node 1. Falsifier arm, exit 0: the no-peer
+run fails with `peer replication did not converge` after both nodes came up and node 1 registered
+directly, and all five attribution markers were present. An earlier single-direction run also
+converged and logged one transient `SocketTimeoutException` in a replication task which retried;
+the nodes log an expected `EndpointUtils` WARN about preferred-zone selection. Neither is hidden.
+
+**Not claimed.** That the DEPLOYED plane is HA: the default boot and compose `cloud` profile still
+run ONE Eureka node, no gateway or `nexus-insight` was failed over between registries, stale-replica
+eviction was not measured, a third node was not tried, the transport is unauthenticated loopback,
+and zero transient socket errors are NOT claimed. Docker (D853), Spring Cloud Bus, OTLP export and
+the real-provider eval lane remain open. D894 retires D858's *blocker*, not the decision to ship a
+single node.
+
+- readers: `scripts/eureka_ha_smoke.sh`, `scripts/falsify_eureka_ha_smoke.sh`,
+  `scripts/check_cloud_plane.mjs`, `scripts/check_cloud_insight.mjs`, `docs/CLOUD.md`,
+  `docs/ATLAS.md`, `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.

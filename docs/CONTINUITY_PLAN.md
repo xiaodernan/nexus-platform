@@ -72,6 +72,8 @@ picked up (none is promised here):
 - **D858's HA Eureka**: two nodes were built but never converged because the replica resolver
   refuses to exclude a node from its own zone and this host's LAN address is unroutable from
   loopback. Re-approach with explicit availability zones, not by declaring victory.
+  **→ closed by D894 (Phase F F3)**: explicit zones plus non-self-registering server nodes
+  replicate registrations in both directions; the deployed plane still boots one node.
 - **D853's Docker plane**: compose `cloud` profile is correct on paper; containers never left
   `Created` on the saturated daemon. Re-measure when the host has room.
 - **Spring Cloud Bus / config broadcast**: needs a broker; currently every instance refreshes via
@@ -98,9 +100,9 @@ picked up (none is promised here):
 
 | E4 | **D890 the last 500-second reader.** The D889 full sweep (9m23s) spent 8m22s in `check_line_cite_drift.mjs`, whose blob cache is keyed by (blame commit × cited file) and thus still spawned thousands of `git show` processes. Prefetch those keys through one `git cat-file --batch`, keep `--no-prefetch` for comparison | full census 9.6s, byte-identical output on a real ledger subset, `verify_all.mjs` SLOW set shrinks again |
 
-Still open after Phase E, re-judged at pickup time (none promised): D858 HA Eureka with explicit zones, D853 Docker plane, Spring Cloud Bus (needs a broker and a measured second instance), an OTLP exporter (propagation is not a collector), `btree_gist` reservation exclusion, CJK recall, the real-provider eval lane, and Spring Boot Admin listing the fifth member.
+Still open after Phase E, re-judged at pickup time (none promised): D858 HA Eureka with explicit zones (**closed by D894**), D853 Docker plane (**still open**), Spring Cloud Bus (needs a broker and a measured second instance), an OTLP exporter (propagation is not a collector), `btree_gist` reservation exclusion, CJK recall, the real-provider eval lane (**all still open**), and Spring Boot Admin listing the fifth member (**closed by D892**).
 
-### Phase F — the next pickup list (F1/D892, F2/D891, F4/D893 shipped; F3 still open)
+### Phase F — the next pickup list (ALL shipped: F1/D892, F2/D891, F3/D894, F4/D893)
 
 Ordered by what the plane can prove next, not by date. Each is a seam a fresh session can start from
 without re-doing a census of the repository.
@@ -109,8 +111,29 @@ without re-doing a census of the repository.
 |---|---|---|
 | F1 | **The fifth member in the admin window.** D886/D887 both leave "Spring Boot Admin was not booted against this member" in `CLOUD.md`. Boot Admin + Eureka, register `nexus-insight`, and assert `/instances` lists it — **D892 shipped**: `scripts/insight_admin_smoke.sh` + `scripts/falsify_insight_admin_smoke.sh` | measured PASS: `admin lists NEXUS-INSIGHT UP, id=fdfed968ab3c` after a clean 0-member baseline; the absence arm FAILS with both servers up and the falsifier verifies the red is attributable; `CLOUD.md`'s not-claimed list narrowed again |
 | F2 | **One shared blob reader.** D888 and D890 each implemented `ls-tree` + `cat-file --batch` parsing. Extract it into one `scripts/git_blobs.mjs` with both readers as callers — **D891 shipped**: `headTree` + `catFileBatch`, a self-falsifying `scripts/check_shared_blob_reader.mjs`, and a repeatable `scripts/verify_line_cite_parity.mjs` | both parity checks PASS byte-for-byte (citation stdout 2150 B identical, line-drift 4723 B / 2728 B identical, 0 drift), gate self-test reddens on three planted corruptions, no third copy of the parser |
-| F3 | **HA Eureka, re-approached (D858).** Explicit availability zones and loopback-resolvable replica URLs, not the LAN address that was unroutable here | two nodes actually replicate a registration, or a measured blocker recorded — never a declared victory |
+| F3 | **HA Eureka, re-approached (D858).** Explicit availability zones and loopback-resolvable replica URLs, not the LAN address that was unroutable here — **D894 shipped**: `scripts/eureka_ha_smoke.sh` + `scripts/falsify_eureka_ha_smoke.sh` | two registrations crossed the wire in BOTH directions (`actionType=ADDED`, `status=UP`, own instanceIds), neither node logged an empty replica set; with peer wiring removed the same assertion FAILS while both JVMs are up. The deployed plane still boots ONE node — recorded, not declared a victory |
 | F4 | **The remaining linear readers.** `check_ledger_citations.mjs` (~22s) and `check_status_citations.mjs` (~13s) still walk the 38k-line ledger — **D893 shipped**: the first became the THIRD caller of `scripts/git_blobs.mjs` (precise prefetch of only the HEAD blobs its own citations name), kept `--no-prefetch`, and gained `scripts/verify_ledger_cite_parity.mjs`; the second needed no change | measured `check_ledger_citations.mjs` **36605ms → 3355ms** with a byte-identical 3312-byte census, full-plane parity **21214ms vs 2010ms (10.6x)** and 0 drift; `check_status_citations.mjs` measured **1787ms** in the D892 sweep — the Phase F estimate of 13s was stale, and the walk is a filesystem scan, not a blob-spawn problem. Both now run under `verify_all.mjs`'s ordinary budget |
+
+### Phase G — the next seams (planned, not started)
+
+Phase F closed every item it named; this is not a terminal state. The plane now has discovery,
+declarative `lb://` calls, honest fallback, config hot refresh, W3C propagation, an admin window
+for the fifth member, and a MEASURED (but deliberately NOT deployed) HA pair. Ordered by what a
+fresh session can prove next — none is promised, and each still earns its own gate, smoke and
+"not claimed" paragraph:
+
+| # | Unit | Acceptance |
+|---|---|---|
+| G1 | **The fifth service's breaker, measured.** D885 shipped resilience4j fallback but never showed its STATE. Expose `/actuator/circuitbreakers` + health details, drive an upstream into repeated failures with the existing fixture, and assert the breaker reaches OPEN, its metrics move, and the view still says `unavailable` (never `UP`) | a smoke that reddens if the breaker never opens or if a fallback impersonates health; a falsifier arm with the upstream healthy |
+| G2 | **Trace context survives degradation.** D884 propagates `traceparent` on successful hops; a breaker's 503 fallback should still echo the caller's `X-Trace-Id`, so an incident is correlatable | a wire-level smoke over both the normal and the fallback response; CI + a static reader |
+| G3 | **Gateway failover across the HA pair.** D894 proved peer replication but no client used both registries. Point the gateway at both Eureka URLs, kill one node, and prove `lb://` resolution still works | a smoke with a downed-node arm, or a measured blocker written down — never a declared victory |
+| G4 | **Config broadcast (Spring Cloud Bus).** D889 refreshes ONE process manually. A bus needs a real broker; first MEASURE whether one is available on this host, then either prove a second instance rebinds from one broadcast or record the blocker | no claim of broadcast without a broker and two measured instances |
+| G5 | **A machine-readable claim census.** `docs/CLOUD.md`'s honesty clauses are prose. A `claims.yaml` naming every claim, its smoke, its gate and its not-claimed boundary, plus a reader that reddens when any of the four is missing | self-falsifying reader; the prose page stays the human-facing one |
+| G6 | **OTLP export.** W3C propagation is not a collector. A span exporter is a separate, measured decision (sampling, storage, queryability) and is NOT implied by D884 | only after a collector is chosen and spans are actually queried |
+
+Still open from earlier phases and deliberately NOT folded into G: `btree_gist` reservation exclusion,
+CJK recall measurement, the real-provider eval lane, Docker verification (D853), and the three
+ledger falsifier arms whose timeout-less spawn pattern makes them impractical on this host (D893).
 
 ## Cadence
 

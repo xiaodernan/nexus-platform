@@ -15,8 +15,9 @@
  *
  * WHAT THIS DOES NOT SAY: that the REAL platform or AI product answered (D887's upstreams are
  * throwaway fixtures registering under the product names), that a SECOND insight instance was ever
- * listed, that Eureka HA replication works (D858), that Docker was exercised (D853), or that the
- * monolith was decomposed. It is a read-only source census plus one GET; it registers, starts and
+ * listed, that Eureka HA replication works in the DEPLOYED plane (D894 proved it only in a throwaway
+ * pair this service never joined), that Docker was exercised (D853), or that the monolith was
+ * decomposed. It is a read-only source census plus one GET; it registers, starts and
  * stops nothing — the smokes are the ones that boot JVMs.
  *
  * Usage:  node scripts/check_cloud_insight.mjs [--no-probe] [--report]
@@ -238,12 +239,12 @@ const main = async () => {
   if (offenders.length) {
     console.log(`\nOFFENDERS (${offenders.length}):`);
     for (const o of offenders) console.log(`  - ${o}`);
-    console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), a SECOND insight instance was listed, HA/Docker ran, or the monolith was split.');
+    console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), a SECOND insight instance was listed, HA ran in the DEPLOYED plane, Docker ran, or the monolith was split.');
     console.log(`\nRESULT: ${REPORT_ONLY ? 'REPORT' : 'FAIL'} — ${offenders.length} offender(s)`);
     process.exitCode = REPORT_ONLY ? 0 : 1;
     return;
   }
-  console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), a SECOND insight instance was listed, HA/Docker ran, or the monolith was split.');
+  console.log('\nWHAT THIS DOES NOT SAY: the REAL platform/AI products answered (D887 used fixtures), a SECOND insight instance was listed, HA ran in the DEPLOYED plane, Docker ran, or the monolith was split.');
   console.log('\nRESULT: PASS — the fifth module is wired, honest, and its host coordinate is free or ours');
   process.exitCode = 0;
 };
