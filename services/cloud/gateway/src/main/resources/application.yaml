@@ -119,8 +119,11 @@ management:
     web:
       exposure:
         # D857: refresh is exposed so config changes land without a restart (the refresh smoke
-        # POSTs /actuator/refresh after rewriting the served file).
-        include: health,info,gateway,refresh
+        # POSTs /actuator/refresh after rewriting the served file). D876: metrics join — the
+        # cloud_retry_smoke greps http.server.requests + resilience4j.* counters after the flaky
+        # fixture recovers. Honest boundary: the gateway's Retry filter is Spring's own redirect-retry
+        # implementation, NOT resilience4j's Retry, so it emits no micrometer counter (measured).
+        include: health,info,gateway,refresh,metrics
   endpoint:
     gateway:
       access: unrestricted

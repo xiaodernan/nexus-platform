@@ -4179,3 +4179,15 @@ normal boot unchanged unless a profile opts in.
   `{"banner":"unmanaged","config_source":"local-default","profiles":["dev"]}`.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).
+- **D875 (§875): the edge retries idempotent GETs past a transient upstream, and the fallback stops 405-ing POST.**
+  Two defects exposed by one smoke (`scripts/cloud_monolith_refresh.sh`'s retry sibling): A failing 5xx upstream on
+  a non-GET routed to a GET-only fallback controller → Spring's own `MethodNotAllowedException` → the client got
+  405, never the 503 `edge_upstream_unavailable` the contract promises (fallback is now method-agnostic). A failing
+  upstream on a GET told the circuit nothing — retries did not exist; now GETs on `/api/v1/**` + `/ai/v1/**` carry
+  `Retry` (retries: 2, 500/502/503/504, methods: [GET]) inside the breaker; POSTs are never retried. `cloud_retry_smoke.sh`
+  with a scripted, countable fixture proves it: 1 GET = 3 upstream calls; 1 POST = 1 call + honest 503. The smoke
+  gates in CI's `cloud` job with the other four smokes.
+- **D876 (§876): the edge's metrics surface exists — and it honestly lacks a `retry` meter.** The gateway's
+  actuator exposure gains `metrics` on good authority. The smoke now asserts `http.server.requests` and
+  `resilience4j.circuitbreaker.*` — both confirmed live. The gateway `Retry` filter is Spring's own, so no
+  `resilience4j.retry.*` is emitted (measured, documented in CLOUD.md + the application.yaml comment).

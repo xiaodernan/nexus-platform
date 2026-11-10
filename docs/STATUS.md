@@ -38095,3 +38095,28 @@ package -DskipTests` exit 0), retry smoke re-run: **PASS** (GET 200 after 3 fixt
 `edge_upstream_unavailable` after exactly 1 hit).
 (d) Full plane re-verified against D850/D857/D872: all three PASS. CI runs the retry smoke in the `cloud`
 job after the monolith-refresh smoke.
+
+## 876. D876 — the edge's metrics surface exists, and it honestly lacks a `retry` meter
+
+**What shipped.** `management.endpoints.web.exposure` on the gateway gains `metrics` alongside the D857
+`refresh`. `scripts/cloud_retry_smoke.sh` now asserts, after the flaky-fixture proves the two retries
+fired: `http.server.requests` is present and at least one `resilience4j.circuitbreaker.*` counter exists —
+both confirmed live (the smoke prints every matching name it finds).
+
+**The boundary, measured, not guessed.** There is NO `resilience4j.retry.*` name in `/actuator/metrics` —
+the Spring Cloud Gateway `Retry` filter is not resilience4j's Retry; no micrometer counter is wired for it.
+The exposure also carries `resilience4j.bulkhead.*` and `resilience4j.timelimiter.*`, and those DO prove:
+the edge's instrumentation path is live end-to-end (breaker + bulkhead + timelimiter + explicit
+`http.server.requests`), measured on the fixture. Documented in CLOUD.md and in the application.yaml
+comment that guards the exposure, so the next reader does not have to rediscover it.
+
+**Not claimed.** That a `retry` meter exists (it does not, by construction — Spring's own redirect-retry);
+that pressure on the breaker shows up in any alerting surface (no alert is wired); that the actuator
+metrics endpoint is production-safe — it remains no-auth on the dev trusted hop, same ruling as the edge
+fallback (D850) and a deployment ingress owns the door. That CI green for this pipeline was observed — all
+proofs this unit happened on this host; CI's `cloud` job invokes the smoke, whose metrics assertion uses
+`curl -fsS` and fails hard on any missing name.
+
+- readers: `services/cloud/gateway/src/main/resources/application.yaml` (metrics exposure),
+  `scripts/cloud_retry_smoke.sh` (the metric assertion),
+  `docs/CLOUD.md` (gate table, retry row).

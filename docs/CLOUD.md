@@ -77,7 +77,7 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | `cloud_lb_smoke.sh` | one REAL `/api/v1/health` through lb://NEXUS-PLATFORM, one through lb://NEXUS-AI; X-Request-Id echo; deterministic limiter |
 | `cloud_refresh.sh` | config edit lands at the edge with no restart (`POST /actuator/refresh`) |
 | `cloud_monolith_refresh.sh` | config edit lands ON THE MONOLITH with no restart (v1 → repo rewrite → POST refresh → v2 banner, same pid) |
-| `cloud_retry_smoke.sh` | idempotent GET retries twice past a transient 5xx upstream; POSTs never retried; failing POST lands `edge_upstream_unavailable` (503) |
+| `cloud_retry_smoke.sh` | idempotent GET retries twice past a transient 5xx upstream; POSTs never retried; failing POST lands `edge_upstream_unavailable` (503); the edge's actuator surface carries `http.server.requests` + `resilience4j.circuitbreaker.*` (measured; the gateway's Retry filter exposes no meter) |
 | `db_gate_fresh.sh` | the seeded database gate (unrelated plane; not the cloud job's dependency) |
 
 The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, both readers, applies migrations, `cloud_lb_smoke.sh`, then the refresh smoke, the monolith-refresh smoke and the retry smoke. The gate `needs.cloud` is in the `required` job's `needs`.

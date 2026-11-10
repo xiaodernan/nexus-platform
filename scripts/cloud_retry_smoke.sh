@@ -97,6 +97,16 @@ hits="$(grep -c 'HIT /api/v1/health' "$LOG_DIR/fixture.log" || true)"
 [ "$hits" = "3" ] || fail "fixture recorded $hits hits, expected 3 (retry did not fire: 500+500+200)"
 echo "  fixture recorded 3 hits for one GET — the two retries fired"
 
+echo "== the edge exposes its own metric surface =="
+metric_names="$(curl -fsS "http://127.0.0.1:$GATEWAY_PORT/actuator/metrics" 2>/dev/null || true)"
+matched="$(printf '%s' "$metric_names" | tr ',' '\n' | sed 's/"//g' | grep -oE '(http\.server\.requests|resilience4j\.(circuitbreaker|timelimiter|bulkhead)[a-z._]*)' || true)"
+[ -n "$matched" ] || fail "no http.server/resilience4j metric in /actuator/metrics: $metric_names"
+printf '%s' "$matched" | grep -q 'http.server.requests' \
+    || fail "http.server.requests missing — the request meter is gone: $metric_names"
+printf '%s' "$matched" | grep -q 'resilience4j.circuitbreaker' \
+    || fail "resilience4j.circuitbreaker.* missing — the breaker meter is gone: $metric_names"
+echo "  resilience4j + http metrics present: $(printf '%s' "$matched" | sort -u | tr '\n' ' ')"
+
 echo "== POST /api/v1/health through the gateway: POST is never retried =="
 posts_before="$(grep -c 'HIT /api/v1/health' "$LOG_DIR/fixture.log" || true)"
 post_body_file="$(mktemp 2>/dev/null || echo /tmp/nexus-retry-post.json)"
