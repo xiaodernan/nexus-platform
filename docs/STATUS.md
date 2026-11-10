@@ -36980,3 +36980,171 @@ a browser retrace of the pre-fix world.
   `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/TokenBucketTest.java`,
   `scripts/cloud_smoke.sh:126-128`, `:156-170`, `scripts/cloud_lb_smoke.sh:106-107`, `:125-151`,
   `scripts/check_cloud_edge.mjs`, `.github/workflows/ci.yml:154-158`.
+
+## 851. D851 · the hour a visitor speaks was read by nobody on the mock plane (`apps/web/src/lib/mock/index.ts`, `apps/web/src/lib/mock/numeral-hours.test.ts`)
+
+*The claim.* `CLOCK_RE` on the mock plane is the service's digit-for-digit, and the service never feeds
+raw text to it. `apps/ai/nexus_ai/nlu/timeparse.py:305` runs
+`normalise_numerals(text, only_before=_HOUR_MARKERS)` and searches the REWRITTEN string; the pass is
+`apps/ai/nexus_ai/nlu/numerals.py:70` and the marker roster is `timeparse.py:156` (`"點時"`). The web had
+no mirror of that pass, so `apps/web/src/lib/mock/index.ts:297` saw no clock in 「九點」 and §8's floor made
+the lane ask for a time the visitor had already given. Where a part-of-day word was present the mock fell
+back to that window's opening hour instead, which is a wrong answer wearing the shape of a right one.
+
+*Measured before the repair*, over the 33 sentences of `tmp/d655_before.txt` against the service's own
+`parse_time` in `tmp/d655_service.txt` (`tmp/d655_docs_measure.mjs`, re-run at `43acb97` into
+`tmp/d721_measure.json`):
+
+    published nothing where the service published the hour      19
+    published the part-of-day window's opening hour              4
+    wrong for a reason that is not the numeral                   1
+    already agreed                                               2
+    not a stated hour on either plane                            7
+                                                               ----
+    rows read                                                   33
+
+  The 19 are 九點 / 九点 / 三點半 / 三點十五分 / 十一點 / 二十點 / 十二點 / 六時 / 六时 / 兩點 / 两点 /
+  五點半 / 十點半 / 下午茶三點 / 星期日三點 / 九點鐘 / 約七點 / 七點左右 / 三點. The 4 are 晚上九點 (18:00
+  here, 21:00 there), 晚上八點半 (18:00 / 20:30), 朝早九點 (07:00 / 09:00) and 夜晚八時 (18:00 / 20:00).
+  The 1 is 下午茶3點 — a digit, so the numeral pass cannot be its cause, and it is pinned below rather
+  than charged to this unit. So **23 of the 33** rows carrying a Chinese numeral were wrong, and every
+  one of them is a sentence a Hong Kong visitor types.
+
+*What ships.* One rewrite pass in front of the clock, mirroring the service rather than improving on it:
+`CN_DIGITS` (`apps/web/src/lib/mock/index.ts:243`), `HOUR_MARKERS` (`:251`), `CN_HOUR_RUN` (`:255`, built from the roster's own
+keys so a digit added to the table is a digit the reader matches), `cnNumber` (`:261`),
+`normaliseHourNumerals` (`:287`) and the call at `:383`. Three decisions in it are not obvious and are
+copied, not chosen:
+
+  * **The Chinese ONE is not rewritten.** `numerals.py:92` skips a value of 1, because the product has
+    already decided what 一點 means in these sentences — 安靜一點 is a degree, not one o'clock — and the
+    compounds are unaffected, since 十一 is eleven and not one. The mirror keeps the skip, so the
+    refusals leg below is a claim about the service's decision and not about this lane's taste.
+  * **`only_before` is a restriction, not a detail.** `numerals.py:87`-`:89` fires the rewrite only when
+    an hour marker follows immediately, which is what keeps 星期三 a weekday and 三小時 a duration
+    instead of handing both to the clock. Dropping the lookahead is arm A2.
+  * **An out-of-range run is the authority's out-of-range value too.** 三十三點 becomes `33點`, and the
+    `_valid_clock` mirror at `apps/web/src/lib/mock/index.ts:406` refuses it there exactly as the service refuses it, so the
+    numeral reader does not grow a bounds check the service does not have. The same mirroring loses the
+    minute tail on BOTH planes — see *Not claimed*.
+
+*The two scripts.* The service holds one spelling per character because its text is canonicalised before
+it is read, so `numerals.py:24` declares **13** rows and `_HOUR_MARKERS` **2**. This plane has no
+canonicalisation and hand-carries both (D641), so it declares **14** and **4**, and the second spelling
+of every character is derived from `apps/ai/nexus_ai/nlu/canonical.py:46`'s `CANONICAL_FORMS` (**239**
+pairs) rather than remembered — 两 from 兩, 点 from 點, 时 from 時. The census leg reddens if the service
+values a digit differently here, if the authority folds a spelling this lane does not carry, or if a
+marker is missing on either script.
+
+*The gate.* `apps/web/src/lib/mock/numeral-hours.test.ts`, **7** legs over **26** stated-hour rows
+(`:149`) and **9** refusals (`:170`). It reads `numerals.py`, `timeparse.py` and `canonical.py` as TEXT
+(D626: a broken table must not be able to satisfy its own assertion), and every branch that would return
+an empty roster throws — under 12 digit rows (`:63`) or under 50 canonical pairs (`:105`) is a refusal,
+not a green that means "I read nothing". The legs: the authority census (`:177`); each stated row
+answered with the hour the service answers it with (`:195`); each refusal publishing `none` and a null
+instant (`:204`); digit and numeral publishing ONE instant across two anchors (`:212`); the follow-up
+read by `mergeIntent` agreeing with `understandQuery` AND carrying the service's hour, no `time` in
+`unknowns` and a positive confidence (`:223`); the roll a typed hour gets (`:254`); and the two unresolved
+readings pinned as they ship (`:264`). Green on the shipped bytes: the door's **7** legs inside
+`Tests  217 passed (217)` over 20 files (`tmp/d721_web_suite.txt`).
+
+*Arms.* Eight mutations of the shipped file IN PLACE — the door imports and text-reads the same bytes, so
+a copy would be graded by a different reader than the one that ships (`tmp/d655_arms.mjs`,
+`tmp/d721_arms.txt`). Red legs were predicted by procedure before each run:
+
+    A1  the value-1 skip removed                    2 red   refusals, follow-up
+    A2  the hour-marker lookahead removed           1 red   stated
+    A3  markers Traditional-only, as the service    2 red   census, stated
+    A4  兩/两 dropped from the roster               4 red   census, stated, parity, follow-up
+    A5  十 dropped from the roster                  5 red   census, stated, refusals, parity, follow-up
+    A6  a bare 十 given no tens place               3 red   stated, parity, follow-up
+    A7  the clock searched without the rewrite      5 red   stated, parity, follow-up, roll, pin
+    A8  a digit run summed, not read positionally   1 red   refusals
+
+  **8 of 8 MATCHED**, 23 firings, `UNPREDICTED=0 DID-NOT-FIRE=0` on every arm, each `restored=OK`, and
+  `BASE_RESTORED=OK (8cc65421c03371852f083fce6cf8988ef48d181a)` — the hash `git hash-object` still prints
+  for the file this section ships. The union of the eight red sets is all seven legs, so no leg is
+  vacuous parity that no mutation can move. A7 is the parent's behaviour. The battery was run three
+  times: the first pass (`tmp/d662_arms.txt`) predates the door's rename and its FAIL lines still say
+  D662, and the second was run before another lane added its part-of-day bands to the same file, so
+  only the last run — over the bytes this section ships — is quoted.
+
+*Two arms are worth their mechanism, because both redden the REFUSALS leg and neither has to.* Executing
+the shipped rewrite bytes with each splice applied (`tmp/d721_why.mjs`, `tmp/d721_why.txt`):
+
+  * **A5** — with 十 out of the roster the run breaks at it, so 三十三點 rewrites to `三十3點` and the tail
+    三 alone reaches the marker: the clock reads `3點` and publishes 03:00 for a sentence that states no
+    legal hour. The base rewrites the whole run to `33點`, which `apps/web/src/lib/mock/index.ts:406` refuses.
+  * **A8** — summing turns 二五 into 7 instead of 25, so 二五點 rewrites to `7點`: a legal hour where the
+    authority's out-of-range 25 was refused. The refusal is the bounds check's, and a reader that
+    mis-composes the number walks straight past it.
+  * **A2** is the mirror image and reddens the STATED leg: without the lookahead the rewrite also fires on
+    十五, so 三點十五分 becomes `3點15分` and the clock reads **03:15** where both planes ship 03:00. The
+    door therefore pins the lost minute tail as a value, and an improvement that reads it goes red here
+    before it can be claimed as a fix — see *Not claimed*.
+
+*Reverse control.* The same door over the parent's real `apps/web/src/lib/mock/index.ts` bytes
+(`git show f8ce1e5:` — this lane's own D646 commit, the last one to touch the file before the numeral
+pass): **6 failed | 1 passed (7)** (`tmp/d721_reverse.txt`, `tmp/d721_reverse.mjs`). The one green is
+`leaves a numeral that is not an hour out of the clock` — the parent publishes `none` for everything, and
+that leg only asks for `none`. This is why each stated row carries the hour the authority publishes for
+it instead of demanding parity alone: parity would have been green with BOTH readers blind.
+
+*Planes.* The repair was written when the lane was at `d1e39be` (D661) and it was never landed by
+itself: another lane's commit `e6f3f384` (D801-web) swept the uncommitted `index.ts` bytes and the new
+door file into its own diff, **79** commits before the tree this section is written against
+(`43acb97`). `git merge-base --is-ancestor d1e39be 43acb97` succeeds, so the base is still an ancestor
+**250** commits back and nothing was rewritten. Everything above was re-measured on that tree, not carried
+across: the service probe was re-read (`tmp/d655_service.txt`, 45 rows), the battery re-run with its
+predictions re-derived, the split re-derived into `tmp/d721_measure.json` (19/4/1/2/7, unchanged), and
+`tmp/d662_agreement.mjs` re-read the door's own corpus against the service into `tmp/d721_agreement.json`
+— `statedDisagreements: 0` over the 26 rows, `head: 43acb97`. The web suite on the shipped tree:
+**217 passed (217)** over 20 files (`tmp/d721_web_suite.txt`), and `tsc --noEmit` wrote **0 bytes** with
+`TSC_EXIT=0` (`tmp/d721_tsc.txt`) — the exit code read from the redirect, not from a pipe whose status
+would have been `tail`'s.
+
+*Adjacent — the two reds this unit named were taken over and are closed.* Both were in
+`apps/web/src/lib/mock/stated-time.test.ts`, D646's door: one read the service's window labels and got
+`['afternoon', 'deep_night', …(5)]` where the mock declared five windows without `deep_night`, and one
+read 「深夜」 as `2026-11-02T10:00:00.000Z` where the service opens it at `15:00:00.000Z`. The cause was
+D698 (§677), which added `deep_night` at `timeparse.py:68` and reads it in the meridiem shift at
+`:356` and `:358`. The other lane's `e6f3f384` added the two missing bands to `PART_OF_DAY_WINDOWS`
+(`apps/web/src/lib/mock/index.ts:227`, now **seven** windows, the service's seven), and the mock's roster
+now names the same seven labels with the same bounds. The two reds are gone — the suite is green — so
+this unit's next step was taken by the lane that owed it, and this section records the taking rather
+than claiming it. One divergence that band change did NOT settle is carried below and in PLAN: the
+service retires 午市 to a strip-only menu token (D677), while the mock's noon band still lists it as a
+clock cue.
+
+*Not claimed.* Three readings stay unresolved and are pinned GREEN by the last leg (`:264`), so the unit
+that moves one has to change a green test rather than rediscover the gap:
+
+  * **The minute tail is lost on both planes.** 三點十五分 becomes `3點15分`, `CLOCK_RE`'s 分 branch
+    needs a digit, and both answer 03:00. Mirrored, not fixed: the service is the authority here and it
+    does not read the tail either. PLAN carries it for the AI lane.
+  * **A category cue still tells the service which half of the day a bare hour means.** 下午茶3點 is
+    15:00 there and 03:00 here, and 下午茶三點 now agrees with 下午茶3點 — the numeral pass made the two
+    spellings of one sentence consistent without making either consistent with the service.
+  * **A named weekday moves the day there and is not a cue here at all.** 星期日三點 is Sunday on the
+    service; this lane knows only 週六 and shifts by a constant `+4` (`apps/web/src/lib/mock/index.ts:416`), so the leg requires
+    the weekday sentence to publish the same instant as a bare 三點. The refusals leg's 星期三 row is the
+    same gap seen from the other side: the service answers `range:Wed 09:00` and this lane has no `range`
+    carrier to publish it in (`apps/web/src/lib/types.ts` spells its no-time `none`), which is the
+    published-time-kinds bullet PLAN already carries.
+
+*Numbering.* The unit was drafted as D655 and re-aimed twice: **D721** was already spoken for by the
+other lane's in-flight part-of-day windows (named in §690's own text), so the number is **D851**, free
+across every commit subject and every ledger line. The section is **§851**: the `## ` series ends at
+850, so 851 is the first number free to the heading reader. The scratch artefacts keep their original
+`tmp/d655_*` and `tmp/d662_*` names, which is why the evidence files carry numbers this section does not.
+The pair does NOT drift here — §851 and D851 agree — which is the exception, not the rule: 387 of 388
+`## N. DN` headings disagree. The PLAN bullet that this closes is re-aimed to §851 in the same commit.
+
+- readers: `apps/web/src/lib/mock/numeral-hours.test.ts` (the door, and the text census of the service's
+  three tables), `tmp/d655_arms.mjs` + `tmp/d721_arms.txt` (the battery and its predictions),
+  `tmp/d721_why.mjs` + `tmp/d721_why.txt` (the A5/A8/A2 mechanisms, executed on the shipped bytes),
+  `tmp/d721_reverse.mjs` + `tmp/d721_reverse.txt` (the parent-bytes control), `tmp/d655_docs_measure.mjs`
+  + `tmp/d721_measure.json` (the 33-row split), `tmp/d662_agreement.mjs` + `tmp/d721_agreement.json`
+  (the re-measurement at `43acb97`), `tmp/d721_web_suite.txt` and `tmp/d721_tsc.txt` (the suite and the
+  type check), and `scripts/check_ledger_sections.mjs` (the heading plane this section's number was
+  chosen against).

@@ -3753,18 +3753,38 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   owed — a leg keeps both spellings at 500 so the dead one cannot be dropped for the live one. Reading the table the
   other cue lived in widened the unit into the lane beside it: `evenight` sat in a one-boolean `evening` regex that
   answered 「下午3點」 with 19:00, and that boolean is gone. Its token retired with the table, so this bullet's second
-  citation is dated to before `9778b7e`; `apps/web/src/lib/mock/index.ts:224` is the five windows the service
-  publishes now. Owner: the lane that owns the mock vocabulary.
+  citation is dated to before `9778b7e`; `apps/web/src/lib/mock/index.ts:227` is the seven windows the service
+  publishes now, and the mock has caught up with two of them (D801-web added `deep_night` and `late_night`).
+  Owner: the lane that owns the mock vocabulary.
 
-- **The mock reads digits, so 「九點」 states an hour and gets no time back - closed by D721 (§696).**
+- **The mock reads digits, so 「九點」 states an hour and gets no time back - closed by D851 (§851).**
   `apps/ai/nexus_ai/nlu/numerals.py:70` rewrites Chinese numerals before `CLOCK_RE` runs, and the web had no mirror
-  of that pass, so `apps/web/src/lib/mock/index.ts:378` saw no clock and §8's floor made the lane ask. Measured over
+  of that pass, so `apps/web/src/lib/mock/index.ts:383` saw no clock and §8's floor made the lane ask. Measured over
   the 33 sentences of `tmp/d655_before.txt` against the service's own `parse_time` (`tmp/d655_service.txt`): 19
   published nothing and 4 published the part-of-day window's opening hour where the service published the hour.
   The mirror now carries the digit table, both scripts of every character (`canonical.py` is the authority for the
   second spelling), the value-1 skip and the positional/十 composition, and the door is
   `apps/web/src/lib/mock/numeral-hours.test.ts` — it reads the service's tables as TEXT, so a numeral learned there
   and not here is a red test. Owner: the web lane.
+
+- **The minute tail is lost on BOTH planes, and the mirror made the loss a value.** 三點十五分 rewrites to
+  `3點15分` on the service (`apps/ai/nexus_ai/nlu/numerals.py:70`) and on the web alike
+  (`apps/web/src/lib/mock/index.ts:383`), but `CLOCK_RE`'s 分 branch wants a digit and the numeral tail carries
+  none, so both planes publish 03:00 for a sentence that states 15 minutes past three. D851's stated leg pins
+  that 03:00 as the hour AND the minute (`apps/web/src/lib/mock/numeral-hours.test.ts:149`), so an
+  implementation that finally reads the tail has to move a green test on BOTH planes — which is the honest
+  shape for a fix, but it means the two planes cannot be fixed independently. The service's own reader is the
+  authority for whether the tail is worth reading at all. Owner: the AI lane, with the web lane's mirror as
+  the second half of the same change.
+
+- **A category cue still decides the half of the day on the service and not on the web.** 「下午茶3點」 is
+  15:00 on the service and 03:00 on the mock plane, and 「下午茶三點」 now agrees with it — D851 made the two
+  spellings of one sentence consistent without making either consistent with the authority. Measured in
+  `tmp/d721_agreement.json`: `下午茶三點 -> explicit:Sun 15:00` and `下午茶3點 -> 15:00` against the mock's
+  03:00. The window that carries the afternoon is `PART_OF_DAY_WINDOWS`
+  (`apps/web/src/lib/mock/index.ts:227`), and the cue that should have moved the hour is read by
+  `apps/ai/nexus_ai/nlu/timeparse.py:356` on the service. Owner: the web lane, for the cue's half of the
+  reading; the authority's half is the service's.
 
 - **Three published time kinds have no carrier on the web.** `packages/types/src/enums.ts:515` and
   `packages/types/src/schemas/intent.json:123` publish `explicit / relative / range / open_now / unspecified`, and
@@ -3773,10 +3793,15 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   shape the contract recognises. Owner: the web lane — the mock's clock reader can only publish what the type can
   hold, which §643 discloses as not claimed rather than fixing blind.
 
-- **The mock's weekend is `+4` days, not the next Saturday.** `apps/web/src/lib/mock/index.ts:352` shifts four days
-  whatever the weekday of the query, so a Wednesday asking for 週六 gets Sunday and a Saturday asking gets Wednesday;
-  「週六」 with no hour publishes nothing, which is the right answer for the wrong reason. Deriving the day is a
-  calendar, not a constant. Owner: the web lane.
+- **The mock's weekend is `+4` days, not the next Saturday, and a named weekday is not a cue at all.**
+  `apps/web/src/lib/mock/index.ts:416` shifts four days whatever the weekday of the query, so a Wednesday asking
+  for 週六 gets Sunday and a Saturday asking gets Wednesday; 「週六」 with no hour publishes nothing, which is the
+  right answer for the wrong reason. Deriving the day is a calendar, not a constant. The same gap has a second
+  face: the service reads 星期日三點 as SUNDAY at 03:00 (`tmp/d721_agreement.json` carries the reading), while
+  this lane has no weekday roster at all and answers a stated 三點 — so the sentence that names a weekday publishes
+  a different day on the two planes. D851's pin leg
+  (`apps/web/src/lib/mock/numeral-hours.test.ts:264`) holds both readings GREEN as they ship, so the unit that
+  moves one has to change a green test rather than rediscover the gap. Owner: the web lane.
 
 - **「晚市」 is dated by neither plane now.** The parent's boolean dated it 19:00; `PART_OF_DAY`
   (`apps/ai/nexus_ai/nlu/timeparse.py:44`) carries 午市 on the noon side and nothing for a night market on the night
