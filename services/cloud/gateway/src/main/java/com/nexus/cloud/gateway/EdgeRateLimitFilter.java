@@ -56,6 +56,12 @@ public class EdgeRateLimitFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // Management surfaces stay exempt: a liveness/readiness probe must never be refused
+        // by our own limiter (the smoke's health waits depend on it, and so do real
+        // orchestrators under load).
+        if (exchange.getRequest().getPath().value().startsWith("/actuator")) {
+            return chain.filter(exchange);
+        }
         String key = clientKey(exchange);
         TokenBucket bucket = buckets.computeIfAbsent(key, k -> new TokenBucket(burst, replenish));
         if (buckets.size() > MAX_BUCKETS) {

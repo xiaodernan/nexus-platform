@@ -30,7 +30,10 @@ spring:
                 - name: CircuitBreaker
                   args: { name: platform, fallbackUri: forward:/fallback/platform }
             - id: ai
-              uri: ${NEXUS_AI_URI:http://127.0.0.1:8010}
+              # D856: the AI route resolves by name under the cloud profile (lb://NEXUS-AI),
+              # same shape as the platform route: env override wins, then the profile's
+              # nexus.edge.ai-uri, then the documented port.
+              uri: ${NEXUS_AI_URI:${nexus.edge.ai-uri:http://127.0.0.1:8010}}
               predicates:
                 - Path=/ai/v1/**
               filters:
@@ -133,3 +136,4 @@ spring:
 nexus:
   edge:
     platform-uri: lb://NEXUS-PLATFORM
+    ai-uri: lb://NEXUS-AI

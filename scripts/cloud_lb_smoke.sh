@@ -4,8 +4,9 @@
 # the registry resolution to the platform (not the hardcoded host:port URI).
 #
 # Usage:  scripts/cloud_lb_smoke.sh
-# Env:    NEXUS_SMOKE_EUREKA_PORT, NEXUS_SMOKE_CONFIG_PORT, NEXUS_SMOKE_GATEWAY_PORT, NEXUS_LB_PORT
-#         (the last one is the smoke's own platform port, so a live `:8090` is untouched).
+# Env:    NEXUS_SMOKE_EUREKA_PORT, NEXUS_SMOKE_CONFIG_PORT, NEXUS_SMOKE_GATEWAY_PORT, NEXUS_LB_PORT,
+#         NEXUS_LB_AI_PORT (default 8011), NEXUS_DATABASE_URL (the AI service reads the same throwaway
+#         database the platform applies; override for CI).
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -87,6 +88,18 @@ env NEXUS_PORT="$PLATFORM_PORT" \
 echo "  platform(lb) started (pid $!)"
 wait_up platform "http://127.0.0.1:$PLATFORM_PORT/actuator/health"
 
+echo "== start the AI service with the cloud profile =="
+AI_PORT="${NEXUS_LB_AI_PORT:-8011}"
+env NEXUS_AI_HOST_PORT="$AI_PORT" \
+    NEXUS_DATABASE_URL="${NEXUS_DATABASE_URL:-postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_verify2}" \
+    NEXUS_LLM_PROVIDER=mock \
+    NEXUS_AI_EUREKA_ENABLED=true \
+    NEXUS_EUREKA_URI="http://127.0.0.1:$EUREKA_PORT/eureka/" \
+    uv run --directory "$ROOT/apps/ai" python start_ai.py >"$LOG_DIR/ai-lb.log" 2>&1 &
+    PIDS+=("$!")
+echo "  ai(lb) started (pid $!)"
+wait_up ai "http://127.0.0.1:$AI_PORT/ai/v1/health"
+
 echo "== eureka lists NEXUS-PLATFORM =="
 registered=0
 attempt=0
@@ -102,11 +115,28 @@ done
 [ "$registered" = 1 ] || fail "eureka never listed NEXUS-PLATFORM from the platform's cloud profile"
 echo "  NEXUS-PLATFORM registered"
 
+echo "== eureka lists NEXUS-AI =="
+registered_ai=0
+attempt=0
+while [ "$attempt" -lt 90 ]; do
+    if curl -fsS -H 'Accept: application/json' "http://127.0.0.1:$EUREKA_PORT/eureka/apps" 2>/dev/null \
+        | grep -q 'NEXUS-AI'; then
+        registered_ai=1
+        break
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+done
+[ "$registered_ai" = 1 ] || fail "eureka never listed NEXUS-AI from the AI service's opt-in registration"
+echo "  NEXUS-AI registered"
+
 echo "== start gateway with cloud profile =="
-# D850: the limiter runs at its documented defaults (burst 10, replenish 5/s) for this smoke;
-# the correlation and limiter phases below are part of the proof, not an afterthought.
+# D856: the burst test must not depend on wall-clock luck. The limiter's management exemption keeps
+# wait_up's health polls off the bucket; replenish=0 makes the burst deterministic — the bucket
+# starts full (burst=10), the correlation phases spend two, and the burst loop is guaranteed to
+# exhaust it and then be refused.
 export NEXUS_GATEWAY_RATE_BURST=10
-export NEXUS_GATEWAY_RATE_REPLENISH=5
+export NEXUS_GATEWAY_RATE_REPLENISH=0
 start gateway "$CLOUD/gateway/target/app.jar" --server.port="$GATEWAY_PORT" \
     --spring.profiles.active=cloud
 wait_up gateway "http://127.0.0.1:$GATEWAY_PORT/actuator/health"
@@ -121,6 +151,24 @@ esac
 routes="$(curl -fsS "http://127.0.0.1:$GATEWAY_PORT/actuator/gateway/routes" 2>/dev/null)"
 echo "$routes" | grep -q 'lb://NEXUS-PLATFORM' || fail "gateway does not carry lb://NEXUS-PLATFORM in its route table"
 echo "  gateway route table carries lb://NEXUS-PLATFORM"
+
+echo "== gateway proxies by name to the AI service =="
+ai_info="$(curl -fsS "http://127.0.0.1:$GATEWAY_PORT/ai/v1/health" 2>/dev/null)" \
+    || fail "gateway /ai/v1/health failed (see $LOG_DIR/gateway.log)"
+case "$ai_info" in
+    *'"status":"ok"'*) echo "  /ai/v1/health through the gateway: ok" ;;
+    *) fail "gateway /ai/v1/health returned no ok status: $ai_info" ;;
+esac
+routes="$(curl -fsS "http://127.0.0.1:$GATEWAY_PORT/actuator/gateway/routes" 2>/dev/null)"
+echo "$routes" | grep -q 'lb://NEXUS-AI' || fail "gateway does not carry lb://NEXUS-AI in its route table"
+echo "  gateway route table carries lb://NEXUS-AI"
+
+echo "== the AI hop carries the request id too =="
+corr_ai="lbcorrai-$$"
+rid_ai="$(curl -fsS -D - -o /dev/null -H "X-Request-Id: $corr_ai" "http://127.0.0.1:$GATEWAY_PORT/ai/v1/health" \
+    | tr -d '\r' | awk 'BEGIN{IGNORECASE=1} /^x-request-id:/{print $2}')"
+[ "$rid_ai" = "$corr_ai" ] || fail "the AI did not echo the gateway's X-Request-Id (got '$rid_ai', want '$corr_ai')"
+echo "  gateway -> ai correlation: $corr_ai"
 
 echo "== the end-to-end request id survives both hops (D850) =="
 corr="lbcorr-$$"
@@ -148,4 +196,4 @@ retry_after="$(grep -il '^retry-after:' "$LOG_DIR"/d850_hdr_* | head -1 \
 [ "$retry_after" = "1" ] || fail "a 429 is missing Retry-After: 1 (saw: '${retry_after:-none}')"
 echo "  25 rapid calls -> $ok admitted, $limited refused; a 429 carries Retry-After: 1"
 
-echo "PASS: cloud lb smoke — eureka + config + platform(cloud profile) + gateway(lb://, limiter, correlation)"
+echo "PASS: cloud lb smoke — eureka + config + platform(cloud profile) + ai(opt-in registration) + gateway(lb:// for both, limiter, correlation)"

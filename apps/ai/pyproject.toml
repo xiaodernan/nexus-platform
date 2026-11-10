@@ -6,6 +6,7 @@ requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastapi>=0.115",
     "uvicorn>=0.30",
+    "py-eureka-client>=0.13,<0.14",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
     "asyncpg>=0.29",

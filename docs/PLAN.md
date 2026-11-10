@@ -4113,6 +4113,14 @@ normal boot unchanged unless a profile opts in.
   stays on the monolith; the limiter is per gateway process by design. `scripts/check_cloud_edge.mjs`
   gates the wiring; the smokes carry the behavioural assertions (the breaker is tripped live on the
   dead-port fixture, the limiter is hammered live through the lb smoke).
+- **Landed - D856 (§856): the AI service registers by opt-in too, and the edge routes it by name.**
+  `apps/ai/nexus_ai/discovery.py` registers NEXUS-AI under `NEXUS_AI_EUREKA_ENABLED=true` (5s/10s leases,
+  findable not a client); the heartbeat is our asyncio task after py-eureka-client's own heartbeat failed
+  to renew on this stack (registration at boot worked; renewals stopped). The gateway routes /ai/v1/** by
+  `lb://NEXUS-AI` under its cloud profile with the env override intact. `scripts/check_cloud_discovery.mjs`
+  gains R6; the lb smoke boots the AI too and proves both lb:// routes end to end (PASS) —
+  NEXUS-PLATFORM and NEXUS-AI both registered, both proxied by name, both correlation-asserted. The web
+  route stays URI by design (the browser's entry is not a service the edge balances).
 - **Deployment LANDED, deployment proof partial (D853/§853):** the three images build from the
   host-verified jars (`Dockerfile`; `Dockerfile.build` is the self-contained source build for CI or a warm
   network); the `cloud` compose profile is validated (`docker compose config --services`), but the

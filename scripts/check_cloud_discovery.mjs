@@ -23,12 +23,16 @@
  *       `lb://<THE PLATFORM'S DECLARED NAME>`, and the base route actually reads that property
  *       (env override still wins): routing by name is a profile decision, not a retyped address.
  *   R5  The lb smoke exists, reads the eureka and gateway module ports instead of retyping literals,
+ *   R6  The AI service registers by opt-in too (apps/ai/nexus_ai/discovery.py + py-eureka-client),
+ *       findable but never a client, and the gateway's cloud document routes the ai route
+ *       lb://NEXUS-AI the same way it routes the platform — the edge discovers both names it owns.
  *       so its green is a verdict about the plane a developer actually gets.
  *
  * WHAT THIS DOES NOT SAY. It does not run anything: the PROOF that a registered instance answers a
  * proxied request is `scripts/cloud_lb_smoke.sh` run live, and this reader only asks that the smoke
- * exists and keeps one port map. It does not judge the AI/web routes — they stay URI routes until
- * those services register, and that is a decision per service, not a drift. It does not read the
+ * exists and keeps one port map. It does not judge the web route — it stays URI by design (the
+ * browser's entry is not a service the edge needs to balance), and that is a decision per service,
+ * not a drift. It does not read the
  * compose file (the cloud profile's deployment shape is D847's R4 population), and it says nothing
  * about whether the edge authenticates, rate-limits or breaks a circuit. The lb:// name is compared
  * with the platform's own spring.application.name uppercased the way Eureka lists it, so a rename
@@ -72,9 +76,11 @@ function main(value, flag) {
   const OPTIONAL = [
     'services/platform/src/main/resources/application-cloud.yml',
     'scripts/cloud_lb_smoke.sh',
+    'apps/ai/nexus_ai/discovery.py',
+    'apps/ai/pyproject.toml',
   ];
   const [POM, PLATFORM_YML, GATEWAY_YAML, EUREKA_YAML] = CORE;
-  const [CLOUD_YML, LB_SMOKE] = OPTIONAL;
+  const [CLOUD_YML, LB_SMOKE, DISCOVERY_PY, AI_PYPROJECT] = OPTIONAL;
 
   const text = {};
   const unreadable = [];
@@ -183,8 +189,45 @@ function main(value, flag) {
       `retyped=${retyped.length} reads-eureka=${readsEureka} reads-gateway=${readsGateway}`);
   }
 
+  /* R6 — the AI service registers by opt-in, the edge routes it by name too (D856) */
+  let aiName = 'NEXUS-AI';
+  if (text[DISCOVERY_PY] === undefined) {
+    charge('R6', 'no apps/ai/nexus_ai/discovery.py: the AI service has nothing that can register it');
+    note('R6 ai discovery', false, 'absent');
+  } else {
+    const py = text[DISCOVERY_PY];
+    const optIn = /NEXUS_AI_EUREKA_ENABLED/.test(py) && /eureka_enabled/.test(py);
+    const offByDefault = /strip\(\)\.lower\(\) in \{"true", "1", "yes"\}/.test(py);
+    const findableNotClient = /should_discover=False/.test(py);
+    const fastLeases = /renewal_interval_in_secs=5/.test(py);
+    const nameMatch2 = /NEXUS_AI_APP_NAME", "([A-Za-z0-9._-]+)"/.exec(py);
+    if (nameMatch2) aiName = nameMatch2[1].toUpperCase();
+    const readsHostPort = /NEXUS_AI_HOST_PORT/.test(py);
+    const declaresLib = text[AI_PYPROJECT] !== undefined && /py-eureka-client/.test(text[AI_PYPROJECT]);
+    if (!optIn) charge('R6', 'discovery.py does not read NEXUS_AI_EUREKA_ENABLED: registration is not opt-in');
+    if (!offByDefault) charge('R6', 'discovery.py does not gate on an explicit true/1/yes: the default boot would register');
+    if (!findableNotClient) charge('R6', 'discovery.py keeps should_discover: the AI would fetch the registry — it must be findable, not a client');
+    if (!fastLeases) charge('R6', 'discovery.py declares no 5s lease: a killed instance would linger in the registry');
+    if (!nameMatch2) charge('R6', 'discovery.py names no NEXUS_AI_APP_NAME default: the edge has nothing stable to look up');
+    if (!readsHostPort) charge('R6', 'discovery.py does not read NEXUS_AI_HOST_PORT: the registration would advertise a port nobody binds');
+    if (!declaresLib) charge('R6', 'apps/ai/pyproject.toml does not declare py-eureka-client: the opt-in is decoration');
+    note('R6 ai opt-in',
+      optIn && offByDefault && findableNotClient && fastLeases && Boolean(nameMatch2) && readsHostPort && declaresLib,
+      `opt-in=${optIn} off-default=${offByDefault} findable=${findableNotClient} 5s=${fastLeases} name=${nameMatch2 ? nameMatch2[1] : 'ABSENT'} host-port=${readsHostPort} lib=${declaresLib}`);
+  }
+
+  const aiReads = /\$\{NEXUS_AI_URI:\$\{nexus\.edge\.ai-uri:http:\/\/127\.0\.0\.1:\d+\}\}/.test(text[GATEWAY_YAML]);
+  const aiLb = cloudDoc && /ai-uri:\s*lb:\/\/([A-Za-z0-9._-]+)/.exec(cloudDoc);
+  if (!aiReads) charge('R6', 'the base ai route does not read ${NEXUS_AI_URI:${nexus.edge.ai-uri:...}}: the profile property lands nowhere');
+  if (cloudDoc && !aiLb) charge('R6', 'the gateway cloud document sets no ai-uri: lb:// route: the profile changes nothing for the AI');
+  else if (aiLb && aiLb[1].toUpperCase() !== aiName) {
+    charge('R6', `the cloud document routes lb://${aiLb[1]} but the AI registers as ${aiName}: the edge would look up a name nobody answers`);
+  }
+  note('R6 ai lb by profile', Boolean(aiReads && aiLb && aiLb[1].toUpperCase() === aiName),
+    `ai-route-reads-property=${aiReads} ai-lb=${aiLb ? aiLb[1] : 'ABSENT'} declared=${aiName}`);
+
   /* the verdict */
-  console.log('NEXUS cloud discovery — the monolith registers by opt-in, the edge routes by name');
+  console.log('NEXUS cloud discovery — the monolith and the AI service both register by opt-in; the edge routes both by name');
   console.log(`  plane read         ${BASE}`);
   console.log(`  surfaces           ${CORE.length} core + ${OPTIONAL.length} optional read`);
   console.log(`  platform name      ${nameMatch[1]} (Eureka lists ${appName})`);
@@ -195,13 +238,13 @@ function main(value, flag) {
     console.log(`OFFENDERS (${offenders.length}):`);
     for (const o of offenders) console.log(`  - ${o}`);
   } else {
-    console.log('  the monolith can register, does not unless the cloud profile says so, registers on the');
-    console.log('  plane\'s own registry port, and the edge routes it by its declared name under that profile');
+    console.log('  the monolith and the AI can register, do not unless their profiles say so, register on the');
+    console.log('  plane\'s own registry port and name, and the edge routes both by their declared names under the cloud profile');
   }
   console.log('');
   console.log('WHAT THIS DOES NOT SAY: that a registered instance answers a proxied request (run the lb smoke');
-  console.log('live for that); anything about the AI/web routes, which stay URI routes until those services');
-  console.log('register; anything about compose, TLS, auth, rate limits or circuit breakers.');
+  console.log('live for that); anything about the web route (it stays URI by design — the browser entry);');
+  console.log('anything about compose, TLS, auth, rate limits or circuit breakers.');
   console.log('');
 
   if (REPORT_ONLY) { console.log('RESULT: REPORT — printed, no verdict claimed'); return 0; }

@@ -53,7 +53,12 @@ def create_app(settings: Any | None = None) -> FastAPI:
             await db_pool.connect(deps.settings)
         except Exception as exc:  # pragma: no cover - pool build is defensive already
             log.warning("database pool unavailable, serving offline demo: %s", exc)
+        # D856: opt-in Eureka registration (NEXUS_AI_EUREKA_ENABLED=true). Default off —
+        # the single-process boot registers nothing, like the monolith's default.
+        from nexus_ai.discovery import maybe_register_eureka, stop_eureka
+        eureka_registration = await maybe_register_eureka()
         yield
+        await stop_eureka(eureka_registration)
         try:
             await db_pool.dispose()
         except Exception:  # pragma: no cover

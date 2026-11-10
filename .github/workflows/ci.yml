@@ -150,6 +150,8 @@ jobs:
         with: { distribution: temurin, java-version: '25', cache: maven }
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
+      # The lb smoke also boots the Python AI service with the opt-in registration.
+      - uses: astral-sh/setup-uv@v5
       - run: bash scripts/cloud_smoke.sh
       - name: Edge wiring reads (D849 discovery + D850 resilience)
         run: |
