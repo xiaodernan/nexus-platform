@@ -36852,3 +36852,55 @@ was re-run for this surface; verification is HTTP SSR bytes. (c) The funnel show
 cross-merchant authorisation is the platform's `read_analytics` check, not the console's.
 
 - readers: `apps/web/src/components/console/merchant-shell.tsx:18-27`, `:29-45`, `:46-61`, `:50-59`.
+
+## 849. D849 — the monolith registers by opt-in, and the edge routes it by name (Spring Cloud discovery; the D845/D847 tail)
+
+**The half §845 said out loud.** §845 shipped eureka/config/gateway and declared what it did not do: the
+monolith carried no eureka client and no route used `lb://`. D847 measured the consequence (0 spring-cloud
+libraries in the platform jar, `:8090/actuator/health` answering 404) and moved the plane's host face off a
+foreign registry. This unit is the registration:
+
+**The lane.** `services/platform/pom.xml` imports `spring-cloud-dependencies` 2025.0.3 (the services/cloud
+train, Boot 3.5.16) and declares the eureka-client and actuator starters. On the classpath and OFF by
+default: `application.yml` keeps `eureka.client.enabled: ${NEXUS_EUREKA_ENABLED:false}`, so the normal
+single-process boot registers nothing and fetches nothing. `application-cloud.yml` (new) is the opt-in:
+`dev,cloud` registers `NEXUS-PLATFORM` against `${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}` (the
+D847 measured-free block, not the foreign :8761), `fetch-registry=false` (findable, not a client),
+`prefer-ip-address`, 5s/10s leases, instance id `${spring.application.name}:${server.port}`. The gateway
+gains a `cloud-profile` document: the platform route's uri becomes `lb://NEXUS-PLATFORM` with the env
+override `NEXUS_PLATFORM_URI` still winning; the base default stays `http://127.0.0.1:8090`.
+
+**The gate.** `scripts/check_cloud_discovery.mjs` — five rules, GET-only/report reads: R1 the BOM + client
++ actuator are declared; R2 the base config keeps the client disabled; R3 the opt-in zone's port IS the
+eureka module's declared default (drift reddens); R4 the `lb://` route exists only under the cloud profile
+and the env override still wins; R5 the lb smoke exists and reads the module ports instead of retyping
+literals. `RESULT: PASS — 5 checks, no offender`, exit 0. `scripts/cloud_lb_smoke.sh` is the
+proxied-request proof the reader does not claim: eureka -> config -> platform(dev,cloud :18099) -> gateway
+(cloud :18088), asserting NEXUS-PLATFORM registered, then `/api/v1/health` THROUGH the gateway answering
+`{"status":"ok"}`, and the route table carrying `lb://NEXUS-PLATFORM`. Live this session:
+`PASS: cloud lb smoke` (eureka :18761 -> platform :18099 -> gateway :18088). The smoke's DB surface is
+parameterized (`NEXUS_DB_USER` / `NEXUS_DB_PASSWORD` / `NEXUS_DB_URL` / `NEXUS_PLATFORM_DB_URL`) so CI points
+it at its own throwaway database.
+
+**CI.** The `cloud` job now detects `^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud))`;
+it boots postgres (pgvector/pgvector:pg16, `nexus_test`), applies the migrations, runs `cloud_smoke.sh`, the
+discovery reads, and the lb smoke end-to-end, and `required` needs `cloud` with `needs.cloud.result != failure`.
+YAML parse verified (`yaml.safe_load`). Also fixed en route: `target/classes/application.yml` was shadowing
+`application.yaml` in all three modules (the jars bound the legacy ports despite the D847 docs); `mvn clean
+package` rebuilt all three and `cloud_smoke.sh` re-ran green on the rebuilt bytes (`PASS: cloud plane smoke`,
+config round-trip `cloud-smoke`, route table, `X-Request-Id`, NEXUS-GATEWAY registered, isolation before and
+after).
+
+**Not claimed.** (a) The lb smoke and the discovery reads are locally verified only — the CI runner's result
+is not observable this session. (b) The AI and web routes stay URI routes; nothing about their discovery is
+claimed. (c) No TLS, auth, rate limit or circuit breaker on the edge; no compose wiring for the registration
+path; the platform fetches nothing (findable, not a client). (d) The stale-jar shadowing means D845's shipped
+jars had always booted the legacy ports on this machine — §845/§847's live claims were re-measured on the
+rebuilt bytes this session (both smokes PASS).
+
+- readers: `services/platform/pom.xml:38`, `:94-102`,
+  `services/platform/src/main/resources/application.yml:54-67`,
+  `services/platform/src/main/resources/application-cloud.yml:10-25`,
+  `services/cloud/gateway/src/main/resources/application.yaml:24`, `:72-82`,
+  `scripts/check_cloud_discovery.mjs:16-29`, `scripts/cloud_lb_smoke.sh:76-121`,
+  `.github/workflows/ci.yml:50`, `:134-170`, `:482`, `:489`.
