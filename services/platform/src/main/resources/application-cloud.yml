@@ -7,6 +7,27 @@
 # (services/cloud/eureka-server defaults to 18761 on this machine — the canonical 8761 belongs to
 # another checkout's registry). One port map: scripts/check_cloud_discovery.mjs R3 compares this
 # number with the eureka module's own default and reddens if they drift apart.
+spring:
+  config:
+    # D872: the monolith resolves its OWN config from the same config server the edge uses —
+    # OPTIONAL on purpose: if the config server is down the monolith still boots and serves with
+    # the defaults it already ships. Fail-fast belongs to production overlays.
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
+  cloud:
+    # Flips the base `application.yml` block (enabled: false) — under the `cloud` profile the
+    # import check expects exactly this and the optional import, both of which are present.
+    config:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # D872: refresh is exposed under the cloud profile ONLY — the monolith's base config
+        # stays health-only (application.yml). refresh re-reads @RefreshScope beans (the banner)
+        # after a config-repo edit; nothing else about the monolith's surface moves.
+        include: ${NEXUS_MANAGEMENT_EXPOSURE:health,refresh}
+
 eureka:
   client:
     enabled: true

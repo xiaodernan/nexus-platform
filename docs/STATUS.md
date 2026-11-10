@@ -29870,7 +29870,7 @@ does not. Both were run from their own tree against a directory holding `6145c6c
     this unit's reader, same bytes      RESULT: FAIL — 20 simplified character(s) in 5 literal(s) of 4 zh block(s)   rc 1
           WRONG-SCRIPT apps/web/src/lib/prompts.ts:18 :19 :20 :21 :22 — five of five starter prompts
 
-The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2190`) and
+The two blocks the old admission could not see are `DICTS` (`apps/web/src/lib/i18n/dict.ts:2208`) and
 `BY_LOCALE` (`apps/web/src/lib/prompts.ts:20-35`), both locale-keyed maps: what was missing was the
 population, not the copy. The reader prints such a map's span one line EARLIER than its declaration —
 `2051-2052`, and 2051 is empty — so a row that copies the printed span verbatim draws the BLANK LINE
@@ -36647,7 +36647,7 @@ live request exercised in this session: the platform was not running when the su
 - readers: `app/signin/page.tsx:26-37`, `src/components/signin-actions.tsx:25-56`, `:59-71`, `:73-80`,
   `app/api/nexus/auth/route.ts:42-91`, `:93-96`, `src/lib/api/base.ts:194-215`,
   `src/lib/api/base.test.ts:80-99`, `src/lib/console-admin.ts:227`, `src/lib/console-merchant.ts:67`,
-  `src/lib/i18n/dict.ts:665-679`, `:1372-1387`, `:2084-2099`,
+  `src/lib/i18n/dict.ts:671-685`, `:1372-1387`, `:2084-2099`,
   `src/components/console/console-parts.tsx:63-81`, `src/components/console/admin-shell.tsx:35-43`.
 ## 844. D844 · the two remaining worktrees were stale checkouts, not lanes - removed (`docs/STATUS.md`)
 
@@ -37943,3 +37943,49 @@ merchant session — the scope check (`conversation:id`) lives in the platform a
   `apps/web/src/lib/i18n/dict.ts` (`console.conversations.reply*`),
   `tests/e2e/specs/merchant/reply.spec.ts`,
   `services/platform/src/main/java/com/nexus/conversation/ConversationService.java` (`merchantReply`).
+
+## 872. D872 — the monolith resolves its own config from the config server (hot refresh on the monolith too)
+
+**What was missing.** D857 proved the EDGE hot-refreshes its config. The spring-cloud lane stopped there:
+the monolith — the service actually running the customer demo — could not resolve anything from the
+config server, and had no refresh at all. This unit is the platform half of the promise.
+
+**Shipped.**
+- `services/platform/pom.xml`: `spring-cloud-starter-config` (inert on the classpath without an import).
+- `application-cloud.yml`: `spring.config.import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}`
+  + `spring.cloud.config.enabled=true`; exposure under `cloud` ONLY: `management.endpoints.web.exposure.include: health,refresh`.
+- `application.yml` (base): `spring.cloud.config.enabled: false` — **the failure this exists for:** Boot's
+  import check refuses to START the monolith when the config starter sits on the classpath with no import.
+  The demo plane (`dev` profile) crashed on first boot with it. The base config now disables the config
+  client outright; the cloud profile flips it on. This is DECISIONS D4 applied to config: degrade, never
+  crash-loop.
+- `services/cloud/config-server/src/main/resources/config-repo/nexus-platform.yml` (new): serves the
+  `nexus.platform.banner` demo marker next to `nexus-gateway.yml`.
+- `CloudInfoController` (new, `@RefreshScope`): `GET /api/v1/cloud/info` →
+  `{"service":"nexus-platform","banner":"<banner>","config_source":"config-server|local-default","profiles":[...]}`.
+- `scripts/cloud_monolith_refresh.sh` (new, CI's `cloud` job runs it after the edge refresh smoke):
+  throwaway repo with `monolith-refresh-v1` → monolith boot (dev,cloud) → banner v1, `config_source=config-server`
+  → rewrite repo → POST `:$PORT/actuator/refresh` → banner v2, same pid. **PASS measured twice.**
+  cygpath is now guarded — Git Bash-only (`command -v`), a bare `file://` path on Linux CI.
+- PLAN.md cloud queue row added; the D858 body paragraph that had drifted under the D861 row is back under
+  D858's header; CLOUD.md gained the monolith-config section and the gates table row; the stale `dict.ts:2190`
+  and `dict.ts:665` citations were re-aimed (two MOVED sites, this unit's `dict.ts` edit grew the file).
+
+**Measured.** Base `dev` boot re-verified on the live plane: `health 200` on :8090,
+`/api/v1/cloud/info` → `{"banner":"unmanaged","config_source":"local-default","profiles":["dev"]}` (honest
+local-default source, the dev profile gets no config traffic). Demo plane re-opened after the reboot.
+CI lane: the `cloud` job now runs both refresh smokes with the CI database env.
+
+**Not claimed.** That the monolith's runtime reads ANY config key outside the banner (single key, by design —
+expand only with a consumer that needs one and a unit to prove it); that refresh cascades to tenant-scoped
+beans, DB connections or the flyway stream — it re-reads `@RefreshScope` beans only; that the deployed
+container inherits any of this (D853 barrier, unchanged); that the base config file's
+`spring.cloud.config.enabled=false` is understood by a human without this note — logged here precisely
+because the next import-check failure will look inexplicable otherwise.
+
+- readers: `services/platform/src/main/resources/application.yml` (base, enabled:false),
+  `services/platform/src/main/resources/application-cloud.yml` (import + health,refresh),
+  `services/platform/src/main/java/com/nexus/platform/CloudInfoController.java`,
+  `services/cloud/config-server/src/main/resources/config-repo/nexus-platform.yml`,
+  `scripts/cloud_monolith_refresh.sh`, `.github/workflows/ci.yml` (the monolith refresh step),
+  `docs/PLAN.md` (cloud queue, D872 row), `docs/CLOUD.md` (monolith config section + gate table).

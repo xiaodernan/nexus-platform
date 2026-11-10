@@ -1,0 +1,9 @@
+# Served to `nexus-platform` under its `cloud` profile (D872). The `banner` value is deliberately
+# a marker, not a feature: the platform's `/api/v1/cloud/info` shows the banner it resolved, so a
+# passing smoke run proves the config-server round-trip on the MONOLITH (not the gateway) and a live
+# /actuator/refresh — not the local default ("unmanaged"). Do not put secrets here: the config
+# server's native repo ships inside the jar this repo builds, and the refresh door is open on the
+# dev plane by design (D850's ruling: a deployment ingress owns the door).
+nexus:
+  platform:
+    banner: platform-banner-cloud

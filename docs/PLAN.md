@@ -4135,6 +4135,16 @@ normal boot unchanged unless a profile opts in.
   open. The smoke does NOT belong in `db_gate_fresh.sh` (§845(e)); its gate is the CI `cloud` job.
 - **D858 (§858): the two-node Eureka HA experiment did NOT converge on this host — the plane keeps one
   registry.**
+  The mandate asked for Spring Cloud elements, and a registry surviving a node death is the textbook one.
+  Three configurations were tried on throwaway ports (18961/18962/18089, nothing of the plane's deployment
+  touched): a comma-separated zone (both nodes log "The replica size seems to be empty"; the default
+  instance-id collision then made one node overwrite the other), a LAN-IP zone (replicas detected, but the
+  replication socket times out to 192.168.1.5 — the LAN segment has no hairpin route back to this host),
+  and distinct loopback hostnames (127.0.0.1 vs 127.0.0.2 — replicas resolve, but the sync flaps: node1
+  showed both instances while node2 showed zero, then self-evicts oscillate). The instance-id fix now
+  ships (same-artifact nodes no longer collide on one identity) plus opt-in peer wiring
+  (`NEXUS_EUREKA_PEER`/`NEXUS_EUREKA_ZONE`, default off). The single-node plane is unchanged and re-verified
+  (cloud_smoke / lb / refresh PASS). The HA item stays open with the measured evidence, not as a claim.
 - **D859 (§859): the plane's one window — Spring Boot Admin, live.** `services/cloud/admin-server`
   (new module, spring-boot-admin 3.5.11 against Boot 3.5.16) discovers every Eureka-registered service
   and presents live health, endpoints, metrics — `:19444/actuator/health` 200, `:19444/instances` returns
@@ -4156,15 +4166,16 @@ normal boot unchanged unless a profile opts in.
   inbox empty forever). The internal door requires `NEXUS_AI_INTERNAL_TOKEN` on BOTH services (dev-only
   token, not a secret); without it the door answers 501 `not_implemented` by design (DECISIONS D7).
   All five eval suites re-run green after the fix (exact_match 1.0000).
-  The mandate asked for Spring Cloud elements, and a registry surviving a node death is the textbook one.
-  Three configurations were tried on throwaway ports (18961/18962/18089, nothing of the plane's deployment
-  touched): a comma-separated zone (both nodes log "The replica size seems to be empty"; the default
-  instance-id collision then made one node overwrite the other), a LAN-IP zone (replicas detected, but the
-  replication socket times out to 192.168.1.5 — the LAN segment has no hairpin route back to this host),
-  and distinct loopback hostnames (127.0.0.1 vs 127.0.0.2 — replicas resolve, but the sync flaps: node1
-  showed both instances while node2 showed zero, then self-evicts oscillate). The instance-id fix now
-  ships (same-artifact nodes no longer collide on one identity) plus opt-in peer wiring
-  (`NEXUS_EUREKA_PEER`/`NEXUS_EUREKA_ZONE`, default off). The single-node plane is unchanged and re-verified
-  (cloud_smoke / lb / refresh PASS). The HA item stays open with the measured evidence, not as a claim.
+- **D872 (§872): the monolith resolves its own config from the config server — refresh without a restart.**
+  The Spring Cloud lane's missing half: D857 proved the EDGE hot-refreshes; the monolith never could.
+  The platform gets `spring-cloud-starter-config` (opt-in effect: `spring.cloud.config.enabled=false`
+  in base, `true` under `cloud`, with `optional:configserver:` `spring.config.import` — without the
+  flip, Boot's import check refuses the plain dev boot outright; found by restarting the demo plane).
+  A `@RefreshScope` `/api/v1/cloud/info` controller shows the banner the monolith resolved
+  (`nexus.platform.banner`; the native repo serves `nexus-platform.yml` next to `nexus-gateway.yml`),
+  and `/actuator/refresh` is exposed under `cloud` only. `scripts/cloud_monolith_refresh.sh` proves it
+  end-to-end: throwaway repo, v1 banner → rewrite → POST refresh → v2, same pid, `config_source=config-server`.
+  CI's `cloud` job runs it after the edge refresh smoke (with the CI DB env). Base `dev` boot verified:
+  `{"banner":"unmanaged","config_source":"local-default","profiles":["dev"]}`.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first - on this
   machine a canonical port is presumed contested until measured free (D9, D847).

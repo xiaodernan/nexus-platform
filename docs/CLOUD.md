@@ -22,7 +22,7 @@ POST /api/v1/**  /ai/v1/**       (the gateway's doors, path-based)
       v            v
   Postgres 5433     Postgres 5433   (verify2 corpus, seeded demo data, data_origin='demo')
 ```
-`scripts/cloud_smoke.sh` / `cloud_lb_smoke.sh` / `cloud_refresh.sh` prove the wiring without any of this going to production.
+`scripts/cloud_smoke.sh` / `cloud_lb_smoke.sh` / `cloud_refresh.sh` / `cloud_monolith_refresh.sh` prove the wiring without any of this going to production.
 
 ## The port map (measured free)
 
@@ -64,6 +64,7 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 - **Gateway (`nexus-gateway`)** — reactive WebFlux edge: path routes (`/api/v1/**` → platform, `/ai/v1/**` → AI, `/**` → web), `@RefreshScope` for config-bound beans, resilience4j breakers per upstream (platform/ai/web) with an honest `edge_upstream_unavailable` 503 fallback + `request_id`, per-client token bucket rate limiter with `429 Retry-After: 1 + edge_rate_limited` (management paths exempt), X-Request-Id honored end-to-end and deduped at the first hop.
 - **Admin (`nexus-admin`)** — Spring Boot Admin at `:19444`: every Eureka-registered service is listed live with health, endpoints and metrics. Watches only: `register-with-eureka=false`. Same trusted-hop boundary as the edge (no auth on this dev plane; a deployment ingress owns the door).
 - **Discovery** — platform registers only under `dev,cloud` (`application-cloud.yml`, pomer imports the BOM); AI registers only under `NEXUS_AI_EUREKA_ENABLED=true` (`apps/ai/nexus_ai/discovery.py`). Both OFF by default.
+- **Monolith config (opt-in, D872)** — the platform resolves its OWN config from the same config server, only under `dev,cloud`: `spring.config.import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}` and `spring.cloud.config.enabled=true`; the base `application.yml` carries `spring.cloud.config.enabled=false` so the normal boot ignores the config starter entirely (Boot's import check would refuse to start otherwise — found the hard way, fixed in the same unit). The `nexus-platform.yml` in the native repo carries a demo banner marker; `GET /api/v1/cloud/info` shows the banner the monolith resolved, `POST /actuator/refresh` (exposed under `cloud` only) hot-reloads it via `@RefreshScope` (proven by `scripts/cloud_monolith_refresh.sh`: v1 → rewrite repo → POST refresh → v2, same pid). Without the config server the monolith boots normally with local defaults.
 
 ## The gates that hold this honest
 
@@ -75,9 +76,10 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | `cloud_smoke.sh` | config server round-trip, gateway resolves config, route table, breaker trips on dead port, NEXUS-ADMIN discovery smoke (admin passes and lists the gateway) |
 | `cloud_lb_smoke.sh` | one REAL `/api/v1/health` through lb://NEXUS-PLATFORM, one through lb://NEXUS-AI; X-Request-Id echo; deterministic limiter |
 | `cloud_refresh.sh` | config edit lands at the edge with no restart (`POST /actuator/refresh`) |
+| `cloud_monolith_refresh.sh` | config edit lands ON THE MONOLITH with no restart (v1 → repo rewrite → POST refresh → v2 banner, same pid) |
 | `db_gate_fresh.sh` | the seeded database gate (unrelated plane; not the cloud job's dependency) |
 
-The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, both readers, applies migrations and `cloud_lb_smoke.sh`, then the refresh smoke. The gate `needs.cloud` is in the `required` job's `needs`.
+The `cloud` CI job (`.github/workflows/ci.yml`) runs `cloud_smoke.sh`, both readers, applies migrations, `cloud_lb_smoke.sh`, then the refresh smoke and the monolith-refresh smoke. The gate `needs.cloud` is in the `required` job's `needs`.
 
 ## What this plane does NOT claim (read this)
 

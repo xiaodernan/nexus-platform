@@ -16,6 +16,13 @@ server:
 spring:
   application:
     name: nexus-platform
+  cloud:
+    # D872: spring-cloud-starter-config is on the classpath, but the base monolith boot must
+    # never contact the config server — Boot's import check would refuse to start otherwise.
+    # The `cloud` profile (application-cloud.yml) flips this to true and sets the optional
+    # configserver import. Normal boot: inert dependency, zero registry traffic, zero config traffic.
+    config:
+      enabled: false
   datasource:
     # DECISIONS D9 pins the local container ports (5433/6380) because 5432/6379 are occupied on this
     # machine by unrelated stacks. Variable names match the root `.env` written by infra.

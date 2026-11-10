@@ -97,6 +97,14 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
+    <!-- D872: the monolith resolves its OWN config from the same config server the edge uses,
+         opt-in (the `cloud` profile sets spring.config.import). Inert without the import key —
+         the normal boot never contacts the config server; the dependency just sits on the
+         classpath. /actuator/refresh is exposed only under the `cloud` profile (application-cloud.yml). -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
