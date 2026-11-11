@@ -39879,3 +39879,30 @@ anything smaller is not the claim made here.
   `scripts/check_cloud_plane.mjs` (D919 wiring),
   `.github/workflows/ci.yml`, `docs/ATLAS.md`, `docs/CLOUD.md`,
   `docs/cloud_claims.yaml`, `docs/CONTINUITY_PLAN.md` (H2 marked done/D919).
+
+## 920. D920 — the two static-safe public index segments get the same loading treatment the consoles already had
+
+**Goal.** `admin/loading.tsx` and `merchant/loading.tsx` already carried the console segment skeleton,
+and the public `/`, `/products/...`, `/[city]`, `/o/[slug]` all render or decide-404 on the wire (a loading
+boundary there is the soft-404 §29 forbids). Two segments had no excuse: `/collections` and `/guides`
+fetch async content and never call `notFound()`, so a boundary below them cannot make a 404 read as a 200.
+
+**The fix.** `apps/web/app/collections/loading.tsx` and `apps/web/app/guides/loading.tsx` — same shape
+the consoles ship: `role="status"` + `<span class="sr-only">{dict.states.loading}</span>`, `aria-busy` on
+the container, the existing `@nexus/ui` `Skeleton`, `dict.states.loading` for the assistive label, zero
+invented copy, zero new classes, one grid skeleton each whose cell count matches the card density below
+it. The `[city]` segment and every `[slug]` segment keep NO loading boundary (they decide 404 on the
+wire), which is not an oversight — the rule was measured in the build and recorded in `app/layout.tsx`.
+
+**Verification.** `npx tsc --noEmit` in `apps/web` → 0; `npx vitest run` → **221/221 pass**. No e2e claim:
+Playwright was not re-run; the change is a segment boundary, not a document-shell change, and the
+boundary specifically does not exist under any route that decides a 404.
+
+**What this does NOT claim.** That these skeletons have been screenshot-verified against live data (they
+have not; no e2e arm runs in this unit). That the card heights match async content precisely (placeholder
+heights approximate the rendered rows — they are scaffold, not layout assertions). That any route which
+CAN raise `notFound()` was touched — explicitly none.
+
+- readers: `apps/web/app/collections/loading.tsx`,
+  `apps/web/app/guides/loading.tsx`,
+  this ledger section.
