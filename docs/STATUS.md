@@ -41174,3 +41174,32 @@ two config repairs, one-line ledger entry. The change is pushes-once; post-hoc C
   `services/platform/src/test/java/com/nexus/testsupport/NexusIntegrationTest.java` (credential chain resolution),
   `scripts/cloud_lb_smoke.sh` (no-`.env` fallback), `.gitleaks.toml` (consolidated allowlist; dead rule removed),
   this ledger entry.
+
+## 952. D952  the e2e job was booting against the WRONG database plane: compose credentials stop being confused with the service-container ones
+
+**Goal.** The first full CI run reached the e2e job, and its "Boot services" step could never have worked. The job is the only one in this workflow that starts its data stores with `docker compose -f infra/docker-compose.yml up -d postgres redis`; every other job (`platform`, `ai`, `cloud`) uses a GitHub **service container** with a *different* database, superuser password and AI role password. A hand-edit had copied the service-container coordinates into the compose job. D952 repairs the three load-bearing coordinates and adds a coordinate-census reader so the two planes cannot be crossed again without a red gate.
+
+**The two planes (both pre-existing, both correct on their own plane).**
+
+| coordinate | e2e job  `docker compose` plane | `platform`/`ai`/`cloud` jobs  service-container plane |
+|---|---|---|
+| database | `nexus` (`POSTGRES_DB: ${NEXUS_DB_NAME:-nexus}`) | `nexus_test` |
+| superuser | `postgres` / `postgres` (`POSTGRES_PASSWORD` default) | `postgres` / `ci_secret` |
+| AI role | `nexus_ai` / `nexus_dev_ai_only` (`NEXUS_DB_AI_PASSWORD` default) | `nexus_ai` / `ci_nexus_ai` |
+| host port | 5433 (`NEXUS_PG_HOST_PORT`) | 5433 |
+
+The compose service has **no `env_file` and no password/database override in this job**, so its credentials are exactly the compose defaults. The e2e "Start data stores" step also applies migrations and loads the seed through `db_apply_migrations.sh` / `data/seed/load.sh` as superuser `postgres` against database `nexus`  so the services the job boots must address that same plane.
+
+**What was wrong and what D952 changed** (three tokens, in the e2e "Boot services" run block only):
+
+1. platform boot had **no** explicit datasource coordinates, so it inherited the application default instead of naming the compose superuser; it now pins `NEXUS_PLATFORM_DB_URL=.../nexus`, `NEXUS_PLATFORM_DB_USERNAME=postgres`, `NEXUS_PLATFORM_DB_PASSWORD=postgres` (the `ci_secret` value from an earlier partial edit is gone).
+2. the AI uvicorn line used `nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test`; it now uses `nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus`  the compose AI password and the compose database.
+3. `ci.yml` stays at **535 lines**: the edit is token-for-token, so no cited line number in the ledger moves.
+
+**The reader.** `scripts/check_d952.mjs` is a sibling of `check_plane_coordinates.mjs`: it reads source text only, starts no service, needs no Docker/Postgres, and judges five rules  R1 the e2e job still boots via the compose invocation (else the reader's premise is void); R2 the compose plane's four defaults are read from `infra/docker-compose.yml` itself, so a compose-side rename that leaves `ci.yml` stale reddens; R3 inside the **e2e segment only** the platform/AI boot lines pin the compose coordinates (scoped, because `ci_secret`/`nexus_test` are *correct* in the other three jobs); R4 the three service-container-only tokens are absent from that segment; R5 the 535-line cited-line-stable discipline and the two boot lines hold. It accepts `--ci=<path>` reverse control (census an alternate workflow copy) and `--self-test`, which plants eleven corruptions  platform password back to `ci_secret`, AI password back to `ci_nexus_ai`, AI database back to `nexus_test`, explicit platform coordinates erased, compose invocation swapped for a service container, two different compose defaults renamed, CI entry deleted, ATLAS row erased, ledger entry removed, and a line added past 535  and requires each to redden while the real plane holds.
+
+**Verification.** `check_d952.mjs` positive judge holds all credential-plane, segment-scope and line-count claims; `--self-test` reddens on all eleven arms. The edit is confined to the e2e "Boot services" run block; the `platform`/`ai`/`cloud` jobs' service-container credentials are untouched and remain correct for those planes.
+
+**Honest boundaries  read this before calling it green.** A pass means "the two credential planes are derivably consistent in source text", NOT "the e2e suite ran or passed". No Docker, Postgres, Redis or browser was started here; this host has repeatedly failed to run the full compose plane (kernel-level OOM, see D904), so the compose container was **not verified reachable** and no password is proven to authenticate on the wire. 5433 being free, Flyway baseline behaviour against that live container, and the Playwright assertions remain the **e2e job's** verdict  CI is the verifier of record. These are published dev-plane defaults, not secrets; no credential is rotated, no `.env` is written, and no deployment is enabled by this unit. It fixes the *coordinate drift* only; it does not make the e2e job's other failure modes (seed timing, image pulls, browser install) go away.
+
+- readers: `.github/workflows/ci.yml` (three e2e coordinates + the wired-readers chain token), `infra/docker-compose.yml` (the plane's own defaults, unchanged), `scripts/check_d952.mjs` (this reader), `docs/ATLAS.md` (one row), this ledger entry.
