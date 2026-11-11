@@ -18,10 +18,18 @@
  * while the eval path never calls the standalone expire) live in KeyValueStoreAtomicityTest and are
  * run by Maven, CI and a live Redis — this reader does not start Redis and claims no test ran.
  *
- * SELF-TEST: `judge` is pure over (path -> text). `--self-test` plants corruptions — the eval swapped
- * back to bare incr, the EXPIRE erased from the Lua body, the falsifier arm removed, the atomicity
- * test deleted, a CI/ATLAS/CENSUS entry dropped — and requires EACH to redden while the real plane
- * holds. The D909 in-memory fallback contract (bounded, LRU, window semantics) must ALSO survive.
+ * The two WIRE-LEVEL Redis smokes are guarded here too, at D931 parity: the positive smoke really
+ * evals the SOURCE-extracted Lua on a live Redis (first write arms a ttl, the next INCR counts without
+ * re-arming), and the falsifier reproduces the TTL-less lockout on the legacy split. Their existence,
+ * load-bearing assertions and CI/ATLAS/CLOUD/census/ledger wiring are structural claims this reader
+ * holds; the smokes themselves own the live measurement, and this reader starts no Redis.
+ *
+ * SELF-TEST: `judge` is pure over (path -> text). `--self-test` plants EIGHT corruptions — the eval
+ * swapped back to bare incr, the EXPIRE erased from the Lua body, the falsifier arm removed, the
+ * atomicity test deleted, the CI platform command dropped, the census entry deleted, the wire smoke
+ * dropped from CI, and the census wire-falsifier binding unbound — and requires EACH to redden while
+ * the real plane holds. The D909 in-memory fallback contract (bounded, LRU, window semantics) must
+ * ALSO survive.
  *
  * WHAT THIS DOES NOT SAY: that the suite passed today, that a real Redis answered, or that any OTHER
  * two-command sequence is atomic — notably {@code setIfAbsent}'s SETNX+EXPIRE (a replay-dedup key, a
@@ -42,13 +50,15 @@ const SELF_TEST = process.argv.includes('--self-test');
 const STORE = 'services/platform/src/main/java/com/nexus/platform/KeyValueStore.java';
 const RATE = 'services/platform/src/main/java/com/nexus/platform/RateLimiter.java';
 const TEST = 'services/platform/src/test/java/com/nexus/platform/KeyValueStoreAtomicityTest.java';
+const SMOKE = 'scripts/ratelimit_atomicity_smoke.sh';
+const FALSIFIER = 'scripts/falsify_ratelimit_atomicity_smoke.sh';
 const CI = '.github/workflows/ci.yml';
 const ATLAS = 'docs/ATLAS.md';
 const CLOUD = 'docs/CLOUD.md';
 const CENSUS = 'docs/cloud_claims.yaml';
 const STATUS = 'docs/STATUS.md';
 const SELF = 'scripts/check_atomic_ratelimit.mjs';
-const PATHS = [STORE, RATE, TEST, CI, ATLAS, CLOUD, CENSUS, STATUS, SELF];
+const PATHS = [STORE, RATE, TEST, SMOKE, FALSIFIER, CI, ATLAS, CLOUD, CENSUS, STATUS, SELF];
 
 /** Pure over a (path -> text) map; existence passed as a Set. */
 export function judge(files, present) {
@@ -121,6 +131,31 @@ export function judge(files, present) {
   has(CENSUS, 'honesty_anchor: D932', 'D932 binds an exact honesty anchor');
   has(STATUS, '## 932. D932', 'the ledger holds §932');
 
+  /* 5 — the TWO WIRE-LEVEL Redis smokes: load-bearing assertions + all wiring (D931 parity). */
+  // The positive smoke must eval the SOURCE-extracted Lua, not a copy that could drift, and must
+  // assert BOTH halves of the property: a first-write ttl AND a next INCR that does not re-arm.
+  has(SMOKE, 'INCR_AND_EXPIRE_LUA', 'the positive smoke extracts the Lua from KeyValueStore.java');
+  has(SMOKE, 'redis EVAL "$SCRIPT"', 'the positive smoke evals the source script on live Redis');
+  has(SMOKE, '[ "$ttl1" -gt 0 ]', 'the positive smoke asserts a real first-write ttl > 0');
+  has(SMOKE, '[ "$ttl2" -lt "$ttl1" ]', 'the positive smoke asserts the next INCR does NOT re-arm the window');
+  // The falsifier must reproduce the TTL-less lockout on the legacy split (the injected fault), then
+  // close the loop by showing the one-script path does NOT leave that state.
+  has(FALSIFIER, '[ "$ttl" = "-1" ]', 'the falsifier asserts the legacy split reproduces TTL == -1');
+  has(FALSIFIER, "Deliberately NO 'redis EXPIRE'", 'the falsifier names the injected fault window');
+  has(FALSIFIER, 'redis EVAL "$SCRIPT"', 'the falsifier closes the loop with the one-script path');
+  // Wiring: each proof is invoked by CI, listed on the human + map pages, bound in the machine census
+  // and recorded in the ledger — the same four corners D931's events-group reader holds.
+  has(CI, 'scripts/ratelimit_atomicity_smoke.sh', 'CI runs the positive wire smoke');
+  has(CI, 'scripts/falsify_ratelimit_atomicity_smoke.sh', 'CI runs the wire falsifier');
+  has(ATLAS, 'scripts/ratelimit_atomicity_smoke.sh', 'ATLAS lists the positive wire smoke');
+  has(ATLAS, 'scripts/falsify_ratelimit_atomicity_smoke.sh', 'ATLAS lists the wire falsifier');
+  has(CLOUD, 'ratelimit_atomicity_smoke.sh', 'CLOUD.md lists the positive wire smoke');
+  has(CLOUD, 'falsify_ratelimit_atomicity_smoke.sh', 'CLOUD.md lists the wire falsifier');
+  has(CENSUS, 'smoke: ratelimit_atomicity_smoke.sh', 'the census binds the positive wire smoke');
+  has(CENSUS, 'falsifier: falsify_ratelimit_atomicity_smoke.sh', 'the census binds the wire falsifier');
+  has(STATUS, 'ratelimit_atomicity_smoke.sh', 'the ledger records the positive wire smoke');
+  has(STATUS, 'falsify_ratelimit_atomicity_smoke.sh', 'the ledger records the wire falsifier');
+
   return { offenders, notes, unchecked: null, paths: PATHS };
 }
 
@@ -157,6 +192,8 @@ if (SELF_TEST) {
     ['CI platform test command dropped', mutate(CI, 'mvn -B -f services/platform/pom.xml test',
       '# the platform suite is no longer run')],
     ['census entry deleted', mutate(CENSUS, '- id: D932', '- id: D999')],
+    ['wire smoke dropped from CI', mutate(CI, ' && bash scripts/ratelimit_atomicity_smoke.sh', '')],
+    ['census wire-falsifier unbound', mutate(CENSUS, 'falsifier: falsify_ratelimit_atomicity_smoke.sh', 'falsifier: none')],
   ];
   let allCaught = true;
   for (const [label, arm] of arms) {

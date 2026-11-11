@@ -40418,6 +40418,20 @@ present; `--self-test` plants six corruptions (eval swapped back to incr, EXPIRE
 falsifier assertion removed, positive arm deleted, CI command dropped, census entry deleted) that must
 each redden.
 
+**Wiring follow-through (`9ac9c69`) and this unit's gate hardening.** A follow-through commit closed the
+remaining census cell: the two wire-level smokes are now bound in `docs/cloud_claims.yaml` as D932's
+`smoke` / `falsifier`, appended to the `.github/workflows/ci.yml` cloud smoke chain (a text-only edit on
+the existing line — no cited line number moved), and given rows in the `docs/CLOUD.md` gates/smokes table
+and `docs/ATLAS.md`. That cleared the `D932: no smoke named` census red and the ATLAS reverse-census red
+(the two shipped `.sh` files were previously uncited on the map). This hardening extends
+`scripts/check_atomic_ratelimit.mjs` to D931 parity: it now ALSO asserts the two smokes' load-bearing
+assertions (the positive smoke evals the SOURCE-extracted Lua and checks a real first-write ttl plus a
+non-re-arming next INCR; the falsifier reproduces `TTL == -1` on the legacy split then closes the loop
+with the one-script path) and their four-corner wiring (CI, CLOUD.md, ATLAS, census) plus this ledger
+record. `--self-test` now plants EIGHT corruptions — the original six plus "wire smoke dropped from CI"
+and "census wire-falsifier unbound" — each required to redden. As in D931, this reader starts no Redis
+and claims no smoke ran today; the smokes own the live measurement.
+
 **Not claimed.** That a ZSET sliding window removes fixed-window's boundary burst — that is a SEPARATE,
 unshipped seam and fixed windows remain the shipped behaviour; that `setIfAbsent`'s `SETNX`+`EXPIRE`
 (replay-dedup key) is atomic — a rejected EXPIRE there could permanently refuse a legitimate retry, a
@@ -40431,5 +40445,6 @@ per-instance limiter over a different store.
 - readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java`,
   `services/platform/src/main/java/com/nexus/platform/RateLimiter.java`,
   `services/platform/src/test/java/com/nexus/platform/KeyValueStoreAtomicityTest.java`,
-  `scripts/check_atomic_ratelimit.mjs`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`,
-  `.github/workflows/ci.yml`, this ledger section.
+  `scripts/check_atomic_ratelimit.mjs`, `scripts/ratelimit_atomicity_smoke.sh`,
+  `scripts/falsify_ratelimit_atomicity_smoke.sh`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`,
+  `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.
