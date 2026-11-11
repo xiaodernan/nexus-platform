@@ -140,6 +140,8 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_java_basenames.mjs` | D930: every shipped Java source basename is unique, so a ledger's bare `Class:NN` cite cannot be made ambiguous by a new module; `--self-test` plants two real collisions and two non-collisions |
 | `scripts/check_events_group.mjs` | D931: the opt-in consumer-group seam — real `XGROUP`/`XREADGROUP`/`XACK`/`XPENDING` calls, default-off flag, replay offsets, `/events/group` endpoint, split assertion + falsifier, unit test and CI/ATLAS/CLOUD/census/ledger wiring; `--self-test` plants seven corruptions |
 | `scripts/check_atomic_ratelimit.mjs` | D932: the Redis limit counter's INCR+first-write EXPIRE live in ONE Lua `EVAL` (no counter without a ttl), with a live-Redis positive arm and a mock falsifier that reproduces the TTL-less lockout on the legacy split; `--self-test` plants six corruptions |
+| `scripts/ratelimit_atomicity_smoke.sh` | D932: the live-Redis proof of the split fix — INCR now arms TTL atomically; the next INCR counts without re-arming the fixed window |
+| `scripts/falsify_ratelimit_atomicity_smoke.sh` | D932: the mock falsifier that reproduces the TTL-less lockout on the legacy split path while the D932 path stays clean |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
 

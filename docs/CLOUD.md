@@ -115,6 +115,8 @@ cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
 | `check_cloud_insight_trace.mjs` | D900 (wiring reader): strict W3C grammar, no-minting rule, request-scope attribute propagation through the Feign/servlet boundary, unit tests, and `--self-test` planting corruptions |
 | `insight_breaker_config_smoke.sh` | D899: the actuator shows 60/40 thresholds on `PlatformHealthClienthealth` / `AiHealthClienthealth`; five calls produce `AI OPEN` on call 3 and `platform OPEN` on call 5, with `bufferedCalls` tracking each one |
 | `falsify_insight_breaker_config_smoke.sh` | D899: with both `minimumNumberOfCalls` raised to 10 the call-3 assertion must FAIL while the aligned names and 60/40 thresholds remain visible |
+| `ratelimit_atomicity_smoke.sh` | D932: the live-Redis proof of the INCR+EXPIRE Lua EVAL — INCR arms the ttl atomically; the next INCR counts without re-arming the fixed window |
+| `falsify_ratelimit_atomicity_smoke.sh` | D932: the mock lockout falsifier reproduces the TTL-less key on the legacy two-command path while the D932 path remains clean |
 | `insight_metrics_smoke.sh` | D918: `/actuator/metrics/resilience4j.circuitbreaker.calls` and `.state` read as real actuator meters for both Feign-method breakers (`PlatformHealthClienthealth` / `AiHealthClienthealth`), with per-name COUNT > 0 after 12 driven calls |
 | `falsify_insight_metrics_smoke.sh` | D918: the no-drive arm keeps the combined COUNT at 0 — a meter that counts code that never ran is not a meter |
 | `events_service_smoke.sh` | D929: the events-service sidecar boots, connects to Redis, drains `nexus:events` into a bounded ring, and registers as `NEXUS-EVENTS` with a throwaway Eureka |

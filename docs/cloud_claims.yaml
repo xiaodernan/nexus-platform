@@ -185,8 +185,8 @@
 
 - id: D932
   claim: The Redis fixed-window limit counter increments and sets its first-write expiry in one atomic Lua EVAL, so a counter can never exist without a ttl
-  smoke: none
-  falsifier: none
+  smoke: ratelimit_atomicity_smoke.sh
+  falsifier: falsify_ratelimit_atomicity_smoke.sh
   gate: check_atomic_ratelimit.mjs
   not_claimed: No ZSET sliding window (fixed-window boundary burst remains), no atomicity claim for setIfAbsent's SETNX+EXPIRE, no production throughput, and the injected EXPIRE fault models a crash window rather than a live Redis failure
   honesty_anchor: D932's Redis limit counter is atomic
