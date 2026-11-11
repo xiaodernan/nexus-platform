@@ -317,7 +317,7 @@ jobs:
         run: node scripts/check_plane_coordinates.mjs
       - name: Start data stores + schema + demo data
         run: |
-          docker compose -f infra/docker-compose.yml up -d postgres redis
+          docker compose -f infra/docker-compose.yml up -d --wait postgres redis
           bash scripts/db_apply_migrations.sh
           # D576 — the scale of the demo seed. `--counts` takes a PRESET NAME (full|ci|smoke), so
           # `--counts merchants=80,offerings=600,reviews=1200` was an argparse error: this step was
