@@ -162,10 +162,14 @@ export function GrowthIndex({
   const dict = getDict(locale);
   return (
     <Container size="shell" className="flex flex-col gap-6 py-8 sm:py-12">
-      <div className="flex flex-col gap-3">
-        <Breadcrumbs items={[{ label: dict.brand.name, href: '/' }, { label: title, href: null }]} />
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-ink-strong sm:text-4xl">{title}</h1>
-        <p className="max-w-3xl text-sm leading-relaxed text-ink-muted sm:text-base">{intro}</p>
+      <div className="relative flex flex-col gap-3">
+        <div aria-hidden="true" className="pointer-events-none absolute -left-6 -top-10 h-32 w-72"
+             style={{ background: 'radial-gradient(closest-side, rgb(var(--nexus-accent-rgb) / 0.10), transparent)' }} />
+        <div className="relative">
+          <Breadcrumbs items={[{ label: dict.brand.name, href: '/' }, { label: title, href: null }]} />
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight text-ink-strong sm:text-4xl">{title}</h1>
+          <p className="max-w-3xl text-sm leading-relaxed text-ink-muted sm:text-base">{intro}</p>
+        </div>
       </div>
       {notice ? (
         <p className="flex items-center gap-2 rounded-md border border-warning/70 bg-warning-soft px-3 py-2 text-xs text-warning">
@@ -182,8 +186,10 @@ export function GrowthCardLink({ href, title, description, meta }: { href: strin
   return (
     <Link
       href={href}
-      className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 transition-colors hover:border-accent"
+      className="group flex flex-col gap-2 rounded-lg border border-line bg-surface p-4 transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-xs"
     >
+      <span aria-hidden="true" className="h-[2px] w-9 rounded-full opacity-80 transition-[width,opacity] duration-200 group-hover:w-14 group-hover:opacity-100"
+            style={{ background: 'var(--nexus-ai-gradient)' }} />
       <span className="text-base font-semibold text-ink-strong">{title}</span>
       <span className="text-sm leading-relaxed text-ink-muted">{description}</span>
       <span className="text-2xs text-ink-faint">{meta}</span>

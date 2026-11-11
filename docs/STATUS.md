@@ -40799,3 +40799,39 @@ surface). No production load or uptime claim; no benchmark ran.
   `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsRing.java` (eviction counter),
   `services/cloud/events-service/src/test/java/com/nexus/cloud/events/EventsMetricsTest.java` (5/5),
   `docs/CLOUD.md` (the not-claimed bullet, space separated), this ledger entry.
+
+## 941. D941 — the growth index earns its designed frame, and the guide cards lift
+
+**Goal.** The mandate's front-end half: editorial surfaces share one idiom, and right now they share the
+flat one. `/guides` and `/collections` (both backed by the same `GrowthIndex` component) rendered a plain
+header above a grid of bordered boxes whose only affordance was `hover:border-accent` — the same surface
+the consumer home and the merchant console now carry as designed moments (D923 glow, D927 signin panel,
+D938 identity card, D940-era skeleton states).
+
+**The fix.** One shared change in `apps/web/src/components/growth-view.tsx`, two visible effects:
+
+1. `GrowthIndex` — the page header gets one low-alpha accent radial glow anchored to its top-left corner
+   (`closest-side` gradient, `aria-hidden`, absolutely positioned, zero copy, zero tokens, no layout shift)
+   — the section every guides/collections page opens with, so both markets gain the depth cue.
+2. `GrowthCardLink` — each guide/collection card now carries a short `--nexus-ai-gradient` hairline above
+   its title (a 2.25rem→3.5rem width ramp on `group-hover`, 2px — tailwind `w-9`→`w-14` — the token pair
+   the theme contract keeps in `:root`/`.dark`), plus a `-translate-y-0.5` and `shadow-xs` lift on hover
+   with the accent border. Deliberately split transitions: `[width,opacity]` on the hairline,
+   `[transform,box-shadow,border-color]` on the card — no shared catch-all timing function.
+
+Zero new copy; zero new colour tokens (`var(--nexus-ai-gradient)` and `rgb(var(--nexus-accent-rgb))` are
+already the shipping accent pair); zero new client JS; both `guides` and `collections` surfaces elevated by
+the shared edit — one change, two doors.
+
+**Verification.** `npx tsc --noEmit` — clean. Full web suite: **228/228 green** before and after the edit.
+Browser drive is NOT claimed (same boundary as D923/D927/D938 — a decor delta verified at the type/test
+plane; no screenshot gate exists for these two routes on this host).
+
+**What this does NOT claim.** No new component API; no `aria` contract change (the glow is `aria-hidden`,
+the hairline is non-interactive, the cards remain links with the same accessible name); no layout shift on
+hover (`transform` and `opacity` only, layout boxes unchanged); no motion for
+`prefers-reduced-motion` (a system-level motion gate at the app's CSS layer remains the parent unit's
+responsibility, unchanged here); nothing about the `guides` content itself or the collections payload.
+
+- readers: `apps/web/src/components/growth-view.tsx` (`GrowthIndex`, `GrowthCardLink`), this ledger entry,
+  `packages/ui/src/styles/tokens.css` (the accent pair this frame consumes, D924-era contract).
