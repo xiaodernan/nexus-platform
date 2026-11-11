@@ -122,6 +122,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_reader_reachability.mjs` | every shipped reader is reachable from a runner |
 | `scripts/check_contract_drift.mjs` | undocumented routes, client-only routes, missing served paths |
 | `scripts/check_console_a11y.mjs` | landmarks, control names, focus rings, recomputed contrast |
+| `scripts/check_tinted_contrast.mjs` | D956: closes the tinted-ground blind spot the a11y reader declares — reads the 4 opaque `bg-*-soft` + `text-*` pairings from Badge.tsx's cva tone table (contract: a missing tone reddens), resolves both tokens in the light and dark blocks of tokens.css and recomputes the same WCAG ratio, requiring all 4 tones x 2 themes >= 4.5:1 (tightest: light positive-on-soft 4.75:1); source text only, no browser; `--self-test` plants corruptions with a no-op snapshot guard |
 | `scripts/check_console_i18n.mjs` | the console's zh-HK/en copy census |
 | `scripts/check_ui_script.mjs` | the zh-HK UI script census |
 | `scripts/check_duplicate_keys.mjs` | React list keys that two members could share |

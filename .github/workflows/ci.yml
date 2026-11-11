@@ -463,7 +463,7 @@ jobs:
       - name: Console accessibility census (landmarks, names, focus order, printed contrast)
         shell: bash
         run: |
-          node scripts/check_console_a11y.mjs | tee console-a11y.txt
+          node scripts/check_console_a11y.mjs | tee console-a11y.txt && node scripts/check_tinted_contrast.mjs | tee -a console-a11y.txt
           { echo "## Console accessibility"; echo '```'; cat console-a11y.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: The accessibility census can still fail (its own arms)
         shell: bash

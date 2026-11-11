@@ -41274,3 +41274,73 @@ layout staying the same forever — only that it didn't change in this unit.
 
 - readers: `apps/web/src/components/site-chrome.tsx` (`SiteFooter`), this ledger entry,
   `packages/ui/src/styles/tokens.css` (`--nexus-ai-gradient` contract).
+
+## 956. D956 — the tinted badges were the contrast census's own declared blind spot: 4 tones x 2 themes now measured against AA
+
+**The hole the a11y reader named itself.** `scripts/check_console_a11y.mjs` recomputes every printed
+WCAG ratio, but its contrast axis deliberately measures body-text ink only against NEUTRAL grounds
+(surface / canvas / neutral chip). Its own header says out loud that a tinted ground — `accent-soft`,
+`positive-soft`, `warning-soft`, `danger-soft` — is outside it, because those pair with their own
+semantic ink and "the census would be guessing which token a component meant to put there." That is
+an honest boundary, but it left a real one: a tinted badge whose ink drifted under 4.5:1 would pass
+the entire console accessibility census. D956 closes exactly that seam.
+
+**Why this is not guessing.** The pairing is DECLARED, not inferred: `packages/ui/src/primitives/Badge.tsx`
+cva tone table is the product's authoritative tinted-badge map (mirrored by `Floating.tsx`) —
+`accent -> bg-accent-soft + text-accent-soft-ink`, `positive -> bg-positive-soft + text-positive`,
+`warning -> bg-warning-soft + text-warning`, `danger -> bg-danger-soft + text-danger`.
+`scripts/check_tinted_contrast.mjs` READS that table (a missing tone pairing is an offender, so the
+map cannot silently shrink), resolves both class tokens to their `--nexus-*` hex in BOTH theme blocks
+of `packages/ui/src/styles/tokens.css`, and recomputes the SAME luminance / ratio formula the a11y
+reader uses. All 4 tones x 2 themes must clear 4.5:1.
+
+**The measured plane (quoted ratios the gate re-derives every run, nothing asserted by prose).**
+light: accent 7.16, positive 4.75, warning 5.39, danger 6.53; dark: accent 9.72, positive 8.49,
+warning 8.90, danger 7.72. Tightest is light `positive` on `positive-soft` at **4.75:1** — a 0.25
+margin over AA. Drop that ink a shade toward the soft ground and it goes under; that is the drift
+this gate is built to catch, and the reason the pairing contract is pinned to the component source.
+
+**Falsifier discipline.** `--self-test` plants 9 corruptions in memory and requires EACH to redden
+while the real plane holds: an ink swapped for `ink-disabled` (~2.3:1), a soft ground recoloured
+toward its ink, a tone pairing erased from the Badge table, a dark soft-ink deleted, a whole theme
+block removed, the a11y blind-spot note erased, and the CI / ATLAS / ledger wiring cut. A no-op
+snapshot guard (D954's invariant) fails any arm whose corruption did not change a byte — so a
+needle gone stale cannot again report `caught: false` while silently testing nothing.
+
+**A mutation-strength lesson, recorded.** The recolour arm first planted `#fbe7c0`, which measured
+4.88:1 — still over AA, so the gate correctly stayed GREEN. That was not a reader defect; it was a
+corruption too weak to cross the threshold. Replanting `#e8c878` (3.66:1) made the arm redden. Rule
+carried forward from D950/D954: when a falsifier arm stays green, check the mutation actually crosses
+the boundary before blaming the needle. The no-op guard would NOT have caught this — the bytes did
+change, just not enough; only the measured ratio caught it.
+
+**Verification.** `node scripts/check_tinted_contrast.mjs` — PASS, 8 pair(s) clear AA, 17 holds.
+`node scripts/check_tinted_contrast.mjs --self-test` — all 9 arms redden, exit 0. CI wiring at
+`.github/workflows/ci.yml:466` runs it as a second pipeline after the a11y census, both under
+`shell: bash` (GHA `bash -eo pipefail`), so either gate can fail the step; the `tee -a` keeps both
+outputs in the printed step summary. `ci.yml` stays 535 lines — zero line drift against the many
+`ci.yml:NN` citations in this ledger. ATLAS lists the reader; `check_ledger_eols` PASS (all-LF plane).
+
+**What this does NOT claim.** It is a SOURCE reader, not a browser: it measures token hex values,
+not the composited pixel of an alpha variant (`bg-accent-soft/40`) or a className assembled across
+elements. It judges the 4 opaque tinted-badge pairs from the Badge tone table and nothing else —
+other soft-ground usages are enumerated but not asserted. It does not say a page ran, that a screen
+reader agreed, or that a printed hex is the colour a GPU produced. It leaves the a11y reader's own
+axes untouched and requires its blind-spot note to remain, so this gate cannot outlive its purpose.
+
+**Numbering.** This unit was D955 through implementation, then yielded the number to a concurrent
+lane's footer brand-mark unit (`cf41c02`, `apps/web/src/components/site-chrome.tsx`), which had real
+product code + a 228/228 suite and landed first. Same yield pattern as D939->D940 and D953->D954:
+renumber D955->D956 (5 tokens in the gate + ATLAS row) rather than collide on a shared ledger.
+
+**Pre-existing corruption left out of scope.** While writing this entry the ledger was measured at
+6 x U+0007 (BEL) — an `a` -> BEL mangling in three old accessibility/address lines near D7xx — plus
+1 x U+FFFD in a mojibake fragment in §681. These predate D956, no current gate checks for control
+characters, and the §681 fragment is a decode-mojibake whose original bytes need real recovery work;
+silently rewriting them here would mix an unrelated repair into a contrast unit. Recorded so the
+next unit can take the encoding census on deliberately. `check_ledger_eols` PASS on the all-LF plane.
+
+- readers: `scripts/check_tinted_contrast.mjs` (self-test + no-op guard + this note),
+  `packages/ui/src/primitives/Badge.tsx` (cva tone table), `packages/ui/src/styles/tokens.css`
+  (light/dark tinted + semantic ink hex), `scripts/check_console_a11y.mjs` (declared blind spot),
+  `.github/workflows/ci.yml:466` (wiring), `docs/ATLAS.md`, this ledger entry.
