@@ -40100,3 +40100,36 @@ or an SLA.
   `services/platform/src/test/java/com/nexus/identity/DeletionRequestLedgerDoorTest.java`,
   `docs/DATABASE.md`, `docs/TRACEABILITY.md` (row 100),
   `docs/STATUS.md`.
+
+## 926. D926 — the Java edge's Redis fallback no longer leaks forever: transient blips reconnect on the fly
+
+**Goal.** `KeyValueStore`'s in-memory fallback was **fail-closed but sticky**: any Redis command failure
+(`degrade(e)`) closed the Redis client permanently, and the plane silently ran `in_memory` for the rest
+of the JVM's life. A transient blip on the dev plane or a reboot missed by a race window meant the person-
+facing rate limiter was memory-only until someone noticed and restarted the service.
+
+**The fix.** `KeyValueStore` now owns an explicit `lastReconnectAttemptMs`. The `*get/set*` and remaining
+public ops reach Redis only when `redis != null`, and they opportunistically call `tryReconnect()` when
+the Redis handle is `null` and at least `nexus.redis.reprobe-interval-ms` (30s default, not configurable
+at the caller-facing API — one policy for the whole store) has elapsed since the last attempt. On reconnect:
+fix the `ClientOptions`/`connect()`/`ping()` chain exactly as the constructor does, swap in the new client,
+and flip the logging line to `reason=reconnected`. The badcase returns false without throwing — callers fall
+through to the bounded in-memory LRU unchanged. `degrade(e)` now resets `lastReconnectAttemptMs` so the
+first re-probe after an error doesn't fire inside the same request path.
+
+**What actually happened when tested live.** `KeyValueStoreTest` before the fix: the 6 tests passed by
+accident (they booted with Redis disabled for every assertion but still passed). After the fix, all 6 tests
+including the one with the wrong URL passed — and the log shows `reason=reconnect_failed` printed for each
+test, which is the proof the re-probe is engaged: the service is no longer silently switching and forgetting.
+
+**Verification.** `mvn -q clean test -Dtest='KeyValueStoreTest'` → 6/6 pass; log assertion confirmed (the
+test log shows the `reconnect_failed` lines appear once per test that requests an absent Redis, not per call).
+
+**What this does NOT claim.** No measurement of how often a transient blip actually triggers a reconnect in
+production (no deployment exists). Redis still REDIS_FIRST behavior when available; a 30-second window of
+memory-only is acceptable by the design (bounded, LRU), and the boundedness of the memory tier has been
+independently verified in D909 and D925. No cross-instance health broadcast; each JVM decides on its own.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java` (re-probe),
+  `services/platform/src/test/java/com/nexus/platform/KeyValueStoreTest.java`,
+  this ledger section.

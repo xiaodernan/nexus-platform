@@ -45,6 +45,9 @@ public class KeyValueStore {
         }
     }
 
+    /** Minimum interval between re-probe attempts once the store has degraded into in_memory mode. */
+    private static final long REDIS_REPROBE_INTERVAL_MS = 30_000L;
+
     private final boolean redisEnabled;
     private final String url;
     private final long timeoutMs;
@@ -52,6 +55,8 @@ public class KeyValueStore {
     private RedisClient client;
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> redis;
+    /** epoch ms of the last degraded-window reconnect attempt; 0 when never degraded. */
+    private volatile long lastReconnectAttemptMs = 0L;
     /**
      * Access-order LRU keyed by the store's logical key. Only ever touched under the map's own
      * monitor; volatile never. The Redis fast path never reads this.
@@ -97,6 +102,44 @@ public class KeyValueStore {
         return redis != null;
     }
 
+    /**
+     * The D909 bounded LRU behaves correctly only when the process keeps using the same backend
+     * for the whole run. When Redis recovers after a blip, the plane re-probes at most once per
+     * {@link #REDIS_REPROBE_INTERVAL_MS}; on success the backend flips back to redis without a
+     * restart, and the health route returns {@code key_value_backend=redis} again — a window that
+     * once stayed open until the JVM restarted, on every transient blip.
+     */
+    private boolean tryReconnect() {
+        long now = System.currentTimeMillis();
+        if (now - lastReconnectAttemptMs < REDIS_REPROBE_INTERVAL_MS) {
+            return false;
+        }
+        synchronized (this) {
+            now = System.currentTimeMillis();
+            if (now - lastReconnectAttemptMs < REDIS_REPROBE_INTERVAL_MS) {
+                return false;
+            }
+            lastReconnectAttemptMs = now;
+            try {
+                RedisClient probe = RedisClient.create(url);
+                probe.setOptions(io.lettuce.core.ClientOptions.builder()
+                        .autoReconnect(true)
+                        .disconnectedBehavior(io.lettuce.core.ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                        .build());
+                StatefulRedisConnection<String, String> conn = probe.connect();
+                conn.sync().ping();
+                this.client = probe;
+                this.connection = conn;
+                this.redis = conn.sync();
+                log.info("key_value_backend backend=redis url={} reason=reconnected", url);
+                return true;
+            } catch (Exception e) {
+                log.warn("key_value_backend reason=reconnect_failed message={}", e.getMessage());
+                return false;
+            }
+        }
+    }
+
     private void closeRedis() {
         try {
             if (connection != null) {
@@ -126,6 +169,7 @@ public class KeyValueStore {
     // ---- api ------------------------------------------------------------
 
     public Optional<String> get(String key) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
                 return Optional.ofNullable(redis.get(key));
@@ -147,6 +191,7 @@ public class KeyValueStore {
     }
 
     public void set(String key, String value, Duration ttl) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
                 redis.setex(key, ttl.getSeconds(), value);
@@ -165,6 +210,7 @@ public class KeyValueStore {
     }
 
     public boolean setIfAbsent(String key, String value, Duration ttl) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
                 return Boolean.TRUE.equals(redis.setnx(key, value)) && expire(key, ttl);
@@ -188,6 +234,7 @@ public class KeyValueStore {
 
     /** Increment with window semantics: first write in a window sets the TTL. */
     public long increment(String key, Duration window) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
                 long v = redis.incr(key);
@@ -223,6 +270,7 @@ public class KeyValueStore {
     }
 
     public long remainingTtlSeconds(String key) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
                 Long t = redis.ttl(key);
@@ -241,6 +289,7 @@ public class KeyValueStore {
     }
 
     public void delete(String key) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
                 redis.del(key);
@@ -271,5 +320,6 @@ public class KeyValueStore {
     private void degrade(Exception e) {
         log.warn("redis_command_failed falling_back=in_memory message={}", e.getMessage());
         closeRedis();
+        lastReconnectAttemptMs = System.currentTimeMillis();
     }
 }
