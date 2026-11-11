@@ -232,16 +232,37 @@ public class KeyValueStore {
         }
     }
 
-    /** Increment with window semantics: first write in a window sets the TTL. */
+    /**
+     * D932 — INCR and the first-write EXPIRE are ONE atomic Redis operation, not two commands.
+     *
+     * <p>Before this unit the Redis path ran {@code redis.incr(key)} and, only when it returned 1,
+     * a SEPARATE {@code redis.expire(key, seconds)}. Those are two round trips with a crash window
+     * between them: if the process died — or the EXPIRE was rejected — after the INCR but before the
+     * EXPIRE, the key carried NO ttl and the fixed-window bucket never reset. Every later request from
+     * that principal then counted against a counter that would never expire: a permanent 429, i.e. a
+     * self-inflicted denial of service. The in-memory fallback never had this hole (it writes value and
+     * expiry together under one monitor), so the defect was specific to the Redis fast path that a
+     * deployment opts INTO.
+     *
+     * <p>A single Lua script closes the window: Redis executes scripts atomically on one thread, so
+     * the INCR and the conditional EXPIRE either both happen or neither does. There is no state in
+     * which the counter exists without its ttl. The seconds are passed as ARGV (never interpolated
+     * into the script), so the script text is constant and Lettuce can EVALSHA-cache it.
+     */
+    static final String INCR_AND_EXPIRE_LUA =
+            "local n = redis.call('INCR', KEYS[1]) "
+          + "if n == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end "
+          + "return n";
+
+    /** Increment with window semantics: first write in a window sets the TTL, ATOMICALLY (D932). */
     public long increment(String key, Duration window) {
         if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
-                long v = redis.incr(key);
-                if (v == 1) {
-                    redis.expire(key, window.getSeconds());
-                }
-                return v;
+                long seconds = Math.max(1L, window.getSeconds());
+                Object result = redis.eval(INCR_AND_EXPIRE_LUA, io.lettuce.core.ScriptOutputType.INTEGER,
+                        new String[]{key}, String.valueOf(seconds));
+                return ((Number) result).longValue();
             } catch (Exception e) {
                 degrade(e);
             }

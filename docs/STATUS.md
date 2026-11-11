@@ -40371,3 +40371,65 @@ production broker.
   `scripts/events_group_smoke.sh`, `scripts/falsify_events_group_smoke.sh`,
   `scripts/check_events_group.mjs`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`,
   `.github/workflows/ci.yml`, this ledger section.
+
+## 932. D932 — the Redis limit counter no longer has a crash window that can lock a principal out forever
+
+**Goal.** The user asked for Redis, networking and algorithm/system knowledge to be applied to make the
+code faster and sounder. This unit closes a REAL correctness defect in the Redis fast path of the
+platform's fixed-window limiter, found by reading `KeyValueStore.increment` against `RateLimiter`.
+
+**The defect.** `increment()` sent `redis.incr(key)` and, only when the result was 1, a SEPARATE
+`redis.expire(key, seconds)`. Two round trips with a fault window between them: if the process died —
+or the EXPIRE was rejected — after the INCR but before the EXPIRE, the counter existed with NO ttl. A
+fixed-window bucket that never expires counts every future request against a permanently full window:
+that principal receives 429 forever, a self-inflicted denial of service. `RateLimiter.check` reads
+`remainingTtlSeconds` for its `Retry-After`, so a `-1` (no expiry) is even surfaced as `max(1, -1) = 1`
+— a retry hint that can never actually clear. The in-memory D909 fallback never had this hole (it
+writes value and expiry together under one monitor); the defect was specific to the Redis path a
+deployment opts into, which is exactly why it survived review.
+
+**The fix.** `INCR_AND_EXPIRE_LUA` is one script — `local n = redis.call('INCR', KEYS[1]); if n == 1
+then redis.call('EXPIRE', KEYS[1], ARGV[1]) end; return n` — and `increment()` now issues ONE
+`redis.eval(..., ScriptOutputType.INTEGER, [key], seconds)`; the bare `redis.incr` / `redis.expire`
+pair is gone from that path. Redis executes scripts atomically on one thread, so "counter without
+expiry" is unreachable; the seconds go in as `ARGV` (not interpolated), keeping the script text
+constant and EVALSHA-cacheable. The `expire(String, Duration)` helper stays because `setIfAbsent`'s
+`SETNX` still uses it (a different key/claim, recorded as out of scope below).
+
+**What is measured.** `mvn -o -f services/platform/pom.xml -Dtest=KeyValueStoreAtomicityTest,KeyValueStoreTest`
+→ **8/8 pass** (atomicity 2 + D909 fallback 6). `KeyValueStoreAtomicityTest` gives two kinds of evidence:
+(a) LIVE Redis (:6380) — the first `increment` leaves `TTL > 0` and `<= 30`, a second leaves a positive
+TTL again (the window does NOT re-arm) while the count climbs to 2, and the script literal really holds
+both `INCR` and `EXPIRE` gated on `n == 1`; (b) FALSIFIER — a Mockito `RedisCommands` whose `expire`
+throws reproduces the exact lockout on the legacy shape (`incr` survives, EXPIRE fails, `ttl` returns
+`-1`, asserted with `isEqualTo(-1L)`), while the D932 `increment()` issues ONE `eval`, `never()` calls
+the standalone `expire`, and `never()` calls `incr`. The mock's fault is injected, so the arm proves the
+red is attributable to the split, not to a mock that cannot fail.
+
+**Wiring.** `docs/CLOUD.md` gains a D932 honesty clause that NARROWS the claim rather than deleting the
+trade-offs, a gates-table row for the new reader, and the CI-seam note; `docs/cloud_claims.yaml` adds a
+D932 record bound to `check_atomic_ratelimit.mjs`; `docs/ATLAS.md` adds the reader row;
+`.github/workflows/ci.yml` adds `check_atomic_ratelimit.mjs --self-test` to the wired-readers chain
+(the platform test suite already runs the whole `KeyValueStoreAtomicityTest` via surefire's default
+`**/*Test.java` include — no CI test-command edit needed). New `scripts/check_atomic_ratelimit.mjs` is
+a pure source census: the Lua body holds both commands, `increment()` calls `eval` with no bare
+`incr`/`expire`, the positive + falsifier test arms exist, the D909 fallback survives, and all wiring is
+present; `--self-test` plants six corruptions (eval swapped back to incr, EXPIRE erased from Lua,
+falsifier assertion removed, positive arm deleted, CI command dropped, census entry deleted) that must
+each redden.
+
+**Not claimed.** That a ZSET sliding window removes fixed-window's boundary burst — that is a SEPARATE,
+unshipped seam and fixed windows remain the shipped behaviour; that `setIfAbsent`'s `SETNX`+`EXPIRE`
+(replay-dedup key) is atomic — a rejected EXPIRE there could permanently refuse a legitimate retry, a
+different failure mode left for its own unit; that the mock's injected EXPIRE fault is a real Redis
+server failure (it models the crash/fault window, and the positive arm is the one that touches a live
+server); any production throughput or a measured improvement in request latency (the change trades two
+round trips for one on the first write of each window, which is argued from the command count, not
+benchmarked here); and nothing about the edge gateway's D917 token bucket, which is a SEPARATE
+per-instance limiter over a different store.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java`,
+  `services/platform/src/main/java/com/nexus/platform/RateLimiter.java`,
+  `services/platform/src/test/java/com/nexus/platform/KeyValueStoreAtomicityTest.java`,
+  `scripts/check_atomic_ratelimit.mjs`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`,
+  `.github/workflows/ci.yml`, this ledger section.
