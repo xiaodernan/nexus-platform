@@ -40296,3 +40296,78 @@ with `git mv`; no public HTTP path, Eureka name (`NEXUS-EVENTS`), port (19566) o
   `services/cloud/events-service/src/test/java/com/nexus/cloud/events/EventsViewControllerTest.java`,
   `scripts/check_ledger_citations.mjs`, `scripts/check_comment_citations.mjs`, `docs/ATLAS.md`,
   `.github/workflows/ci.yml`, this ledger section.
+
+## 931. D931 — the Redis Stream bus gains opt-in consumer groups: exactly-once split, ack, and pending replay
+
+**Goal.** D928 shipped the carrier and D929 the first reader, and BOTH said out loud that the bus was a
+bare log: producer only `XADD`+`XTRIM`, consumer only `XREAD` with a process-local cursor, **no consumer
+groups, no acks, no replay**. The user asked for the message queue to be used *properly*. This unit adds
+the reliability primitives that turn a tail into a queue — while keeping D929's tail as the shipped
+default so nothing that already passed is disturbed.
+
+**Design.** `EventsReader` gains an OPT-IN group mode (`nexus.events.group-enabled`, default **false**;
+group name and consumer name configurable, the latter a distinct UUID per process unless set). With it
+on, `pollOnce()` runs two arms through a real Lettuce consumer group:
+1. `XGROUP CREATE nexus:events <group> 0 MKSTREAM` once (`BUSYGROUP` on restart is swallowed);
+2. **Replay** — `XREADGROUP GROUP <g> <consumer> … STREAMS nexus:events 0` re-reads THIS consumer's own
+   unacked pending entries;
+3. **New** — `… STREAMS nexus:events >` claims entries never yet delivered to the group — the
+   at-most-once split across consumers;
+4. each entry is pushed into the ring, `delivered` incremented, THEN `XACK` (`acked` incremented); an
+   ACK is issued only AFTER a successful push, so a push failure leaves the entry pending for replay.
+`GET /events/group` exposes `{enabled, group, consumer, delivered, acked, pending}` (`pending` from
+`XPENDING`), making the property observable over HTTP. Two constructors exist; the 7-arg `@Value` one
+is marked `@Autowired` — the first smoke run exposed a REAL defect here: with two constructors and no
+annotation, Spring fell back to a nonexistent no-arg constructor and both JVMs died at bean creation
+(`NoSuchMethodException`), which the single-instance probe then caught and fixed.
+
+**What is measured.** `mvn -o -pl events-service test` → **10/10 pass**: `EventsGroupReaderTest` (3)
+asserts (a) two readers in ONE group split N=6 with `total_seen` summing to 6, with a contrast arm
+proving the SAME two readers in D929 tail mode each see all 6 (sum 12); (b) a raw-claimed, unacked entry
+stays `XPENDING` and is replayed+acked by the same consumer on the next poll (pending → 0); (c) the
+`groupState()` counters the smoke reads. The integration arms run against the live `nexus-platform-redis`
+on `:6380` and `assumeTrue`-skip when it is absent. `events_group_smoke.sh` boots TWO service JVMs on
+distinct ports with the SAME group and DISTINCT consumer names, publishes N=8 real entries via
+`redis-cli XADD`, and asserts the two `/events/count` totals sum to EXACTLY 8 (two tails would give 16)
+plus `/events/group` delivered+acked == 8 and pending 0. Its falsifier boots the SAME two readers with
+`group-enabled=false` and requires that SPLIT assertion to redden with the doubled sum, attributable to
+exactly one flipped variable. **Measured:** `events_group_smoke.sh` PASS — `total_seen: A=6 B=2 sum=8`
+(the split itself: one reader took 6, the other 2, together exactly 8, never 16), `A /events/group`
+`{delivered:6, acked:6, pending:0}` and `B {delivered:2, acked:2, pending:0}`, distinct consumers
+`consumer-a` / `consumer-b` under the one shared group. The single-instance probe after the `@Autowired`
+fix returned `{"enabled":true,"group":"probe-g","consumer":"probe-c","delivered":0,"acked":0,"pending":0}`.
+The falsifier PASSed: with `group-enabled=false` the SAME assertion saw `total_seen: A=8 B=8 sum=16`
+(exactly 2N — each tail read all 8), reddened with `FAIL: sum=16 != N=8`, and the falsifier verified the
+red was that doubled-sum assertion and not a build/boot failure. The two arms differ by ONE variable.
+
+**Wiring.** `docs/CLOUD.md` narrows D929's "does NOT participate in consumer groups / replay" clause
+instead of deleting it (group mode exists but is opt-in and off by default); gates/smokes tables gain the
+smoke, falsifier and reader; `.github/workflows/ci.yml` cloud chain gains both scripts and the wiring
+chain gains `check_events_group.mjs --self-test` (text edits only, no cited line moves);
+`docs/cloud_claims.yaml` adds a D931 record bound to `check_events_group.mjs` and narrows D929's
+not-claimed; `docs/ATLAS.md` adds three rows; `docs/STATUS.md` holds this section. New
+`scripts/check_events_group.mjs` is a pure source census (real `XGROUP`/`XREADGROUP`/`XACK`/`XPENDING`
+calls, opt-in default, replay offsets, endpoint, split assertion + falsifier, unit test, all wiring) with
+`--self-test` planting seven corruptions that must each redden.
+
+**Not claimed.** Group mode is **OFF by default** and no shipped deployment enables it; the default plane
+still runs D929's bare tail. No `XAUTOCLAIM`/`XCLAIM` of a DEAD consumer's pending entries — only a LIVE
+consumer replays its OWN pending (a crashed consumer's entries stay pending until it returns or a human
+reclaims them); no dead-letter queue, no consumer lag alert, no persistent ring (the 32-entry buffer is
+memory only and two instances keep separate rings), no per-tenant stream partitioning, no transform or
+compute, no ordering guarantee. The smoke needs Docker + live Redis on `:6380` and does NOT run when
+they are absent (it fails, it does not silently claim a partition). **Measured host quirk, recorded not
+hidden:** a full `mvn -o -pl events-service test` finished all 10 tests in ~6s of surefire time but took
+5m52s wall clock on this host — the Lettuce/Netty event-loop threads delay the forked JVM's exit, and a
+separate run of the same suite took 42s. The tests themselves are green and CI has its own budget; an
+explicit synchronous `RedisClient.shutdown()` / a shared client in the test fixture is left for a future
+CI-time unit (Phase I) rather than claimed as solved here. This is a measured dev-plane seam, not a
+production broker.
+
+- readers: `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsReader.java`,
+  `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsViewController.java`,
+  `services/cloud/events-service/src/main/resources/application.yaml`,
+  `services/cloud/events-service/src/test/java/com/nexus/cloud/events/EventsGroupReaderTest.java`,
+  `scripts/events_group_smoke.sh`, `scripts/falsify_events_group_smoke.sh`,
+  `scripts/check_events_group.mjs`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`,
+  `.github/workflows/ci.yml`, this ledger section.

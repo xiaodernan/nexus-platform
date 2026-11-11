@@ -39,6 +39,13 @@ nexus:
     poll-ms: ${NEXUS_EVENTS_POLL_MS:1000}
     initial-poll-ms: ${NEXUS_EVENTS_INITIAL_POLL_MS:200}
     ring-size: ${NEXUS_EVENTS_RING_SIZE:32}
+    # D931: opt-in consumer-group mode. Default false keeps D929's bare XREAD tail semantics;
+    # true makes readers sharing `group-name` split the stream (at-most-once per group) and XACK
+    # each delivered entry, with unacked entries replayable from the consumer's pending list.
+    group-enabled: ${NEXUS_EVENTS_GROUP_ENABLED:false}
+    group-name: ${NEXUS_EVENTS_GROUP_NAME:nexus-events-readers}
+    # Empty means "a distinct UUID per process"; set it explicitly only for a deliberate replay test.
+    consumer-name: ${NEXUS_EVENTS_CONSUMER_NAME:}
 
 logging:
   level:

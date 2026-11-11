@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
  *   <li>{@code GET /events/health} — liveness, with the last-poll age in milliseconds.</li>
  *   <li>{@code GET /events/count} — running totals (bounded ring) for audit and dashboards.</li>
  *   <li>{@code GET /events/recent} — the ring itself, newest first.</li>
+ *   <li>{@code GET /events/group} — D931: consumer-group state (enabled, group, consumer,
+ *       delivered / acked / pending), so the at-most-once property is observable.</li>
  * </ul>
  *
  * Returned as a map rather than a domain object: no schema, no promises, the reader is the arbiter.
@@ -47,5 +49,11 @@ public class EventsViewController {
     @GetMapping("/events/recent")
     public Map<String, Object> recent() {
         return Map.of("events", reader.recent());
+    }
+
+    /** D931: the consumer-group reliability surface. In tail mode `enabled` is false and pending is 0. */
+    @GetMapping("/events/group")
+    public Map<String, Object> group() {
+        return reader.groupState();
     }
 }

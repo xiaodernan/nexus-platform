@@ -172,8 +172,16 @@
   smoke: events_service_smoke.sh
   falsifier: none
   gate: check_cloud_plane.mjs
-  not_claimed: No stream transformation, no consumer group, no backlog replay, no tenant-partitioned fan-out, no production deployment, no readiness other than registration
+  not_claimed: No stream transformation, no consumer group BY DEFAULT (D931's is opt-in), no cold-start backlog replay, no dead-consumer reclaim, no tenant-partitioned fan-out, no production deployment, no readiness other than registration
   honesty_anchor: D929's events-service is a bounded sidecar
+
+- id: D931
+  claim: An opt-in Redis consumer group splits nexus:events across two live readers exactly once, acks each delivered entry, and replays a consumer's own unacked pending entries
+  smoke: events_group_smoke.sh
+  falsifier: falsify_events_group_smoke.sh
+  gate: check_events_group.mjs
+  not_claimed: Group mode is OFF by default; no XAUTOCLAIM of a dead consumer, no dead-letter, no persistent ring, no per-tenant partitioning, no transform, no ordering guarantee
+  honesty_anchor: D931 NARROWS the group/replay boundary
 
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane

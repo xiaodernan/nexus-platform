@@ -138,6 +138,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_citation_supports_sentence.mjs` | a cited line supports the sentence quoting it |
 | `scripts/check_shared_blob_reader.mjs` | D891: both citation readers call the one shared blob reader, no third parser; `--self-test` plants an erased import, a pasted parser and an empty plane |
 | `scripts/check_java_basenames.mjs` | D930: every shipped Java source basename is unique, so a ledger's bare `Class:NN` cite cannot be made ambiguous by a new module; `--self-test` plants two real collisions and two non-collisions |
+| `scripts/check_events_group.mjs` | D931: the opt-in consumer-group seam — real `XGROUP`/`XREADGROUP`/`XACK`/`XPENDING` calls, default-off flag, replay offsets, `/events/group` endpoint, split assertion + falsifier, unit test and CI/ATLAS/CLOUD/census/ledger wiring; `--self-test` plants seven corruptions |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
 
@@ -172,6 +173,8 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/insight_metrics_smoke.sh` | D918: `resilience4j.circuitbreaker.calls`/`.state` read as real actuator meters for both Feign-method breaker names (`PlatformHealthClienthealth`/`AiHealthClienthealth`), with per-name COUNT > 0 after 12 driven calls |
 | `scripts/falsify_insight_metrics_smoke.sh` | D918: the no-drive arm must keep the combined COUNT at 0 — a meter that counts code that never ran is not a meter |
 | `scripts/events_service_smoke.sh` | D929: the events-service sidecar boots, connects to Redis, drains `nexus:events`, and registers as `NEXUS-EVENTS` with a throwaway Eureka — `/events/health` transitions to UP |
+| `scripts/events_group_smoke.sh` | D931: two events-service readers share one Redis consumer group and drain N entries with `total_seen` summing to N; `/events/group` shows delivered+acked == N, pending 0 |
+| `scripts/falsify_events_group_smoke.sh` | D931: the two readers in D929 tail mode double the sum to 2N, so the SPLIT assertion must redden — one flipped variable |
 | `services/cloud/events-service/pom.xml` | D929: fifth Spring Cloud module |
 | `services/cloud/events-service` | D929: fifth Spring Cloud module — bounded ring buffer drains `nexus:events`; `GET /events/health`, `GET /events/count`, `GET /events/recent`; port 19566 |
 | `scripts/eureka_eviction_smoke.sh` | D919: fixture registered → SIGKILL → the registry stops listing it; the eviction is measured on this host, wall-clock, not assumed from the 30s lease |
