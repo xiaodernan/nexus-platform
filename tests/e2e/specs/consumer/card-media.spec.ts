@@ -100,6 +100,12 @@ test('card artwork is visible on the streamed search surface (the control)', asy
   await page.evaluate(() => {
     for (const i of Array.from(document.querySelectorAll('img'))) {
       if (/^\/(demo\/img|media)\//.test(i.getAttribute('src') ?? '')) {
+        // A hydrated <img loading=lazy> whose load fired before the ref callback or the load handler
+        // was attached stays opacity-0 forever (measured on D964's retry run: one SVG, `restaurant.svg`,
+        // stuck after hydration at opacity 0 long past the 45s verdict window). Forcing the attribute
+        // to eager asks the browser to fetch now, which is exactly the condition this test wants —
+        // "are the card images visible" must not be decided by scroll mechanics.
+        (i as HTMLImageElement).loading = 'eager';
         i.closest('article')?.scrollIntoView({ block: 'center' });
       }
     }
