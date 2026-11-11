@@ -39232,3 +39232,50 @@ never enter it. No claim is made about cache hit rates — this unit bounds the 
 
 - readers: `apps/ai/nexus_ai/tools/registry.py`,
   `apps/ai/tests/test_d903_cache_is_bounded.py`.
+
+
+## 904. D904 — `cloud_lb_smoke.sh` rewritten: own ports, isolation checks, AI opt-in arm restored — NOT re-verified on this host (kernel-level OOM); CI is the verifier of record
+
+**Goal.** The only live script proving Spring Cloud discovery — the registered monolith and the registered AI
+service reached BY NAME through the edge — got rewritten in a parallel lane whose author is no longer
+reachable for questions. The mandate is explicit that this repo finishes its own orphaned work. Reviewing
+it found it was a strict regression in COVERAGE (it dropped D856's AI route + registration arm and D850's
+deterministic limiter burst), gained safety (platform no longer touches the live `:8090`/`:18099`
+owner's port, `:8091` instead; caller overrides survive `.env`; ports read from the services' own
+application.yaml), and gained a shared maven lock honoring `PLAN.md`'s `.tmp-p4/mvnlock` convention.
+
+**The merge.** The rewrite's safety pieces were KEPT and its dropped arms were restored, almost verbatim,
+from their D856-body evidence: the AI service registers by opt-in (`NEXUS_AI_EUREKA_ENABLED=true`), the
+edge route `lb://NEXUS-AI` resolves, `/ai/v1/health` is answered through the gateway, the gateway→AI hop
+keeps one `X-Request-Id`, and the limiter (burst=10, replenish=0) answers 25 rapid `/api/v1/health` calls
+with at least one 429 carrying `Retry-After: 1` and at least one 200. New isolation assertions now also
+cover the AI's declared name (read from `apps/ai/nexus_ai/discovery.py`, not retyped), and a missing
+platform or AI mid-run now fails with a named cause ("it died during the AI-registration wait") instead
+of a bare 503 from the edge — the exact ambiguity this session could not resolve (below) was the
+motivation for that instrumentation. A documented escape hatch, `NEXUS_LB_SKIP_REBUILD=1`, lets a host
+reuse the existing `target/` jars instead of rebuilding both reactors under the lock.
+
+**What was verified here, and what was NOT.** The script is `bash -n` clean and every doc that names it
+(`ATLAS.md`, `CLOUD.md`) describes the merged coverage, which is again true and unchanged. THE LIVE RUN
+FAILED on this host before any of the D904 arms executed: the platform was ready, registered, and seen by
+the gateway's initial fetch (`initial instances count: 2`); the very first proxied request
+`/api/v1/health` answered 503 through the trace-minting fallback (`Content-Length: 159`, no
+upstream bytes logged by either the platform or a sane route trace). Minutes later a freshly booted
+`nexus-eureka` on `:18761` died silently mid-boot with no error frame in its log — same shape. This host
+has 15.8 GB of physical RAM and 0.5 GB free (the parallel session serving other projects on this machine
+holds it); JVMs are being killed by the kernel with no `Error` line written. The memory death, not the
+script, is the recorded finding. What this unit therefore does NOT establish and does NOT claim:
+(i) that any part of the merged script ran end-to-end anywhere; (ii) that the 503 has a root cause —
+the strongest hypothesis is silent platform death under memory starvation, but it is a hypothesis;
+(iii) that the retry/correlation/limiter arms prove what they proved at D856; they are ports, not
+re-proofs. The `.github/workflows/ci.yml` `cloud` job invokes this exact script on every push; the job
+is the verifier of record for this unit. **If the first post-push CI run of `cloud-lb` goes red, this
+section's claim stands FALSE until a follow-up unit records the real failure and fixes it — that is the
+next thing this repo does, not a fallback.**
+
+**Doc contract.** `docs/ATLAS.md`'s row (`a real request through lb://NEXUS-PLATFORM and lb://NEXUS-AI`)
+and `docs/CLOUD.md`'s rows are now an honest description of what the script *asserts*, which is the same
+contract as D856's and no claim about today's run. `scripts/cloud_lb_smoke.sh` only this file committed
+under this section; no CI wiring changes (the script name is unchanged).
+
+- readers: `scripts/cloud_lb_smoke.sh` (this unit's only code change).
