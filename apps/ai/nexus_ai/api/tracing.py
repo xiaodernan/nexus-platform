@@ -17,10 +17,6 @@ from __future__ import annotations
 
 import re
 
-TRACEPARENT_HEADER = "traceparent"
-TRACE_ID_HEADER = "x-trace-id"
-PARENT_ID_HEADER = "x-trace-parent-id"
-
 _W3C = re.compile(r"^00-([0-9a-f]{32})-([0-9a-f]{16})-([0-9a-f]{2})$")
 _ZERO_TRACE = "0" * 32
 _ZERO_PARENT = "0" * 16

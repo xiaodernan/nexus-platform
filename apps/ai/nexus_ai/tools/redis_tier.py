@@ -92,8 +92,3 @@ class RedisTier:
         except Exception as exc:  # pragma: no cover — infra must never break a tool call
             log.warning("shared Redis SETEX failed (%s); the local cache holds the row", exc)
 
-
-def redis_enabled() -> bool:
-    import os
-
-    return os.getenv("NEXUS_AI_SHARED_CACHE") == "redis"

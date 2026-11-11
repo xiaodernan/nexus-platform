@@ -41344,3 +41344,61 @@ next unit can take the encoding census on deliberately. `check_ledger_eols` PASS
   `packages/ui/src/primitives/Badge.tsx` (cva tone table), `packages/ui/src/styles/tokens.css`
   (light/dark tinted + semantic ink hex), `scripts/check_console_a11y.mjs` (declared blind spot),
   `.github/workflows/ci.yml:466` (wiring), `docs/ATLAS.md`, this ledger entry.
+
+## 957. D957 — a dead function out of the AI tool cache that the census now sees from CI
+
+**Goal.** The mandate asks every unit to ship with a runnable gate and a push; the CI repair campaign
+surfaced something that gate was specifically built to catch. The AI pipeline job in GitHub Actions
+fails at `tests/test_no_dead_constants.py`:
+
+```
+AssertionError: these functions are defined and called by nothing: redis_enabled (tools/redis_tier.py)
+```
+
+The function `redis_enabled` was added in D922 (the opt-in shared Redis tier) to encapsulate the env
+lookup but is never called anywhere in the product or tests — the tier discriminates via
+`os.getenv("NEXUS_AI_SHARED_CACHE")` inline in `RedisTier.maybe_create`, and the test suite also reads
+the env directly. The code is unreachable: not dead-code rescued by a doc comment, not a public API
+promise, not a test-support helper.
+
+**Fix.** Removed `def redis_enabled()` from `apps/ai/nexus_ai/tools/redis_tier.py`. No behaviour
+changes: the function had no call sites, no side effect, no introspection users, and no type used by the
+module. `uv run ruff check .` and `uv run mypy nexus_ai` both clean (the new files pathhas the deletion
+in place). All other tests are unaffected (no test reference).
+
+**Verification.** Locally reapplied with the CI's own gate from the AI job: `uv run ruff check .` —
+all checks passed; `uv run mypy nexus_ai` — Success: no issues found in 72 source files. The shell-level
+test target on Windows would be the typical "run the pytest suite with NEXUS_TEST_DATABASE_URL set" —
+not attempted on this host, so CI is the verifier of record for that one claim.
+
+**Not claimed.** No behavior of the shared Redis tier changed (the optional path is byte-identical to
+other callers; `maybe_create()` remains the single construction gateway). No new tests were needed: the
+whole point is that the failing gate catches this class of rot. No claim that this fixes the full
+AI-job pytest run — there may be further failures behind it; this is only the FIRST observed one.
+
+- readers: `apps/ai/nexus_ai/tools/redis_tier.py`, the issue it raises (`tests/test_no_dead_constants.py
+  test_every_module_level_name_is_read_by_the_product`), this ledger section.
+
+## 958. D958 — the dead wire-name constants out of the AI tracer are gone
+
+**Goal.** The mandate asks for end-to-end CI to complete. The AI-job pytest gate
+`test_every_module_level_constant_is_read_by_the_package` fired on three names in `apps/ai/nexus_ai/api/tracing.py`:
+
+```
+AssertionError: these constants are defined and read by nothing: ... PARENT_ID_HEADER (api/tracing.py);
+TRACEPARENT_HEADER (api/tracing.py); TRACE_ID_HEADER (api/tracing.py)
+```
+
+The three names existed as "W3C wire names" — exactly the kind of import-time surface that's correct in a library boundary that someone might want to cite. But no read site exists in this repo, so the trace module was exporting three constants that nothing consumed.
+
+**Fix.** Deleted the three module-level constants from `apps/ai/nexus_ai/api/tracing.py`. The W3C `traceparent` parsing grammar (`_W3C` regex, `parse_traceparent`, the `_ZERO_TRACE` / `_ZERO_PARENT` sentinels) is untouched. Every read of the literal `"traceparent"` in the product codebase remains a literal (e.g., `apps/ai/nexus_ai/api/app.py:92`). The Java side projects trace ids under `X-Trace-Id`; the Python side never had a corresponding accessor.
+
+**Verification.** `uv run pytest tests/test_no_dead_constants.py` — **3 passed**, including the failing test.
+`uv run ruff check .` — All checks passed. `uv run mypy nexus_ai` — Success: no issues found in 72 source files.
+Full AI-suite pytest may still hit live-DB pathways that can only be measured against `NEXUS_TEST_DATABASE_URL` on a host with proper DB ports — left to CI as the verifier of record.
+
+**Not claimed.** No API, shape, transport or behavior change — the module is still
+"parse W3C traceparent in, return trace-id/parent/flags, otherwise stay silent". The names are documented as removed rather than renamed;
+no call site read them, no consumer is silently broken. No claim that CI passes — the remaining failures there are documented elsewhere.
+
+- readers: `apps/ai/nexus_ai/api/tracing.py` (three removed exports), `apps/ai/tests/test_no_dead_constants.py` (the gate that fires), this ledger entry.
