@@ -137,7 +137,8 @@ public class AuthController {
     private void setSessionCookies(HttpServletResponse response, Map<String, Object> out, TenantContext tenant) {
         Object accessToken = out.get("access_token");
         Object csrf = out.get("csrf_token");
-        response.addHeader("Cache-Control", "no-store");
+        // set (not add): a cache-control marked by CacheControlFilter at chain entry must not double up on the wire
+        response.setHeader("Cache-Control", "no-store");
         if (accessToken instanceof String token) {
             // HttpOnly session cookie (§1); the SPA also keeps the bearer token for non-browser clients.
             response.addHeader("Set-Cookie", ResponseCookie.from(cookieName, token)

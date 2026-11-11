@@ -7,9 +7,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
-/** Filter order is load-bearing: request id → tenant → auth → body cache → rate limit. */
+/** Filter order is load-bearing: cache control → request id → tenant → auth → body cache → rate limit. */
 @Configuration
 public class FilterChainConfig {
+
+    @Bean
+    public FilterRegistrationBean<CacheControlFilter> cacheControlFilter() {
+        FilterRegistrationBean<CacheControlFilter> bean = new FilterRegistrationBean<>(new CacheControlFilter());
+        // Before everything, even the request id: error bodies from tenant/auth/rate-limit must carry it too.
+        bean.addUrlPatterns("/api/v1/*");
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE + 5);
+        return bean;
+    }
 
     @Bean
     public FilterRegistrationBean<RequestIdFilter> requestIdFilter() {

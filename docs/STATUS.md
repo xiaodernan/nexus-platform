@@ -40543,3 +40543,52 @@ unit proves they agree today and keeps them agreeing, it does not merge them int
 
 - readers: `apps/web/src/lib/i18n/dict-contract.test.ts`, `apps/web/src/lib/i18n/dict.ts` (the two trees),
   `apps/web/app/merchant/settings/page.tsx` (the pinned surface), this ledger entry.
+
+## 935. D935 — every /api/v1 response carries an explicit freshness mark: Cache-Control: no-store, before any handler runs
+
+**Goal.** Reading the platform for one more subnet of the "networking knowledge applied to this project"
+m mandate: HTTP cacheability is a property the code must state out loud, and almost every response this
+monolith emits is tenant-scoped or personal. Today nothing dangerous escapes — the reads send no validators
+(no `ETag`, no `Last-Modified`), so RFC 7234 heuristic freshness cannot attach — but "safe by accident of
+missing validators" is not a policy anyone can audit, and one proxy that inserts a shared cache would see
+a silent, untested default for every JSON payload we serve. §52's own discipline is that visibility and
+authorisation are what the code says aloud; freshness is the same class of property.
+
+**The fix.** `CacheControlFilter` — a one-screen `OncePerRequestFilter` registered FIRST in the
+`FilterChainConfig` chain (order `HIGHEST_PRECEDENCE + 5`, ahead of request id / tenant / auth / body-cache /
+rate-limit) for `/api/v1/*`. It sets `Cache-Control: no-store` and `Pragma: no-cache` before any handler
+runs. A handler that wants a different policy calls `response.setHeader("Cache-Control", ...)` with the same
+name, which by the servlet contract REPLACES this one — the in-scope publics are the catalog, collections,
+SEO and geo reads and `GET /api/v1/merchants/{slug}/ucp.json` (`public, max-age=300`, merchant-authored UCP
+configuration with a documented revoke-freshness SLA), each of which already calls `setHeader` (plus
+`Vary: X-Tenant` where the payload is tenant-resolved) and therefore keeps its explicit policy over this
+blanket one; the `.well-known/ucp` probe stays public outside this mount. Error bodies that never reach a
+controller (tenant refusals, 429s, 401s) carry the mark because the filter precedes them on the same
+response object.
+
+**Verification.** `CacheControlFilterTest` — 5/5: marks a plain handler; a handler override wins
+(`setHeader` semantics); the mark survives a downstream `ServletException`; it survives a downstream
+`RuntimeException`; a HEAD request is marked too. `CacheControlHeaderTest` — 1/1 over the real HTTP stack:
+an auth-filter refusal to `/api/v1/me` answers 401 with `Cache-Control: no-store` and `Pragma: no-cache`
+end-to-end (nothing in that path sets headers; the mark can ONLY have come from the filter, which is the
+assertion). Full platform suite: **336 tests, exactly one failure — `ForwardedHeaderTrustTest.frameworkHandsTheLoginGateToTheCaller`**,
+the same pre-existing full-suite-only red recorded in D933's entry (passes 3/3 solo this session; diff
+untouched by this unit). `AuthController`'s session-cookie `Cache-Control: no-store` moved from
+`addHeader` to `setHeader` so the wire never carries a doubled value alongside the filter's mark.
+
+**What this does NOT claim.** No CDN, edge or shared-cache is claimed to exist on this deployment today; the
+mark is a precondition for any future shared cache, not evidence of one. No caching was ADDED anywhere by this
+unit — the public read paths keep exactly their explicit policy (`public, max-age=300` on published UCP,
+`public, s-maxage…stale-while-revalidate` on `/api/v1/catalog` breadcrumbs, `no-store` on availability
+windows) because the last `setHeader` wins; nothing was downgraded to hide behind a blanket rule. `Vary: X-Tenant`
+is unchanged where it mattered. Streaming/SSE bodies (`/api/v1/conversation/*`) were never set by controllers,
+so they flipped from "no freshness mark at all" to `no-store` — strictly a strengthening, not a behavioural
+promise about SSE boundaries. Browser-side `fetch` caching rules were always private by default; this is for
+intermediaries, not for tab behaviour.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/CacheControlFilter.java` (the filter),
+  `services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java` (registration, order),
+  `services/platform/src/main/java/com/nexus/identity/AuthController.java` (addHeader → setHeader),
+  `services/platform/src/test/java/com/nexus/platform/CacheControlFilterTest.java` (5/5),
+  `services/platform/src/test/java/com/nexus/platform/CacheControlHeaderTest.java` (1/1 HTTP),
+  this ledger entry.
