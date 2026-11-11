@@ -78,13 +78,25 @@ public class RetentionSweeper {
     }
 
     public SweepReport sweepPendingDeletionRequests(int batchSize, long minAgeMs) {
+        return sweepPendingDeletionRequestsForUser(null, batchSize, minAgeMs);
+    }
+
+    public SweepReport sweepPendingDeletionRequestsForUser(UUID forUser, int batchSize, long minAgeMs) {
+        // One method, two entry points — the scheduled tick takes the global lane; a test that must
+        // assert on exactly one user's rows takes the per-user lane so other tests' pending rows
+        // are not swept out from under them.
+        String predicate = forUser != null ? "and user_id = :user_id" : "";
+        Map<String, Object> params = forUser != null
+                ? Json.map("ageMs", (double) minAgeMs, "limit", batchSize, "user_id", forUser)
+                : Json.map("ageMs", (double) minAgeMs, "limit", batchSize);
         List<Map<String, Object>> pending = jdbc.crossTenant("""
                 SELECT id, user_id FROM deletion_requests
                  WHERE status = 'pending'
                    AND created_at < now() - :ageMs * interval '1 millisecond'
+                   """ + predicate + """
                  ORDER BY created_at ASC
                  LIMIT :limit
-                """, Json.map("ageMs", (double) minAgeMs, "limit", batchSize));
+                """, params);
 
         int reservations = 0, orders = 0, notifications = 0, savedSearches = 0;
         for (Map<String, Object> row : pending) {

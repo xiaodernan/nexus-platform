@@ -203,7 +203,7 @@ class DeletionRequestLedgerDoorTest extends NexusIntegrationTest {
                 Map.of("u", personId)).get("contact")).replaceAll("\\s", ""))
                 .as("the erase leaves the reservation's contact copy untouched").isNotEqualTo("{}");
 
-        com.nexus.identity.RetentionSweeper.SweepReport report = sweeper().sweepPendingDeletionRequests(1000, 0);
+        com.nexus.identity.RetentionSweeper.SweepReport report = sweeper().sweepPendingDeletionRequestsForUser(personId, 1000, 0);
         assertThat(report.processed()).as("at least the account row this test filed").isGreaterThanOrEqualTo(1);
         // Counting the tables the sweep reached is global on a shared test database — the useful
         // claim is the one about THIS user's rows; other users' pending rows are not this test's to assert about.
@@ -245,7 +245,7 @@ class DeletionRequestLedgerDoorTest extends NexusIntegrationTest {
         assertThat(filed.hasCompletion()).isFalse();
 
         // The retention workflow performs the remaining step:
-        com.nexus.identity.RetentionSweeper.SweepReport report = sweeper().sweepPendingDeletionRequests(1000, 0);
+        com.nexus.identity.RetentionSweeper.SweepReport report = sweeper().sweepPendingDeletionRequestsForUser(person.id(), 1000, 0);
         assertThat(report.processed()).as("at least this account row was swept").isGreaterThanOrEqualTo(1);
         Filed completed = request(person, "account");
         assertThat(completed.status()).isEqualTo("completed");

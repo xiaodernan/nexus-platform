@@ -22,13 +22,22 @@ public class NotificationEventListener {
     private static final Logger log = LoggerFactory.getLogger(NotificationEventListener.class);
 
     private final NotificationService notifications;
+    private final com.nexus.platform.RedisEventStream events;
 
-    public NotificationEventListener(NotificationService notifications) {
+    public NotificationEventListener(NotificationService notifications,
+                                      com.nexus.platform.RedisEventStream events) {
         this.notifications = notifications;
+        this.events = events;
     }
 
     @EventListener
     public void on(DomainEvents.NexusDomainEvent event) {
+        // The bus is a best-effort side-channel — the local listener below is still the surface.
+        try {
+            events.publish(event);
+        } catch (RuntimeException e) {
+            log.warn("events_stream publish_threw class={} reason={}", e.getClass().getSimpleName(), e.getMessage());
+        }
         try {
             TenantContext tenant = notifications.tenantById(event.tenantId());
             if (tenant == null) {

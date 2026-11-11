@@ -40159,3 +40159,42 @@ to the role buttons. No other surface was touched.
 
 - readers: `apps/web/app/signin/page.tsx`,
   this ledger section.
+
+## 928. D928 — events on a wire: an optional Redis Streams bridge along the in-process domain bus
+
+**Goal.** The mandate asked specifically for 消息队列合理运用. The platform's in-process notification path
+is honest (`NotificationEventListener` + `DomainEvents`) and carries every §123–125 event
+(`LeadCaptured`/`ReservationChanged`/`ReviewCreated`/`HandoffRequested`/`HandoffResolved`/`OrderStatusChanged`)
+but stays inside the monolith — nothing else on the plane can see it. Phase H/H2/H3 built the microservices
+story (D894/D918/D919) and the registry plane proves liveness, but the domain feed has no wire surface.
+
+**The fix.** `services/platform/src/main/java/com/nexus/platform/RedisEventStream.java` — a bounded,
+opt-in Redis Streams bridge. `nexus.events.redis-stream-enabled` (default `false`) turns it on;
+`nexus.events.max-len` (default 1000) self-trims via `XTRIM ... MAXLEN ~` after every `XADD`; the
+`@PostConstruct` connection warmup fails softly (no Redis → bridge stays inert, zero side-effect);
+`XADD` errors log-and-continue — the business action that earned the notification NEVER rolls back
+because the bus hiccupped, matching the listener's own fail-soft rule. The listener now ALSO publishes
+every event to `nexus:events` (bridged once) while keeping its own local dispatch — the bus is additive,
+no existing behaviour changes. The wire schema is: `template` (the `notifications.template` column value),
+`tenant_id`, `type` (the record class's simple name), `payload` (the full event serialised).
+
+**`services/platform/src/main/java/com/nexus/notification/NotificationEventListener.java` also refactored the class name path given in this unit — the final call-site shape is: in the `@EventListener`, first `events.publish(event)` in its own try/catch, then the preexisting resolution and dispatch unchanged.**
+
+**Verification.** `services/platform/src/test/java/com/nexus/platform/RedisEventStreamTest.java` — 3/3 pass:
+inert-by-default flag off; unreachable-Redis-bootstrap doesn't throw; `redis://127.0.0.1:6380/0` live arm actually
+`XADD` under `nexus:events` with the documented schema and `XREAD` cleanly reads it back. Live local platform
+suite unchanged (316/316 pass in isolation form; the full parallel suite has 2 preexisting flaky tests unrelated
+to this unit — `RateLimitEnforcementTest.authLadderRefusesTheForgedEscape` and
+`ForwardedHeaderTrustTest.frameworkHandsTheLoginGateToTheCaller` both pass solo, both fail only in the full
+parallel suite due to shared Redis-state interference from prior tests, preexisting before this unit).
+
+**What this does NOT claim.** No cross-service consumer of `nexus:events` exists yet — nothing on this plane
+reads it. No consumer groups, no ack/retry, no ordering guarantee across tenants (one stream for every tenant,
+in one key). No production topology. No claim that the bridge is required, or that it meaningfully increases
+throughput on this dev host. The 30s re-probe, LRU, and in-memory fallback from D926/D909/D903 handle the
+mode where Redis is absent entirely.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/RedisEventStream.java`,
+  `services/platform/src/main/java/com/nexus/notification/NotificationEventListener.java`,
+  `services/platform/src/test/java/com/nexus/platform/RedisEventStreamTest.java`,
+  this ledger section.

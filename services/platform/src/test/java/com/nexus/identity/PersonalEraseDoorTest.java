@@ -439,10 +439,11 @@ class PersonalEraseDoorTest extends NexusIntegrationTest {
         String notice = answer.path("notice").asText();
         assertThat(notice).as("the notice points at the derived list instead of re-describing it: %s", notice)
                 .contains("erased_columns");
-        assertThat(notice).as("the notice admits the retention workflow has no runner in this build: %s", notice)
-                .contains("no job in this build reads");
+        assertThat(notice).as("the notice names the retention sweeper — which this build ships, opt-in by default: %s", notice)
+                .contains("retention sweeper");
         assertThat(notice).as("no sentence here may claim the erasure reached everything")
-                .doesNotContain("all personal data", "Personal identifiers were erased");
+                .doesNotContain("all personal data", "Personal identifiers were erased",
+                        "no job in this build reads");
     }
 
     @Test
