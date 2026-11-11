@@ -77,6 +77,8 @@ const CIRCUIT_SMOKE = 'scripts/insight_circuit_smoke.sh';
 const CIRCUIT_FALSIFIER = 'scripts/falsify_insight_circuit_smoke.sh';
 const BREAKER_CONFIG_SMOKE = 'scripts/insight_breaker_config_smoke.sh';
 const BREAKER_CONFIG_FALSIFIER = 'scripts/falsify_insight_breaker_config_smoke.sh';
+const METRICS_SMOKE = 'scripts/insight_metrics_smoke.sh';
+const METRICS_FALSIFIER = 'scripts/falsify_insight_metrics_smoke.sh';
 
 for (const [rel, label] of [
   [POM, 'the module pom'], [APP, 'the application class'],
@@ -93,6 +95,8 @@ for (const [rel, label] of [
   [CONFIG_REPO, 'the insight config-repo entry (D889)'],
   [ADMIN_SMOKE, 'the Spring Boot Admin visibility smoke (D892)'],
   [ADMIN_FALSIFIER, 'the admin smoke absence-arm falsifier (D892)'],
+  [METRICS_SMOKE, 'the metrics smoke (D918)'],
+  [METRICS_FALSIFIER, 'the metrics absence-arm falsifier (D918)'],
   [CIRCUIT_SMOKE, 'the breaker-state smoke (D895)'],
   [CIRCUIT_FALSIFIER, 'the breaker smoke no-drive falsifier (D895)'],
   [BREAKER_CONFIG_SMOKE, 'the tuned-threshold breaker smoke (D899)'],
@@ -223,6 +227,19 @@ has(CIRCUIT_FALSIFIER, 'NEXUS_CIRCUIT_SKIP_DRIVE=1', 'the falsifier actually rem
 has(CLOUD_DOC, 'D895', 'CLOUD.md records the breaker-state unit');
 has(ATLAS, 'scripts/insight_circuit_smoke.sh', 'the atlas lists the breaker smoke');
 has(ATLAS, 'scripts/falsify_insight_circuit_smoke.sh', 'the atlas lists the no-drive falsifier');
+
+/* D918 — the counters, not just the state: resilience4j-micrometer's meters must be real,
+ * tag-readable, and count only after the driving sequence. The falsifier's red is the point. */
+has(METRICS_SMOKE, 'resilience4j.circuitbreaker.calls?tag=name:', 'the smoke reads the per-breaker counter with a tag');
+has(METRICS_SMOKE, 'NEXUS_METRICS_SKIP_DRIVE', 'the smoke has a no-drive arm');
+has(METRICS_SMOKE, 'state meter lists both breakers', 'the state meter must list both breakers');
+has(METRICS_SMOKE, 'combined COUNT', 'the smoke asserts the combined count moved after driving');
+has(METRICS_FALSIFIER, 'NEXUS_METRICS_SKIP_DRIVE=1', 'the falsifier actually removes the driving calls');
+has(CI, 'scripts/insight_metrics_smoke.sh', 'CI runs the metrics smoke (D918)');
+has(CI, 'scripts/falsify_insight_metrics_smoke.sh', 'CI runs the metrics absence-arm falsifier (D918)');
+has(CLOUD_DOC, 'D918', 'CLOUD.md records the metrics unit');
+has(ATLAS, 'scripts/insight_metrics_smoke.sh', 'the atlas lists the metrics smoke');
+has(ATLAS, 'scripts/falsify_insight_metrics_smoke.sh', 'the atlas lists the metrics falsifier');
 
 /* D899 — the per-instance tuning must reach the SAME breakers Feign actually opens. D895 measured
  * that the registry-name instances were never used; a yaml edit that merely renames them is not

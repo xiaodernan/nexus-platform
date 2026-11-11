@@ -39802,3 +39802,45 @@ beyond the map; it remains covered by the CI `cloud_retry_smoke.sh`/`cloud_lb_sm
 
 - readers: `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java`,
   `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/EdgeRateLimitFilterTest.java`.
+
+## 918. D918 — Phase H/H3 closed: the Fifth Service's resilience4j counters are real actuator meters (`/actuator/metrics`), not just state probes
+
+**Goal.** D895 exposed `/actuator/circuitbreakers` on `nexus-insight` so an operator can SEE that a
+Feign breaker opened (state, not rates). The H3 seam (`docs/CONTINUITY_PLAN.md`) flagged two open
+questions — whether `resilience4j-micrometer` is on the classpath, and whether the actuator exposure
+list actually carries the meters — and both were unresolved since D895.
+
+**The fix.** `services/cloud/insight-service/pom.xml` gains `io.github.resilience4j:resilience4j-micrometer`
+(BOM-aligned, released as 2.2.0 against Spring Cloud 2025.0.3 — the tree resolved it with the BOM, no version
+literal added). With it on the classpath, `Resilience4JAutoConfiguration` registers the tags for every
+breaker on `/actuator/metrics` (`metrics` was already exposed). Nothing else changed in the module: the
+Feign clients, fallbacks and the D899-tuned names are untouched, so the breakers behaving are the SAME
+two breakers (`PlatformHealthClienthealth`, `AiHealthClienthealth`) — not a third mechanism papered over.
+
+**`scripts/insight_metrics_smoke.sh`** now proves the way the D895 smoke proves its own claim — driving
+the same no-Eureka plane view 12 times: after the drive, each
+`/actuator/metrics/resilience4j.circuitbreaker.calls?tag=name:<breaker>` carries a COUNT > 0 (measured
+combined COUNT=8.0 on this host — not 24, which is what 12 plain successes × 2 breakers would suggest;
+some calls were absorbed/failing in ways the Feign layer accounts for singly; what is claimed is only
+">0 and tagged", not a rate). `/actuator/metrics/resilience4j.circuitbreaker.state` lists both names with
+`{name, state: closed|open|...}` tag pairs. **`scripts/falsify_insight_metrics_smoke.sh`**
+(`NEXUS_METRICS_SKIP_DRIVE=1` wrapper) boots the same process with no driving calls, and requires the
+combined COUNT to hold at 0 — a meter that counts code that never ran is not a meter.
+
+**Verification.** `insight_metrics_smoke.sh` PASS (metrics exist, both names listed, COUNT>0 after drive).
+`falsify_insight_metrics_smoke.sh` PASS (COUNT stays 0 without driving). `check_cloud_insight.mjs` gains
+the wiring rows for both scripts (PASS, 151 claims held). `check_atlas.mjs` PASS (139 cited paths, both
+new scripts named). `check_cloud_claims.mjs --self-test` PASS (census holds; D918 claim added).
+`.github/workflows/ci.yml` runs both in the cloud job chain. `docs/ATLAS.md`, `docs/CLOUD.md`,
+`docs/cloud_claims.yaml`, `docs/CONTINUITY_PLAN.md` (H3 marked DONE) all updated.
+
+**What this does NOT claim.** No production-load behaviour, no dashboard, no alert, no OTLP export, no
+monotonicity on the counter, no exposure beyond this dev plane (the exposure list stays
+health,info,metrics,refresh,circuitbreakers). The absence arm only bounds the false-positive mode.
+Anything past this — an alert, a dashboard, a grafana board — is a separate and open unit.
+
+- readers: `services/cloud/insight-service/pom.xml` (resilience4j-micrometer),
+  `scripts/insight_metrics_smoke.sh`, `scripts/falsify_insight_metrics_smoke.sh`,
+  `scripts/check_cloud_insight.mjs` (D918 wiring rows),
+  `.github/workflows/ci.yml`, `docs/ATLAS.md`, `docs/CLOUD.md`,
+  `docs/cloud_claims.yaml`, `docs/CONTINUITY_PLAN.md` (H3 marked done/D918).
