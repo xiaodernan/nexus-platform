@@ -1,10 +1,12 @@
 package com.nexus.platform;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,10 +41,50 @@ public class PermissionService {
      */
     public static final List<String> HUMAN_SUBJECT_TYPES = List.of("user", "merchant_user");
 
+    /** One bound grant answer: true/false until its TTL expires. */
+    private static final class CacheEntry {
+        final boolean value;
+        final long expiresAt;
+
+        CacheEntry(boolean value, long expiresAt) {
+            this.value = value;
+            this.expiresAt = expiresAt;
+        }
+    }
+
     private final TenantJdbc jdbc;
 
-    public PermissionService(TenantJdbc jdbc) {
+    /**
+     * D912: bounded, access-order LRU for grant lookups. The interceptor asks the database up to
+     * three times per guarded {@code @RequiresPermission} call (user spelling, merchant_user spelling,
+     * tenant scope), and grants move rarely and always through THIS service's write methods, so the
+     * whole cache is flushed on every {@code grant}/{@code revoke}/{@code revokeAll} — the only
+     * staleness left is the read-your-own-revocation via a different process, bounded by the TTL.
+     * `expires_at` inside a live grant is NOT cached past its own row's lapse: the cache stores only
+     * the check's boolean and the TTL is below the minimum practical grant lifetime this door issues
+     * (the demo's grants carry no expiry), so a lapsed grant can authorise at most `ttl` out of
+     * context — the same staleness TenantService's negative tier already accepts for slugs.
+     */
+    private final LinkedHashMap<Key, CacheEntry> cache;
+    private final long cacheTtlMs;
+    private final int cacheMax;
+
+    /** Null-safe record key, including the merchant scope so tenant/merchant tiers never alias. */
+    private record Key(UUID tenantId, String subjectType, UUID subjectId, UUID merchantId, String permission) {
+    }
+
+    public PermissionService(TenantJdbc jdbc,
+                             @Value("${nexus.permission-cache.ttl-ms:15000}") long cacheTtlMs,
+                             @Value("${nexus.permission-cache.max:1024}") int cacheMax) {
         this.jdbc = jdbc;
+        this.cacheTtlMs = cacheTtlMs;
+        this.cacheMax = cacheMax;
+        this.cache = new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<Key, CacheEntry> eldest) {
+                return size() > cacheMax;
+            }
+        };
     }
 
     /**
@@ -73,9 +115,9 @@ public class PermissionService {
                   and m.tenant_id = :tenant_id
                   and (g.expires_at is null or g.expires_at > now())
                 """;
-        return !jdbc.forTenant(tenant, sql, Json.map(
+        return cached(tenant, subjectType, subjectId, merchantId, permission, () -> !jdbc.forTenant(tenant, sql, Json.map(
                 "subject_type", subjectType, "subject_id", subjectId,
-                "permission", permission, "merchant_id", merchantId)).isEmpty();
+                "permission", permission, "merchant_id", merchantId)).isEmpty());
     }
 
     /**
@@ -95,8 +137,39 @@ public class PermissionService {
                   and g.merchant_id is null
                   and (g.expires_at is null or g.expires_at > now())
                 """;
-        return !jdbc.forTenant(tenant, sql, Json.map(
-                "subject_type", subjectType, "subject_id", subjectId, "permission", permission)).isEmpty();
+        return cached(tenant, subjectType, subjectId, null, permission, () -> !jdbc.forTenant(tenant, sql, Json.map(
+                "subject_type", subjectType, "subject_id", subjectId, "permission", permission)).isEmpty());
+    }
+
+    /** One lookup through the LRU; null subject/permission bypass the cache entirely. */
+    private boolean cached(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId,
+                           String permission, java.util.function.BooleanSupplier query) {
+        if (subjectId == null || permission == null || cacheTtlMs <= 0) {
+            return query.getAsBoolean();
+        }
+        Key key = new Key(tenant.tenantId(), subjectType, subjectId, merchantId, permission);
+        long now = System.currentTimeMillis();
+        synchronized (cache) {
+            CacheEntry hit = cache.get(key);
+            if (hit != null && hit.expiresAt > now) {
+                return hit.value;
+            }
+            if (hit != null) {
+                cache.remove(key);
+            }
+        }
+        boolean value = query.getAsBoolean();
+        synchronized (cache) {
+            cache.put(key, new CacheEntry(value, System.currentTimeMillis() + cacheTtlMs));
+        }
+        return value;
+    }
+
+    /** Flush everything on any grant write: a grant must be visible to the very next check. */
+    private void flushCache() {
+        synchronized (cache) {
+            cache.clear();
+        }
     }
 
     public boolean has(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId, String permission) {
@@ -141,6 +214,7 @@ public class PermissionService {
                     on conflict (subject_type, subject_id, merchant_id, permission) do nothing
                     """, Json.map("subject_type", subjectType, "subject_id", subjectId,
                     "permission", permission, "granted_by", grantedBy));
+            flushCache();
             return;
         }
         if (!hasMerchantGrant(tenant, "user", grantedBy, merchantId, "admin_members")
@@ -160,6 +234,7 @@ public class PermissionService {
                 on conflict (subject_type, subject_id, merchant_id, permission) do nothing
                 """, Json.map("subject_type", subjectType, "subject_id", subjectId, "merchant_id", merchantId,
                 "permission", permission, "granted_by", grantedBy));
+        flushCache();
     }
 
     public int revoke(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId, String permission) {
@@ -173,8 +248,10 @@ public class PermissionService {
                   and g.merchant_id = :merchant_id
                   and g.permission = :permission
                 """;
-        return jdbc.updateForTenant(tenant, sql, Json.map("subject_type", subjectType, "subject_id", subjectId,
+        int deleted = jdbc.updateForTenant(tenant, sql, Json.map("subject_type", subjectType, "subject_id", subjectId,
                 "merchant_id", merchantId, "permission", permission));
+        flushCache();
+        return deleted;
     }
 
     /**
@@ -183,7 +260,7 @@ public class PermissionService {
      * an untouched grant keeps answering {@link #has} for a person who is no longer anybody's staff.
      */
     public int revokeAll(TenantContext tenant, String subjectType, UUID subjectId, UUID merchantId) {
-        return jdbc.updateForTenant(tenant, """
+        int deleted = jdbc.updateForTenant(tenant, """
                 delete from permission_grants g
                 using merchants m
                 where g.merchant_id = m.id
@@ -192,5 +269,7 @@ public class PermissionService {
                   and g.subject_id = :subject_id
                   and g.merchant_id = :merchant_id
                 """, Json.map("subject_type", subjectType, "subject_id", subjectId, "merchant_id", merchantId));
+        flushCache();
+        return deleted;
     }
 }

@@ -47,6 +47,11 @@ import org.springframework.web.client.RestTemplate;
         "nexus.redis.enabled=false",
         "nexus.ratelimit.enabled=false",
         "nexus.jwt.secret=nexus-test-only-secret-0123456789abcdef",
+        // the suite seeds permission_grants rows with direct JDBC INSERT/DELETE from several
+        // classes; the cache would answer from a stale entry for as long as the TTL allows and no
+        // integration grant would ever read "recomputed". Unit tests in PermissionServiceTest own
+        // the cache's lru/ttl behaviour; the integration suite deliberately bypasses it.
+        "nexus.permission-cache.ttl-ms=0",
         "nexus.tenant.default-slug=hong-kong",
         "NEXUS_AI_INTERNAL_TOKEN=nexus-test-ai-internal-token-1234567890"
 })

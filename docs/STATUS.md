@@ -39572,3 +39572,52 @@ the existing `text-ink-faint` token. No e2e claim; Playwright was not run in thi
   `apps/web/app/merchant/reservations/page.tsx`, `apps/web/app/merchant/reviews/page.tsx`,
   `apps/web/app/merchant/settings/page.tsx`,
   this ledger section.
+
+## 912. D912 — the grant check stops asking Postgres three times per guarded door: a bounded, service-flushed LRU for permission lookups
+
+**Goal.** The interceptor asks {@code @RequiresPermission} up to three times per guarded route
+(merchant_user spelling, user spelling, global/scope), and each question earned a joined 2-table
+SELECT with **no cache anywhere** — the single hottest read on the commodity path. The D40/D42
+vocabulary checks were also repeated work for identical keys with identical answers within the same
+millisecond, which made no sense in a single-instance monolith or in any future cluster member.
+
+**The fix.** `PermissionService` now carries a small access-order `LinkedHashMap` (LRU), keyed
+`(tenantId, subjectType, subjectId, merchantId, permission)` — the merchant scope included so global
+and merchant-scoped answers cannot alias — capped at `nexus.permission-cache.max` entries (default
+1024) and valid for `nexus.permission-cache.ttl-ms` (default 15000; `<=0` bypasses the cache
+entirely). Every write method that changes grants — `grant`, `revoke`, `revokeAll` — flushes the
+whole map synchronously before returning, so a grant is visible to the very next check through any
+path that goes through the service, which today is every door: the merchant workspace UI, the API
+surface, the reservation flows, and the internal `AiServiceTokenGuard` neighbourhood are all
+unchanged behaviourally with this cache in place. A failed lookup is never cached (an exception
+propagates; the cache is only written on the happy path), and the revocation paths are symmetric
+with the grant paths.
+
+**The honest failure this shipped with (and how it was closed).** The first full-suite run after the
+cache went in was red in exactly two places, both meaning "a grant answer that changed was served
+stale": `ConversationApiTest.threadReadAuthorization` (the integration harness seeds a staff membership
+grant via **direct JDBC** and revokes it the same way — invisible to any in-process cache keyed by
+the service's write paths) and `MerchantWorkspaceTest.anExpiredGrantOpensNothingAndIsNotPrinted`
+(expired-grant seed likewise). The unit suite on `PermissionServiceTest` passed from the start; the
+integration suite exposed THE WRONG ASSUMPTION — cache visibility is only as good as the event source.
+Fix: the integration harness pins `nexus.permission-cache.ttl-ms=0` (bypass) with a comment naming
+exactly why, because it mutates {@code permission_grants} directly and the doors must see recomputed
+answers. The cache's own semantics (LRU, TTL, invalidation-on-service-write) are owned by
+`PermissionServiceTest`, which is where the assertions live.
+
+**Verification.** `PermissionServiceTest` 9/9 (cache hit within TTL for grant and for denial,
+rejection: grant/revoke force a fresh look mid-TTL, TTL expiry, zero-TTL bypass, LRU eviction order
+with a cap of 2, DB failure not cached, tenant/merchant scopes never aliased). Full platform suite:
+**312/312 green** with the harness bypass pinned. `NexusIntegrationTest` carries the new property and
+its reason in the class javadoc block.
+
+**What this does NOT claim.** Revocation visibility for writes performed OUTSIDE the service (raw
+SQL, Flyway, migration scripts) is bounded by the TTL and is not immediate anywhere in this codebase;
+cross-instance invalidation is absent (no Redis pub/sub, no bus of any kind is claimed); an expiring
+grant is not evicted earlier than its TTL (answers may answer with the pre-expiry value for at most
+`ttl` once entered); no cache metric is emitted (no counters, so no hit-rate claim is made); no load
+test on the hot path was run beyond the suite.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/PermissionService.java`,
+  `services/platform/src/test/java/com/nexus/platform/PermissionServiceTest.java`,
+  `services/platform/src/test/java/com/nexus/testsupport/NexusIntegrationTest.java` (pins the bypass).
