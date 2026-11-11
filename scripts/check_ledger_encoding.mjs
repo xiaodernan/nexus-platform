@@ -63,7 +63,10 @@
  *
  * SELF-TEST. `judge` is pure over a (path -> text) map. `--self-test` plants corruptions in memory on a
  * plane built from the real files: a BEL, a C1, a DEL, a U+FFFD, a backspace, a bijective mojibake run,
- * and cuts the CI / ATLAS / ledger wiring — each must redden. A false-positive guard then feeds a plane
+ * cuts the CI / ATLAS / ledger wiring, and removes the reader from disk — 10 arms, each must redden for
+ * cause. The ledger arm deletes the HEADING line (not just the token): this reader's own falsifier prose
+ * quotes the section number, so a token-replace would leave a second anchor and stay green (D954's class).
+ * A false-positive guard then feeds a plane
  * full of LEGITIMATE prose (§, ·, —, café, naïve, a full emoji, CJK, curly quotes) and requires GREEN —
  * the check that this census does not become the thing that punishes non-ASCII writing. A no-op snapshot
  * guard (D954's invariant) fails any arm whose corruption did not change a byte.
