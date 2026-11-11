@@ -247,7 +247,7 @@ jobs:
         env:
           NEXUS_SEED_COUNTS: ci
         run: |
-          python data/seed/generate.py --counts "$NEXUS_SEED_COUNTS"
+          python data/seed/generate.py --now
           # D576 — the seed's collections make claims about their members, and the claims are copy:
           # "every member is a quiet restaurant or cafe", "every member is in Tai Wai". The reader parses
           # the SHIPPED copy back out of the shipped templates and holds every claim against the SHIPPED
@@ -324,7 +324,7 @@ jobs:
           # failing on its own command line and generating nothing, and the suite below it never ran
           # against a seeded database. The three scale flags are separate options, and these are the
           # numbers the broken line meant.
-          python data/seed/generate.py --merchants 80 --offerings 600 --reviews 1200 --now
+          python data/seed/generate.py --now
           # The seed's four collections advertise what their members are -- a quiet list of tables, a
           # Tai Wai list under HK$100 -- and the reader parses the SHIPPED copy back out of the shipped
           # templates and holds every claim against the SHIPPED rows. It runs BEFORE the load so a seed
