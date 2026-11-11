@@ -40133,3 +40133,29 @@ independently verified in D909 and D925. No cross-instance health broadcast; eac
 - readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java` (re-probe),
   `services/platform/src/test/java/com/nexus/platform/KeyValueStoreTest.java`,
   this ledger section.
+
+## 927. D927 — `/signin` stops being a bare column: one console-panel card composition, zero invented copy
+
+**Goal.** `/signin` is the literal front door of this product in demo mode — every reviewer's first
+keystroke — and it rendered a loose text column at `max-w-xl px-6`, the sparsest standalone surface
+on the plane. The mandate asked for front-end beauty put through serious work; a reviewer looking at
+this page first formed their whole impression from it.
+
+**The fix.** A single designed panel: one rounded bordered card (`rounded-xl border-line shadow-md`),
+an accent-seam `style` on the left edge using only existing `--nexus-ai-gradient` (no new token),
+a wordmark row (`dict.brand.name` — `NEXUS` from the dictionary, never a bare literal), and the
+existing `dict.signin` copy verbatim (title, intro, role buttons, sign-out). No new dict keys were
+declared, no localization entries invented. A `Badge tone="neutral"` with the title text anchors
+the panel the way a real admin console shows entry — a small design move that reads as "this is a
+real product", nothing more.
+
+**Verification.** `npx tsc --noEmit` → 0; `npx vitest run` → **222/222 pass**. The page renders
+server-side (no client JS added); `robots: { index: false, follow: false }` metadata unchanged;
+`tokens.test.ts` untouched.
+
+**What this does NOT claim.** The sign-in flow is unchanged (no auth added, §46/§48 still stand, no
+live deployment claim). The gradient rail is 1px wide — grabs the eye, the hierarchy still belongs
+to the role buttons. No other surface was touched.
+
+- readers: `apps/web/app/signin/page.tsx`,
+  this ledger section.
