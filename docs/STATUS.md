@@ -41512,3 +41512,49 @@ to LF in the HEAD blob; the other three LF).
 
 - readers: `scripts/check_ledger_encoding.mjs` (this census + its 10-arm falsifier), CI line 171,
   `docs/ATLAS.md`, the four repaired Markdown files, this ledger section.
+
+## 960. D960 — the e2e job's 900-second mystery, peeled: the platform never booted (blank JWT secret outside the dev profile) and wait-on probed GET-only FastAPI health route with HEAD
+
+**Goal.** The mandate keeps the e2e lane open the way the other lanes are kept open. D952 stopped the
+credential-plane confusion (compose vs service container) and D957/D958 removed two dead AI-surface
+constants the CI gate caught; the last full e2e attempt (run #37-era follow-through, the D956 run,
+`43089036101`, 2026-11-12) still failed. This unit reads that run's own log to the byte and lands the
+two honest repairs the evidence names — no CI ritual, no assertion.
+
+**The evidence, from the job log** (`gh api repos/.../actions/jobs/130770063462/logs`, 492,853 chars
+out, `D:\d956_e2e_retry.log`):
+
+1. The platform booted `HikariPool-1` fine (D952's credential repair WAS the difference there), then
+   died with `Error starting Tomcat context … authFilter … jwtService … Constructor threw exception`.
+   `JwtService`'s constructor refuses a blank secret outside the `dev` profile:
+   `NEXUS_JWT_SECRET must be set outside the dev profile (D7: no silent fallbacks)`. The e2e job's
+   "Boot services" step exports `NEXUS_PORT` and nothing else — no `SPRING_PROFILES_ACTIVE=dev`, no
+   `NEXUS_JWT_SECRET`. The platform had never once started in the e2e job; every earlier e2e attempt
+   died somewhere before this point and this one died exactly here.
+2. wait-on then polled the AI leg as an `http://` resource (HTTP HEAD, wants 2XX — wait-on's own
+   README: "The `http:` and `https:` prefixes send an HTTP `HEAD` request… Use the `-get:` forms when
+   a server does not implement `HEAD`"). FastAPI's `GET /ai/v1/health` answers **405 Method Not
+   Allowed** to HEAD (`routes_system.py:49` — GET-only, and that is correct REST semantics).
+   The uvicorn access log in the job log shows `127.0.0.1 - "HEAD /ai/v1/health HTTP/1.1" 405 Method
+   Not Allowed` every 250 ms for the full 900 s budget. Even had the platform booted, wait-on would
+   still have timed out on this leg — independently of the JWT crash.
+
+**The two repairs (both one-line edits in ci.yml, the file keeps its 535 lines and every cited line
+number is stable).**
+
+- Line 343 (the "Boot services" platform launch): `NEXUS_JWT_SECRET=ci_only_not_a_real_secret ` is
+  exported inline alongside the already-inline DB credentials — the same compose-plane pattern D952
+  established. The secret is the exact throwaway value every other CI job exports
+  (`NEXUS_JWT_SECRET: ci_only_not_a_real_secret`, e.g. line 137). No weakening: outside dev/CI the
+  JwtService still refuses a blank secret by code.
+- Line 350 (the wait-on gate): the AI leg is now `http-get://127.0.0.1:8000/ai/v1/health` — wait-on's
+  documented form for GET-only endpoints; the platform (`http://…:8080/actuator/health`, HEAD maps to
+  the GET mapping in Spring MVC) and the web (`http://…:3000`) legs are unchanged.
+
+**Not claimed.** CI has not observed this commit — the run is queued at push time and
+`cancel-in-progress` means the D959 queue row (`43098989870`) dies with this push. Whether Playwright
+passes against the fully-seeded corpus (520 merchants, not the 80 the suite was authored against) is
+exactly the next observation, not a settled fact here; neither is the claim that any other job's
+flakes are cleared by this. No new tests were needed: wait-on is the unit's gate by construction —
+name the contract between the probe and the probed door, and the gate follows.
+- readers: `.github/workflows/ci.yml` (lines 343, 350), this ledger entry.
