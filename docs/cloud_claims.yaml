@@ -199,6 +199,14 @@
   not_claimed: Sliding mode is OFF by default (D932's fixed window still ships); nowMs is injected by the test rather than read from a real clock, no cross-node claim beyond Redis single-threaded script execution, no production throughput, no claim that the in-memory fallback is as fast as Redis, and the edge gateway's D917 token bucket is a separate per-instance limiter
   honesty_anchor: D937's sliding window is opt-in and not the shipped default
 
+- id: D940
+  claim: An opt-in deterministic TTL offset on KeyValueStore.set() decorrelates a batch of same-TTL cache writes — base + unsigned_fnv1a64(key) mod spread only ever LENGTHENS the TTL, and the same key gets the same lifetime on every node and restart
+  smoke: ttl_jitter_smoke.sh
+  falsifier: falsify_ttl_jitter_smoke.sh
+  gate: check_ttl_jitter.mjs
+  not_claimed: Jitter is OFF by default (the D909 SETEX path still ships); no production cache was migrated, no hit-rate or backing-store stampede was measured under load, no cross-node claim beyond the hash being a pure portable function of the key, and the D932 fixed-window counter / D937 sliding window / setIfAbsent replay-dedup keep their own untouched TTL contracts
+  honesty_anchor: D940's cache-TTL jitter is opt-in and off by default
+
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane
   smoke: cloud_smoke.sh

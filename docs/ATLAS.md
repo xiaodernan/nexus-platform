@@ -145,6 +145,9 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_sliding_window.mjs` | D937: the atomic Redis-ZSET sliding window closes fixed-window's boundary burst — all four ZSET commands in ONE Lua EVAL, injected nowMs, opt-in default OFF, D932 fixed path preserved, bounded fallback, source + CI/ATLAS/CLOUD/census/ledger wiring; `--self-test` plants eight corruptions |
 | `scripts/sliding_window_smoke.sh` | D937: live-Redis proof that fixed admits 2×limit across a boundary while the source Lua's sliding window holds it to limit, then a hit a window later sweeps old scores and reopens it |
 | `scripts/falsify_sliding_window_smoke.sh` | D937: deletes the `ZREMRANGEBYSCORE` line from the source Lua and requires the reset assertion to REDDEN (ZCARD keeps climbing = permanent throttle) while the intact-script control still resets to 1 |
+| `scripts/check_ttl_jitter.mjs` | D940: cache-TTL decorrelation is OPT-IN (default OFF); the FNV-1a 64 constants + unsigned remainder + golden vector are pinned, set() keeps the D909 SETEX off-path and issues ONE atomic PSETEX when on, and the D932 counter / D937 sliding window / SETNX replay-dedup are proved UNPOLLUTED; `--self-test` plants eight corruptions |
+| `scripts/ttl_jitter_smoke.sh` | D940: live-Redis proof that a batch of same-TTL keys collapses to 1 expiry bucket WITHOUT jitter and spreads to >= 16 buckets WITH the source's unsigned-FNV offset, never shorter than base, with a stable per-key offset |
+| `scripts/falsify_ttl_jitter_smoke.sh` | D940: plants the SIGNED remainder in the source-extracted formula and requires the "never shorter than base" assertion to REDDEN (10/64 keys expire early) while the unsigned control keeps all TTLs >= base |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
 

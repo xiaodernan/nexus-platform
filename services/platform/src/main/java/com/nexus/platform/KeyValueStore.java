@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,10 @@ public class KeyValueStore {
     private final boolean redisEnabled;
     private final String url;
     private final long timeoutMs;
+    /** D940: opt-in deterministic TTL jitter on cache writes; default false preserves D909 exactly. */
+    private final boolean ttlJitterEnabled;
+    /** D940: max extra lifetime in ms (unsigned-hash offset in [0, spread]); ignored when disabled. */
+    private final long ttlJitterSpreadMs;
 
     private RedisClient client;
     private StatefulRedisConnection<String, String> connection;
@@ -64,14 +69,25 @@ public class KeyValueStore {
     private final Map<String, Entry> memory;
     private final int fallbackMax;
 
+    /**
+     * D940 — the Spring-injected primary constructor. The extra two knobs are OFF/1024 by default, so a
+     * deployment that does not opt in gets the byte-for-byte D909 behaviour on the write path. Marked
+     * {@code @Autowired} (D931's lesson) because the package-visible 4-arg test constructor below also
+     * exists: without an explicit primary, Spring cannot choose between two candidates.
+     */
+    @Autowired
     public KeyValueStore(@Value("${nexus.redis.enabled:true}") boolean redisEnabled,
                          @Value("${nexus.redis.url:redis://127.0.0.1:6380/0}") String url,
                          @Value("${nexus.redis.timeout-ms:400}") long timeoutMs,
-                         @Value("${nexus.redis.fallback-max-entries:4096}") int fallbackMaxEntries) {
+                         @Value("${nexus.redis.fallback-max-entries:4096}") int fallbackMaxEntries,
+                         @Value("${nexus.cache.ttl-jitter-enabled:false}") boolean ttlJitterEnabled,
+                         @Value("${nexus.cache.ttl-jitter-spread-ms:1024}") long ttlJitterSpreadMs) {
         this.redisEnabled = redisEnabled;
         this.url = url;
         this.timeoutMs = timeoutMs;
         this.fallbackMax = Math.max(1, fallbackMaxEntries);
+        this.ttlJitterEnabled = ttlJitterEnabled;
+        this.ttlJitterSpreadMs = Math.max(0L, ttlJitterSpreadMs);
         this.memory = Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, KeyValueStore.Entry> eldest) {
@@ -98,8 +114,43 @@ public class KeyValueStore {
         }
     }
 
+    /**
+     * Compatibility constructor for the D909/D932/D937 unit tests and any programmatic caller: jitter
+     * OFF (spread ignored). Delegates to the primary so there is ONE initialisation path. Only the Spring
+     * 6-arg constructor can enable D940 — a test that wants jitter must call it explicitly.
+     */
+    public KeyValueStore(boolean redisEnabled, String url, long timeoutMs, int fallbackMaxEntries) {
+        this(redisEnabled, url, timeoutMs, fallbackMaxEntries, false, 1024L);
+    }
+
     public boolean usingRedis() {
         return redis != null;
+    }
+
+    /** D940: whether deterministic TTL jitter is active on cache writes (config, independent of backend). */
+    public boolean usingTtlJitter() {
+        return ttlJitterEnabled;
+    }
+
+    /**
+     * D940 — resolve the effective cache-write TTL for this key, in milliseconds.
+     *
+     * <p>Jitter OFF returns the caller's TTL unchanged (the exact D909 contract). Jitter ON only EVER
+     * LENGTHENS: {@code base + unsigned(hash(key)) mod spread}, in {@code [base, base+spread)}. It never
+     * shortens, so no cache entry expires earlier than requested. The offset is a stable function of the
+     * key, so the same key gets the same lifetime on every node and after every restart — decorrelation
+     * comes from the keys differing, not from process-local randomness.
+     *
+     * <p>Deliberately applied ONLY by {@link #set(String, String, Duration)}. The D932 counter (which
+     * must reset exactly at its window edge), the D937 sliding window and {@link #setIfAbsent} replay-dedup
+     * keep their own TTL contracts untouched.
+     */
+    long effectiveTtlMs(String key, Duration ttl) {
+        long base = Math.max(1L, ttl.toMillis());
+        if (!ttlJitterEnabled) {
+            return base;
+        }
+        return TtlJitter.jitterMs(key, base, ttlJitterSpreadMs);
     }
 
     /**
@@ -194,7 +245,14 @@ public class KeyValueStore {
         if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {
             try {
-                redis.setex(key, ttl.getSeconds(), value);
+                if (ttlJitterEnabled) {
+                    // D940 ON: millisecond PSETEX carries the key-specific offset. Still ONE command with
+                    // value+ttl together, so the write stays atomic (no SET-then-EXPIRE crash window).
+                    redis.psetex(key, effectiveTtlMs(key, ttl), value);
+                } else {
+                    // D940 OFF (default): the byte-for-byte D909 path, second-granular SETEX.
+                    redis.setex(key, ttl.getSeconds(), value);
+                }
                 return;
             } catch (Exception e) {
                 degrade(e);
@@ -205,7 +263,8 @@ public class KeyValueStore {
             if (memory.size() >= fallbackMax) {
                 sweepExpired(now);
             }
-            memory.put(key, new Entry(value, now + Math.max(1L, ttl.toMillis())));
+            // effectiveTtlMs == max(1, ttl.toMillis()) when jitter is OFF, so the legacy fallback is unchanged.
+            memory.put(key, new Entry(value, now + effectiveTtlMs(key, ttl)));
         }
     }
 

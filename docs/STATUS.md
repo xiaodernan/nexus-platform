@@ -40835,3 +40835,86 @@ responsibility, unchanged here); nothing about the `guides` content itself or th
 
 - readers: `apps/web/src/components/growth-view.tsx` (`GrowthIndex`, `GrowthCardLink`), this ledger entry,
   `packages/ui/src/styles/tokens.css` (the accent pair this frame consumes, D924-era contract).
+## 940. D940 — a same-TTL cache batch no longer expires in one instant: opt-in deterministic TTL jitter from a stable key hash
+
+**Goal.** The mandate asks for Redis, data-structure/algorithm and operating-systems knowledge to make the
+software faster, sounder and better fitted to the hardware, with reasoned cache use. A recurring cache defect
+is the THUNDERING HERD / cache avalanche: a batch of keys written with the SAME TTL (a backfill, a deploy, or
+`TokenRegistry`'s refresh families issued in a login burst) all become stale at the SAME instant, so every
+miss lands on the backing store at once. This unit gives the cache-write path a deterministic, reproducible
+expiry decorrelation, the project's first use of a stable hash as a systems primitive (not a Merkle/digest use).
+
+**The defect.** `KeyValueStore.set(key, value, ttl)` gave every key in a batch the identical lifetime; their
+expiry timestamps were perfectly correlated. The naive fix — add a per-process `Random` to each TTL — is WORSE
+than the disease here: two instances, or the same instance after a restart, give the SAME key a DIFFERENT
+lifetime, so a key's expiry becomes an unreproducible function of which pod wrote it and the jitter itself
+turns into an inconsistency source that no test can pin.
+
+**The fix.** New pure utility `TtlJitter`: `offset = Long.remainderUnsigned(fnv1a64(key), spreadMs)` and
+`jitterMs = baseTtlMs + offset`. FNV-1a 64 (offset basis `0xcbf29ce484222325`, prime `0x100000001b3`) is a
+published, trivially portable byte hash — the Python half of the wire smoke reproduces the exact bit pattern,
+and a five-key GOLDEN VECTOR pins Java == Python so neither can drift silently. The offset is a STABLE, pure
+function of the key: same key -> same lifetime on every node and after every restart; decorrelation comes from
+the keys DIFFERING, never from process entropy. `Long.remainderUnsigned` is LOAD-BEARING: FNV's top bit is set
+for about half of keys, so as a signed `long` the hash is negative and a plain `%` would return a NEGATIVE
+offset — a TTL SHORTER than requested (a cache that expires early is a worse defect than the avalanche). The
+result is only ever LENGTHENED, into `[base, base+spread)`.
+
+**Opt-in, zero-risk default.** `KeyValueStore` gains a Spring-primary 6-arg constructor with
+`nexus.cache.ttl-jitter-enabled` (default `false`) and `nexus.cache.ttl-jitter-spread-ms` (default `1024`), and
+keeps the package-visible 4-arg test constructor delegating with jitter OFF (so every D909/D932/D937 test is
+byte-for-byte unchanged). It is marked `@Autowired` explicitly because two public constructors exist — D931's
+lesson — so Spring cannot fall back to a missing no-arg one. When OFF, `set()` still issues the exact D909
+second-granular `SETEX` and the in-memory `now + ttl.toMillis()`. When ON it issues ONE millisecond `PSETEX`
+(value+ttl still atomic, no SET-then-EXPIRE window) at `effectiveTtlMs(key, ttl)`, and the bounded D909 fallback
+applies the SAME effective millis, so both tiers agree. Critically, jitter is applied ONLY by `set()`: the D932
+fixed-window counter, the D937 sliding-window ZSET and `setIfAbsent`'s replay-dedup key keep their own TTL
+contracts, and the dedicated gate asserts none of those three bodies mentions jitter.
+
+**What is measured.** `TtlJitterTest` — **10/10 pass**. Four evidence tiers: (a) GOLDEN VECTOR — five keys
+pinned to exact milliseconds (`nexus:jc:0` -> 60583, `jc:1` -> 60148, `jc:7` -> 60302, `jc:42` -> 60267,
+`refreshfam:demo` -> 61020), the same values the wire smoke recomputes from the SOURCE constants; (b)
+PROPERTIES — stable across "instances", bounded into `[base, base+spread)` over 256 keys, identity when
+`spread<=1`, and a 64-key same-TTL batch collapsing to 1 bucket WITHOUT jitter but spreading to >= 16 buckets
+WITH it; (c) FALSIFIER — modelling the signed `%` reproduces an EARLY expiry for a negative-hash key, so the
+"never shortens" claim is load-bearing on the unsigned remainder; (d) WIRING / LIVE — the default 4-arg store
+issues `SETEX` and never `PSETEX`, an enabled store issues ONE `PSETEX` with the golden TTL and never `SETEX`,
+the bounded fallback decorrelates too, and a LIVE Redis `:6380` arm asserts two different keys arm different
+millisecond `PTTL`s, both inside `[base, base+spread)`. The two WIRE-LEVEL smokes run against the live
+`nexus-platform-redis` on `:6380`: the positive smoke extracts the FNV constants + unsigned remainder from the
+SOURCE, cross-checks its Python FNV replica against the golden hashes, then shows `PSETEX` batching collapses
+to 1 bucket without jitter and spreads to 16 with it, min `PTTL` 30020 >= base 30000, offset stable on
+recompute; `falsify_ttl_jitter_smoke.sh` plants the SIGNED remainder and requires the "never shorter" assertion
+to REDDEN — 10/64 keys expire early (min `PTTL` 29123 < 30000) — while the unsigned control keeps all 64 >= base.
+
+**Wiring.** `scripts/check_ttl_jitter.mjs` is a pure source census: the FNV constants + unsigned remainder +
+`base + offset` shape, the golden vector, the default-FALSE flag, the two-constructor `@Autowired` primary, the
+set() off/on split, the bounded fallback, the UNPOLLUTED D932/D937/setIfAbsent bodies, the smoke/falsifier
+load-bearing assertions, and CI/ATLAS/CLOUD/census/ledger are bound — `--self-test` plants eight corruptions
+(FNV prime changed, unsigned->signed, `+offset`->`-offset`, default flipped TRUE, off path lost, golden vector
+edited, jitter leaked into the D932 counter, census falsifier unbound), each reddening while the real plane
+holds. `.github/workflows/ci.yml` gains the reader on the chained wired-readers line and the two smokes on the
+cloud smoke chain — text-only edits, no cited line number moved. `docs/ATLAS.md`, `docs/CLOUD.md`,
+`docs/cloud_claims.yaml` (a D940 record bound to the reader, smoke and falsifier) and this ledger carry the
+four-corner wiring.
+
+**Honesty follow-through (numbering).** This unit was authored as D939, but a concurrent lane landed its own
+**D939** (events-service actuator meters) while this unit was being wired, occupying ledger section 939, the
+CLOUD honesty bullet and the git history. To avoid "one number, two different units" — exactly the drift this
+project's census exists to kill — this unit was re-numbered **D940** end-to-end (source comments, gate, smokes,
+ATLAS/CLOUD/census records, honesty anchor and this ledger), leaving the concurrent D939 unit untouched.
+
+**Not claimed.** That jitter is ON anywhere: `nexus.cache.ttl-jitter-enabled` defaults `false` and `set()`
+keeps the D909 `SETEX` path until flipped; that any production cache was migrated; any hit-rate, latency or
+throughput improvement, or a real backing-store stampede measured under load (the smokes measure expiry-bucket
+distribution on the wire, not a served workload); any cross-node guarantee beyond the hash being a pure,
+portable function of the key (two nodes agree because they compute the same offset, not through coordination);
+or that the D932 fixed-window counter, D937 sliding window or `setIfAbsent` replay-dedup were changed — all three
+retain their own untouched TTL contracts.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/TtlJitter.java` (the pure FNV + unsigned-offset
+  primitive), `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java` (the opt-in set() split +
+  two constructors), `services/platform/src/main/resources/application.yml` (the default-off knobs),
+  `services/platform/src/test/java/com/nexus/platform/TtlJitterTest.java` (10/10, live arm),
+  `scripts/check_ttl_jitter.mjs`, `scripts/ttl_jitter_smoke.sh`, `scripts/falsify_ttl_jitter_smoke.sh`,
+  `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.

@@ -94,6 +94,14 @@ nexus:
     url: ${NEXUS_REDIS_URL:redis://127.0.0.1:6380/0}
     enabled: ${NEXUS_REDIS_ENABLED:true}
     timeout-ms: 400
+  cache:
+    # D940: OFF by default — KeyValueStore.set() keeps the exact D909 TTL (SETEX seconds / in-memory millis).
+    # Flip true to decorrelate a batch of same-TTL cache writes: each key's TTL is lengthened by
+    # unsigned_fnv1a64(key) mod spread ms, so they no longer expire in one instant (thundering herd).
+    # The offset is a STABLE function of the key (same key -> same lifetime on every node/restart), never
+    # shorter than requested. Applies ONLY to set(); the D932 counter / D937 sliding window are untouched.
+    ttl-jitter-enabled: ${NEXUS_CACHE_TTL_JITTER_ENABLED:false}
+    ttl-jitter-spread-ms: ${NEXUS_CACHE_TTL_JITTER_SPREAD_MS:1024}
   ratelimit:
     enabled: ${NEXUS_RATELIMIT_ENABLED:true}
     # D937: OFF by default — the shipped limiter stays D932's atomic fixed window. Set true to route
