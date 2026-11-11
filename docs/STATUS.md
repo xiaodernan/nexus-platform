@@ -39070,3 +39070,72 @@ CJK recall, `btree_gist` and the real-provider eval lane remain open.
   `scripts/insight_breaker_config_smoke.sh`, `scripts/falsify_insight_breaker_config_smoke.sh`,
   `scripts/check_cloud_insight.mjs`, `docs/cloud_claims.yaml`, `docs/CLOUD.md`, `docs/ATLAS.md`,
   `docs/CONTINUITY_PLAN.md`, `.github/workflows/ci.yml`.
+
+## 902. D902 — an unknown tenant slug stops costing one Postgres query per request
+
+**The gap.** `TenantFilter` resolves the tenant on every `/api/v1/*` request at order 20
+(`services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java:32`) — before
+`AuthFilter` (30) and before `RateLimitFilter`
+(`services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java:67`). So the
+resolution is unauthenticated and unthrottled. `TenantService.resolve` ended in
+`bySlug.computeIfAbsent(slug, this::load)`, and `load` returns `null` for a slug the table
+does not know. `ConcurrentHashMap.computeIfAbsent` does not store a null result, so every
+request carrying a bogus `X-Tenant` re-ran the SELECT — cache penetration (缓存穿透): one
+HTTP request = one SQL query, and rotating the slug makes every request a miss. The
+positive tier had no TTL and `evict` had no callers; the tenants table is written only at
+boot (`BootstrapRunner`) and by tests, so stale positives were latent, not live.
+
+**The door.** `services/platform/src/test/java/com/nexus/platform/TenantCachePenetrationTest.java`
+counts the exact `queryForList(String, SqlParameterSource)` overload `load` calls through a
+`NamedParameterJdbcTemplate` subclass that answers from a fixture — no database, no timing.
+R1 the same unknown slug twice costs ONE select; R2 the negative tier is a bounded LRU (the
+eldest is evicted, the newest kept); R3 a negative expires after its TTL; R4 a known slug
+still resolves with one select, normalized, keeping its row fields; R5 a failed select
+propagates and is never cached as a negative; R6 `evict` clears the negative tier too.
+`services/platform/src/test/java/com/nexus/platform/TenantNegativeCacheHttpTest.java` boots
+the real stack and proves the wire is unchanged: unknown slug → enumeration-safe 404
+`tenant_not_found` twice in a row, known tenant → 200 health.
+
+**What shipped.** `services/platform/src/main/java/com/nexus/platform/TenantService.java:50`
+checks the positive tier, then a bounded expiring negative tier
+(`services/platform/src/main/java/com/nexus/platform/TenantService.java:74`), then loads.
+The negative tier is an access-order `LinkedHashMap` under its monitor (cap
+`nexus.tenant.negative-cache-max`, default 1024) storing slug → expiry epoch ms (TTL
+`nexus.tenant.negative-ttl-ms`, default 30000; 0 disables). A null load is remembered; a
+thrown load propagates and is never remembered; `evict` drops both tiers. The two leaves
+are declared in `services/platform/src/main/resources/application.yml` with `NEXUS_TENANT_*`
+env overrides. In-process, not Redis, by decision: the hot path is per-request and the
+tenant set is tiny, so a Redis GET per unknown slug would add a network hop to defend a
+table that fits in a few KB (Redis stays where it already earns its keep — rate limiting
+and refresh-token replay).
+
+**Measured.** Red on the pre-fix service (inert config knobs): R1 expected 1 select got 2,
+R2 newest negative not cached, R3 expected 1 got 2 (`tmp/d902_door_red.txt`, 8 run / 3
+failed). Green on the fix: 8/8 (`tmp/d902_door_green.txt`). Three mutation arms each
+reddened exactly their own leg and no other: A2 `removeEldestEntry → false` → R2 only
+(`tmp/d902_arm_a2.txt`); A3 TTL ignored → R3 only (`tmp/d902_arm_a3.txt`); A4 a failed
+select cached as a negative → R5 only (`tmp/d902_arm_a4.txt`). A2's first run also exposed
+a cold-JVM flake in R3 (a 120ms TTL expired during class loading before the pre-sleep
+checkpoint); R3 was hardened to 500ms/700ms and the arm re-run reddened R2 alone. Full
+platform suite on the shipped bytes: 297 run, 1 failure + 3 errors (`tmp/d902_full_suite.txt`);
+all four reds are PRE-EXISTING at HEAD, proven by a clean detached worktree at 189a7e7 with
+D902 absent reproducing the identical signatures (`tmp/d902_base_attribution.txt`,
+`tmp/d902_base_reds.txt`): `ConversationApiTest.paginationIsCapped` (expected 3 got 0, a 200
+not a 404, so independent of tenant resolution) and `PermissionVocabularyTest` ×3
+(`NoUniqueBeanDefinitionException` — Actuator's `controllerEndpointHandlerMapping` is a
+second `RequestMappingHandlerMapping`, the dependency at `services/platform/pom.xml:110`
+landed via the cloud lane). D902 adds zero new reds.
+
+**Not claimed.** No live SQL counter on the dev plane (`pg_stat_statements` is not installed
+in the shared container; installing it needs a restart) — the per-request SQL count is
+proven by the door's counter, not `pg_stat_activity`. The positive tier still has no TTL
+(no runtime writer exists to make staleness live). The two pre-existing platform-suite
+reds are recorded, not fixed here. No Redis claim for tenant resolution. The negative
+tier masks a tenant created within the TTL window after a 404 for its slug; `evict` is the
+writer's hook, and no runtime writer exists today.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/TenantService.java`,
+  `services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java`,
+  `services/platform/src/main/resources/application.yml`,
+  `services/platform/src/test/java/com/nexus/platform/TenantCachePenetrationTest.java`,
+  `services/platform/src/test/java/com/nexus/platform/TenantNegativeCacheHttpTest.java`.

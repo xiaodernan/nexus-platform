@@ -77,6 +77,10 @@ nexus:
   tenant:
     default-slug: ${NEXUS_TENANT:hong-kong}
     resolve-from-hostname: true
+    # D902: an unknown slug is remembered briefly (bounded LRU) so a bogus X-Tenant cannot cost
+    # one SQL per request ahead of the rate limiter. 0 disables the negative tier.
+    negative-ttl-ms: ${NEXUS_TENANT_NEGATIVE_TTL_MS:30000}
+    negative-cache-max: ${NEXUS_TENANT_NEGATIVE_MAX:1024}
   jwt:
     # Required outside the dev profile — JwtService refuses to boot with a blank secret there.
     secret: ${NEXUS_JWT_SECRET:}

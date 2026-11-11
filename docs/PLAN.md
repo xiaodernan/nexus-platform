@@ -4203,3 +4203,51 @@ normal boot unchanged unless a profile opts in.
   actuator exposure gains `metrics` on good authority. The smoke now asserts `http.server.requests` and
   `resilience4j.circuitbreaker.*` — both confirmed live. The gateway `Retry` filter is Spring's own, so no
   `resilience4j.retry.*` is emitted (measured, documented in CLOUD.md + the application.yaml comment).
+
+### Performance, caching, and the frontend — the optimization lane the project asked for
+
+The mandate added six directions: Redis usage, computer-networking knowledge, algorithms /
+data-structures / OS knowledge applied to runtime speed and hardware fit, a dramatic frontend-aesthetics
+uplift, front/back-end co-development, and database performance with sensible caching. They are queued
+here as measured units, not promises. Each keeps the house form (measure → red door → minimal fix →
+mutation arms → whole-suite verdict with every red attributed → ledger → commit own files only). Ordered
+by what is already verified, not by date.
+
+- **Landed — D902 (§902): the tenant negative cache.** An unknown `X-Tenant` slug cost one Postgres query
+  per request, unauthenticated and ahead of the rate limiter; a bounded expiring LRU negative tier in
+  `TenantService` closes the penetration. First unit of the caching lane. In-process by decision (the hot
+  path is per-request, the tenant set tiny); Redis stays where it earns its keep.
+- **D903 candidate — the AI tool-result cache is unbounded.** `apps/ai/nexus_ai/tools/registry.py`
+  `_Cache._store` is a plain dict: TTL is checked on read, but there is NO size bound and no sweep of
+  expired entries. Varied-argument traffic (`search_merchants`/`search_products` declare `cache_ttl_s=300`)
+  grows it without bound for the TTL window — the same memory-growth class as D902, on the AI side. Fix:
+  a bounded LRU (`OrderedDict`, O(1) evict) plus an expired-entry sweep; door with a fake clock,
+  red-then-green, mutation arms, full AI suite. Algorithms + caching + OS memory.
+- **D904 candidate — the AI→platform adapter opens a TCP connection per relay.**
+  `apps/ai/nexus_ai/adapters/platform.py` `_request` does `async with httpx.AsyncClient(...)` per call, so
+  every relay (`get_merchant`, `create_cart`, …) pays a fresh connection with no keep-alive, while the
+  model adapters already reuse a pooled client (`apps/ai/nexus_ai/models/base.py`). Fix: a reused
+  `AsyncClient` with keep-alive and a proper `aclose` lifecycle; door = a counting transport proving one
+  connection serves N relays. Computer-networking lane (connection reuse, HTTP semantics).
+- **Frontend aesthetics uplift (workstream).** The surface is already a premium design system —
+  `packages/ui/src/styles/tokens.css` (cobalt accent + ink ramp, light/dark, a WCAG-AA contrast matrix
+  with its own reader `scripts/check_console_a11y.mjs`, CJK-tuned modular type, two-layer shadows, spring
+  motion, reduced-motion discipline) and one `EntityCard` render contract. So this is a MEASURED
+  refinement, not a rewrite: run the dev server, screenshot the consumer search / merchant detail /
+  merchant console, find where a surface lags the token system's promise, uplift those, and re-verify in
+  the browser. Front/back co-development: keep the published TS contract types in sync with the AI
+  models (the open §710/§712/§741 contract residues belong to this lane).
+- **Database performance (workstream).** Measured: 72 indexes already exist across
+  `infra/db/migrations` (GIN trigram/tsvector for search, tenant-scoped composites, DESC ordering indexes).
+  This lane is therefore EXPLAIN-driven query verification on the hot paths, not index creation — find a
+  query whose plan does not use the index it should, prove it, fix it. Hikari budget is already ruled
+  (D56). No claim of a slow query without a saved plan.
+- **Two pre-existing platform-suite reds, exposed by D902's full sweep (candidates).** Both reproduce on
+  a clean HEAD worktree without D902 (`tmp/d902_base_attribution.txt`): `PermissionVocabularyTest` ×3
+  (Actuator's `controllerEndpointHandlerMapping` is a second `RequestMappingHandlerMapping`; the test
+  autowires a single one — a regression the cloud lane's actuator dependency introduced into the platform
+  suite) and `ConversationApiTest.paginationIsCapped` (a 200 returning 0 items where 3 were opened).
+  Taken up here because the cloud lane runs the cloud suites, not the platform suite.
+- **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first; any unit
+  that touches the platform runs the FULL platform suite and attributes every red with a BASE pass before
+  landing (D902).
