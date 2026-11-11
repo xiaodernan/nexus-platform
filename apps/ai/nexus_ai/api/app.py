@@ -60,6 +60,10 @@ def create_app(settings: Any | None = None) -> FastAPI:
         from nexus_ai.discovery import maybe_register_eureka, stop_eureka
         eureka_registration = await maybe_register_eureka()
         yield
+        # D969 — release the pooled AI→platform keep-alive connection on shutdown; stub-mode /
+        # uninitialised factory is a no-op, so the offline first-class boot never fails on it.
+        from nexus_ai.adapters.platform import aclose_platform_client
+        await aclose_platform_client()
         await stop_eureka(eureka_registration)
         try:
             await db_pool.dispose()

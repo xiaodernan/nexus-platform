@@ -41809,3 +41809,79 @@ Neither of services/hundred-and-twelve workflow files nor the compose plane set 
 **Not claimed.** That every SVG will be visible or that the hydration contract is proven; that was D558's arm, and this spec's own history attests to it (7/7 SSR'd merchant-detail case stayed green through the D558 rewrite). No coverage claim about any other spec. If an image fails to fade in after eager-loading, this test now shows exactly that instead of hiding it behind a never-reached verdict — which is the whole job of this file.
 
 - readers: `tests/e2e/specs/consumer/card-media.spec.ts` (the control arm's pre-verdict loop), this ledger entry.
+
+## 969. D969 — the AI→platform adapter opened a fresh TCP connection per relay, paying a full handshake with no keep-alive on every dialogue turn
+
+**The hole.** `apps/ai/nexus_ai/adapters/platform.py` `HttpPlatformClient._request` did
+`async with httpx.AsyncClient(timeout=self.timeout_s) as client:` on EVERY call. Each relay
+(get_merchant / create_cart / add_cart_item / price_check / checkout / the per-turn dialogue
+write in `apps/ai/nexus_ai/api/routes_stream.py` `_persist_turn`) therefore opened a brand-new
+connection, paid a full TCP (and, for https, TLS) handshake, got zero keep-alive reuse, and
+left a TIME_WAIT/fd trail — while `get_platform_client` is already a per-process singleton,
+so there is exactly one adapter whose pool could have been shared. Under load the extra RTT
+compounds on the hottest AI→commerce path and thrashes the peer accept pool. This is the
+D904 candidate `docs/PLAN.md` already registered, whose stated door is *a counting transport*
+*proving one connection serves N relays*; the sibling model adapters
+(`apps/ai/nexus_ai/models/base.py` `HttpLLMAdapter._http`) already pooled a client, the
+platform adapter did not.
+
+**The fix.** `HttpPlatformClient` now owns one lazily-created `httpx.AsyncClient`: the
+constructor takes a `client=` injection point, `_http()` builds it once
+(`if self._client is None`) and returns the same instance on every call, and `_request`
+sends through `await self._http().request(...)`. `async def aclose()` releases it; the
+factory exposes `async def aclose_platform_client()` — a duck-typed no-op for the offline
+stub and an unset factory — and the FastAPI lifespan calls it on shutdown next to
+`stop_eureka` / `db_pool.dispose`. This is explicitly NOT a rewrite: the timeout contract,
+`httpx.HTTPError`→`PlatformUnavailable` mapping, status→`PlatformRejectedRequest` envelope,
+`_safe_json`, headers (Authorization / X-Tenant / Idempotency-Key / X-Internal-Token),
+default-stub mode and factory-singleton shape survive unchanged. The `PlatformClient`
+Protocol is untouched, so structural-type compatibility with the stub is preserved.
+
+**Why the shipped tests were blind.** No existing test drove `HttpPlatformClient` at all —
+`test_stub_platform.py` pins only the stub, and `test_live_adapters.py` fakes a client for
+the *model* adapters — so a per-call `AsyncClient` was invisible to the suite. The offline
+probe `apps/ai/tests/test_platform_client_reuses_connection.py` closes that gap with
+`httpx.MockTransport` (no live platform, DB or network): a positive arm sends N relays
+through ONE injected counting client and requires N requests plus exactly one `aclose`;
+a concurrency arm, a lazy-timeout arm (the built client carries `timeout_s` and `_http()`
+is identity-stable), a shutdown-lifecycle arm (the hook closes a real adapter and is a
+stub no-op), a contract-survival arm and a factory-singleton arm pin the rest. Its
+one-flipped-variable falsifier monkeypatches `_http` back to a *per-call new AsyncClient* —
+the exact pre-D969 shape — and requires the construction count to become N, reddening the
+positive arm `== 1` and proving that arm is load-bearing. Reverting the single product line
+to the per-call construct was verified to REDDEN the positive arm; restoring it returns GREEN.
+
+**The structural gate.** `scripts/check_platform_client_reuse.mjs` judges source text and
+wiring: `_request` sends through the reused `_http()` client and no per-call
+`async with httpx.AsyncClient(...) as client:` line remains (line-anchored), the injection
+point / lazy guard / build-once / aclose / factory hook / lifespan call / hot-path caller
+are present, every preserved-contract needle holds, and the probe ships all its arms with
+the one-variable falsifier. Its `--self-test` plants twenty-one corruptions plus one GREEN
+control, each cause-checked with an `expect` tag, a D954 no-op snapshot guard, and a D959
+line-anchored D969 ledger-heading match (the reader own prose quotes the heading, so a plain
+substring test would be a vacuous needle). The harness reads the `expect` tag from *either*
+tuple shape from the start — D962 first self-test run silently scored thirteen arms
+GREEN/WRONG by binding only `arm.expect` while the tags lived in a third tuple slot.
+
+**Wiring.** CI line 171 self-test chain runs `check_platform_client_reuse.mjs --self-test`
+beside its siblings; the file holds at 535 cited-line-stable lines, and the ai-job
+`uv run pytest -q` executes the probe. ATLAS lists both the reader and the probe; this D969
+ledger heading is the anchor. Full `verify_all --report` is green with the new reader joining
+the census.
+
+**What this does NOT claim.** That a live platform connection or a keep-alive HOL timer was
+observed, that any test ran today, or any RTT / throughput / TIME_WAIT number. The proof is
+structural (the reader) plus an offline counting transport; no platform, network, DB or JVM
+was live. The default-stub mode is unchanged.
+
+- readers: `apps/ai/nexus_ai/adapters/platform.py` (the pooled `_http()` / `_request` / aclose),
+  `apps/ai/nexus_ai/api/app.py` (the lifespan shutdown hook),
+  `apps/ai/nexus_ai/api/routes_stream.py` (the per-turn hot-path caller),
+  `apps/ai/tests/test_platform_client_reuses_connection.py` (the offline counting probe),
+  `scripts/check_platform_client_reuse.mjs` (this unit structural reader),
+  `.github/workflows/ci.yml` (line 171 self-test chain), `docs/ATLAS.md` (reader + probe rows),
+  `.workbuddy/memory/2026-11-12.md` (work log)
+
+**Numbering.** D966 (geolocation), D967 (merchant-agent internal door) and D968 (card-media
+spec) were claimed by the concurrent lane while this unit was in flight (f19d0ad / 567d6d1 /
+3bd70c9), so the connection-reuse unit yields to D969 across every token.

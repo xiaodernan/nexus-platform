@@ -106,11 +106,36 @@ def _require_idempotency(key: str, *, action: str) -> str:
 class HttpPlatformClient:
     mode = "http"
 
-    def __init__(self, base_url: str, *, timeout_s: float = 5.0) -> None:
+    def __init__(self, base_url: str, *, timeout_s: float = 5.0,
+                 client: Any = None) -> None:
         if not base_url:
             raise PlatformUnavailable("NEXUS_PLATFORM_BASE_URL is unset")
         self.base_url = base_url.rstrip("/")
         self.timeout_s = timeout_s
+        # D969 — one AsyncClient per adapter instance, REUSED across every relay so the
+        # HTTP/1.1 keep-alive connection (and its TLS session, when https) survives. The
+        # `client` argument is an injection point for tests / offline transports; None means
+        # lazily build a real one on first use. This mirrors models/base.py's HttpLLMAdapter.
+        self._client = client
+
+    def _http(self):
+        """D969 — lazily create then REUSE the pooled client for this instance's whole life.
+
+        Opening a fresh AsyncClient per call paid a new TCP (and TLS) handshake on every
+        relay with no keep-alive, inflating RTT and TIME_WAIT/fd pressure on the hot path
+        (routes_stream._persist_turn). The client's own timeout=self.timeout_s still applies.
+        """
+        if self._client is None:
+            import httpx
+
+            self._client = httpx.AsyncClient(timeout=self.timeout_s)
+        return self._client
+
+    async def aclose(self) -> None:
+        """D969 — release the pooled client at shutdown; idempotent, no-client is a no-op."""
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
 
     def _headers(self, token: str | None, tenant: str | None,
                  idempotency_key: str | None = None,
@@ -134,11 +159,12 @@ class HttpPlatformClient:
 
         url = f"{self.base_url}{path}"
         try:
-            async with httpx.AsyncClient(timeout=self.timeout_s) as client:
-                resp = await client.request(method, url, json=json_body,
-                                            headers=self._headers(token, tenant,
-                                                                  idempotency_key,
-                                                                  internal_token))
+            # D969 — reuse the pooled keep-alive client instead of opening one AsyncClient
+            # per relay; its timeout=self.timeout_s still enforces the same contract.
+            resp = await self._http().request(method, url, json=json_body,
+                                              headers=self._headers(token, tenant,
+                                                                    idempotency_key,
+                                                                    internal_token))
         except httpx.HTTPError as exc:
             raise PlatformUnavailable(f"platform {method} {path} unreachable: {exc}") from exc
         if resp.status_code >= 400:
@@ -408,6 +434,21 @@ def reset_platform_client() -> None:
     _STUB = StubPlatformClient()
 
 
+async def aclose_platform_client() -> None:
+    """D969 — lifespan shutdown hook: close the pooled HttpPlatformClient's AsyncClient.
+
+    The offline stub has no `aclose` and an uninitialised factory is a no-op, so default
+    (stub-mode) boot and every existing test are unaffected; this only releases a real
+    pooled connection when the http adapter actually opened one.
+    """
+    global _CLIENT
+    if _CLIENT is not None:
+        aclose = getattr(_CLIENT, "aclose", None)
+        if aclose is not None:
+            await aclose()
+        _CLIENT = None
+
+
 def _safe_json(resp: Any) -> dict[str, Any]:
     try:
         data = resp.json()
@@ -418,4 +459,5 @@ def _safe_json(resp: Any) -> dict[str, Any]:
 
 __all__ = ["PlatformClient", "HttpPlatformClient", "StubPlatformClient", "StubCatalogue",
            "PlatformUnavailable", "PlatformRejectedRequest", "get_platform_client",
-           "set_platform_client", "reset_platform_client"]
+           "set_platform_client", "reset_platform_client",
+           "aclose_platform_client"]
