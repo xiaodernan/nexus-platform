@@ -41668,3 +41668,20 @@ since the BFF starts proxying, but that is CI's verdict to give, not this ledger
 
 - readers: `.github/workflows/ci.yml` (line 345), the downloaded artifact `D:\d961_playwright_report`,
   this ledger entry.
+
+## 964. D964 — the e2e suite was eating the auth-ip budget alive: anonymous rate permit is 10/300s per address and three workers burned it in the first minute
+
+**Goal.** D963's run (#43111368230, e2e job `130833873268`) made the CI plane live end-to-end: contract specs passed against the freshly source-built platform, cards rendered from real seeded data, the ask flows were the browser's to lose. The remaining 12-failure list now concentrates in ONE shape:
+
+  `specs/consumer/ask-merchant.spec.ts:21 / ask-merchant-history.spec.ts:23,75 — expect(resp.ok()).toBeTruthy()`
+
+with every BFF call (`page.request.post(${WEB}/api/nexus/auth …)`) answering non-2xx while, in the SAME run, the platform's direct demo door is provably open (contract spec's own `demoLogin(platform, 'consumer')` passes inside the same minute). The one remaining platform-side veto between "internal relink" and "I acted as anonymous" is the `auth-ip` bucket — `RateLimitFilter` scopes `/api/v1/auth/**` to **10 requests per address per 300 seconds** (API_CONTRACT §1/§47), and this suite runs `fullyParallel` with 3 workers from one address while re-executing borken tests with `retries: 2` (each retry re-spends the budget). The CI plane is a throwaway runner; policing anonymous abuse there serves nothing and blocks exactly the assertions the job exists to prove.
+
+**The repair (ci.yml line 343, one inline token on the platform start, same line count).**
+`SPRING_APPLICATION_JSON='{"nexus":{"ratelimit":{"auth-requests":"1000"}}}'` is added to the platform `spring-boot:run` env. Spring converts the JSON tree to properties, so `nexus.ratelimit.auth-requests` binds deterministically to `1000` (Spring's env-level relaxed binding for a dashed key is too subtle to rely on blindly — dash removal versus underscore insertion changes behaviour across Boot lines, this is the documented path). The AI (`ai-requests=20/60s`) and write (`write-requests=60/60s`) scopes are UNCHANGED; this is deliberately the narrowest knob the contract gives out for exactly this class.
+
+**Verification.** Structural only, on this host: the workflow parses (check_ci.py per the same invariants the cloud/platform jobs use), ci.yml stays 535 lines so the entire line-cite web is stable, `SPRING_APPLICATION_JSON` is Spring's own property-source idiom (no custom code). The proof that matters is the next full CI e2e run — nothing green is claimed here.
+
+**What this does NOT claim.** That every remaining ask-merchant failure is discharged by this knob — `§34 cards after refinement`, the anonymous-visitor UX expectations in `ask-merchant-history.spec.ts:67` (sign-in prompt vs 403/401) and `card-media.spec.ts:95` (streamed-search-surface card artwork, mobile) may keep red for reasons untriggered by rate limits; each will be read after the run lands. The 300s/10 rule stays in force for real deployments; nothing in this unit weakens it outside this job. No claim about the interplay of `fullyParallel: true` with this budget beyond what the fingerprint shows (the auth failures cluster in the second half of the suite, retries included).
+
+- readers: `.github/workflows/ci.yml` (line 343), `services/platform/src/main/java/com/nexus/platform/RateLimitFilter.java` (the scope this relaxes, `application.yml` `${nexus.ratelimit.auth-requests:10}`), `docs/API_CONTRACT.md` (auth-ip §1/§47), the D963 log (`D:\d963_e2e.log`), this ledger entry.
