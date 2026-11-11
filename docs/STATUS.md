@@ -39520,3 +39520,55 @@ was audited; these were the two the suite itself surfaced.
   `services/platform/src/test/java/com/nexus/merchant/PermissionVocabularyTest.java`,
   `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java` (modified: NO — green unchanged),
   `docs/STATUS.md`.
+
+## 911. D911 — the console's empty states learn to be designed: `EmptyState` everywhere a `<p>` used to be, and a `CardMedia` that can actually fail
+
+**Goal.** `@nexus/ui` ships a designed `EmptyState` (dashed border, icon disc, title, description,
+action) and `§155` of the design rules says an empty state is a valid state — but the console pages
+ignored it for everything and rendered a bare `<p className="text-sm text-ink-muted">`, so an empty
+queue/inbox/list looked like a footnote instead of a screen. The second defect lived on the card:
+`CardMedia` only advanced its `loaded` flag on image load, so a failed image kept the skeleton
+**forever** — a permanent shimmer/placeholder where a card's factual content (title, match score,
+monogram) was supposed to be legible.
+
+**The fix.** Every `empty={<p ...>}` table slot and every page-level empty slot across the
+`apps/web` console/admin/merchant surfaces is now `<EmptyState icon=... title=<same copy> className=...>` —
+copy untouched (the zh-HK/en dict values that shipped with the bare `<p>` are rendered verbatim, so
+no new claim about language correctness is introduced), icons chosen from the existing `IconName`
+enum (list/grid/search/calendar/users/mail/store/ticket/trending/layers/download/lock/star/filter/pin),
+and table-slot class `py-6` (a compact panel, not a hero) vs page-level `py-8/py-10`. 31 empty-state
+sites across 21 files converted. `CardMedia` now holds a `failed` state: an `onError` or a completed
+incomplete image gets the monogram fallback (the exact branch the no-image path already used); the
+explanatory comment that documented "a failed image keeps the skeleton" documents the new contract.
+
+**Scope deliberately NOT converted (honest):** inline labels that happen to share the same text
+classes — the filter pills in the admin moderation/merchant analytics/reservations bars, the
+`notStated` label in merchant settings, the review table's rating cells, the conversation "thread
+closed" banner in `merchant/conversations/[id]` — are running prose with structure, not empty states;
+converting them would restyle the layout for zero gain. `ConsoleTable` renders its `empty` node
+under a plain `div` (tested), so a padded `EmptyState` is correct there.
+
+**Verification.** `npx tsc --noEmit` in `packages/ui` → 0; `npx tsc --noEmit` in `apps/web` → 0;
+`npx vitest run` → **221/221 pass** (20 files; includes the search-input degradation tests and the
+match-explanations rendering suite that touch CardMedia's callers). No e2e/Playwright run claims —
+the visual check is the same component exercised by the consoles in the demo path, not a screenshot
+flake test added here.
+
+**What this does NOT claim.** A per-locale sign-off (copy is verbatim, no new copy). A visual diff
+against a browser matrix. That `EmptyState` is now used for loading skeletons or errors (`ErrorState`
+covers those separately; unchanged). That the monogram fallback changes colour contrast — it uses
+the existing `text-ink-faint` token. No e2e claim; Playwright was not run in this unit.
+
+- readers: `packages/ui/src/trust/Renderers.tsx` (CardMedia gains `failed`),
+  `apps/web/app/collections/page.tsx`, `apps/web/app/guides/page.tsx`,
+  `apps/web/app/admin/moderation/page.tsx`, `apps/web/app/admin/ai/page.tsx`,
+  `apps/web/app/admin/page.tsx`, `apps/web/app/admin/merchants/page.tsx`,
+  `apps/web/app/admin/orders/page.tsx`, `apps/web/app/admin/reservations/page.tsx`,
+  `apps/web/app/admin/search/page.tsx`, `apps/web/app/admin/system/page.tsx`,
+  `apps/web/app/admin/users/page.tsx`, `apps/web/app/merchant/analytics/page.tsx`,
+  `apps/web/app/merchant/campaigns/page.tsx`, `apps/web/app/merchant/conversations/page.tsx`,
+  `apps/web/app/merchant/imports/page.tsx`, `apps/web/app/merchant/listings/page.tsx`,
+  `apps/web/app/merchant/offerings/page.tsx`, `apps/web/app/merchant/page.tsx`,
+  `apps/web/app/merchant/reservations/page.tsx`, `apps/web/app/merchant/reviews/page.tsx`,
+  `apps/web/app/merchant/settings/page.tsx`,
+  this ledger section.

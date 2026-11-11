@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { formatRelativeDay } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -47,7 +47,7 @@ export default async function MerchantConversationsPage(props: {
           <ReadFailure read={inbox} locale={session.locale} title={dict.merchant.degradedTitle} />
         ) : threads.length === 0 ? (
           <div className="flex flex-col gap-2">
-            <p className="text-sm text-ink-muted">{copy.empty}</p>
+            <EmptyState icon="mail" title={copy.empty} className="py-8" />
             <SourceStamp read={inbox} locale={session.locale} />
           </div>
         ) : (

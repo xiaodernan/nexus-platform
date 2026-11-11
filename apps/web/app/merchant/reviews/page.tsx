@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { formatNumber } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -52,7 +52,7 @@ export default async function MerchantReviewsPage(props: {
       ) : noSummary ? (
         <ConsoleSection id="none" title={copy.title} icon="star">
           <div className="flex flex-col gap-2">
-            <p className="text-sm text-ink-muted">{copy.noSummary}</p>
+            <EmptyState icon="star" title={copy.noSummary} className="py-4" />
             <SourceStamp read={intel} locale={session.locale} />
           </div>
         </ConsoleSection>
@@ -72,7 +72,7 @@ export default async function MerchantReviewsPage(props: {
             {data.summary ? (
               <p className="mt-3 max-w-3xl text-sm leading-relaxed text-ink-strong">{data.summary}</p>
             ) : (
-              <p className="mt-3 text-sm text-ink-muted">{copy.empty}</p>
+              <EmptyState icon="star" title={copy.empty} className="mt-3 py-6" />
             )}
 
             {coverage && !coverage.hasEvidence ? (
@@ -117,7 +117,7 @@ export default async function MerchantReviewsPage(props: {
 
           <ConsoleSection id="themes" title={copy.themes} icon="list">
             {data.themes.length === 0 ? (
-              <p className="text-sm text-ink-muted">{copy.empty}</p>
+              <EmptyState icon="star" title={copy.empty} className="py-6" />
             ) : (
               <ul className="flex flex-col gap-2">
                 {data.themes.map((theme) => (

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { merchantBySlug } from '@/lib/data';
 import { formatMoney, formatNumber, formatRelativeDay } from '@/lib/format';
@@ -187,7 +187,7 @@ export default async function MerchantConsolePage(props: {
               </>
             ) : (
               <div className="flex flex-col gap-2">
-                <p className="text-sm text-ink-muted">{dict.console.conversations.empty}</p>
+                <EmptyState icon="mail" title={dict.console.conversations.empty} className="py-6" />
                 <SourceStamp read={inbox} locale={session.locale} />
               </div>
             )}
@@ -214,7 +214,7 @@ export default async function MerchantConsolePage(props: {
               </p>
             ) : null}
             {detail && detail.top_offerings.length === 0 && page?.data && page.data.offerings.items.length === 0 ? (
-              <p className="text-sm text-ink-muted">{dict.console.listings.empty}</p>
+              <EmptyState icon="store" title={dict.console.listings.empty} className="py-6" />
             ) : page?.data && page.data.offerings.items.length > 0 ? (
               <ul className="flex flex-wrap gap-2">
                 {page.data.offerings.items.map((offering) => (
@@ -235,7 +235,7 @@ export default async function MerchantConsolePage(props: {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-ink-muted">{dict.console.listings.empty}</p>
+              <EmptyState icon="store" title={dict.console.listings.empty} className="py-6" />
             )}
           </ConsoleSection>
         </>

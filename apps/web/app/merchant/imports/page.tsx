@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { formatMoney } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -142,7 +142,7 @@ export default async function MerchantImportsPage(props: {
                   size="xs"
                 />,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.empty}</p>}
+              empty={<EmptyState icon="download" title={copy.empty} className="py-6" />}
             />
             <SourceStamp read={read} locale={session.locale} className="mt-3" />
           </>

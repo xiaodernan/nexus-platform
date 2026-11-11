@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { formatMoney } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -61,7 +61,7 @@ export default async function AdminOrdersPage() {
                 <span key="m" className="text-2xs text-ink-muted">{row.merchant_name ?? '—'}</span>,
                 <span key="cr" className="font-mono text-2xs text-ink-faint">{row.created_at ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.empty}</p>}
+              empty={<EmptyState icon="list" title={copy.empty} className="py-6" />}
             />
             <SourceStamp read={read} locale={locale} className="mt-2" />
           </>

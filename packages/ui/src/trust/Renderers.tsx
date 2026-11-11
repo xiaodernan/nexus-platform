@@ -390,21 +390,28 @@ export function CardMedia({
   className?: string;
 }) {
   const [loaded, setLoaded] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
   // `onLoad` only reaches a load that happens after hydration attached the handler. On a
   // server-rendered surface the browser has usually finished the local artwork by then, and a load
   // event that already fired never fires again — so the ref callback, which runs on every mount,
-  // reads the completion the event missed. Mirrors onLoad's success-only contract: a failed image
-  // keeps the skeleton, exactly as it did before.
+  // reads the completion the event missed. A failed image used to keep the skeleton forever; it now
+  // answers with the monogram fallback below, exactly like a card with no image at all.
   const adopt = React.useCallback((node: HTMLImageElement | null) => {
-    if (node && node.complete && node.naturalWidth > 0) setLoaded(true);
+    if (node && node.complete) {
+      if (node.naturalWidth > 0) {
+        setLoaded(true);
+      } else {
+        setFailed(true);
+      }
+    }
   }, []);
   return (
     <div
       className={cx('relative w-full overflow-hidden bg-surface-muted', className)}
       style={{ aspectRatio: ratio }}
     >
-      {!loaded ? <Skeleton className="absolute inset-0 h-full w-full rounded-none" /> : null}
-      {card.image?.url ? (
+      {!loaded && !failed ? <Skeleton className="absolute inset-0 h-full w-full rounded-none" /> : null}
+      {!failed && card.image?.url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           ref={adopt}
@@ -412,6 +419,7 @@ export function CardMedia({
           alt={card.image.alt || card.title}
           loading="lazy"
           onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
           className={cx(
             'h-full w-full object-cover transition-opacity duration-slow ease-nexusOut motion-reduce:transition-none',
             loaded ? 'opacity-100' : 'opacity-0',

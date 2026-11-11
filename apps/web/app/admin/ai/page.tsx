@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { formatNumber } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -95,7 +95,7 @@ export default async function AdminAiPage(props: {
                 <span key="c" className="font-mono text-2xs">{run.cost_usd === null ? '—' : `$${run.cost_usd.toFixed(4)}`}</span>,
                 <span key="st" className="font-mono text-2xs text-ink-faint">{run.started_at ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.runsEmpty}</p>}
+              empty={<EmptyState icon="layers" title={copy.runsEmpty} className="py-6" />}
             />
             <SourceStamp read={runs} locale={locale} className="mt-2" />
           </>
@@ -138,7 +138,7 @@ export default async function AdminAiPage(props: {
                 </span>,
                 <span key="l" className="font-mono text-2xs">{row.avg_latency_ms === null ? '—' : `${row.avg_latency_ms}ms`}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.costsEmpty}</p>}
+              empty={<EmptyState icon="trending" title={copy.costsEmpty} className="py-6" />}
             />
             <SourceStamp read={costs} locale={locale} className="mt-2" />
           </>

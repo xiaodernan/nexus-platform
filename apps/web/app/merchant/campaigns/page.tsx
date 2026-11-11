@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
@@ -56,7 +56,7 @@ export default async function MerchantCampaignsPage(props: {
           <ReadFailure read={read} locale={session.locale} title={dict.merchant.degradedTitle} />
         ) : campaigns.length === 0 ? (
           <div className="flex flex-col gap-2">
-            <p className="text-sm text-ink-muted">{copy.empty}</p>
+            <EmptyState icon="ticket" title={copy.empty} className="py-8" />
             <SourceStamp read={read} locale={session.locale} />
           </div>
         ) : (

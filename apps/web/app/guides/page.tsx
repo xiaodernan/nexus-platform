@@ -5,6 +5,8 @@ import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { formatDateTime } from '@/lib/format';
 import { GrowthCardLink, GrowthIndex } from '@/components/growth-view';
+import { EmptyState } from '@nexus/ui';
+
 
 /** `/guides` (§8): the index of editorial/AI guides. Nothing is listed that the data plane omitted. */
 
@@ -31,7 +33,7 @@ export default async function GuidesIndexPage() {
       notice={result.degraded ? dict.states.error : null}
     >
       {guides.length === 0 ? (
-        <p className="text-sm text-ink-muted">{dict.states.empty}</p>
+        <EmptyState icon="pin" title={dict.states.empty} className="py-10" />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {guides.map((guide) => {

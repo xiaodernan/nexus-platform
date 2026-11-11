@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { merchantBySlug } from '@/lib/data';
 import { formatMoney, weekdayLabel } from '@/lib/format';
@@ -152,7 +152,7 @@ export default async function MerchantSettingsPage(props: {
                 <span key="s" className="text-2xs">{member.status ?? dict.console.common.notStated}</span>,
                 <span key="j" className="font-mono text-2xs text-ink-faint">{member.created_at ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.team.empty}</p>}
+              empty={<EmptyState icon="users" title={copy.team.empty} className="py-6" />}
             />
             <div className="mt-3">
               <ConfirmAction
@@ -186,7 +186,7 @@ export default async function MerchantSettingsPage(props: {
                 <span key="u" className="font-mono text-2xs text-ink-faint">{key.last_used_at ?? '—'}</span>,
                 <span key="r" className="text-2xs">{key.revoked_at ? <Badge tone="danger" size="sm">{copy.keys.columns.revoked}</Badge> : '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.keys.empty}</p>}
+              empty={<EmptyState icon="lock" title={copy.keys.empty} className="py-6" />}
             />
             <p className="mt-2 text-2xs text-ink-faint">{copy.keys.onceNote}</p>
             <div className="mt-3">
@@ -232,7 +232,7 @@ export default async function MerchantSettingsPage(props: {
                 <span key="c" className="font-mono text-2xs">{document.chunk_count ?? '—'}</span>,
                 <span key="u" className="font-mono text-2xs text-ink-faint">{document.updated_at ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.knowledge.empty}</p>}
+              empty={<EmptyState icon="layers" title={copy.knowledge.empty} className="py-6" />}
             />
             <div className="mt-3">
               <ConfirmAction

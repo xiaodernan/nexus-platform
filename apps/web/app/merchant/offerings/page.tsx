@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { formatMoney } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -70,7 +70,7 @@ export default async function MerchantOfferingsPage(props: {
                   {row.updated_at ?? dict.console.common.notStated}
                 </span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.empty}</p>}
+              empty={<EmptyState icon="store" title={copy.empty} className="py-6" />}
             />
             <SourceStamp read={offerings} locale={session.locale} className="mt-2" />
           </>

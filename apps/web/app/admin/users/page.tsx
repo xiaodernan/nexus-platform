@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
@@ -69,7 +69,7 @@ export default async function AdminUsersPage() {
                 </span>,
                 <span key="c" className="font-mono text-2xs text-ink-faint">{row.created_at ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.empty}</p>}
+              empty={<EmptyState icon="users" title={copy.empty} className="py-6" />}
             />
             <p className="mt-2 max-w-3xl text-2xs leading-relaxed text-ink-faint">{copy.detailNote}</p>
             <SourceStamp read={read} locale={locale} className="mt-2" />

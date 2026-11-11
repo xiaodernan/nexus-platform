@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
@@ -93,7 +93,7 @@ export default async function AdminModerationPage(props: {
           <ConsoleSection id="cases" title={dict.console.nav.moderation} note={dict.console.adminConsole.moderationIntro} icon="list">
             {cases.length === 0 ? (
               <div className="flex flex-col gap-2">
-                <p className="text-sm text-ink-muted">{copy.empty}</p>
+                <EmptyState icon="filter" title={copy.empty} className="py-6" />
                 <SourceStamp read={read} locale={locale} />
               </div>
             ) : (

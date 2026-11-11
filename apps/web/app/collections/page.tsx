@@ -4,6 +4,8 @@ import { collectionList } from '@/lib/data';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { GrowthCardLink, GrowthIndex } from '@/components/growth-view';
+import { EmptyState } from '@nexus/ui';
+
 
 /** `/collections` (§8): curated lists, each one labelled with who curated it. */
 
@@ -30,7 +32,7 @@ export default async function CollectionsIndexPage() {
       notice={result.degraded ? dict.states.error : null}
     >
       {collections.length === 0 ? (
-        <p className="text-sm text-ink-muted">{dict.states.empty}</p>
+        <EmptyState icon="layers" title={dict.states.empty} className="py-10" />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {collections.map((collection) => (

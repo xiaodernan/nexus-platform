@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { formatMoney, formatNumber } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -93,7 +93,7 @@ export default async function MerchantAnalyticsPage(props: {
       ) : data ? (
         <>
           <ConsoleSection id="totals" title={copy.title} note={copy.window(data.from, data.to)} icon="trending">
-            {empty ? <p className="mb-3 text-sm text-ink-muted">{copy.empty}</p> : null}
+            {empty ? <EmptyState icon="trending" title={copy.empty} className="mb-3 py-6" /> : null}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {ANALYTICS_LIVE_FIELDS.map((field) => {
                 const provided = analyticsFieldProvided(data, field);

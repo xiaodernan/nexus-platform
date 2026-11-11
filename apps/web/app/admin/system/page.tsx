@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
@@ -77,7 +77,7 @@ export default async function AdminSystemPage() {
                 <span key="l" className="font-mono text-2xs">{dependency.latency_ms === null ? '—' : `${dependency.latency_ms}ms`}</span>,
                 <span key="d" className="max-w-[18rem] text-2xs text-ink-muted">{dependency.detail ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.dependenciesEmpty}</p>}
+              empty={<EmptyState icon="grid" title={copy.dependenciesEmpty} className="py-6" />}
             />
           </ConsoleSection>
         </>

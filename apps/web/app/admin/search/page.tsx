@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { formatNumber } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -84,7 +84,7 @@ export default async function AdminSearchPage() {
                 <span key="q" className="font-mono text-2xs">{row.searches ?? '—'}</span>,
                 <span key="f" className="font-mono text-2xs">{row.fulfilled_intents ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.dailyEmpty}</p>}
+              empty={<EmptyState icon="search" title={copy.dailyEmpty} className="py-6" />}
             />
           </ConsoleSection>
 
@@ -97,7 +97,7 @@ export default async function AdminSearchPage() {
                 <span key="e" className="font-mono text-2xs">{row.events ?? '—'}</span>,
                 <span key="s" className="font-mono text-2xs">{row.sessions ?? '—'}</span>,
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.eventsEmpty}</p>}
+              empty={<EmptyState icon="search" title={copy.eventsEmpty} className="py-6" />}
             />
             {data.source || data.note ? (
               <p className="mt-2 max-w-3xl text-2xs leading-relaxed text-ink-faint">

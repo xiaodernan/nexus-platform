@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { formatNumber } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -124,7 +124,7 @@ export default async function AdminOverviewPage() {
         {costs.status === 'failed' ? (
           <ReadFailure read={costs} locale={locale} title={dict.merchant.degradedTitle} />
         ) : topCost.length === 0 ? (
-          <p className="text-sm text-ink-muted">{copy.ai.costsEmpty}</p>
+          <EmptyState icon="trending" title={copy.ai.costsEmpty} className="py-6" />
         ) : (
           <ul className="flex flex-col gap-1.5">
             {topCost.map((row) => (

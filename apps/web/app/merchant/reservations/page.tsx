@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { formatMoney } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
@@ -131,7 +131,7 @@ export default async function MerchantReservationsPage(props: {
                   ),
                 ];
               })}
-              empty={<p className="text-sm text-ink-muted">{copy.empty}</p>}
+              empty={<EmptyState icon="calendar" title={copy.empty} className="py-6" />}
             />
           </ConsoleSection>
         </>

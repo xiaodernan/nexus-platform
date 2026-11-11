@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
@@ -93,7 +93,7 @@ export default async function AdminMerchantsPage() {
                   />
                 ),
               ])}
-              empty={<p className="text-sm text-ink-muted">{copy.empty}</p>}
+              empty={<EmptyState icon="list" title={copy.empty} className="py-6" />}
             />
             <SourceStamp read={read} locale={locale} className="mt-2" />
           </>

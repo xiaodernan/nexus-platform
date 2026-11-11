@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { merchantBySlug } from '@/lib/data';
 import { DATA_MODE, IS_MOCK, SESSION_COOKIE } from '@/lib/env';
@@ -127,7 +127,7 @@ export default async function MerchantListingsPage(props: {
 
           <ConsoleSection id="rows" title={dict.console.listings.rowsTitle} icon="list">
             {offerings.length === 0 ? (
-              <p className="text-sm text-ink-muted">{dict.console.listings.empty}</p>
+              <EmptyState icon="store" title={dict.console.listings.empty} className="py-8" />
             ) : (
               <ul className="flex flex-col divide-y divide-line rounded-lg border border-line bg-surface">
                 {offerings.map((offering) => (
@@ -149,7 +149,7 @@ export default async function MerchantListingsPage(props: {
           </ConsoleSection>
         </>
       ) : overview.status === 'ok' ? (
-        <p className="text-sm text-ink-muted">{dict.states.empty}</p>
+        <EmptyState icon="store" title={dict.states.empty} className="py-10" />
       ) : null}
     </ConsoleContainer>
   );
