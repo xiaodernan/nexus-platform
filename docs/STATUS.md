@@ -15408,27 +15408,27 @@ name: the reason builder's locale parameter is `locale`, not `lang`, and the cop
 
 ---
 
-## 384. D393 Â· a negated preference is a DISLIKE, not a like (`nlu/polarity`, Â§7.1 / Â§8)
+## 384. D393 · a negated preference is a DISLIKE, not a like (`nlu/polarity`, §7.1 / §8)
 
 **The gap D381-D392 left.** The lexicon's `PREFERENCE_RULES` carry a fixed polarity of +1 for every
-rule, so "å´å¥½å®é" (not quiet) and "å®é" (quiet) extracted the SAME
+rule, so "嗴好安静" (not quiet) and "安静" (quiet) extracted the SAME
 preference with the SAME sign. The ranking lane could then boost exactly the merchant the user had
 asked it to demote, which is the difference between "the page says the wrong thing" and "the page
 says the opposite of what the user asked".
 
 **The fix.** A new module `nexus_ai/nlu/polarity.py` decides the sign from the SENTENCE, and
 `_fill_preferences` calls it after the lexicon pass. The rule is deliberately narrow: a negation cue
-must GOVERN the token. A cue immediately before the token (modulo short filler: "å´å¥½çå®é") governs that token
+must GOVERN the token. A cue immediately before the token (modulo short filler: "嗴好的安静") governs that token
 alone; a cue elsewhere in the sentence governs the turn, EXCEPT when other words separate it from
 the token by more than a filler, in which case the two belong to different clauses and the token
 keeps its positive polarity. A sentence carrying two preferences and one negation is therefore not
 silently turned into a dislike of both.
 
 **The token, not the canonical value.** The lexicon's canonical value ("quiet") is not in a Chinese
-sentence; the surface token that matched it ("å®é") is. So the extractor remembers which token
+sentence; the surface token that matched it ("安静") is. So the extractor remembers which token
 matched each rule and the polarity is decided against THAT token.
 
-**The effect, measured end to end.** "å´å¥½å®éçåº" now extracts `ambience=quiet` with
+**The effect, measured end to end.** "嗴好安静的店" now extracts `ambience=quiet` with
 `polarity=-1`; the category inference reads the sign and contributes -0.5, so no category is
 inferred from a dislike; and the pipeline ranks the LOUD merchant above the quiet one (the two
 merchants' scores separate where they were tied before).
@@ -15438,7 +15438,7 @@ merchants' scores separate where they were tied before).
 skipped** (live-DB tests skip; the Docker engine is down on this machine).
 
 **Discipline note.** The first version of the polarity rule negated a preference whenever a cue
-appeared ANYWHERE in the sentence, which made "å´å¥½è¾£ æ³æ¾åå®éçåå¡ååº" dislike the ambience as well as
+appeared ANYWHERE in the sentence, which made "嗴好辣 想找個安静的咖啡劖店" dislike the ambience as well as
 the spice. The rule now distinguishes the two clauses, and the test that pins that distinction is
 `test_a_cue_far_from_the_token_does_not_negate_it`.
 
@@ -15448,14 +15448,14 @@ the spice. The rule now distinguishes the two clauses, and the test that pins th
 
 **The gap D384 left.** The NLU says "japanese"; the seeded taxonomy writes the leaves
 "sushi", "ramen" and "izakaya". The matcher compared the two by SUBSTRING, so a cuisine preference
-that WAS satisfied by the merchant never fired â "japanese" is not a substring of "sushi" â and
+that WAS satisfied by the merchant never fired — "japanese" is not a substring of "sushi" — and
 "dim_sum" (the NLU's spelling) is not a substring of "dimsum" (the seed's). A satisfied preference
 and an unsatisfied one produced the same score, which is the same failure D381 found in a
 different shape: a signal that cannot fire is not a signal.
 
 **The fix.** `nexus_ai/nlu/lexicon.py` owns the vocabulary now: `CUISINE_LEAVES` maps a named cuisine to
 the leaves that satisfy it, `cuisine_leaves` resolves a name (an unknown cuisine falls back to
-matching by its own name, which is right â a cuisine the taxonomy does not know is still a word a
+matching by its own name, which is right — a cuisine the taxonomy does not know is still a word a
 merchant may carry), and `cuisine_matches` compares the two sides by LEAF, normalized for case and
 for the `_`/`-`/space separators, rather than by substring. Both the stored preference and the typed
 one go through it.
@@ -15474,7 +15474,7 @@ matches neither a sushi nor a ramen merchant, and a merchant with no such cuisin
 suite -> **714 passed, 4 skipped** (live-DB tests skip; the Docker engine is down on this machine).
 
 **Discipline note.** The first version of the vocabulary test asserted the exact score (0.9) for a
-match, and the matcher returned 1.0 â because it ignored the weight. The test premise was right and
+match, and the matcher returned 1.0 — because it ignored the weight. The test premise was right and
 the code was wrong: a preference the user holds at 0.9 must not score as a certainty. The matcher
 now uses the weight, and the test pins the number rather than a threshold.
 
@@ -15484,13 +15484,13 @@ now uses the weight, and the test pins the number rather than a threshold.
 
 **The gap the live plane found.** With the Docker engine back up, the end-to-end probe against the
 seeded `nexus` database (470 published merchants, 202 under `restaurant`) showed the Chinese
-sentence answering with **5 items** where D381 left it at **0** â the fix holds on the live plane. The same
-probe then found a second hole: "æ³é£æ¥åðfè" ("I want Japanese-style food") resolved to
+sentence answering with **5 items** where D381 left it at **0** — the fix holds on the live plane. The same
+probe then found a second hole: "想食日式菜" ("I want Japanese-style food") resolved to
 `category=None` with **no preferences at all**, so the page answered with the search's first five
 merchants rather than the Japanese ones the user asked for.
 
 **Why.** Only two of the eleven `CUISINE_TERMS` rows carried the "X-style" form (日式, 泰式, 韓式)
-â the rows had 日料, 日本菜, 豝菜 but not 日式, and "日式菜" is how a Hong Kong user actually asks
+— the rows had 日料, 日本菜, 豝菜 but not 日式, and "日式菜" is how a Hong Kong user actually asks
 for Japanese food. A vocabulary row is a promise about what the users will type, and this one had
 promised less than it delivered.
 
@@ -15507,7 +15507,7 @@ suite -> **728 passed, 4 skipped**; the live-DB integration tests -> **4 passed*
 `NEXUS_TEST_DATABASE_URL` pointed at the seeded `nexus` database.
 
 **Discipline note.** The first probe of this unit was read off the console, and the console's
-GBK encoding made every Chinese term unreadable â one probe used the wrong codepoint for 泰 and
+GBK encoding made every Chinese term unreadable — one probe used the wrong codepoint for 泰 and
 appeared to show that the Thai row was missing its own style form. The probe was rewritten to
 print codepoints, which showed the row was fine and the probe was wrong. A measurement read
 through a lossy display is not a measurement.
@@ -15525,12 +15525,12 @@ and "matches what you just asked for" are different promises.
 
 **The fix.** The label travels with its source: `preference_labels` entries are now
 `{label, source}`, the stored path takes the source from the row and the transient path marks it
-`typed`, and the card picks its copy by source â `preference_named` ("配合你的偏好：安靜" /
+`typed`, and the card picks its copy by source — `preference_named` ("配合你的偏好：安靜" /
 "matches your preference: quiet") for a standing preference, `preference_typed` ("符合你這次的要求：安靜" /
 "matches what you asked for: quiet") for this turn. When both fired, the bullet names both.
 
 **The honesty rule.** A label that carries no source is not a claim about anything, so the generic
-copy is the honest answer rather than an invented one â a legacy string label still reads as
+copy is the honest answer rather than an invented one — a legacy string label still reads as
 "matches your preferences", not as a typed preference.
 
 **Verified, not claimed.** `pytest tests/test_preference_source.py` -> **8 passed**; full `apps/ai`
@@ -15543,7 +15543,7 @@ holds the database).
 
 **What the fresh gate found.** The 18-step gate ran to step 5 on the live plane and filed 216
 assertions with **1 red**: "favourites point at a renderable row". The seeded `nexus` database was
-clean â the same query over it returned 0 bad rows â because that database was seeded
+clean — the same query over it returned 0 bad rows — because that database was seeded
 from an earlier RNG stream. The gate's own fresh seed was not clean.
 
 **The cause.** The generator sampled the four saved OFFERINGS from *every* offering:
@@ -15553,13 +15553,13 @@ Only an `active` offering is renderable, and the check asserts exactly that. The
 one line above already did it right (`if m["status"] == "published"]`); the offering branch did not.
 
 **Why it had not been seen.** The sample only fails when one of the four draws lands on a
-non-active offering, and the probability of all four being active is (5170/5546)^4 â 75%, so the
+non-active offering, and the probability of all four being active is (5170/5546)^4 ≈ 75%, so the
 check failed on roughly one run in four. It passed the earlier runs by luck of the RNG stream, and
 D383's attribute work shifted that stream enough for the latent defect to surface. A check that
 passes three times out of four is not a passing check.
 
 **The fix.** The offering branch now samples from the active offerings only, so the seed cannot
-ship a bookmark whose click is a 404 â which is the same §35/D35 failure in the opposite
+ship a bookmark whose click is a 404 — which is the same §35/D35 failure in the opposite
 direction, as the check's own comment says.
 
 **Verified, not claimed.** `python data/seed/generate.py --counts ci` -> RESULT: PASS (FK integrity,
@@ -15824,7 +15824,7 @@ SELECT count(*) FROM chunks WHERE embedding IS NOT NULL             -> 0
 
 **Why.** `to_tsvector('simple', ...)` cannot SEGMENT Chinese: a CJK run with no spaces becomes
 ONE token, so 咖啡 is a SUBSTRING of a token like 咖啡及茶 and never equals one. The vector lane
-cannot cover it either â the seeded chunks carry no embedding â so the retrieval had no lane left, and the
+cannot cover it either — the seeded chunks carry no embedding — so the retrieval had no lane left, and the
 merchant agent's answers (grounded on chunks) had nothing to ground on for a Chinese question.
 
 **The fix, in two halves that both had to land:**
@@ -15833,7 +15833,7 @@ merchant agent's answers (grounded on chunks) had nothing to ground on for a Chi
    DOES work on CJK: the `%` OPERATOR does not, because it needs three-character trigrams and a
    two-character Chinese word has none (`text % '咖啡'` -> 0 rows, `similarity(...) > 0` -> 82). The
    parameter is cast (`::text`) because `similarity(text, $1)` leaves the type ambiguous and
-   Postgres answers `could not determine data type of parameter $1` â a hard error, not a soft one.
+   Postgres answers `could not determine data type of parameter $1` — a hard error, not a soft one.
 2. **The route's threshold learned to count it.** The route scored a chunk by `kw_score` and
    `vec_score` only, so the chunks the trigram lane DID match were dropped as sub-threshold
    noise. The trigram score is now part of the score and of the threshold's evidence.
@@ -15846,7 +15846,7 @@ one); full `apps/ai` suite -> **779 passed** with the database, **762 passed / 1
 it.
 
 **Discipline note.** The first attempt at the trigram lane changed the query and the retrieval still
-answered 0 â because the route's threshold dropped the chunks the new lane had found. The
+answered 0 — because the route's threshold dropped the chunks the new lane had found. The
 probe that found it read the route's own scoring line rather than assuming the query was the whole
 story; a lane that only SCORES cannot widen a result set, and this one had to widen a FILTER too.
 
@@ -32788,7 +32788,7 @@ restored 669-673 mean):
 
 ### 680. D680 · the personalization weight is one number for two different things - after D397 the preference and feedback signals combine by maximum, so the number no longer says WHICH evidence produced it - a separate `preference` weight would need a `ranking_weights.yaml` change (the weights must sum to 1.0) and a strategy version bump; the current shape is defensible and the change is a product decision, not a bug fix - the residue filed: this is a product decision, not a bug fix, and remains open for future weight-splitting work
 
-### 681. D681 · a Chinese query's candidate pool is not subject-bounded - the merchant lane's `cjk_keywords()` bigram containment (D583) reaches English ramen tags, measured: "拉麵" returned 12/12 merchants carrying the `ramen` tag, while "鎷夐�? held the same order at a lower fraction score (1 of 4 bigrams) - the offering lane: `build_offering_query()` has no containment leg, so a Chinese query still reaches no offering. D406 claim that "拉麵" matches zero `ramen` tags was waived as the merchant lane already provides the containment - the residue: offering lane needs strpos in SQL like merchant lane
+### 681. D681 · a Chinese query's candidate pool is not subject-bounded - the merchant lane's `cjk_keywords()` bigram containment (D583) reaches English ramen tags, measured: "拉麵" returned 12/12 merchants carrying the `ramen` tag, while "鎷夐[U+FFFD]? held the same order at a lower fraction score (1 of 4 bigrams) - the offering lane: `build_offering_query()` has no containment leg, so a Chinese query still reaches no offering. D406 claim that "拉麵" matches zero `ramen` tags was waived as the merchant lane already provides the containment - the residue: offering lane needs strpos in SQL like merchant lane
 
 ### 682. D682 · a surface inside another surface reads past the clause's reach - 附 inside 兩手 sits two characters further from the cue, reach is the clause (D535), so "no want 兩手" reads the 兩手 -1 and the 附 +1. The two lanes agree about the CONSTRAINT now (D545's canon gives the nested pair one value, so the refusal is written once), so it is the reader's reach rather than a contradiction - residue: preference keyed on shorter surface would be boosted
 
@@ -34142,9 +34142,9 @@ side effect.
 
 ## 726. D726 · alias accessibility to access in preference ranking (stored + transient)
 
-**The gap.** ccessibility is a writable kind (published contract's word for step-free preference) that the ranker never read - it only handled ccess/*. A caller obeying the types package stored a row that answered nothing (D527 mirror).
+**The gap.** accessibility is a writable kind (published contract's word for step-free preference) that the ranker never read - it only handled access/*. A caller obeying the types package stored a row that answered nothing (D527 mirror).
 
-**The fix.** Aliased ccessibility to ccess in the preference ranking reader for all access keys (pet_friendly, mtr_near, accessible, parking) in both stored and transient (intent) paths. Updated the AST-based test readers to recognize kind in (...) forms. Updated 	est_a_preference_kind_the_ranker_reads_is_one_the_api_accepts.py to reflect ccessibility is now readable.
+**The fix.** Aliased accessibility to access in the preference ranking reader for all access keys (pet_friendly, mtr_near, accessible, parking) in both stored and transient (intent) paths. Updated the AST-based test readers to recognize kind in (...) forms. Updated 	est_a_preference_kind_the_ranker_reads_is_one_the_api_accepts.py to reflect accessibility is now readable.
 
 **Measured.** 25 passed, 1 skipped on accessibility/preference declaration tests. No double-scoring (same branch handles both spellings per D545).
 
@@ -34175,7 +34175,7 @@ side effect.
 
 ## 729. D729 · compare grid stops synthesizing merchant-keyed address facts in fallback
 
-**The gap.** D401 synthesized a merchant-keyed ddress fact when district came from the primary-location fallback; D609 established address facts are location-keyed, so the grid could claim a key the corpus does not file and contradict location-keyed citations.
+**The gap.** D401 synthesized a merchant-keyed address fact when district came from the primary-location fallback; D609 established address facts are location-keyed, so the grid could claim a key the corpus does not file and contradict location-keyed citations.
 
 **The fix.** In 
 outes_discover.py grid fallback, when no stored address fact is found but district is known from the districts map, show the district value ungrounded (no fact_id) instead of synthesizing a merchant-keyed fact. Updated 	est_compare_grid.py to expect ungrounded fallback.
@@ -41402,3 +41402,113 @@ Full AI-suite pytest may still hit live-DB pathways that can only be measured ag
 no call site read them, no consumer is silently broken. No claim that CI passes — the remaining failures there are documented elsewhere.
 
 - readers: `apps/ai/nexus_ai/api/tracing.py` (three removed exports), `apps/ai/tests/test_no_dead_constants.py` (the gate that fires), this ledger entry.
+
+## 959. D959 — the ledgers hid 89 forbidden codepoints and 28 mis-decoded runs in plain sight, and no reader could see them
+
+**Goal.** Every recent repair found one more way the BYTES can disagree with the intent, silently:
+D954 caught a self-test whose LF needle no-op'd against a CRLF census; D952 pinned a credential plane that
+had been quietly confused with another; D956 closed the tinted-ground contrast blind spot the a11y reader
+declared out loud. All three are instances of one class — the ledger said one thing, the bytes carried
+another, and nothing failed. This unit generalizes that lesson to the prose itself: it censuses the
+CHARACTER ENCODING of every tracked Markdown file, so an invisible control byte or a mis-decoded UTF-8
+run can no longer survive review.
+
+**The hole, measured.** Across all 40 tracked `*.md` files, 4 carried codepoints no Markdown prose should
+ever contain. The plane was already baked into historical commits (no clean ancestor to restore), so this
+is a census + policy, not a one-line revert:
+
+| file | damage |
+|---|---|
+| `docs/STATUS.md` | 6 x U+0007 (BEL), 78 x C1 (U+0080..U+009F), 1 x U+FFFD; 28 byte-exact bijective Latin-1 mis-read runs |
+| `docs/PLAN.md` | 1 x U+0008 (backspace) |
+| `docs/TESTING.md` | 2 x U+FFFD |
+| `DEVELOPMENT_PLAN.md` | 1 x U+FFFD |
+
+= **89 forbidden codepoints** and **28 bijective mojibake runs** (25 C1-bearing, 3 two-byte middle-dot /
+section-sign runs). `docs/DECISIONS.md`'s 14632 CR bytes are CRLF line endings, not content damage — a
+census that cannot tell EOL from prose would have produced a false epidemic.
+
+**Two axes, both provable — the reader never guesses a glyph.**
+
+- **Axis A — forbidden codepoints.** C0 controls except HT/LF/CR, DEL (U+007F), the C1 block
+  (U+0080..U+009F), and U+FFFD. Each offender is reported with an exact `file:line:col` and a printable
+  context. U+FFFD is named even though it is itself the symptom — a plane that still contains one has a
+  byte nobody can read, and a census that skips it is a false pass.
+- **Axis B — byte-exact bijective Latin-1 runs.** A maximal run of Latin-1 high bytes (U+0080 to U+00FF),
+  whose bytes, read back
+  as UTF-8, decode to different text with NO replacement char AND re-encode to the exact original bytes.
+  That round-trip is the byte-exact inverse of a Latin-1 mis-read, so the repair writes back the inverse
+  and invents nothing. A lone `é`, `§`, `·` or `—` is NOT bijective under this test and is left alone —
+  which is what keeps the census from becoming the thing that punishes non-ASCII writing.
+
+**The repair, recorded so it can be re-checked** (all four files UTF-8, each kept in its own EOL plane;
+every replacement asserted an exact occurrence count and the whole plane was judged clean IN MEMORY
+before a single byte was written):
+
+- 25 C1-bearing runs + 3 two-byte `C2 B7` / `C2 A7` runs (a D393/D678-era section): byte-exact
+  Latin-1-to-UTF-8 inverse. This restored em dashes from the `C3 A2 E2 80 94` mis-read, an approx sign
+  from `C3 A2 E2 89 88`, section signs, and CJK phrases. Where a phrase's round-trip was LOSSY (a GBK
+  fragment `E6 83 B3 E9 A3 9F E6 97 A5` with a dropped byte), the inverse was NOT applied; instead the
+  clean in-document anchor `我想食日式菜`, a few lines below in the same ledger, supplied the reading.
+- 6 x BEL where an `a` was eaten and 1 x backspace where a `b` was eaten: the escape MECHANISM proves
+  the letter (`\a` = BEL, `\b` = backspace when a string literal lost its backslash); word context
+  confirms `accessibility`, `access`, `address`, `bookable`. Restored to `a` / `b`.
+- `docs/TESTING.md` `read <FFFD><FFFD>8.4`: the two replacement chars are the two bytes `C2 A7` of a
+  section sign after a mis-decode; the same file writes `§8.3` / `§8.5` and uses the sign 35 times, and
+  the introducing commit is titled "...across §8.3/§8.5". Restored to `read §8.4` from context.
+- 2 genuinely LOSSY glyphs (a GBK-mojibaked ramen query, and a lost decorative emoji heading prefix whose
+  siblings are 🎯 / 📅 / 📋 / ⚠️ / 📊 / 📈): the original bytes are unrecoverable, so this unit does NOT
+  fabricate them. Each U+FFFD became the self-describing ASCII sentinel `[U+FFFD]`, which keeps the "a
+  byte was lost here" fact visible and greppable while removing the unreadable codepoint.
+
+**The honest boundary, and why it matters.** Byte-exact inversion is not semantic correction. Some
+restored CJK reads as a rare or unexpected glyph (for example the QA phrase now reads `嗴好安静`, and a
+merchant line `咖啡劖店`) because the SOURCE bytes were already imperfect BEFORE the Latin-1 mis-read;
+the gate restores exactly what those bytes prove, rather than "helpfully" rewriting them to the likely
+intended `更` or `店`. That is the same discipline as the two sentinels: prove or mark, never guess.
+Only the 2 bytes with no inverse at all were marked; everything invertible was recovered byte-for-byte.
+
+**Falsifier.** `judge` is pure over a `path -> text` map. `--self-test` first requires the REAL plane to
+be clean (so an undefined census cannot self-test green), then plants 10 corruptions in memory: a BEL, a
+C1, a DEL, a U+FFFD, a backspace, a bijective mojibake run (chosen `C2 B7` so both bytes are >= A0 and
+axis A cannot trip — proving axis B judges independently), a cut CI chain, an erased ATLAS row, a removed
+`## 959. D959` heading, and an absent reader file. Each arm carries an `expect` substring the offender
+MUST contain, so an arm that reddens for the WRONG reason still fails; and a D954 no-op snapshot guard
+fails any arm whose corruption changed no byte. A false-positive guard then feeds a plane of LEGITIMATE
+non-ASCII prose (`§`, `·`, `—`, `café`, `naïve`, a full emoji, CJK, curly quotes) and requires GREEN on
+both axes. Result: 10/10 corruption arms redden for cause, guard green.
+
+**The self-test caught its own vacuous needle (a D954 echo).** The first run left the ledger-heading arm
+GREEN: the wiring used a plain `.includes` on the token `## 959. D959`, and this very Falsifier paragraph
+quotes that same token inline, so removing the real heading still left a second anchor and `has()` stayed
+satisfied — the "a missing smoke reddens" promise asserted only by prose, again. Fixed on two sides: the
+wiring now uses an EOL-agnostic line-start heading match (`^## 959. D959(?=\s|$)`, so an inline quote cannot
+hold it), and the arm deletes the whole heading line rather than replacing the first token occurrence.
+Re-run: 10/10 redden for cause. The lesson generalizes D954's no-op guard one step: a no-op guard catches a
+corruption that changes nothing, but a corruption that changes a DIFFERENT occurrence than the one the
+wiring reads still slips — so a wiring needle must name the load-bearing structure (a heading at line
+start), not a token that honest documentation may legitimately repeat.
+
+**Wiring.** CI line 171's self-test chain runs `check_ledger_encoding.mjs --self-test` alongside its
+siblings; `ci.yml` stays at 535 cited-line-stable lines (zero row drift). ATLAS lists the reader next to
+the EOL census, this section pins the ledger, and the reader ships on disk — all four are judged.
+
+**Numbering.** D957 and D958 were taken by a concurrent lane (`07d14bd`) with real code: it removed the
+never-called `redis_enabled` function (a D922 leftover) and three never-read W3C wire-name constants (a
+D884 leftover) that the AI job's new no-dead-constants census caught, with `ruff` + `mypy` green. Per
+the D939/D940, D953/D954 and D955/D956 yield pattern, this unit took **D959** rather than collide with
+shipped ledger entries; the gate, ATLAS and this section were renumbered together. The concurrent commit
+did not change the 89/28 damage figure, so the repair needles were re-verified against the post-lane
+plane before any write (each asserted exact counts, and the script aborts before writing on any drift).
+
+**Not claimed.** This is a SOURCE census, not a renderer: it does not say a page renders, that a screen
+reader agreed, or that a repaired CJK phrase is the author's exact intended glyph where the bytes were
+already lossy (the two sentinels name precisely where that limit is). It censuses tracked Markdown prose
+only — not binaries, source code or lockfiles. It does not assert the repairs are the ONLY possible
+reading; it asserts every one is byte-provable or context-proved by the ledger's own text, and that the
+two that are neither are marked, not silently guessed. Post-repair the plane is 0 forbidden / 0
+bijective across all 40 files; EOL planes are unchanged (`DEVELOPMENT_PLAN.md` CRLF on disk, normalized
+to LF in the HEAD blob; the other three LF).
+
+- readers: `scripts/check_ledger_encoding.mjs` (this census + its 10-arm falsifier), CI line 171,
+  `docs/ATLAS.md`, the four repaired Markdown files, this ledger section.

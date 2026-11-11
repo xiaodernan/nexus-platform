@@ -113,7 +113,7 @@ feat: AI search pipeline and run ledger enhancements
 
 ---
 
-## � NEXT IMMEDIATE ACTIONS
+## [U+FFFD] NEXT IMMEDIATE ACTIONS
 
 1. **Run the new test suite**: `cd apps/ai && uv run pytest -q` or `python -m pytest -q`
 2. **Verify type checking**: `cd apps/web && npx tsc --noEmit`

@@ -138,4 +138,4 @@ python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injecti
 cd apps/web; npm run evidence                      # 5/5 surfaces, manifest ok=true
 ```
 When the live plane serves NOW-anchored data, these are the confirmations the plane is honest;
-if one of them goes red, read ��8.4 before suspecting the product.
+if one of them goes red, read §8.4 before suspecting the product.

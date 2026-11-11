@@ -2686,7 +2686,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
   cannot tell which cell is whose. Owner: the web lane with the contract owner.
 
 - **The party bounds are the two Booking columns this row leaves behind** - **PARTIAL D727 (AI lane)** -
-  ookable reaches the card's CTA (D674), duration_minutes reaches card and grid (D675). D727 adds
+  bookable reaches the card's CTA (D674), duration_minutes reaches card and grid (D675). D727 adds
   min_party_size/max_party_size to entities_for (both branches) and adds party_size_text() helper
   in search/cards.py. The compare grid party_size row emission is **blocked on web lane labels**
   (	est_the_length_an_offering_states_reaches_the_grid_that_compares_it.py requires frontend rowLabels
