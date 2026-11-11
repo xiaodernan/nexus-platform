@@ -42,6 +42,10 @@
          calls the two existing services by NAME through OpenFeign + Spring Cloud LoadBalancer,
          with a resilience4j fallback that reports `unavailable` instead of inventing health. -->
     <module>insight-service</module>
+    <!-- D929: the FIFTH service, and D928's first consumer. It tails nexus:events into a
+         bounded in-memory ring and answers /events/* — the wire bus that every domain event rides
+         onto finally has a reader on the plane. -->
+    <module>events-service</module>
   </modules>
 
   <dependencyManagement>

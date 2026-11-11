@@ -169,6 +169,21 @@ for (const s of ['eureka_eviction_smoke.sh', 'falsify_eureka_eviction_smoke.sh']
 }
 mustContain('CLOUD.md records D919', 'docs/CLOUD.md', 'D919');
 
+/* D929 — an opt-in fifth Spring Cloud service: events-service listens to nexus:events. */
+const EVENTS_APP = 'services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsApplication.java';
+const EVENTS_POM = 'services/cloud/events-service/pom.xml';
+const EVENTS_SMOKE = 'scripts/events_service_smoke.sh';
+check('D929 events-service module exists', EVENTS_APP, existsSync(join(root, EVENTS_APP)));
+check('D929 events-service reactor entry', 'services/cloud/pom.xml', read('services/cloud/pom.xml').includes('<module>events-service</module>'));
+check('D929 events-service smoke ships', EVENTS_SMOKE, existsSync(join(root, EVENTS_SMOKE)));
+mustContain('D929 events-service registers with Eureka', EVENTS_SMOKE, 'NEXUS-EVENTS');
+mustContain('D929 events-service smoke boots eureka', EVENTS_SMOKE, 'eureka-server/target/app.jar');
+mustContain('CLOUD.md records D929', 'docs/CLOUD.md', 'D929');
+for (const s of ['events_service_smoke.sh']) {
+  check(`CI cloud job invokes ${s}`, CI, ciText.includes(s));
+  check(`CLOUD.md lists ${s}`, 'docs/CLOUD.md', cm.includes(s));
+}
+
 if (failures.length) {
   console.log('CLOUD PLANE — FAIL');
   for (const f of failures) console.log('  - ' + f);

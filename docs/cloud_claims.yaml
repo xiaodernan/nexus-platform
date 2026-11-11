@@ -167,6 +167,14 @@
   not_claimed: No replica replication, no failover, no production topology, no sub-window bound promoted to a regression test beyond the measured host, no cross-host measurement
   honesty_anchor: eureka_eviction_smoke
 
+- id: D929
+  claim: The events-service sidecar boots, drains nexus:events into a bounded ring, and registers as NEXUS-EVENTS with a throwaway Eureka
+  smoke: events_service_smoke.sh
+  falsifier: none
+  gate: check_cloud_plane.mjs
+  not_claimed: No stream transformation, no consumer group, no backlog replay, no tenant-partitioned fan-out, no production deployment, no readiness other than registration
+  honesty_anchor: D929's events-service is a bounded sidecar
+
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane
   smoke: cloud_smoke.sh

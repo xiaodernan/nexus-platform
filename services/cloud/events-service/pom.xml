@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.nexus</groupId>
+    <artifactId>nexus-cloud</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-events</artifactId>
+  <name>NEXUS Events Reader</name>
+  <description>D928's optional Redis Streams carrier gets its first reader: a sidecar that tails nexus:events into a bounded ring and reports counts — the bus is finally read by something</description>
+
+  <!--
+    This is the FIFTH Spring Cloud element on this plane (D847 eureka, D852 config, D854 gateway,
+    D886 admin, D885 insight). Unlike insight it owns no Feign clients and never writes back into the
+    platform: it reads ONE Redis stream, holds the last N events in memory, and answers /events/*.
+    The stream's home is the platform process; this reader is the first consumer on the plane side.
+
+    Not a production scheduler. Not a durable event broker. A truth-ful instrumentation service
+    with documented bounds (ring = 32 entries; poll = 2s; no acker; any consumer group would accept).
+  -->
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.lettuce</groupId>
+      <artifactId>lettuce-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>app</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

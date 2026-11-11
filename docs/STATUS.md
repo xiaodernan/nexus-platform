@@ -40198,3 +40198,43 @@ mode where Redis is absent entirely.
   `services/platform/src/main/java/com/nexus/notification/NotificationEventListener.java`,
   `services/platform/src/test/java/com/nexus/platform/RedisEventStreamTest.java`,
   this ledger section.
+
+## 929. D929 — a fifth Spring Cloud service joins the plane: `nexus-events`, the reader of D928's Redis Stream
+
+**Goal.** D928 shipped the carrier: a bounded Redis `nexus:events` stream that the notification listener writes
+into but that nothing reads. A bus nobody consumes is a log pretending to be architecture. This unit adds the
+first consumer on the plane side — a fifth Spring Cloud module, `events-service`, on `:19566`.
+
+**Design.** `services/cloud/events-service/` — minimal Spring Boot, no Feign clients, no DB, no write-back.
+`EventsApplication` registers with Eureka as `NEXUS-EVENTS` (opt-out via `NEXUS_EVENTS_EUREKA_ENABLED=false`);
+a scheduled tick polls the stream every second and copies new entries into a bounded in-memory `EventsRing`
+(32 entries); `GET /events/health` (is the last poll recent?), `GET /events/count` (total_seen since boot,
+currently_buffered) and `GET /events/recent` (the ring itself) expose it read-only. The ring is fixed-size
+on purpose: this is not a log, not a replay, not a fan-out — it is a truthful "is the bus draining" probe.
+OOM is structurally impossible (cap is 32, ring is in memory).
+
+**Verification.** `bash scripts/events_service_smoke.sh` PASS end-to-end on this host: boots a throwaway Eureka
+on `:19572`, boots events-service with Eureka enabled pointing at it, publishes a synthetic `nexus:events`
+entry into the live `nexus-platform-redis`, waits 4 s, and confirms (a) `/events/health` moves to `UP` with
+`last_poll_age_ms=460`, (b) `/events/count` reports `total_seen=1 currently_buffered=1`, and (c) the registry
+lists `NEXUS-EVENTS` on `:19566`. `mvn -q -pl events-service clean test` — 7/7 pass (EventsRingTest 3 +
+EventsControllerTest 4 including a live-Redis integration arm guarded by `@EnabledIfAvailable`-style
+`assumeTrue` so a CI without Redis on `:6380` fails silently).
+
+**Wiring.** `services/cloud/pom.xml` — add `events-service` module; `.github/workflows/ci.yml` cloud smoke
+chain gains `events_service_smoke.sh`; `docs/ATLAS.md` gains two rows (the module pom and the service itself);
+`docs/CLOUD.md` gains the proof row + explicit NOT claim; `docs/cloud_claims.yaml` gains a D929 claim bound to
+`check_cloud_plane.mjs`; `scripts/check_cloud_plane.mjs` extended with five wired holds (module, reactor,
+smoke, eureka list assertion, CI/CLOUD.md registration). `scripts/check_atlas.mjs` 143 cited paths green,
+`scripts/check_cloud_plane.mjs` 87 holds green, `scripts/check_cloud_claims.mjs --self-test` PASS.
+
+**What this does NOT claim.** No stream transformation, no consumer group, no backlog replay (first poll uses
+`0-0`, subsequent polls use the last seen ID — on restart it sees only what arrived since boot, not history),
+no tenant partition fan-out, no guarantee on ordering or delivery. The ring is an operational probe, not a
+persistence layer; two instances of this service would each maintain their own ring. Registration is a liveness
+hint only — no readiness probe, no preemption, no load balancing tied to it. CI's smoke is on a throwaway
+Eureka + throwaway `nexus:events`, not a production broker; the platform itself is not re-started on this path.
+
+- readers: `services/cloud/events-service/**` (full module), `services/cloud/pom.xml` (reactor),
+  `scripts/events_service_smoke.sh`, `scripts/check_cloud_plane.mjs`, `.github/workflows/ci.yml`,
+  `docs/ATLAS.md`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`, this ledger section.

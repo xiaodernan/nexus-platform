@@ -170,6 +170,9 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/falsify_insight_breaker_config_smoke.sh` | D899: with both `minimumNumberOfCalls` raised to 10 the unchanged call-3 assertion MUST fail while the aligned names and 60/40 thresholds are still visible |
 | `scripts/insight_metrics_smoke.sh` | D918: `resilience4j.circuitbreaker.calls`/`.state` read as real actuator meters for both Feign-method breaker names (`PlatformHealthClienthealth`/`AiHealthClienthealth`), with per-name COUNT > 0 after 12 driven calls |
 | `scripts/falsify_insight_metrics_smoke.sh` | D918: the no-drive arm must keep the combined COUNT at 0 — a meter that counts code that never ran is not a meter |
+| `scripts/events_service_smoke.sh` | D929: the events-service sidecar boots, connects to Redis, drains `nexus:events`, and registers as `NEXUS-EVENTS` with a throwaway Eureka — `/events/health` transitions to UP |
+| `services/cloud/events-service/pom.xml` | D929: fifth Spring Cloud module |
+| `services/cloud/events-service` | D929: fifth Spring Cloud module — bounded ring buffer drains `nexus:events`; `GET /events/health`, `GET /events/count`, `GET /events/recent`; port 19566 |
 | `scripts/eureka_eviction_smoke.sh` | D919: fixture registered → SIGKILL → the registry stops listing it; the eviction is measured on this host, wall-clock, not assumed from the 30s lease |
 | `scripts/falsify_eureka_eviction_smoke.sh` | D919: a heartbeat-keeping fixture stays listed through the window a dead one leaves — the kill was the signal |
 | `scripts/insight_smoke.sh` | D885: with Eureka disabled, `/insight/plane` reports both upstreams `unavailable`, never a faked `UP` |

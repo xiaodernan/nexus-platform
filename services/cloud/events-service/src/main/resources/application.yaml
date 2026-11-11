@@ -1,0 +1,46 @@
+server:
+  # D929: the sixth host coordinate on the plane. Measured FREE before declared. It sits between
+  # D885's insight (19555) and D928's live ports (19561-19570 for throwaway proofs).
+  port: ${NEXUS_EVENTS_PORT:19566}
+
+spring:
+  application:
+    name: nexus-events
+  config:
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    enable:
+      jvm: true
+
+eureka:
+  client:
+    register-with-eureka: ${NEXUS_EVENTS_EUREKA_ENABLED:true}
+    fetch-registry: false
+    service-url:
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+
+nexus:
+  events:
+    # D928: the Redis Streams carrier (platform-side producer). Default TRUE on this sidecar
+    # because this service has nothing else to do — turn it off to make it a no-op for CI/tests.
+    enabled: ${NEXUS_EVENTS_ENABLED:true}
+    url: ${NEXUS_EVENTS_URL:redis://127.0.0.1:6380/0}
+    poll-ms: ${NEXUS_EVENTS_POLL_MS:1000}
+    initial-poll-ms: ${NEXUS_EVENTS_INITIAL_POLL_MS:200}
+    ring-size: ${NEXUS_EVENTS_RING_SIZE:32}
+
+logging:
+  level:
+    com.nexus.cloud.events: INFO
+    io.lettuce: WARN
