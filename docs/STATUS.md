@@ -40644,3 +40644,31 @@ the constraint becomes applicable and must be re-proposed then.
   `services/platform/src/main/java/com/nexus/identity/RetentionSweeper.java` (the predicate the
   pending index serves), `services/platform/src/main/java/com/nexus/merchant/ApiKeyService.java`
   (the list door the composite index serves).
+
+## 938. D938 — the /merchant console's identity card earns its designed frame
+
+**Goal.** The mandate's front-end half: the operator consoles deserve the same design discipline as the
+consumer surfaces (one visual accent per screen, never a pile of chrome). The merchant console is where a
+business owner lands; its most-read element is the summary card at the top — yet it was the flattest
+surface on the page, a bare outlined box next to the rails, glows and gradient-letter treatments the rest
+of the product now carries (D923 hero, D927 signin panel).
+
+**The fix.** One component-local change in `apps/web/app/merchant/page.tsx`: the identity card
+(the badges, display name, slug line and provenance stamp of the signed-in business) gains the same material from the signin console frame — an absolutely-positioned 3px `--nexus-ai-gradient` rail on the
+left edge and a low-alpha accent radial glow bleeding from the top-right corner — with every inner control
+wrapped in a relative layer so the decor can never intercept a click. Zero new copy, zero new tokens,
+zero new client JS, both themes handled by the existing token pair (the glow uses
+`rgb(var(--nexus-accent-rgb) / 0.12)`, the rail uses the shared `--nexus-ai-gradient` the :root/.dark pair
+keeps in contract per tokens.test).
+
+**Verification.** `npx tsc --noEmit` — clean (no type breakage). Full web suite: **228/228 green** before
+and after (this is a pure markup-material change; no behaviour moved). Browser drive of the console frame
+is NOT run here and NOT claimed — the exact analogue of D923/D927: a decor delta with zero new strings,
+verified at the type/test plane and by eye against the existing hero/signin material on the same tokens.
+
+**What this does NOT claim.** No responsive re-layout (the card grid is unchanged); no focus/hover state
+change; no motion (D923/D927 drew on the same restraint); nothing about the ASCII/printability of the
+gradient rail outside the two themes the token contract pins.
+
+- readers: `apps/web/app/merchant/page.tsx` (the identity card), this ledger entry,
+  `apps/web/src/lib/tokens.test.ts` (the `--nexus-ai-gradient` contract this frame relies on).

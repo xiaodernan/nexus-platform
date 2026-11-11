@@ -73,26 +73,35 @@ export default async function MerchantConsolePage(props: {
 
       {overview.data ? (
         <>
-          <section className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              {overview.data.data_origin === 'demo' ? <LocaleDemoBadge locale={session.locale} /> : null}
-              <Badge tone={overview.data.status === 'published' ? 'positive' : 'warning'} size="sm">
-                {dict.console.funnel.statusLabel}: {overview.data.status}
-              </Badge>
-              <Badge tone="neutral" size="sm">
-                {dict.console.funnel.planLabel}: {overview.data.plan}
-              </Badge>
-              {overview.data.category_primary ? (
-                <Badge tone="outline" size="sm">
-                  {dict.console.funnel.categoryLabel}: {overview.data.category_primary}
+          {/* One designed frame, matches the signin console panel (D927) and the hero glow (D923):
+              a 3px gradient rail for the identity context and a low-alpha corner glow — pure decor,
+              no new copy. */}
+          <section className="relative overflow-hidden rounded-lg border border-line bg-surface p-5">
+            <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-[3px]"
+                 style={{ background: 'var(--nexus-ai-gradient)' }} />
+            <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-14 h-44 w-64"
+                 style={{ background: 'radial-gradient(closest-side, rgb(var(--nexus-accent-rgb) / 0.12), transparent)' }} />
+            <div className="relative flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {overview.data.data_origin === 'demo' ? <LocaleDemoBadge locale={session.locale} /> : null}
+                <Badge tone={overview.data.status === 'published' ? 'positive' : 'warning'} size="sm">
+                  {dict.console.funnel.statusLabel}: {overview.data.status}
                 </Badge>
-              ) : null}
+                <Badge tone="neutral" size="sm">
+                  {dict.console.funnel.planLabel}: {overview.data.plan}
+                </Badge>
+                {overview.data.category_primary ? (
+                  <Badge tone="outline" size="sm">
+                    {dict.console.funnel.categoryLabel}: {overview.data.category_primary}
+                  </Badge>
+                ) : null}
+              </div>
+              <h2 className="text-xl font-semibold tracking-tight text-ink-strong">{overview.data.display_name}</h2>
+              <p className="text-xs text-ink-muted">
+                {overview.data.slug ? `/m/${overview.data.slug}` : ''} · {dict.console.funnel.zeroNote}
+              </p>
+              <SourceStamp read={overview} locale={session.locale} />
             </div>
-            <h2 className="text-xl font-semibold tracking-tight text-ink-strong">{overview.data.display_name}</h2>
-            <p className="text-xs text-ink-muted">
-              {overview.data.slug ? `/m/${overview.data.slug}` : ''} · {dict.console.funnel.zeroNote}
-            </p>
-            <SourceStamp read={overview} locale={session.locale} />
           </section>
 
           <ConsoleSection id="funnel" title={dict.console.sections.funnel} note={dict.console.sections.funnelNote} icon="trending">
