@@ -108,6 +108,9 @@ services:
       NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
       NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
       NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
+      # The internal door the AI persists merchant-agent dialogue through. Shared secret read in
+      # constant time by AiServiceTokenGuard; must match the AI service's own NEXUS_AI_INTERNAL_TOKEN.
+      NEXUS_AI_INTERNAL_TOKEN: ${NEXUS_AI_INTERNAL_TOKEN:-dev_nexus_internal_token_for_local_compose_0123456789abcdef}
     ports:
       - "127.0.0.1:${NEXUS_PLATFORM_HOST_PORT:-8080}:8080"
 
@@ -134,6 +137,8 @@ services:
       NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
       NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
       NEXUS_PLATFORM_BASE_URL: http://platform:8080
+      # Same shared secret as the platform's door — "configured for both sides or it behaves 501".
+      NEXUS_AI_INTERNAL_TOKEN: ${NEXUS_AI_INTERNAL_TOKEN:-dev_nexus_internal_token_for_local_compose_0123456789abcdef}
       NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
       TZ: Asia/Hong_Kong
     ports:

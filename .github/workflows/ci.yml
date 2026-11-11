@@ -340,8 +340,8 @@ jobs:
           NEXUS_PLATFORM_URL: http://127.0.0.1:8080
           NEXUS_AI_URL: http://127.0.0.1:8000
         run: |
-          SPRING_APPLICATION_JSON='{"nexus":{"ratelimit":{"auth-requests":"1000"}}}' NEXUS_JWT_SECRET=ci_only_not_a_real_secret NEXUS_PLATFORM_DB_URL='jdbc:postgresql://127.0.0.1:5433/nexus' NEXUS_PLATFORM_DB_USERNAME=postgres NEXUS_PLATFORM_DB_PASSWORD=postgres NEXUS_PORT=8080 mvn -B -q -f services/platform/pom.xml spring-boot:run &
-          (cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus' NEXUS_LLM_PROVIDER=mock uv run uvicorn app.main:app --port 8000) &
+          NEXUS_AI_INTERNAL_TOKEN=ci_only_not_a_real_internal_token_0123456789abcdef SPRING_APPLICATION_JSON='{"nexus":{"ratelimit":{"auth-requests":"1000"}}}' NEXUS_JWT_SECRET=ci_only_not_a_real_secret NEXUS_PLATFORM_DB_URL='jdbc:postgresql://127.0.0.1:5433/nexus' NEXUS_PLATFORM_DB_USERNAME=postgres NEXUS_PLATFORM_DB_PASSWORD=postgres NEXUS_PORT=8080 mvn -B -q -f services/platform/pom.xml spring-boot:run &
+          (cd apps/ai && NEXUS_AI_INTERNAL_TOKEN=ci_only_not_a_real_internal_token_0123456789abcdef NEXUS_PLATFORM_BASE_URL=http://127.0.0.1:8080 NEXUS_DATABASE_URL='postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus' NEXUS_LLM_PROVIDER=mock uv run uvicorn app.main:app --port 8000) &
           npm ci && PLATFORM_API_BASE_URL=http://127.0.0.1:8080 AI_API_BASE_URL=http://127.0.0.1:8000 NEXT_PUBLIC_DATA_MODE=live NEXT_PUBLIC_DEFAULT_GEO=22.3809,114.1861 npm run build --workspace @nexus/web
           PLATFORM_API_BASE_URL=http://127.0.0.1:8080 AI_API_BASE_URL=http://127.0.0.1:8000 npm run start --workspace @nexus/web &
           # wait-on hangs forever by default; a service that never boots (dead port, failed Flyway,

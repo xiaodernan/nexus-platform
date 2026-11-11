@@ -41769,3 +41769,33 @@ unit yields to D965 across every token.
 
 **Not claimed.** That vertical-slice :50 now PASSES — that is the next CI run's verdict, not this ledger's; desktop :50 is expected to respond identically to the phone run, and card-media :95 (the one lazy-image stuck at `opacity-0` over a 120-second window, `/demo/img/restaurant.svg`) remains unresolved in this unit. The deeper product gap named here — the web never reads `navigator.geolocation`, so the Sha Tin-pinned browser permission this harness itself sets is inaccessible to users anywhere — is REAL and undeclared fixed; it belongs to a different lane with its own state machine (permission request, refusal, SSR-compatible geo injection).
 - readers: `.github/workflows/ci.yml` (line 345), `apps/web/src/lib/env.ts` (`DEFAULT_GEO`, `geo()`), `apps/web/src/lib/geo.ts` (`resolveGeo`), the D964 log (`D:\d964_e2e.log`) and the prescriptive cell probe (`C:/Users/18414/AppData/Local/Temp/opencode/db_probe15.py` output listed in body), this ledger entry.
+
+## 967. D967 — the merchant-agent's internal door was never configured on CI (nor on local compose): every agent turn fell into the audit sink, and the consumer's own question never made it to reload
+
+**Goal.** D964's run still showed `ask-merchant-history.spec.ts:15` failing on both projects with the exact §142 reload signature. After the consumer signs in and asks a merchant question — and the merchant replies through the same cookie jar — the consumer signs in again, reloads the merchant page, and the hydrated thread (`apps/web/src/components/ask-merchant.tsx` `useEffect` on mount) must replay both the question and the reply. The page paints the merchant reply but not the consumer's question, and the 60-second `getByText(marker).first()` times out every retry on both projects.
+
+**The mechanism, read rather than inferred.** The merchant agent's SSE path persists dialogue turns through D846's seam (`nexus_ai/api/routes_stream.py:_persist_turn`, called for `sender_type='user'` before the stream body, and for `sender_type='ai_agent'` after the answer is built). The turn is relayed as an HTTP POST to the platform's audited internal door:
+
+  `POST /api/v1/internal/conversations/{id}/agent-message` — the only route in the platform this door serves.
+
+The door is guarded by `AiServiceTokenGuard` (`services/platform/src/main/java/com/nexus/conversation/AiServiceTokenGuard.java`), which compares the caller's `X-Internal-Token` header to the deployment's `NEXUS_AI_INTERNAL_TOKEN` in constant time. Three preconditions have to align; this CI plane satisfied none:
+
+  1. the platform's own `NEXUS_AI_INTERNAL_TOKEN` unset or shorter than 16 chars → door fails closed with 501 `not_implemented` (per D7: an unconfigured deployment must fail loudly, not silently accept writes);
+  2. the AI service's own `NEXUS_AI_INTERNAL_TOKEN` unset → the AI never even attempts the persist (`routes_stream.py:174-177`: `if not token or not conversation_id: return`);
+  3. even with both set, the AI needs to know where to reach the platform — `NEXUS_PLATFORM_BASE_URL`, defaulting to `http://127.0.0.1:8080`, which is correct for this topology.
+
+Neither of services/hundred-and-twelve workflow files nor the compose plane set the token. So every agent turn was lost on the floor, silently. The platform's answer table records the merchant's reply because it is a manually-posted reply through the merchant's own BFF session — which is not gated by the internal door.
+
+**The repair (two planes, same secret, unchanged shapes).**
+
+1. `.github/workflows/ci.yml` — the e2e job's boot lines carry `NEXUS_AI_INTERNAL_TOKEN=ci_only_not_a_real_internal_token_0123456789abcdef` on the platform start and on the AI uvicorn line (and the AI line gets its `NEXUS_PLATFORM_BASE_URL=http://127.0.0.1:8080`). The value is a CI-only string, comfortably over the 16-char floor `guard.configured()` enforces.
+2. `infra/docker-compose.yml` — the `platform` and `ai` environment blocks now declare `NEXUS_AI_INTERNAL_TOKEN` with a visibly-dev default (`dev_nexus_internal_token_for_local_compose_0123456789abcdef`) that operators override in real compose usage via the same variable. The local plane was the same silent gap; the e2e job just happened to find it first.
+3. No new code path is invented. No test or spec changes. Not a single `@SpringBootTest` was touched.
+
+**Verification.** `git diff --stat` is confined to the two boot lines in ci.yml (535 lines unchanged) plus the two env blocks in compose; all ledger readers and `verify_all --report` are untouched by this diff's shape. The true verifier is the next CI e2e run — this entry does not claim it green; it claims the mechanism behind the §142 failure is now wired.
+
+**Not claimed.** That any test now passes that previously failed; that the AI persists anything without the env set; that the 501-on-unconfigured path is wrong (it is the documented D7 behaviour; this unit works with it); that the CI-only value is suitable for any real deployment (it must never ship).
+
+**Trade-offs.** The token crosses two services on the same host plane; a copy of the AI plane's filesystem reading would discover it and could then write `kind=user|ai_agent` messages into conversations in the tenant it belongs to. That is the same blast radius the door was built to bound — the token gates exactly the one ledger operation the agent is allowed to make, and nothing else. No changes to `AiServiceTokenGuard`, no new permission scope, no loosening of the merchant/owner read path.
+
+- readers: `.github/workflows/ci.yml` (two boot lines, e2e job), `infra/docker-compose.yml` (platform and ai environment blocks), `apps/ai/nexus_ai/api/routes_stream.py` (`_persist_turn`, the code path unblocked), `services/platform/src/main/java/com/nexus/conversation/AiServiceTokenGuard.java` (the door's guard), `tests/e2e/specs/consumer/ask-merchant-history.spec.ts` (the spec the repair aims at), the D964 artifact (error context: `D:\d964_playwright_report/data/7f888744e2caa750fa288f755b6dece3d4dd868b.md`), this ledger entry.
