@@ -21,7 +21,10 @@ import org.springframework.mock.web.MockHttpServletResponse;
  */
 class CacheControlFilterTest {
 
-    private static final MockHttpServletRequest REQUEST = new MockHttpServletRequest("GET", "/api/v1/search");
+    // A real contract-declared platform path, not a made-up placeholder: check_contract_drift censuses
+    // path literals in this source tree against docs/API_CONTRACT.md, so a fixture URI that no route owns
+    // would read as "code calls a path nobody documented" (integration fix, D937 plane).
+    private static final MockHttpServletRequest REQUEST = new MockHttpServletRequest("GET", "/api/v1/collections");
 
     @Test
     @DisplayName("a plain handler leaves no-store and Pragma: no-cache on the response")
@@ -77,7 +80,7 @@ class CacheControlFilterTest {
     void marksHeadToo() throws Exception {
         final MockHttpServletResponse response = new MockHttpServletResponse();
         new CacheControlFilter().doFilter(
-                new MockHttpServletRequest("HEAD", "/api/v1/search"), response, (req, res) -> { });
+                new MockHttpServletRequest("HEAD", "/api/v1/collections"), response, (req, res) -> { });
         assertThat(response.getHeader("Cache-Control")).isEqualTo("no-store");
     }
 }
