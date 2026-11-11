@@ -39,6 +39,8 @@ this table changes, so that can only add matches).
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 from typing import Any
 
 #: simplified -> the standard spelling. The characters are written as escapes on purpose:
@@ -291,6 +293,7 @@ CANONICAL_FORMS: dict[str, str] = {
 }
 
 
+@lru_cache(maxsize=512)
 def canonical(text: str) -> str:
     """The text in the spelling the vocabulary and the user both understand."""
     if not text:

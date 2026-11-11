@@ -39690,3 +39690,52 @@ whether the web build is or is not overdue, nor shorten the cold-start path; it 
 risk on the tail.
 
 - readers: `.github/workflows/ci.yml` (the `e2e` job's Boot services step, and its comment).
+
+## 915. D915 — three more constant-factor lanes: a cached `canonical` per glyph pass, an indexed merchant offering list for the static lane, and one normalized-weights copy per rank call
+
+**Goal.** Continuing D913's theme — costs that repeat deterministically and are trivially indexed — three
+sites the same exploration flagged, each verified cheap to fix and measured by the existing suite.
+
+**1. `canonical()` gets a bounded memo (`nlu/canonical.py`).** Every caller — including every
+`match_district`/`match_category`/`understand` visit — recomputed the same dict lookups per character.
+`@lru_cache(maxsize=512)` on the pure function: small strings, stable universe of inputs, and the
+function is identical when called with identical arguments. Behaviour is unchanged (same outputs; tests
+pass); repeated calls are now dict lookups.
+
+**2. The static `avoid` leg no longer scans all offerings per row (`search/service.py`, D549 lane).**
+`_filter_static` calls `_static_avoids(r, ...)` for every candidate row, and each merchant-lane row
+looped over EVERY offering to match its own — O(rows × offerings) on the offline/degraded path (475
+candidates × 4,700 offerings ≈ 2.2M reads per search when an avoid clause is active). The filter now
+indexes `merchant_id → [offerings]` ONCE per pass (only when `avoid` is set), and `_static_avoids`
+accepts either a sequence (unchanged behaviour for existing callers) or a mapping — a mapping means
+the caller pre-built the index and the lane reads only the row's own merchant's offerings. Tests:
+`tests/test_every_refusal_the_lane_reads_reaches_the_avoid_filter.py`,
+`tests/test_the_filter_speaks_the_avoid_vocabulary.py`, `tests/test_the_fixture_lane_answers_the_same_avoid_question.py`,
+`tests/test_a_refusal_of_noise_reaches_the_corpus_weakness_list.py`,
+`tests/test_a_refusal_of_noise_reads_the_corpus_second_spelling.py`,
+`tests/test_the_bucket_leg_reads_the_column_an_offering_row_states.py` — 215 passed. Semantics of the
+avoid veto are unchanged; the candidate universe is a subset of the same universe, all read by the same
+veto clauses, and a partial index yields identical verdicts (the live tests pin that).
+
+**3. `organic_rank` normalizes the weights once, not twice per candidate (`search/ranking.py`).**
+`score_candidate` and `contributions` each called `w.normalized()` (a division of all weights by
+their sum — allocation + division each time). `organic_rank` now hoists `nw` once per call and passes
+it to `contributions`; the floor and scoring order are untouched. Tests:
+`tests/test_ranking_components.py`, `tests/test_ranking_weights.py`, `tests/test_sponsored_ranking.py`,
+`tests/test_preferences_ranking.py` — 58 passed; the live-plane ordering tests remain skipped (no
+`NEXUS_TEST_DATABASE_URL` locally).
+
+**Verification.** No end-to-end claim is made: these are constant-factor and algorithmic improvements;
+the suite ran green in the touched areas (215 + 58 + the same tests that cover `canonical()`
+transitively — `tests/test_vocabulary_canonical_coverage.py`, `tests/test_canonical_forms.py` included
+in the 215). No full-suite run in this unit.
+
+**What this does NOT claim.** No request latency was measured end-to-end; no new tractability theorem
+is offered beyond the index arithmetic; `lru_cache` is per-process (any future shared-state module
+must not read it). The `Mapping` acceptance in `_static_avoids` is additive — no caller was changed
+except the one inside `_filter_static`. `organic_rank`'s semantics are pinned by the existing rank
+tests; invalid weights (all-zero vector → division by zero) are NOT handled here, they were not
+before.
+
+- readers: `apps/ai/nexus_ai/nlu/canonical.py`, `apps/ai/nexus_ai/search/service.py`,
+  `apps/ai/nexus_ai/search/ranking.py`, `docs/STATUS.md`.

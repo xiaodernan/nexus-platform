@@ -276,13 +276,14 @@ def organic_rank(candidates: Iterable[Candidate], w: RankingWeights,
                  *, apply_floor: bool = True) -> list[Scored]:
     """Relevance floor -> score -> sort. Sponsored plays no part here (§67)."""
     out: list[Scored] = []
+    nw = w.normalized()  # hoisted: rank() normalizes once per call, not once per candidate
     floor = 0.0 if not apply_floor else w.relevance_floor
     for c in candidates:
         if apply_floor and _has_query_signal(c) and c.relevance < floor:
             continue  # dropped before scoring, never ranked by popularity to hide it
         score, parts = score_candidate(c, w)
         out.append(Scored(candidate=c, score=score, organic_score=score, breakdown=parts,
-                          contributions=contributions(parts, w.normalized())))
+                          contributions=contributions(parts, nw)))
     out.sort(key=lambda s: (-s.organic_score, s.candidate.key()))
     return out
 

@@ -22,7 +22,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, time as clock_time, timedelta, timezone
-from typing import Any, Protocol, Sequence
+from typing import Any, Mapping, Protocol, Sequence
 from uuid import UUID
 
 from nexus_ai.contract import EntityCard, FacetValue, Intent, SearchResponse
@@ -293,6 +293,14 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
     bucket = str(filters["category"]) if filters.get("category") else ""
     slugs = {canonical_tag(x) for x in resolve(bucket)} if bucket else set()
     hour_sets = _static_hour_index(hours)
+    # D913: index the merchant's offerings once per pass when avoid filtering is live —
+    # otherwise every row scans every offering (O(rows × offerings)). A partial map yields fewer
+    # candidates, never different verdicts; the avoid lane only consults the row's own merchant.
+    _avoid_index = None
+    if filters.get("avoid"):
+        _avoid_index = {}
+        for o in offerings:
+            _avoid_index.setdefault(str(o.get("merchant_id") or ""), []).append(o)
     low = (text or "").lower()
     out: list[dict[str, Any]] = []
     for r in rows:
@@ -452,7 +460,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
                 continue
             else:
                 r["meters"] = metres
-        if _static_avoids(r, filters.get("avoid"), offerings):
+        if _static_avoids(r, filters.get("avoid"), _avoid_index if _avoid_index is not None else offerings):
             continue
         if party_size:
             # D607: the same hard bound the live clause applies, so the two lanes answer one
@@ -748,11 +756,15 @@ def _static_avoids(row: dict[str, Any], avoid: Any,
                                   _static_avoid_attributes(avoid)):
         return True
     if row.get("display_name"):
-        # the merchant lane: the EXISTS leg looks at the merchant's OWN offerings.
+        # the merchant lane: the EXISTS leg looks at the merchant's OWN offerings. A Mapping in
+        # `offerings` is a by-merchant index the caller built once for the whole pass, so the
+        # candidate lookup is O(own offerings) instead of O(every offering) for every row.
         mine = str(row.get("id") or "")
-        for o in offerings:
-            if str(o.get("merchant_id") or "") != mine:
-                continue
+        if isinstance(offerings, Mapping):
+            candidates = offerings.get(mine, ())
+        else:
+            candidates = (o for o in offerings if str(o.get("merchant_id") or "") == mine)
+        for o in candidates:
             if _static_row_avoids_text(o, terms) or _static_row_avoids_allergen(o, terms):
                 return True
         return False
