@@ -137,6 +137,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_line_cite_drift.mjs` | file:line citations still name their line; D890 batch-prefetches the (blame commit × cited file) blobs through one `git cat-file --batch`, with `--no-prefetch` kept for byte-for-byte comparison |
 | `scripts/check_citation_supports_sentence.mjs` | a cited line supports the sentence quoting it |
 | `scripts/check_shared_blob_reader.mjs` | D891: both citation readers call the one shared blob reader, no third parser; `--self-test` plants an erased import, a pasted parser and an empty plane |
+| `scripts/check_java_basenames.mjs` | D930: every shipped Java source basename is unique, so a ledger's bare `Class:NN` cite cannot be made ambiguous by a new module; `--self-test` plants two real collisions and two non-collisions |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
 

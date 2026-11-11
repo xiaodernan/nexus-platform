@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-class EventsControllerTest {
+class EventsViewControllerTest {
 
-    private EventsController controller;
+    private EventsViewController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new EventsController(new EventsReader(false, "redis://127.0.0.1:1/0", 1L, 4));
+        controller = new EventsViewController(new EventsReader(false, "redis://127.0.0.1:1/0", 1L, 4));
     }
 
     @Test

@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
  * Returned as a map rather than a domain object: no schema, no promises, the reader is the arbiter.
  */
 @RestController
-public class EventsController {
+public class EventsViewController {
 
     private final EventsReader reader;
 
-    public EventsController(EventsReader reader) {
+    public EventsViewController(EventsReader reader) {
         this.reader = reader;
     }
 

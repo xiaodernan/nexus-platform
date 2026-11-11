@@ -431,7 +431,7 @@ def build_card(cand: Candidate, scored: Scored | None, bundle: FactBundle, *,
     # DECISIONS D6 make a legal answer precisely so it does not have to fabricate a slot. The
     # `is not None` filter this replaces dropped the key instead, so 41 of the 41 cards measured
     # by `tmp/d619_dump_cards.py` sent `status: null` and matched neither branch of the block's
-    # `oneOf`. `full` is the ranking lane's word (service.py:810) and is off the enum; the
+    # `oneOf`. `full` is the ranking lane's word (service.py:1357) and is off the enum; the
     # contract's word for a slot with no seats left is `unavailable`. `as_of` is mandatory for a
     # bookable word - the freshness table puts availability's TTL at 0 - and the stamp is the
     # row clock the candidate already carries, not a new claim.

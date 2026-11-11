@@ -40218,7 +40218,7 @@ on `:19572`, boots events-service with Eureka enabled pointing at it, publishes 
 entry into the live `nexus-platform-redis`, waits 4 s, and confirms (a) `/events/health` moves to `UP` with
 `last_poll_age_ms=460`, (b) `/events/count` reports `total_seen=1 currently_buffered=1`, and (c) the registry
 lists `NEXUS-EVENTS` on `:19566`. `mvn -q -pl events-service clean test` — 7/7 pass (EventsRingTest 3 +
-EventsControllerTest 4 including a live-Redis integration arm guarded by `@EnabledIfAvailable`-style
+EventsViewControllerTest 4 including a live-Redis integration arm guarded by `@EnabledIfAvailable`-style
 `assumeTrue` so a CI without Redis on `:6380` fails silently).
 
 **Wiring.** `services/cloud/pom.xml` — add `events-service` module; `.github/workflows/ci.yml` cloud smoke
@@ -40238,3 +40238,61 @@ Eureka + throwaway `nexus:events`, not a production broker; the platform itself 
 - readers: `services/cloud/events-service/**` (full module), `services/cloud/pom.xml` (reactor),
   `scripts/events_service_smoke.sh`, `scripts/check_cloud_plane.mjs`, `.github/workflows/ci.yml`,
   `docs/ATLAS.md`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`, this ledger section.
+
+## 930. D930 — two citation gates go red on the D929 plane, and the basename that caused it becomes a rule
+
+**Goal.** The opening full sweep of this session returned **2 FAIL / 27 PASS / 2 UNCHECKED**: two
+citation readers that had been green through D929 had gone red. This unit does not add a product
+feature; it repairs the plane's own ability to certify its claims and then prevents the specific
+class of regression that caused it.
+
+**Failure 1 — a basename collision made six correct historical cites ambiguous.** D929 shipped
+`services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsController.java`. The
+repository already shipped `services/platform/src/main/java/com/nexus/growth/EventsController.java`.
+The ledgers cite that class by its BARE stem — `EventsController:63` in DECISIONS D69/D87/D88 and
+STATUS §65/§568 — all six pointing at the platform's 63rd line (the new class is 51 lines and has no
+line 63). `check_ledger_citations.mjs` resolves a bare stem by basename and filed all six as
+**AMBIGUOUS**: two files held the name. The cite was never wrong; a new module stole a name an old
+paragraph owned. Repaired by renaming the new class to `EventsViewController` (aligned with D895's
+`ConfigViewController` — it is a read-only observation surface): `git mv` of the class and its test,
+class/constructor/field renames, and the one test-name mention in §929's prose. The six historical
+cites resolve uniquely again; `check_ledger_citations.mjs` → **0 strict offenders** (1382 working-copy
+cites in 1174 sections).
+
+**Failure 2 — an expired comment line number.** `apps/ai/nexus_ai/search/cards.py:434` explained
+that `full` is the ranking lane's word and cited line 810 of `service.py`. The file has since grown;
+that line is now blank. The word is actually minted at `service.py:1357`
+(`availability = "available" if left >= need else ("limited" if left else "full")`), stable since
+`e237f6df` (2026-09-22) by `git blame`. Fixed the line number to `1357`;
+`check_comment_citations.mjs` → **PASS, 218/218 resolving, 0 strict offenders**.
+
+**The rule that outlives the fix.** A compiler will not catch two same-named classes in different
+packages, but the ledgers' bare `Class:NN` grammar cannot disambiguate them, so the citation plane
+needs a STRICTER invariant than javac: across every shipped Java source (excluding `VENDOR_DIRS`),
+no two files may share a basename. New `scripts/check_java_basenames.mjs` judges a pure path set,
+walks 224 Java sources, reports 0 collisions, and joins `verify_all.mjs` (auto-enumerated) and the CI
+wiring chain. `--self-test` plants the D929 collision and a generic two-package collision (both must
+redden), plus a case-only difference and distinct names (both must stay green). The self-test's first
+run caught a REAL defect in the gate itself — holders were de-duplicated with a `Set` while the test
+claimed a duplicated-path arm would redden; rather than write a claim the implementation did not
+honour, the non-fault arm was dropped and the de-duplication stated explicitly, then the case-only arm
+added to prove the gate is not over-eager.
+
+**Verification.** Renamed module recompiles (`mvn -o -pl events-service -DskipTests package`, rc 0,
+`EventsViewController.class` emitted, no stale `EventsController.class`) and its suite passes
+(7/7: `EventsRingTest` 3 + `EventsViewControllerTest` 4). Both previously-red readers PASS in
+isolation. New gate PASS on the real plane (224 basenames unique) and 5/5 self-test arms behave.
+
+**Not claimed.** That the two citation readers' VERDICTS are correct beyond the offender classes they
+implement (this unit changed no reader logic — only the plane they read); that no OTHER class of
+citation drift exists (the two UNCHECKED readers still need `--db`/`--expect`); that basenames are
+unique across non-Java sources or across `tmp/`/build output (the gate uses the shared `VENDOR_DIRS`
+exclusion); that a future bare stem cite to a genuinely duplicated class is auto-rewritten (it is not —
+the gate reddens and forces the writer to path-qualify the cite). The rename is a source-level rename
+with `git mv`; no public HTTP path, Eureka name (`NEXUS-EVENTS`), port (19566) or stream key changed.
+
+- readers: `scripts/check_java_basenames.mjs`, `apps/ai/nexus_ai/search/cards.py`,
+  `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsViewController.java`,
+  `services/cloud/events-service/src/test/java/com/nexus/cloud/events/EventsViewControllerTest.java`,
+  `scripts/check_ledger_citations.mjs`, `scripts/check_comment_citations.mjs`, `docs/ATLAS.md`,
+  `.github/workflows/ci.yml`, this ledger section.
