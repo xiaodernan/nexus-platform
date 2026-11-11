@@ -41631,3 +41631,40 @@ the real mock-provider LLM. No Green halo is asserted for any cell of the matrix
 **Not claimed.** That any test ran today, that a live Redis round trip was measured, any latency or throughput number, that a real FastAPI worker was scheduled, or that the default plane (cache OFF) changed behaviour — it is byte-identical by construction. The behavioural proof is the pytest probe on the CI `ai` job; this reader judges source text and wiring only.
 
 - readers: `apps/ai/nexus_ai/tools/registry.py` (the two offloaded call sites), `apps/ai/nexus_ai/tools/redis_tier.py` (the preserved sync contract), `apps/ai/tests/test_shared_cache_does_not_block_event_loop.py` (heartbeat + falsifier), `scripts/check_shared_cache_async.mjs` (this census + its falsifier), CI line 171, `docs/ATLAS.md`, this ledger entry.
+
+## 963. D963 — my own one-line slip in D961, removed: the env prefix applied to `npm ci`, not the `next build` — mock mode was baked at build time and the BFF 501'd everything
+
+**Goal.** The mandate keeps every attempt honest down to its own mistakes. D961's CI (run
+`43104434832`) went red with the SAME desktop signature D960 had — plus a NEW one (the mobile landing
+page failing on the hidden-on-mobile DEMO badge) — which forced the artifact download
+(`gh run download 43104434832 --name playwright-report`), the i18n banner read, and finally the catch-all
+BFF route chunk. There, the smoking gun:
+
+  `if (v.Yj) return z(A("data_mode_mock", "NEXT_PUBLIC_DATA_MODE=mock serves pages from fixtures; set it to live to proxy /api/nexus/**", null), 501)`
+
+with `v.Yj` being the bundle's IS_MOCK export. When mock is baked at build time, the ENTIRE browser
+`/api/nexus/**` namespace returns `501 data_mode_mock` — the BFF never proxies at all. Every demo-auth
+call and every conversation-ask call failed exactly this way, fully matching the logs (12 failures:
+ask-merchant ×2, ask-merchant-history ×2, vertical-slice :37/:96/:143 on both projects).
+
+**Why mock was baked.** D961's repair prefixed `PLATFORM_API_BASE_URL … NEXT_PUBLIC_DATA_MODE=live` onto
+`npm ci` — and shell semantics give a simple command's compound env to the FIRST command only. The
+actual `next build` ran with nothing. This is the same class of silent-scoping bug the platform job's
+`NEXUS_JWT_SECRET` inline fixed, one composition step out.
+
+**The fix (ci.yml line 345, one line, same length).** `npm ci && PLATFORM_API_BASE_URL=… AI_API_BASE_URL=… NEXT_PUBLIC_DATA_MODE=live npm run build --workspace @nexus/web` — the env lands on the build itself. Verified on this machine before any commit:
+
+  - `.next/server/app/api/nexus/[...path]/route.js` after the live build: env module shows
+    `h = "live" === d("live", "mock") ? "live" : "mock"` and `i = "mock" === h` → `i === false`.
+  - Remaining literal `"live","mock"` inlines: exactly 8 bundle chunks, all live; zero `"mock","live"`
+    outside copies of the i18n demoBanner copy (a dict string, not a branch).
+  - `PLATFORM_API_BASE_URL`/`AI_API_BASE_URL` are correctly left as runtime `process.env` reads (start-line inline covers them; bundling them would freeze hostnames into the client).
+
+**Not claimed.** This unit alone does NOT make the suite green — the mobile landing test expectation
+(the DEMO badge is legitimately `sm:inline-flex hidden` on mobile and visible ≥sm) is a spec-or-component
+question this unit deliberately does not touch; vertical-slice :37/:96/:143 require the live plane's
+and-only-one retry to be observed again. The ask-merchant group is expected to pass for the first time
+since the BFF starts proxying, but that is CI's verdict to give, not this ledger's.
+
+- readers: `.github/workflows/ci.yml` (line 345), the downloaded artifact `D:\d961_playwright_report`,
+  this ledger entry.
