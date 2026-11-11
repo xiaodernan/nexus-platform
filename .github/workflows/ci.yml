@@ -5,7 +5,7 @@ name: ci
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
   pull_request:
   workflow_dispatch:
 

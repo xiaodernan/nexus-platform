@@ -39279,3 +39279,28 @@ contract as D856's and no claim about today's run. `scripts/cloud_lb_smoke.sh` o
 under this section; no CI wiring changes (the script name is unchanged).
 
 - readers: `scripts/cloud_lb_smoke.sh` (this unit's only code change).
+
+## 905. D905 — CI never fired on this repository's only branch: `ci.yml` listened to push of `main`/`develop`, never `master`
+
+**Goal.** Every session of this project has pushed to `origin/master` — D600-something times now — and the
+repository's CI has a `required` gate the merge path claims to honor. `gh api repos/xiaodernan/nexus-platform/
+actions/runs --jq .total_count` returned **0**: not one workflow run has EVER executed for this repository.
+The cause is one line in `.github/workflows/ci.yml`: `on.push.branches: [main, develop]` — neither of which is
+a branch this repository has ever contained. The working branch is `master`. The `pull_request` trigger was
+also inert (no PRs are opened here; work ships on direct push).
+
+**The fix.** `on.push.branches` now reads `[master, main, develop]`. One line. The jobs, gates, smokes and
+`required` aggregation are unchanged — this unit only makes the existing pipeline eligible to run, it does NOT
+pre-judge that CI is green. The first run will execute everything: lint → typecheck → unit → integration →
+build → the `cloud` job (eureka/platform dev,cloud/AI opt-in/**D904's `cloud_lb_smoke.sh`**, which this host
+could not verify under kernel OOM — that gap is now closable by this channel) → E2E harness (if its env has
+the compose network) → security scan.
+
+**What this does NOT claim.** It does not claim CI will pass — D904's ledger entry pre-registered exactly the
+two ways this can come out: green (recorded by a later entry, noting the run) or red (recorded as a
+follow-up unit with the real failure output; the fix is then mandatory before this section can honestly say
+the gates work). It changes nothing about local development. It is not a merge queue, not branch protection,
+and not a release process. If the account or repository disables Actions at any point, `actions/runs` will
+return 0 again and this section will still be true as written about this day.
+
+- readers: `.github/workflows/ci.yml` (the trigger line), this ledger section.
