@@ -40506,3 +40506,40 @@ brute-force space this measure never pretended to touch).
 - readers: `services/platform/src/main/java/com/nexus/merchant/ApiKeyService.java` (the two caches,
   the flush, the throttle), `services/platform/src/test/java/com/nexus/merchant/ApiKeyServiceCacheTest.java`
   (12/12), this ledger entry.
+
+## 934. D934 — the copy dictionary is ONE tree seen two ways: a contract test pins zh-HK/en parity and the /merchant/settings button surface
+
+**Goal.** The mandate includes "front-end beauty at its zenith" and the standing note that major user-
+accessible surfaces are held to the same standard as platform internals. Reading `dict.ts` against the
+`/merchant/settings` page exposed a silent failure mode with no guard anywhere: the settings page wires
+every action button — request verification, invite member, create api key, reindex knowledge — to dict
+leaves, and a key that drifts between `zh-HK` and `en` (or empties out) ships an unlabelled button in one
+language. The two trees are hand-duplicated literals in one file; the type system is satisfied by an empty
+string; no test compared them.
+
+**The fix.** `apps/web/src/lib/i18n/dict-contract.test.ts` walks both full Dict trees (`zhHK` and `en`,
+the two hand-written literals in `dict.ts`) and asserts: (1) exact leaf-path parity — the count and the set
+(today: 809 leaves in each, zero-only-in-either); (2) leaf TYPE parity at every path; (3) every string
+leaf non-empty and free of template residue (`undefined`, `NaN`, `[object Object]`); (4) every function
+leaf callable in both locales returning non-empty copy (the dict carries signature-typed leaves like
+`updatedBy: (who: string) => string`); (5) an explicit required list — 45 leaf paths naming every button
+label, confirm title, confirm text and table column header `/merchant/settings` actually points at —
+exist and are non-empty in BOTH locales. Renaming any of those keys in the two literals without updating
+the pin reddens with a named `${locale} ${path}` failure rather than a vague diff. Copy is never invented
+by the test: a failure means the dict lost text and the fix is to restore it, never to fill the hole from
+the test file.
+
+**Verification.** The new file runs **6/6 green** in isolation; the full web suite runs **228/228 green**
+(222 before this unit + the 6 new). A temporary probe run measured the tree BEFORE the test was written:
+`zh-HK leaves 809, en leaves 809, zh-only [], en-only [], typeMismatch []`, zero empty strings — this unit
+installs the guard that keeps that true, it does not repair a red (no red existed; an un-guarded tree was
+the defect).
+
+**What this does NOT claim.** Nothing about translation adequacy, tone or grammar — parity and presence
+only; nothing about the settings UI actually rendering (no browser drive is attached to this commit); the
+45-key pin is not exhaustive of the whole surface (panels added later must extend the list in the same
+change); and the `Dict` type is still the hand-maintained contract between two literals in one file — this
+unit proves they agree today and keeps them agreeing, it does not merge them into one source of truth.
+
+- readers: `apps/web/src/lib/i18n/dict-contract.test.ts`, `apps/web/src/lib/i18n/dict.ts` (the two trees),
+  `apps/web/app/merchant/settings/page.tsx` (the pinned surface), this ledger entry.
