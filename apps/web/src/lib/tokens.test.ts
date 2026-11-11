@@ -267,6 +267,17 @@ describe('tokens.css — -rgb channel triplets', () => {
   });
 });
 
+describe('tokens.css - the AI gradient (the one the home hero dot lives on)', () => {
+  it('declares --nexus-ai-gradient in both :root and .dark as a linear-gradient', () => {
+    for (const blockName of [':root', '.dark']) {
+      const declarations = declarationsOf(tokensCss, blockName);
+      const value = declarations.get('--nexus-ai-gradient');
+      expect(value, `${blockName} must declare --nexus-ai-gradient`).toBeTruthy();
+      expect(value!).toMatch(/^linear-gradient\(/);
+    }
+  });
+});
+
 describe('tailwind preset ↔ token contract', () => {
   it('parses the preset color map (the guard checks the guard)', () => {
     expect(presetColors.size).toBeGreaterThan(10);

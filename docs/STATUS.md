@@ -40029,3 +40029,30 @@ reduce.
 
 - readers: `apps/web/app/page.tsx` (hero glow + eyebrow dot),
   this ledger section.
+
+## 924. D924 — the ai-gradient stops being a css value on the home page and becomes a guarded contract
+
+**Goal.** D923 shipped the "one visual moment" on the home hero using `--nexus-ai-gradient` — the first
+consumer on an actual product surface. A live visual token no test looks at is a token that will be
+deleted by accident in the next palette pass; this is the gate that makes the promise mechanical.
+
+**The fix.** `apps/web/src/lib/tokens.test.ts` gains a describe block right after the existing
+`--nexus-*-rgb` channel-triplet block: for both `:root` (light) and `.dark`, the parser must find
+`--nexus-ai-gradient` and its value must match `/^linear-gradient\(/`. The test uses the same
+`declarationsOf(css, selector)` machinery every prior guard in that file uses — no new helper, no
+parallel parser to drift from the one that keeps the Tailwind preset in sync, no absolute paths.
+Architectural extensions (palette rules engine, contrast ratios, theme-swap live preview) were
+deliberately not attempted; the test is one row in a file that already proves the token contract.
+
+**Verification.** `npx vitest run src/lib/tokens.test.ts` — **7/7 pass** (6 previous + this one).
+The `npx tsc --noEmit` cleanliness of the prior commit is preserved; no other consumer of the file
+changed. The rest of the suite was not re-run wholesale in this unit.
+
+**What this does NOT claim.** No claim about the value's identity between themes (the two themes
+intentionally carry different stops — #2547f4-family and #7b8cff-family; the declaration is required
+to stay "both declared, both linear-gradient", not "byte-identical everywhere"). Not a contrast/QC
+gate. Not a palette rules engine. Not a visual-regression test. Anything broader belongs in a
+dedicated visual regression lane, not in this unit.
+
+- readers: `apps/web/src/lib/tokens.test.ts` (new describe block),
+  this ledger section.
