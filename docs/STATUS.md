@@ -39942,3 +39942,50 @@ deliberately (they need offline-LLM behaviour and platform roles that do not exi
   `apps/ai/nexus_ai/api/routes_system.py` (the note names the seven),
   `apps/ai/tests/test_search_reviews_tool.py`,
   `docs/STATUS.md`.
+
+## 922. D922 — an OPTIONAL shared tool-result cache behind `NEXUS_AI_SHARED_CACHE=redis` (Redis thought through, not bolted on)
+
+**Goal.** The mandate explicitly asked for Redis to be exercised meaningfully. The in-process
+`_Cache` bounded by D903/D913 is process-local, which is right for one replica but duplicated
+work across replicas of an otherwise identical read-only dispatch path. The honest shape: an
+*opt-in* shared tier that reuses the same canonical key, the same TTL discipline, and falls to absent
+rather than to error when Redis is down.
+
+**The shape.** `nexus_ai/tools/redis_tier.py` (new) — `RedisTier` with `maybe_create()` honouring
+`NEXUS_AI_SHARED_CACHE=redis` (default OFF — no client constructed, no behaviour change). Every call
+is `SETEX` TTL bounded by the spec's `cache_ttl_s`, never longer. Read path: miss locally → try the
+shared tier → re-fill local on a shared hit → answer — the handler is never touched. Failure path:
+Redis unreachable at construction OR mid-dispatch → the tier degrades to absent and the *local* cache
+or the handler answer proceeds unchanged. Both registries write through (local set + shared set); the
+canonical key is identical (same `_Cache._key` output feeds both storages).
+
+**Test strategy, honestly.** The demo backend's merchant fixture uses a fixed uuid set, which means
+heuristic CI runs leave cached rows behind between runs — the first attempt at
+"the handler server must NOT run for the second registry" cooked itself into a stale-read false positive
+(counter==0 asserted but the handler never ran for a good reason). The tests now use fresh
+per-test `probe-<uuid4>` arguments, so no two runs share a cache key. With Redis up locally
+(`nexus-platform-redis` on :6380) and in CI (`redis:7.4-alpine`), the gate covers: registry A
+handler runs exactly once; registry B (same key) answers from the shared tier without handler entry;
+the disabled-by-default path leaves every registry paying its own handler; the shared key exists in
+Redis with a positive TTL; a requested-but-down Redis (bogus URL) degrades to absent and the handler
+still answers. **`uv add redis` installed cleanly AND `uv` cleaned its own venv metadata**: the first
+attempts at `uv run` failed with `UnicodeDecodeError: 'gbk' codec can't decode byte 0xae in position 7`
+after the redis package landed — rebuilding `.venv` with `uv sync --all-extras` repaired it without
+touching any dependency pins.
+
+**Verification.** `tests/test_redis_shared_cache.py` — 4/4 pass. The wider tool-dispatch suite the
+fixture participates in: `test_a_tool_dispatch_is_the_only_data_path.py` (47), `test_d903_cache_is_bounded.py`,
+`test_search_reviews_tool.py` (6), `test_health_and_tools.py`, `test_the_orchestrator_plans_the_min_necessary_steps.py`
+— 92/92 pass in one run. The `data_path_via_http=True` set now includes `search_reviews` (matched the
+`implemented=True` set that D921 created — the mismatch was a contract test catching it; this unit closes it).
+
+**What this does NOT claim.** No production topology — one Redis instance at a time, no HA/replication
+trust; no cluster; no negative-tier design beyond TTL; no eviction audit; no coordination between the
+local and the shared tier beyond the single SET on write (a shared entry can go stale vs local bounds on
+no-op cache incoherence windows); the tier is a convenience, not a consistency model.
+
+- readers: `apps/ai/nexus_ai/tools/redis_tier.py`, `apps/ai/nexus_ai/tools/registry.py`,
+  `apps/ai/nexus_ai/api/routes_system.py` (`data_path_via_http` set),
+  `apps/ai/pyproject.toml`, `apps/ai/uv.lock`,
+  `apps/ai/tests/test_redis_shared_cache.py`,
+  `docs/STATUS.md`.

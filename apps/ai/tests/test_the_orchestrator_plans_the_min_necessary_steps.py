@@ -169,7 +169,7 @@ class TestExecutor:
 
     def test_an_unknown_tool_is_a_failed_step(self):
         registry, _ = _registry()
-        plan = Plan(steps=(PlannedStep("search_reviews", {"text": "x"}, "bogus"),))
+        plan = Plan(steps=(PlannedStep("tool_that_does_not_exist", {"text": "x"}, "bogus"),))
         report = asyncio.run(execute_plan(plan, registry, subject="u1"))
         assert report.steps[0].status == "failed"
         assert "UnknownTool" in (report.steps[0].reason or "")

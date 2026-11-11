@@ -39,7 +39,7 @@ def test_tools_manifest_is_honest(client):
     # the live read-only tools are honest; every other canonical name advertises implemented:false
     assert implemented == {"search_merchants", "get_business_hours", "get_price",
                            "get_user_preferences",
-                           "search_products", "search_services"}
+                           "search_products", "search_services", "search_reviews"}
     assert "search_merchants" in names
 
 
@@ -47,7 +47,7 @@ def test_every_live_tool_dispatches(client):
     body = client.get("/ai/v1/tools").json()
     for name in ("search_merchants", "get_business_hours", "get_price",
                  "get_user_preferences",
-                 "search_products", "search_services"):
+                 "search_products", "search_services", "search_reviews"):
         bucket = next(t for t in body["tools"] if t["name"] == name)
         assert bucket["implemented"] is True
         assert bucket["data_path_via_http"] is True
@@ -61,14 +61,14 @@ def test_data_path_via_http_advertised_only_with_implemented(client):
         f"tools with mismatched data_path_via_http vs implemented: {mismatches}")
 
 
-def test_six_tools_report_implemented(client):
+def test_seven_tools_report_implemented(client):
     body = client.get("/ai/v1/tools").json()
     implemented = [t for t in body["tools"] if t["implemented"]]
-    assert len(implemented) == 6
+    assert len(implemented) == 7
     names = {t["name"] for t in implemented}
     assert names == {"search_merchants", "get_business_hours", "get_price",
                      "get_user_preferences",
-                     "search_products", "search_services"}
+                     "search_products", "search_services", "search_reviews"}
 
 
 def test_no_unregistered_tool_claims_a_http_data_path(client):

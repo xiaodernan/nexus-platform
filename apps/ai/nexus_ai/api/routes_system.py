@@ -41,7 +41,7 @@ CANONICAL_TOOLS: tuple[str, ...] = CANONICAL_TOOL_NAMES
 #: HTTP layer answers them through its endpoints and the manifest reads the live registry.
 _DATA_PATH_TOOLS = frozenset({
     "search_merchants", "get_business_hours", "get_price", "get_user_preferences",
-    "search_products", "search_services",
+    "search_products", "search_services", "search_reviews",
 })
 
 

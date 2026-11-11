@@ -36,10 +36,13 @@ from __future__ import annotations
 import asyncio
 import heapq
 import json
+import logging
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Mapping, Sequence
+
+from nexus_ai.tools.redis_tier import RedisTier
 
 from nexus_ai.tools.names import CANONICAL_TOOL_NAMES, NEVER_IN_DEFAULT_GRANT
 
@@ -347,6 +350,11 @@ class Registry:
         self._specs: dict[str, ToolSpec] = {}
         self._handlers: dict[str, _HANDLER] = {}
         self._cache = _Cache(self._clock)
+        # D922 — opt-in shared tier (Redis). Absent by default: no client constructed,
+        # behaviour byte-identical to the local-only lane. When explicitly requested via
+        # NEXUS_AI_SHARED_CACHE=redis, the tier reads/writes the same canonical key and TTL
+        # discipline so a replica layer sees one cache instead of N.
+        self._shared = RedisTier.maybe_create()
 
     # ---------------------------------------------------- registration
     def register(self, spec: ToolSpec, handler: "_HANDLER | None" = None) -> None:
@@ -427,6 +435,15 @@ class Registry:
                 self._emit(started, subject=subject, tool=tool,
                            outcome="ok_cached")
                 return cached
+            if self._shared is not None:
+                shared_key = self._cache._key(spec=spec, arguments=args)
+                if shared_key is not None:
+                    raw = self._shared.get(shared_key[0], shared_key[1])
+                    if raw is not None:
+                        self._emit(started, subject=subject, tool=tool,
+                                   outcome="ok_cached_shared")
+                        self._cache.set(spec=spec, arguments=args, value=raw)
+                        return raw
 
 
         # ---- execute with timeout/retry (§3 timeout is per-tool, default 4 s)
@@ -463,6 +480,10 @@ class Registry:
 
         if use_cache:
             self._cache.set(spec=spec, arguments=args, value=result)
+            if self._shared is not None:
+                shared_key = self._cache._key(spec=spec, arguments=args)
+                if shared_key is not None:
+                    self._shared.set(shared_key[0], shared_key[1], result, spec.cache_ttl_s)
         self._emit(started, subject=subject, tool=tool, result=result, outcome="ok")
         return result
 
