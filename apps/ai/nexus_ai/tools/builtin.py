@@ -185,6 +185,62 @@ def build_get_user_preferences(
     return spec
 
 
+def build_search_reviews(
+    registry: Registry,
+    backend: SearchBackend,
+    tenant_id: str | None = None,
+) -> ToolSpec:
+    """Read the published reviews for ONE merchant, through the merchant's own reviews rows."""
+
+    del tenant_id  # accepted for signature symmetry with the search tools; unused
+
+    spec = ToolSpec(
+        name="search_reviews",
+        version="1",
+        description=(
+            "Read the PUBLISHED reviews for ONE merchant. Returns review rows exactly as the "
+            "corpus writes them (rating, title, body, created_at, verified_purchase, "
+            "helpful_count). Never invents a review; a merchant with none answers with []."
+        ),
+        input_schema={
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "merchant_id": {"type": "string", "minLength": 1},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+            },
+            "required": ["merchant_id"],
+        },
+        output_schema={
+            "type": "object",
+            "properties": {
+                "merchant_id": {"type": "string"},
+                "reviews": {"type": "array"},
+                "total": {"type": "integer"},
+            },
+            "required": ["merchant_id", "reviews", "total"],
+        },
+        permission=PERMISSION_READ,
+        cache_ttl_s=300,
+        timeout_ms=2000,
+        retries=0,
+        side_effect=False,
+        cost_class="db",
+        fallback="none",
+    )
+
+    async def handler(args: Mapping[str, Any], *, subject: str):  # noqa: ARG001
+        merchant_id = str(args["merchant_id"])
+        limit = int(args.get("limit") or 20)
+        rows = await backend.reviews([merchant_id], per_merchant=limit)
+        return {"merchant_id": merchant_id,
+                "reviews": [dict(row) for row in rows],
+                "total": len(rows)}
+
+    registry.register(spec, handler=handler)
+    return spec
+
+
 def build_search_merchants(
     registry: Registry,
     backend: SearchBackend,
@@ -338,4 +394,5 @@ def register_read_tools(
     build_search_merchants(registry, backend, tenant_id)
     build_search_offering(registry, backend, tenant_id, kind="product")
     build_search_offering(registry, backend, tenant_id, kind="service")
+    build_search_reviews(registry, backend, tenant_id)
     return registry

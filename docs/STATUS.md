@@ -39906,3 +39906,39 @@ CAN raise `notFound()` was touched — explicitly none.
 - readers: `apps/web/app/collections/loading.tsx`,
   `apps/web/app/guides/loading.tsx`,
   this ledger section.
+
+## 921. D921 — the seventh read-only tool ships: `search_reviews` (and the honest manifest moves to 7 of 24)
+
+**Goal.** The read-only tool bus declared 24 canonical §3 names but dispatched only six. `search_reviews`
+was the natural next candidate — its answer shape already exists in the same modules the six built on
+(`sql.reviews_for`'s builder was already shipped and unused in the tool lane, and `PostgresBackend` reads
+it the same way it reads `feedback_events`), so the lie was the tool's absence, not the data path's.
+
+**The fix.** `nexus_ai/tools/builtin.py` gains `build_search_reviews` — same spec cadence as the six:
+`PERMISSION_READ`, `cache_ttl_s=300`, read-only, `additionalProperties: false` input schema with
+`merchant_id` (required) and `limit` (1..50), exact-row passthrough output `{merchant_id, reviews, total}`.
+`PostgresBackend` and `StaticBackend` both gain a `reviews(merchant_ids, per_merchant=5)` accessor, the
+Protocol carries it too. `search_reviews` is registered on `register_read_tools` like the others; the
+`CANONICAL_TOOL_NAMES` manifest in `routes_system.py` reports it as implemented, and the honest note now
+names all seven dispatchable tools explicitly.
+
+**Verification.** `apps/ai/tests/test_search_reviews_tool.py` (new): 6/6 pass — dispatch returns the
+backend's rows verbatim with the loyal counts; the per_merchant limit is honored end-to-end; empty
+`merchant_id` and `{}` are `InvalidArguments`; an unknown key is `InvalidArguments`; no call swallows a
+backend failure silently (the accessor catches, logs, and returns `[]` per the lane's own rule); the
+seven dispatchable tools are exactly `{get_business_hours, get_price, get_user_preferences,
+search_merchants, search_services, search_products, search_reviews}`; the passthrough order is honored.
+`tests/test_a_tool_dispatch_is_the_only_data_path.py` (the shared fixture suite) — 47/47 pass with the
+new registration in place. Net: 53/53.
+
+**What this does NOT claim.** No 24/24: 17 canonical §3 names remain `implemented: false` on this plane,
+deliberately (they need offline-LLM behaviour and platform roles that do not exist here).
+`search_reviews` does not rank or summarise — it passes rows through. No claim that any review is real
+(the rows it returns are whatever the connected corpus contains; the demo corpus is synthetic per spec
+§110 and D6). The `routes_system.py` note is a text line, not a contract surface; nothing else reads it.
+
+- readers: `apps/ai/nexus_ai/tools/builtin.py` (the seventh builder + the registration),
+  `apps/ai/nexus_ai/search/service.py` (`reviews` on the Protocol and both backends),
+  `apps/ai/nexus_ai/api/routes_system.py` (the note names the seven),
+  `apps/ai/tests/test_search_reviews_tool.py`,
+  `docs/STATUS.md`.

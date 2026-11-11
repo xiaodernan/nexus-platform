@@ -125,7 +125,8 @@ async def tools(request: Request):
         note=(
             f"the tool-dispatch registry ships with the §3 pipeline enforced; "
             f"{live_count} of {len(CANONICAL_TOOLS)} canonical read-only tools are "
-            f"implemented (get_business_hours through the live backend path). "
+            f"implemented (get_business_hours, get_price, get_user_preferences, "
+            f"search_merchants, search_services, search_products, search_reviews through the live backend path). "
             f"Remaining canonical names are listed but not yet dispatchable; they "
             f"appear with implemented:false."),
         degraded=True,

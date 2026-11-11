@@ -92,6 +92,9 @@ class SearchBackend(Protocol):
 
     async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]: ...
 
+    async def reviews(self, merchant_ids: Sequence[str], per_merchant: int = 5
+                      ) -> list[dict[str, Any]]: ...
+
     async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None,
                                conversation_id: Any = None) -> list[dict[str, Any]]: ...
 
@@ -147,6 +150,19 @@ class PostgresBackend:
                                           schema=self.search_path)
         except Exception:  # pragma: no cover - telemetry must never break a search
             log.info("feedback read failed", exc_info=True)
+            return []
+
+    async def reviews(self, merchant_ids: Sequence[str], per_merchant: int = 5
+                      ) -> list[dict[str, Any]]:
+        if not merchant_ids:
+            return []
+        sql_text, params = S.reviews_for(merchant_ids, per_merchant)
+        if not sql_text:
+            return []
+        try:
+            return await self.db.readonly(sql_text, *params, schema=self.search_path)
+        except Exception:  # pragma: no cover - review must never break a dispatch
+            log.info("reviews read failed", exc_info=True)
             return []
 
     async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None,
@@ -274,6 +290,10 @@ class StaticBackend:
         return out
 
     async def feedback(self, user_id: str, subject_ids: Sequence[str]) -> list[dict[str, Any]]:
+        return []
+
+    async def reviews(self, merchant_ids: Sequence[str], per_merchant: int = 5
+                      ) -> list[dict[str, Any]]:
         return []
 
     async def user_preferences(self, user_id: str, kinds: Sequence[str] | None = None,
