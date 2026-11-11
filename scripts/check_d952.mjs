@@ -105,6 +105,10 @@ export function judge(files, present) {
     if (!t(p).includes(needle)) offenders.push(`MISSING — ${p}: ${label} (expected ${JSON.stringify(needle)})`);
     else notes.push(`held ${label}`);
   };
+  const hasRe = (p, re, label) => {
+    if (!re.test(t(p))) offenders.push(`MISSING — ${p}: ${label} (expected /${re.source}/)`);
+    else notes.push(`held ${label}`);
+  };
   const absent = (text, needle, label) => {
     if (text.includes(needle)) offenders.push(`DRIFT — the e2e segment: ${label} (forbidden ${JSON.stringify(needle)})`);
     else notes.push(`held ${label}`);
@@ -114,8 +118,13 @@ export function judge(files, present) {
     else notes.push(`held ${label}`);
   };
 
-  /* R1 — the e2e job really boots the compose plane. */
-  has(CI, 'docker compose -f infra/docker-compose.yml up -d postgres redis', 'R1 e2e boots data stores via the compose invocation');
+  /* R1 — the e2e job really boots the compose plane. D952-v2: pin the SEMANTICS, not the literal
+   * command — a later lane added `--wait` (up -d --wait postgres redis) to kill a seed race, which is
+   * a strict improvement and must NOT snap a coordinate gate. What matters is that the compose file is
+   * `infra/docker-compose.yml`, the action is `up -d`, and BOTH services postgres+redis are named on
+   * that one invocation. Requiring the literal `up -d postgres redis` was a needle that pointed at a
+   * byte string, not at the plane ownership claim the rule actually makes. */
+  hasRe(CI, /docker compose -f infra\/docker-compose\.yml up -d[^\r\n]*\bpostgres\b[^\r\n]*\bredis\b/, 'R1 e2e boots data stores via the compose invocation (flags like --wait are allowed)');
   has(CI, 'NEXUS_PLATFORM_URL: http://127.0.0.1:8080', 'R5 the e2e segment still pins the platform URL CI and the harness agree on');
 
   /* R2 — the compose plane's defaults, read from compose itself (a rename here must redden). */
@@ -217,7 +226,14 @@ if (SELF_TEST) {
     ['AI password -> ci_nexus_ai', mutate(CI, 'nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus', 'nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus')],
     ['AI database -> nexus_test', mutate(CI, "nexus_dev_ai_only@127.0.0.1:5433/nexus'", "nexus_dev_ai_only@127.0.0.1:5433/nexus_test'")],
     ['explicit platform coords erased', mutate(CI, "NEXUS_PLATFORM_DB_URL='jdbc:postgresql://127.0.0.1:5433/nexus' NEXUS_PLATFORM_DB_USERNAME=postgres NEXUS_PLATFORM_DB_PASSWORD=postgres ", '')],
-    ['compose invocation -> service container', mutate(CI, 'docker compose -f infra/docker-compose.yml up -d postgres redis', 'echo services: # compose removed')],
+    ['compose invocation -> service container', (() => {
+      // EOL/flag-agnostic: erase the whole compose invocation whatever flags it carries (--wait, etc.).
+      const f = new Map(real);
+      const next = f.get(CI).replace(/docker compose -f infra\/docker-compose\.yml up -d[^\r\n]*/, 'echo services: # compose removed');
+      if (next === f.get(CI)) return { skipped: 'compose invocation regex matched nothing' };
+      f.set(CI, next);
+      return { files: f };
+    })()],
     ['compose AI default renamed', mutate(COMPOSE, 'NEXUS_DB_AI_PASSWORD: ${NEXUS_DB_AI_PASSWORD:-nexus_dev_ai_only}', 'NEXUS_DB_AI_PASSWORD: ${NEXUS_DB_AI_PASSWORD:-ci_nexus_ai}')],
     ['compose superuser default renamed', mutate(COMPOSE, 'POSTGRES_PASSWORD: ${NEXUS_DB_ROOT_PASSWORD:-postgres}', 'POSTGRES_PASSWORD: ${NEXUS_DB_ROOT_PASSWORD:-ci_secret}')],
     ['CI entry deleted', (() => {

@@ -23,6 +23,16 @@
  * a duplicated id, a malformed line, a deleted CI/ATLAS/CLOUD entry, an empty census — and
  * requires EACH to redden while the real plane holds.
  *
+ * D954 — the self-test's own falsifiability was quietly broken. The three line-removal arms (missing
+ * smoke / gate / not_claimed) matched a hard-coded LF needle, but docs/cloud_claims.yaml is CRLF on
+ * a Windows worktree (LF on a Linux CI checkout), so on CRLF the `replace` was a NO-OP: the arm
+ * reported `caught: false` without the plane ever changing, and `check_cloud_claims --self-test`
+ * exited 1 while the reader's header still promised "a missing smoke reddens". Two repairs, neither
+ * touching `judge`'s census semantics: (1) line-removal needles are EOL-agnostic (`/^...\r?$/m`), so
+ * they bite on both CRLF and LF planes; (2) EVERY arm must demonstrably change the plane (a snapshot
+ * of all six files before vs after), otherwise it is a FAIL labelled `NO-OP (defect!)`, never a shrug.
+ * This is the meta-invariant: a gate whose own falsifier can silently no-op is not a falsifier.
+ *
  * Exit: 0 every census claim holds · 1 an offender.
  */
 import { existsSync, readFileSync } from 'node:fs';
@@ -187,10 +197,17 @@ function realPlane() {
 const selfTest = process.argv.includes('--self-test');
 if (selfTest) {
   const live = judge(realPlane());
+  // D954 — a corruption that does not actually CHANGE the plane is not a test; it is a no-op dressed
+  // as `caught: false`. The first three arms below used to carry a hard-coded LF needle, but this
+  // census file is CRLF on a Windows worktree (and LF on a Linux CI checkout), so `...sh\n` matched
+  // nothing, `replace` returned the text unchanged, and the arm silently reported `caught: false` —
+  // the README's "a missing smoke reddens" claim was false. Two fixes, both EOL-agnostic:
+  //   (1) line-removal needles use `/^... \r?$/m` so they bite on CRLF AND LF planes;
+  //   (2) EVERY arm must demonstrably change at least one plane file, or it is a FAIL, never a shrug.
   const cases = [
-    ['a claim loses its smoke', (p) => p.set(CLAIMS, p.get(CLAIMS).replace('  smoke: cloud_trace_smoke.sh\n', ''))],
-    ['a claim loses its gate', (p) => p.set(CLAIMS, p.get(CLAIMS).replace('  gate: check_cloud_trace_fallback.mjs\n', ''))],
-    ['a claim loses its not_claimed boundary', (p) => p.set(CLAIMS, p.get(CLAIMS).replace('  not_claimed: No collector, no span into a downstream, no real product failure, no route-miss case, no log correlation\n', ''))],
+    ['a claim loses its smoke', (p) => p.set(CLAIMS, p.get(CLAIMS).replace(/^  smoke: cloud_trace_smoke\.sh\r?$/m, ''))],
+    ['a claim loses its gate', (p) => p.set(CLAIMS, p.get(CLAIMS).replace(/^  gate: check_cloud_trace_fallback\.mjs\r?$/m, ''))],
+    ['a claim loses its not_claimed boundary', (p) => p.set(CLAIMS, p.get(CLAIMS).replace(/^  not_claimed: No collector, no span into a downstream, no real product failure, no route-miss case, no log correlation\r?$/m, ''))],
     ['an anchor no longer exists in CLOUD.md', (p) => p.set(CLAIMS, p.get(CLAIMS).replace('  honesty_anchor: No trace collector', '  honesty_anchor: this phrase is nowhere on the page'))],
     ['a smoke points at a nonexistent script', (p) => p.set(CLAIMS, p.get(CLAIMS).replace('  smoke: cloud_ha_failover_smoke.sh', '  smoke: missing_failover_smoke.sh'))],
     ['a duplicate claim id', (p) => p.set(CLAIMS, p.get(CLAIMS).replace('- id: D897', '- id: D896'))],
@@ -202,10 +219,18 @@ if (selfTest) {
     ['CLOUD.md gains an unbound smoke', (p) => p.set(CLOUD_DOC, `${p.get(CLOUD_DOC)}\n| \`unbound_smoke.sh\` | a proof no claim knows about |\n`)],
     ['the census is emptied', (p) => p.set(CLAIMS, '# nothing here\n')],
   ];
+  const snapshot = (plane) => FILES.map((rel) => `${rel}=${plane.get(rel) ?? ''}`).join('\u0000');
   let allCaught = true;
   for (const [label, corrupt] of cases) {
     const plane = realPlane();
+    const before = snapshot(plane);
     corrupt(plane);
+    // D954 — a needle that misses changes nothing; that is a broken arm, not a caught one. Refuse it.
+    if (snapshot(plane) === before) {
+      console.log(`  self-test  ${label.padEnd(44)} NO-OP (defect!) — the corruption never changed the plane`);
+      allCaught = false;
+      continue;
+    }
     const caught = judge(plane).offenders.length > 0;
     console.log(`  self-test  ${label.padEnd(44)} caught: ${caught}`);
     if (!caught) allCaught = false;
@@ -216,7 +241,7 @@ if (selfTest) {
   const ok = allCaught && emptyCaught && live.offenders.length === 0 && live.notes.length > 20;
   console.log(ok
     ? '\nRESULT: PASS — every planted corruption reddens and the real census holds'
-    : '\nRESULT: FAIL — a corruption was not caught, or the real census is red');
+    : '\nRESULT: FAIL — a corruption was not caught,was a no-op, or the real census is red');
   if (live.offenders.length) for (const o of live.offenders.slice(0, 25)) console.log(`  - ${o}`);
   process.exit(ok ? 0 : 1);
 }
