@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any
 
 from nexus_ai.orchestrator.planner import Plan
 from nexus_ai.tools.registry import ToolError

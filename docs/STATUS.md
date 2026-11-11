@@ -39349,3 +39349,53 @@ authority, and watches are cheap.
 - readers: `.github/workflows/ci.yml` (the `changes` job's `p()` + fallback; no other wiring touched),
   `data/seed/load.sh` (`USER` now reads `NEXUS_SEED_USER`/`PGUSER`/`postgres`),
   This ledger section.
+
+## 907. D907 — CI run #2 surfaced three more blind spots: ruff's two F401s, a secrets scanner failing on its own fixtures, and a `required` gate that did not require half this repo
+
+**Goal.** Run #2 (`42994934216`, head `14d8ba020`) did what D906 pre-wrote: it executed more of the
+pipeline than ever before, and it found three things that needed fixing before a fourth run could be
+meaningful. `ai` FAILED on the `ruff` step with exactly two findings — `nexus_ai/orchestrator/executor.py`
+imported `Mapping` unused, and `tests/test_the_orchestrator_plans_the_min_necessary_steps.py` imported
+`pytest` unused. Both removed; ruff is local-clean and the pre-existing defect had nothing to do with any
+D9xx change. `security` FAILED at the gitleaks step with exactly three findings, all of which are
+fixtures-by-design or prose, never a credential:
+
+- `data/seed/falsifier_plants.py:100` — `"UPDATE users SET password_hash = '<...>'"` — an adversarial
+  falsifier fixture (that is the file's entire reason to exist; the security readers depend on it being
+  present and unmodified);
+- `data/seed/falsifier_plants.py:538` — the planted `nx_*` API key — same fixture class;
+- `docs/STATUS.md:37378` — `generic-api-key` entropy heuristic matching an environment-variable spelling
+  inside the D856 ledger paragraph. Nothing in the file at that line is configuration material.
+
+Fix: a repo-owned `.gitleaks.toml` (new). `[allowlist]` exempts `data/seed/falsifier_plants.py` wholesale
+(documented as synthetic); the `generic-api-key` rule alone is exempted in `docs/STATUS.md` alone (a
+`[[rules]] id = "generic-api-key"` extension, one path, one rule — every other rule still scans the
+ledger; every other path still gets this rule). If either exemption hides a real finding later, that is a
+bug in this file and the security lane is how to close it.
+
+Two further defects found while reading the job steps, fixed here rather than waiting for run #3 to trip
+over them: (1) the `required` aggregator asserted only `cloud`, `e2e`, `contract-drift` — `lint-type`,
+`platform`, `ai`, `security` were NOT checked, so `required` printed success with `ai` red (observed in
+run #2); it now fails on any `failure` among all seven (shape unchanged otherwise — a legitimately skipped
+job is not a failure, and `if: always()` still makes `required` itself report rather than silently drop
+out). (2) the `security` job's pip-audit invocation (`uvx pip-audit -r apps/ai/pyproject.toml`) has been
+a SILENT no-op since creation — `-r` means a requirements file, and pointing it at TOML made it exit 1 on
+every run behind `|| true`. It now exports the locked dependency closure (`uv export --project apps/ai
+--no-emit-project --no-hashes`) and audits THAT, still soft-failing by deliberate policy (the non-negotiable
+hard gate is the test suite), but at least it is an audit now instead of a hatch.
+
+**The full record of run #2:** `changes` success, `contract-drift` success, `ai` FAILURE (two F401s),
+`security` FAILURE (three scanner fixtures/prose), `e2e` SKIPPED (correct `if` behavior — `ai` failed),
+`platform`/`lint-type`/`cloud` SKIPPED (diff did not touch their paths — this run did not test them),
+`required` SUCCESS — the exact bug fixed in this section. Separately recorded, not pretended fixed by this
+unit: that D906's fixes were never exercised by a live CI run (this push is the first), so the seed-load
+`$USER` bug's CI behavior remains verified only by reading bash, and D904's `cloud_lb_smoke.sh` still has
+never run anywhere (its `cloud` job path didn't even trigger for this diff).
+
+**What this section does NOT claim.** That CI is green after this push. That gitleaks findings in future
+runs will be correct (only today's three are understood). That the two F401 fixes were reviewed by anyone
+but the compiler. That pip-audit will report zero vulnerabilities; it is advisory.
+
+- readers: `.github/workflows/ci.yml` (`required` + pip-audit steps), `.gitleaks.toml` (new),
+  `apps/ai/nexus_ai/orchestrator/executor.py` (unused import removed),
+  `apps/ai/tests/test_the_orchestrator_plans_the_min_necessary_steps.py` (unused import removed).

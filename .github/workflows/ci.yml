@@ -494,7 +494,11 @@ jobs:
         with: { node-version: 24 }
       - run: npm audit --audit-level=high --workspaces --if-present || true
       - uses: astral-sh/setup-uv@v5
-      - run: uvx pip-audit -r apps/ai/pyproject.toml --desc on || true
+      # pip-audit's `-r` means a REQUIREMENTS file; pointing it at pyproject.toml made it exit 1 on
+      # every run since creation, and `|| true` swallowed it — the audit had never audited anything.
+      # Export the locked dependencies and audit those; still soft-failing by policy (this is not the
+      # hard gate; the hard gate is the unit suites), but at least it is an audit now.
+      - run: uvx pip-audit -r <(uv export --project apps/ai --no-emit-project --no-hashes) --desc on || true
       - name: Secret scan (hard fail — spec §131)
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -513,6 +517,12 @@ jobs:
       - name: All gates green
         run: |
           echo "results: lint-type=${{ needs.lint-type.result }} platform=${{ needs.platform.result }} ai=${{ needs.ai.result }} cloud=${{ needs.cloud.result }} e2e=${{ needs.e2e.result }} contract-drift=${{ needs.contract-drift.result }} security=${{ needs.security.result }}"
+          # Every job that ran must have succeeded or been legitimately skipped for being
+          # unaffected by this push. A skipped job is NOT a failure; a FAILED job is.
           test "${{ needs.cloud.result }}" != "failure"
           test "${{ needs.e2e.result }}" != "failure"
           test "${{ needs.contract-drift.result }}" != "failure"
+          test "${{ needs.lint-type.result }}" != "failure"
+          test "${{ needs.platform.result }}" != "failure"
+          test "${{ needs.ai.result }}" != "failure"
+          test "${{ needs.security.result }}" != "failure"

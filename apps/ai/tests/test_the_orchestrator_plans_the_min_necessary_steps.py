@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from nexus_ai.orchestrator import ExecutionReport, Plan, PlannedStep, execute_plan, plan_tools
 from nexus_ai.tools.builtin import register_read_tools
 from nexus_ai.tools.registry import Registry
