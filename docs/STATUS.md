@@ -40592,3 +40592,55 @@ intermediaries, not for tab behaviour.
   `services/platform/src/test/java/com/nexus/platform/CacheControlFilterTest.java` (5/5),
   `services/platform/src/test/java/com/nexus/platform/CacheControlHeaderTest.java` (1/1 HTTP),
   this ledger entry.
+
+## 936. D936 — V12: the §106 retention tick and the merchant key list stop walking whole tables
+
+**Goal.** The mandate includes database performance and reasonable cache/index use. Reading the D925
+RetentionSweeper's one read against the live schema found the first honest seq-scan in a path that
+runs forever: `deletion_requests` shipped with only the primary key, so the §106 tick's
+`WHERE status = 'pending' AND created_at < now() - :age ORDER BY created_at LIMIT n` would table-scan
+a table whose entire job is to grow without bound. Reading the merchant key door against the same
+head found the second: `GET /api/v1/merchant/api-keys` joins `api_keys` on `merchant_id`, but the
+only index on the table is `key_hash`'s unique — fine for `verify()`, useless for the list.
+
+**Measured first.** Against the live demo database on this host (`nexus`, 32,612 slots and all):
+- `deletion_requests`: indexes = `deletion_requests_pkey` only.
+- `api_keys`: `api_keys_pkey` + `api_keys_key_hash_key` only.
+- **btree_gist exclusion constraint (considered, then honestly rejected):** the DATABASE.md/ROADMAP
+  §"Reservations double-booking" open question asked for an `EXCLUDE (pool_id, tstzrange)` on
+  `availability_slots`. Measured on the seeded demo data: **231 pool groups hold 20,745 overlapping
+  pairs** — the synthetic corpus creates pool sessions that legitimately overlap by design, each slot
+  row carries its own `capacity_left`, and the ACTUAL double-booking invariant is already enforced by
+  V2's `availability_slots_capacity_bounds` CHECK + the one-live-hold-per-user-per-slot partial unique
+  index + the service's atomic `capacity_left >= party_size` guarded decrement inside one transaction.
+  Adding the exclusion constraint would invalidate the seeded corpus and every falsifier pinned to it.
+  A ledger entry recording the question was answered with measurements, not with a migration.
+
+**The fix.** `infra/db/migrations/V12__sweeper_and_key_list_indexes.sql` — three `IF NOT EXISTS`
+indexes, additive only, no rows/constraints/views touched, exactly the V10/V11 pattern:
+- `deletion_requests_pending_idx` on `(created_at) WHERE status = 'pending'` — the sweeper's predicate,
+  including the per-user lane (`AND user_id = :user` just narrows inside the scan);
+- `deletion_requests_user_idx` on `(user_id, created_at DESC)` — the per-user sweep lane / any
+  subject-status read of its own deletion requests;
+- `api_keys_merchant_idx` on `(merchant_id, created_at DESC)` — covers both the join filter and the
+  `order by created_at desc` of the list door.
+`services/platform`'s `maven-resources:copy-resources` ships `infra/db/migrations/*.sql` onto the
+classpath, so Flyway picks V12 up at boot; both DBs are applied via `scripts/db_apply_migrations.sh`.
+
+**Verification.** Applied to BOTH `nexus` and `nexus_test` on this host (the script's summary prints
+`migrations=12` both times). EXPLAIN on both DBs then shows the retention tick as an **Index Scan using
+`deletion_requests_pending_idx`** (`Index Cond: (created_at < now() - '30 days'::interval)`). The key
+list on `nexus` answers via **`Bitmap Heap Scan` + `Bitmap Index Scan on api_keys_merchant_idx`**; on
+the empty `nexus_test` table the planner correctly prefers a seq scan (no rows to find — no
+misrepresentation here, stated as measured, not asserted).
+
+**What this does NOT claim.** No load test ran; no query-latency number was recorded; V12 will also be
+re-applied by Flyway at the next boot as a no-op (`IF NOT EXISTS`) — idempotent by construction, but
+that path was not executed this session. The exclusion-constraint question remains OPEN by design (its
+blocker is the demo corpus, not the schema); if the demo ever adopts non-overlapping pool sessions,
+the constraint becomes applicable and must be re-proposed then.
+
+- readers: `infra/db/migrations/V12__sweeper_and_key_list_indexes.sql`, this ledger entry,
+  `services/platform/src/main/java/com/nexus/identity/RetentionSweeper.java` (the predicate the
+  pending index serves), `services/platform/src/main/java/com/nexus/merchant/ApiKeyService.java`
+  (the list door the composite index serves).
