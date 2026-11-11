@@ -36,6 +36,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Mapping, Sequence
 
@@ -48,11 +49,21 @@ class _Cache:
     Side-effect tools bypass it entirely; specs whose `cache_ttl_s` is 0 never enter it;
     args that cannot be JSON-canonically dumped never enter it either. The life of a hit
     is bounded by the spec's `cache_ttl_s`, never beyond.
+
+    D903: the store is a bounded LRU (`OrderedDict`, O(1) recency + eviction), not an
+    unbounded dict. Without a cap a long-lived process retained one entry per distinct
+    argument dict forever; TTL was checked only on read, so expired entries lingered
+    until something happened to read them. A write now reclaims expired entries and
+    evicts the least-recently-used once `max_entries` is reached, so both memory and the
+    sweep cost are bounded by the cap rather than by the number of distinct args seen.
     """
 
-    def __init__(self, clock: Callable[[], float]) -> None:
+    def __init__(self, clock: Callable[[], float], max_entries: int = 4096) -> None:
+        if max_entries < 1:
+            raise ValueError("max_entries must be >= 1")
         self._clock = clock
-        self._store: dict[tuple[str, str], tuple[float, Any]] = {}
+        self._max = max_entries
+        self._store: OrderedDict[tuple[str, str], tuple[float, Any]] = OrderedDict()
 
     def _key(self, *, spec: ToolSpec, arguments: Mapping[str, Any]) -> tuple[str, str] | None:
         try:
@@ -73,13 +84,20 @@ class _Cache:
         if self._clock() >= expires_at:
             del self._store[ck]
             return _MISS
+        self._store.move_to_end(ck)
         return value
 
     def set(self, *, spec: ToolSpec, arguments: Mapping[str, Any], value: Any) -> None:
         ck = self._key(spec=spec, arguments=arguments)
         if ck is None:
             return
-        self._store[ck] = (self._clock() + spec.cache_ttl_s, value)
+        now = self._clock()
+        for key in [k for k, (exp, _v) in self._store.items() if now >= exp]:
+            del self._store[key]
+        self._store[ck] = (now + spec.cache_ttl_s, value)
+        self._store.move_to_end(ck)
+        while len(self._store) > self._max:
+            self._store.popitem(last=False)
 
 
 #: sentinel for "no cache hit" — identity-compared only, never leaked out.

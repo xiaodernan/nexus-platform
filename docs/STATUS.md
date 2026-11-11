@@ -39203,3 +39203,32 @@ limiter emits AFTER trace headers — verified order).
   `docs/CONTINUITY_PLAN.md` (Phase H, H1),
   `docs/cloud_claims.yaml` (the D900 claim + honesty anchor),
   `scripts/fixture_insight_upstream.py` (the trace smoke's additive log field).
+
+## 903. D903 — the AI tool-result cache becomes a bounded LRU with a write-side sweep of expired entries
+
+**Goal.** The AI service's tool-result cache (`nexus_ai/tools/registry.py::_Cache`) was a plain dict. Its
+`cache_ttl_s` was checked only on read, so a long-lived process retained one entry per distinct argument
+dict forever, and entries whose TTL had passed lingered until something happened to read them (measured:
+5000 distinct args → 5000 retained, none swept). This is AGENT_CONTRACT §3 (the optimization lane), and
+it is the same failure mode the platform's own cache audits have been closing one lane at a time.
+
+**The fix.** `_Cache` now holds an `OrderedDict` keyed as before. Reads call `move_to_end` so the store
+is LRU-ordered; `set` first reclaims every entry whose `cache_ttl_s` has already expired (a write-side
+sweep, so expired garbage no longer rides along of its own accord), then writes and re-orders, then
+evicts the least-recently-used entry while the size exceeds the bound (default `max_entries=4096`). The
+bound is per-process and entry-count based — the constructor rejects `max_entries < 1`. `_MISS` identity
+semantics, side-effect tool bypass, `cache_ttl_s == 0`, and un-dumpable arguments are unchanged.
+
+**Verification.** `apps/ai/tests/test_d903_cache_is_bounded.py` — 4/4 pass with a fake clock and a
+small cap: R1 the store never exceeds `max_entries` (newest kept, eldest evicted), R2 a read makes an
+entry most-recent so eviction takes the true LRU, R3 a write reclaims expired entries while keeping
+live ones, R4 TTL hit/miss boundary semantics are unchanged.
+
+**What stops here and what does not.** This is a process-local bound: it caps ENTRIES, not bytes — a
+single oversized cached value is retained as one entry, and nothing here defends against a huge reply.
+It does not provide a cross-process cache (Redis remains the D… shared-cache lane), an eviction metric,
+or byte accounting. Tool specs opt into the cache only by declaring `cache_ttl_s > 0`; mutating tools
+never enter it. No claim is made about cache hit rates — this unit bounds the cost of misses.
+
+- readers: `apps/ai/nexus_ai/tools/registry.py`,
+  `apps/ai/tests/test_d903_cache_is_bounded.py`.
