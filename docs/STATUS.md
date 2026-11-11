@@ -39139,3 +39139,67 @@ writer's hook, and no runtime writer exists today.
   `services/platform/src/main/resources/application.yml`,
   `services/platform/src/test/java/com/nexus/platform/TenantCachePenetrationTest.java`,
   `services/platform/src/test/java/com/nexus/platform/TenantNegativeCacheHttpTest.java`.
+
+## 900. D900 — the fifth service joins the W3C trace plane: `nexus-insight` propagates ONE caller context through a Feign boundary
+
+**Goal.** D884 made the edge the plane's only trace-id ORIGIN and the FastAPI service a participant. D900 adds the fifth,
+`nexus-insight` — the one service that actually CALLS others. It is a participant, not an origin: a STRICT version-00
+`traceparent` (lowercase hex; all-zero ids refused — D884's grammar), continues the caller's trace id under a NEW child
+span for itself, and propagates that context onto every Feign outbound call. It mints NOTHING when the inbound context
+is absent or malformed.
+
+**The discovery, measured on this host.** `InsightTraceConfig` was designed with a servlet `Filter` that sets the child
+in a `ThreadLocal`, plus a loosely-registered `@Bean RequestInterceptor` bean that reads it. The unit tests passed
+(drive the filter and interceptor manually — `setOutbound(...)` in `InsightTraceConfigTest`), but the live smoke was
+**red**: the fixture logged `traceparent=None`. The interceptor FIRED on a DIFFERENT thread than the DispatcherServlet
+that set the ThreadLocal — the Spring `FeignCircuitBreakerInvocationHandler.asSupplier` captures the caller's
+`RequestContextHolder.getRequestAttributes()` and `Thread.currentThread()` at build time, then a `FutureTask` dispatches
+via `pool-2-thread-N` (an `Executors.newCachedThreadPool` created by the default TimeLimiter) — and the interceptor
+runs on THAT worker with the request attributes available but NOT the ThreadLocal. Printing thread names in the probe
+confirmed it: `[PROBE-filter] … path=/insight/plane thread=http-nio-19567-exec-N` vs `[PROBE] interceptor invoked;
+thread=pool-N-thread-M  OUTBOUND=null`.
+
+**The fixes (in order of attempt).** (1) Added `Spring Cloud Feign` global `defaultConfiguration` with a `Defaults`
+class holding the same interceptor — still red; Spring Cloud OpenFeign does not auto-adopt loosely-registered
+interceptor beans in this version either, but explicit `defaultConfiguration = InsightTraceConfig.Defaults.class`
+on `@EnableFeignClients` wires every client the module declares. (2) Tried `spring.cloud.circuitbreaker.resilience4j
+.disable-timelimiter=true` — didn't resolve the executor boundary (different pool). (3) **The real fix**: store the
+child context in a REQUEST-SCOPE attribute on the incoming `HttpServletRequest`; Spring propagates the request
+attributes across the executor boundary (proven in `asSupplier` — `setRequestAttributes` on the worker thread from the
+caller-thread attributes); the interceptor reads `RequestAttributes.SCOPE_REQUEST` with `RequestContextHolder
+.getRequestAttributes()` and copies it onto the Feign template. `ThreadLocal` removed entirely; the previous thread-
+boundary hypothesis was wrong about which mechanism Spring was actually using, and the new one relies on the same
+boundary window but in a shape Spring does propagate. The `disable-timelimiter` override from (2) was REMOVED once
+(3) proved the attribute mechanism independent of the executor; the smoke re-ran GREEN with the default TimeLimiter,
+so the shipped configuration carries no such override.
+
+**Verification.** `scripts/insight_trace_smoke.sh` PASSES (live Eureka prefix-instance ids; both registered fixtures
+log the child `traceparent`; phase A proves `all_up=true` and `X-Trace-Id=$trace` in response headers; phase B the
+DEGRADED arm echoes the SAME trace id; `scripts/falsify_insight_trace_smoke.sh` PASSES (participation off → the SAME
+wire assertion reddens with the plane healthy). `InsightTraceConfigTest` 7/7 pass. `scripts/check_cloud_insight_trace.mjs
+--self-test` PASSES (all 11 planted corruption cases redden; the empty plane is refused; the real plane holds).
+
+**Doc contract.** `docs/CLOUD.md` gains a D900 proof row and a `NOT claim` paragraph ("Propagation is not export — no
+collector, no backend anyone can query"); `docs/ATLAS.md` gains the D900 rows (the reader + both smokes). `.github/
+workflows/ci.yml` chain gains `check_cloud_insight_trace.mjs --self-test` (Edge wiring reads line) and the two D900
+smokes plus their results into `insight` script chain.
+
+**What stops here and what does not.** No OTLP exporter, no collector, no backend — explicit `NOT claim` row in
+`CLOUD.md`. The trace is only as good as what the fixture logs: an instrumented downstream log is a trace, but the
+plane has no such downstream. The interceptor does not mint survivors when callers send a malformed or missing header;
+a 503/429 degraded answer DO still carries the echoed `X-Trace-Id` (limiter runs at `+10`, tracing filter at `+1`,
+limiter emits AFTER trace headers — verified order).
+
+- readers: `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/InsightTraceConfig.java`,
+  `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/InsightServiceApplication.java`,
+  `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/AiHealthClient.java`,
+  `services/cloud/insight-service/src/main/java/com/nexus/cloud/insight/PlatformHealthClient.java`,
+  `services/cloud/insight-service/src/test/java/com/nexus/cloud/insight/InsightTraceConfigTest.java`,
+  `scripts/insight_trace_smoke.sh`, `scripts/falsify_insight_trace_smoke.sh`,
+  `scripts/check_cloud_insight_trace.mjs`,
+  `docs/CLOUD.md` (gate + NOT claim + 51-check row),
+  `docs/ATLAS.md` (D900 rows),
+  `.github/workflows/ci.yml` (wiring reads + smoke chain),
+  `docs/CONTINUITY_PLAN.md` (Phase H, H1),
+  `docs/cloud_claims.yaml` (the D900 claim + honesty anchor),
+  `scripts/fixture_insight_upstream.py` (the trace smoke's additive log field).

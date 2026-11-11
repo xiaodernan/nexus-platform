@@ -18,7 +18,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  */
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(defaultConfiguration = InsightTraceConfig.Defaults.class)
 public class InsightServiceApplication {
 
     public static void main(String[] args) {

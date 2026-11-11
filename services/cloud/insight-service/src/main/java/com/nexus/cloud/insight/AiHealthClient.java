@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
  * opt-in (D877); when it has not, the name resolves to no instance and the fallback answers — which
  * is precisely the state this client should report, not hide.
  */
-@FeignClient(name = "NEXUS-AI", fallback = AiHealthFallback.class)
+@FeignClient(name = "NEXUS-AI", fallback = AiHealthFallback.class,
+        configuration = InsightTraceConfig.Defaults.class)
 public interface AiHealthClient {
 
     @GetMapping("/ai/v1/health")

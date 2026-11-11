@@ -114,7 +114,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == HEALTH_PATH:
             with _state_lock:
                 status = state['status']
-            print(f'SERVE {self.path} status={status} app={APP}', flush=True)
+            # D900: the trace smoke greps this line for the propagated traceparent. The rest of
+            # the plane only greps the `SERVE <path>` prefix, so the extra field is additive.
+            print(f'SERVE {self.path} status={status} app={APP} '
+                  f'traceparent={self.headers.get("traceparent")}', flush=True)
             self._json(200, {'status': status, 'fixture': APP, 'instance': INSTANCE_ID})
             return
         if self.path == '/__control/ping':

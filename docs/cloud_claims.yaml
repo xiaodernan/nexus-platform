@@ -143,6 +143,14 @@
   not_claimed: No recovery to CLOSED, half-open timing, production thresholds, or a real platform/AI product failure was measured
   honesty_anchor: D899's breaker tuning is measured on ONE throwaway process
 
+- id: D900
+  claim: The fifth service joins the W3C trace plane; ONE inbound context reaches both declarative upstreams through the Feign boundary
+  smoke: insight_trace_smoke.sh
+  falsifier: falsify_insight_trace_smoke.sh
+  gate: check_cloud_insight_trace.mjs
+  not_claimed: Propagation is not export — no OTLP collector, span storage, backend or span tree anyone can query exists; a 503/429 degraded answer still carries the echoed trace id
+  honesty_anchor: No trace collector
+
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane
   smoke: cloud_smoke.sh

@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
  * instead of mistaking a breaker response for a live service (the platform's "real data or nothing"
  * rule, applied to health).
  */
-@FeignClient(name = "NEXUS-PLATFORM", fallback = PlatformHealthFallback.class)
+@FeignClient(name = "NEXUS-PLATFORM", fallback = PlatformHealthFallback.class,
+        configuration = InsightTraceConfig.Defaults.class)
 public interface PlatformHealthClient {
 
     @GetMapping("/api/v1/health")

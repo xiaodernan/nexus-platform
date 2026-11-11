@@ -115,6 +115,9 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_cloud_ha_failover.mjs` | D897: the empty-cache anti-false-positive design, the primary kill, the LATE registration on the secondary, the single-registry falsifier, the NOT-SHIPPED honesty clause, and nine planted corruptions |
 | `scripts/check_cloud_claims.mjs` | D898: the machine-readable claim census — restricted-YAML grammar, four-element completeness, script/reader existence, CI/CLOUD/ATLAS wiring, honesty anchors, a reverse census, and 13 planted corruptions |
 | `scripts/check_cloud_insight.mjs` | D885–D889: fifth reactor module, Feign-by-name clients, honest fallbacks, registry/lease shape, D887 live-upstream smoke assertions, D889 config import/`@RefreshScope`, compose, CI, docs, free-or-ours probe of :19555 |
+| `scripts/check_cloud_insight_trace.mjs` | D900: the fifth service (`nexus-insight`) joins the W3C trace plane as a participant — strict version-00 `traceparent` grammar, trace id preserved end-to-end through the Feign boundary, child span minted per hop, `X-Trace-Id` echoed on the response, the disabled-participation falsifier must redden |
+| `scripts/insight_trace_smoke.sh` | D900: wire proof — one caller traceparent reaches BOTH `lb://` upstreams; each live fixture logs the received context; phase B degraded arm echoes the SAME trace id on fallback |
+| `scripts/falsify_insight_trace_smoke.sh` | D900: turning participation off makes the trace smoke exit non-zero, with the healthy 200 control proving the red is attributable to missing participation |
 | `scripts/check_plane_coordinates.mjs` | the URLs the browser harness reads |
 | `scripts/check_reader_reachability.mjs` | every shipped reader is reachable from a runner |
 | `scripts/check_contract_drift.mjs` | undocumented routes, client-only routes, missing served paths |

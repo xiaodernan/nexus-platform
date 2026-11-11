@@ -136,6 +136,20 @@ Still open from earlier phases and deliberately NOT folded into G: `btree_gist` 
 CJK recall measurement, the real-provider eval lane, Docker verification (D853), and the three
 ledger falsifier arms whose timeout-less spawn pattern makes them impractical on this host (D893).
 
+### Phase H — the next seams (planned, not started)
+
+Phase G closed five of its seven named seams. G4 (Spring Cloud Bus) and G6 (OTLP export) remain
+open because they need infrastructure a throwaway smoke cannot invent: a real broker and a real
+collector. H is ordered by what this host can prove WITHOUT either, and none of it is promised:
+
+| # | Unit | Acceptance |
+|---|---|---|
+| H1 | **The fifth service joins the W3C trace plane.** D884 made the edge the only trace-id origin and the FastAPI service a participant, but `nexus-insight` — the one component that actually CALLS two other services — is still trace-blind. Add a strict participant filter plus a Feign `RequestInterceptor` so an inbound `traceparent` reaches BOTH `lb://` upstreams and is echoed even when the fallback answers | a wire-level smoke whose two live fixtures log the header they received, a degraded arm, and a falsifier arm that disables propagation; the service must still MINT nothing |
+| H2 | **Eureka lease eviction, measured.** D894 explicitly left stale-replica eviction unmeasured. Register a fixture, kill it, and read `/eureka/apps` until the lease expires — or record the measured blocker | the instance disappears within the documented 5s/10s lease, with a no-eviction arm that reddens |
+| H3 | **resilience4j Micrometer counters.** D895 and D899 both left "metrics counters NOT measured" open. Read `/actuator/metrics/resilience4j.circuitbreaker.calls` after D899's driven calls and compare with the actuator's `bufferedCalls` | the counter and the state agree on the SAME instance names, or a written reason why the meter is absent |
+| H4 | **Bus / OTLP, only after measuring the infrastructure.** First ask whether a broker or collector is reachable on this host; if not, record the blocker rather than declaring a feature | no claim of broadcast without two instances, no claim of export without a queried span |
+| H5 | **Docker plane, re-measured (D853).** Compose's `cloud` profile is correct on paper; the containers never left `Created` on a saturated daemon | containers actually run and answer, or a fresh host blocker is written down |
+
 ## Cadence
 
 Every unit ends with: run its gate and smoke → append the numbered `STATUS.md` section with a
