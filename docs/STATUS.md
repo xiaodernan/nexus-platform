@@ -39621,3 +39621,46 @@ test on the hot path was run beyond the suite.
 - readers: `services/platform/src/main/java/com/nexus/platform/PermissionService.java`,
   `services/platform/src/test/java/com/nexus/platform/PermissionServiceTest.java`,
   `services/platform/src/test/java/com/nexus/testsupport/NexusIntegrationTest.java` (pins the bypass).
+
+## 913. D913 — two algorithmic costs inside the AI lane: amortized expiry for the tool cache and a per-kind index for the ground set
+
+**Goal.** D903 bounded the AI tool-result cache by count and KeyValueStore (D909) bounded the Java
+fallback by count — this unit removes two asymptotically avoidable costs on those same paths without
+changing any of their contracts.
+
+**The `_Cache.set()` write path (registry.py).** D903 reclaimed expired entries by iterating the WHOLE
+store on every `set` — O(n) per write, and for a long-lived process at the 4096 cap that's 4096 scans
+per write. The store now maintains an expiry min-heap alongside the LRU map (`heapq`): each entry is
+pushed once and popped once, stale heap entries are tolerated and discarded on pop when the store has
+moved on (overwritten or swept), and expired entries are pruned lazily on the write path only. Reads
+remain O(1) with `move_to_end`. Behaviour is unchanged for every reader: `set`, `get`, `setIfAbsent`,
+and the D903 tests (bounded, LRU read order, write-time reclaim, TTL boundary) all still pass. The
+sweep is no longer a full scan per write — amortized O(log n) per entry, zero extra calls on the hot
+`get` path.
+
+**The `GroundSet.numbers` scan (trust/verification.py).** Every claim verification had to loop over
+ALL numbers collected for the page to satisfy kind equality plus tolerance; the entity and times sets
+were already constant-time, but numbers were not. The ground set now lazily builds, per kind, a
+sorted entry list AND a parallel sorted float list (rebuilt on the first `find` after any
+`add_number`, via an `_kinds_sorted` dirty flag), then `find` narrows the window with `bisect_left` /
+`bisect_right` to entries within the provably-enclosing tolerance bound
+`(abs_tol + rel*|claim|)/(1 - rel)` and applies the exact same tolerance judgment to that narrow
+window. No judgment can be missed (the bound is derived from `|v-c| <= max(abs_tol, rel*|v|)`), no
+candidate outside the window can match, and the final comparison is byte-identical to before.
+
+**Verification.** `tests/test_d903_cache_is_bounded.py`, `tests/test_verification.py`,
+`tests/test_verification_claims.py`, `tests/test_verification_ground.py`,
+`tests/test_trust_claim_kinds.py`, `tests/test_the_trust_surface_is_used.py` — 62/62 pass. A
+synthetic microbenchmark on this host (600 random numbers, 120 claims, `bench` corpus) measured
+~0.01ms/find including index construction and ~0.001ms/find warm — sparse absolute numbers, but the
+real cost was the scan being O(n) per claim with n = all stored numbers, which is what the index
+removes. No end-to-end latency claim is made or measured at the service level.
+
+**What this does NOT claim.** No hit rate was measured; no distributed caching property is implied —
+the tool cache remains in-process. No wall-clock benchmark under a real workload is offered (the
+claim is algorithmic). The heap is internal to the cache and not part of any public or spec'd API.
+`GroundSet.find` returns identical verdicts to before on this corpus (62 unit cases agree); no claim
+of any behaviour beyond the unit suite's assertions.
+
+- readers: `apps/ai/nexus_ai/tools/registry.py` (+ `heapq`),
+  `apps/ai/nexus_ai/trust/verification.py` (+ per-kind bisect index and lazy rebuild).

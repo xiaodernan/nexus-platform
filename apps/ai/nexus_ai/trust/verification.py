@@ -23,6 +23,7 @@ They are deliberately tight (2% on money, 0.06 on ratings) so a *fabricated* pri
 from __future__ import annotations
 
 import re
+from bisect import bisect_left, bisect_right
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Iterable, Sequence
@@ -132,10 +133,17 @@ class GroundSet:
     strings: set[str] = field(default_factory=set)                         # times, names, labels
     times: set[int] = field(default_factory=set)                           # minute-of-day
     entities: set[str] = field(default_factory=set)                        # normalised names
+    # D913: kind -> sorted [values] companion to `numbers`, rebuilt lazily on first find after a
+    # rebuild round. Only the qualifier bisect depends on it; `find` still applies the exact
+    # tolerance check to the narrowed window, so behaviour is identical, only the window differs.
+    _by_kind: dict[str, list[tuple[float, str, str, Any]]] = field(default_factory=dict, init=False, repr=False)
+    _vals_by_kind: dict[str, list[float]] = field(default_factory=dict, init=False, repr=False)
+    _kinds_sorted: bool = field(default=False, init=False, repr=False)
 
     def add_number(self, value: float, attribute: str, fact_id: Any = None, *,
                    kind: str | None = None) -> None:
         self.numbers.append((float(value), kind or _attr_kind(attribute), attribute, fact_id))
+        self._kinds_sorted = False
 
     def add_string(self, value: str) -> None:
         v = value.strip()
@@ -166,8 +174,23 @@ class GroundSet:
         if claim.value is None:
             return (False, None, None)
         rel, abs_tol = TOLERANCE.get(claim.kind, TOLERANCE[NUMBER_KIND])
+        window = (abs_tol + rel * abs(claim.value)) / max(1e-9, 1.0 - rel)
+        if not self._kinds_sorted:
+            self._by_kind = {}
+            self._vals_by_kind = {}
+            for entry in self.numbers:
+                self._by_kind.setdefault(entry[1], []).append(entry)
+            for kind in self._by_kind:
+                self._by_kind[kind].sort(key=lambda t: t[0])
+                self._vals_by_kind[kind] = [c[0] for c in self._by_kind[kind]]
+            self._kinds_sorted = True
+        candidates = self._by_kind.get(claim.kind, [])
+        vals = self._vals_by_kind.get(claim.kind) if candidates else None
+        if vals:
+            lo, hi = bisect_left(vals, claim.value - window), bisect_right(vals, claim.value + window)
+            candidates = candidates[lo:hi]
         best: tuple[float, Any, float] | None = None
-        for value, entry_kind, _attr, fact_id in self.numbers:
+        for value, entry_kind, _attr, fact_id in candidates:
             if entry_kind != claim.kind:
                 continue
             diff = abs(value - claim.value)

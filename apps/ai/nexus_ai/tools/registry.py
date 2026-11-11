@@ -34,6 +34,7 @@ are refused outright.
 from __future__ import annotations
 
 import asyncio
+import heapq
 import json
 import time
 from collections import OrderedDict
@@ -64,6 +65,11 @@ class _Cache:
         self._clock = clock
         self._max = max_entries
         self._store: OrderedDict[tuple[str, str], tuple[float, Any]] = OrderedDict()
+        # D913: an expiry min-heap. Each entry is pushed exactly once, popped exactly once, so
+        # the heap operations are amortized O(log n) per write and O(1) per read. Lazy: stale
+        # (overwritten or delete-swept) heap entries are tolerated and detected on pop by checking
+        # the store still holds that exact (key, expires_at) pair.
+        self._expiry_heap: list[tuple[float, tuple[str, str]]] = []
 
     def _key(self, *, spec: ToolSpec, arguments: Mapping[str, Any]) -> tuple[str, str] | None:
         try:
@@ -87,14 +93,24 @@ class _Cache:
         self._store.move_to_end(ck)
         return value
 
+    def _sweep_expired(self, now: float) -> None:
+        while self._expiry_heap and self._expiry_heap[0][0] <= now:
+            expires_at, ck = heapq.heappop(self._expiry_heap)
+            entry = self._store.get(ck)
+            # discard stale heap entries — the store moved on, the key was overwritten,
+            # or it was already swept by this loop
+            if entry is not None and entry[0] == expires_at:
+                del self._store[ck]
+
     def set(self, *, spec: ToolSpec, arguments: Mapping[str, Any], value: Any) -> None:
         ck = self._key(spec=spec, arguments=arguments)
         if ck is None:
             return
         now = self._clock()
-        for key in [k for k, (exp, _v) in self._store.items() if now >= exp]:
-            del self._store[key]
-        self._store[ck] = (now + spec.cache_ttl_s, value)
+        self._sweep_expired(now)
+        expires = now + spec.cache_ttl_s
+        self._store[ck] = (expires, value)
+        heapq.heappush(self._expiry_heap, (expires, ck))
         self._store.move_to_end(ck)
         while len(self._store) > self._max:
             self._store.popitem(last=False)
