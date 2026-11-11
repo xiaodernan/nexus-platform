@@ -47,9 +47,25 @@ export default async function HomePage(props: {
   return (
     <>
       <section className="relative overflow-hidden border-b border-line bg-surface">
-        <Container size="shell" className="flex flex-col gap-7 py-14 sm:py-20">
+        {/* One visual moment, no new copy: two low-alpha gradient glows anchored to the page corners
+            give the hero a sense of depth in both light and dark themes without touching tokens. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(64rem 38rem at 88% -18%, rgb(var(--nexus-accent-rgb) / 0.14), transparent 65%), ' +
+              'radial-gradient(46rem 30rem at -12% 28%, rgb(var(--nexus-accent-rgb) / 0.09), transparent 60%)',
+          }}
+        />
+        <Container size="shell" className="relative flex flex-col gap-7 py-14 sm:py-20">
           <Reveal>
-            <span className="text-2xs font-semibold uppercase tracking-wide text-accent">{dict.home.eyebrow}</span>
+            <span className="flex items-center gap-2">
+              <span aria-hidden="true"
+                    className="h-2 w-2 rounded-full shadow-xs ring-1 ring-inset ring-black/10"
+                    style={{ background: 'var(--nexus-ai-gradient)' }} />
+              <span className="text-2xs font-semibold uppercase tracking-wide text-accent">{dict.home.eyebrow}</span>
+            </span>
             <h1 className="mt-2 max-w-[22ch] text-4xl font-semibold leading-[1.12] tracking-tight text-ink-strong sm:text-5xl lg:text-6xl">
               {dict.home.title}
             </h1>

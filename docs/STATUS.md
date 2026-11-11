@@ -39989,3 +39989,43 @@ no-op cache incoherence windows); the tier is a convenience, not a consistency m
   `apps/ai/pyproject.toml`, `apps/ai/uv.lock`,
   `apps/ai/tests/test_redis_shared_cache.py`,
   `docs/STATUS.md`.
+
+## 923. D923 — the home hero gets its one visual moment: two low-alpha accent glows and a gradient signature dot on the eyebrow (no copy invented)
+
+**Goal.** The home page is the mandate's visual premiere and had eyebrow copy, a search box and rails,
+but no visual signature of its own — it read like a well-laid terminal, not a product. §78 design rules
+permit one tasteful moment; this unit ships exactly one and no more.
+
+**The fix.** Two additive, purely style-layer changes on `apps/web/app/page.tsx`, zero token changes,
+zero copy artifacts:
+
+1. A `pointer-events-none aria-hidden` absolutely-positioned backdrop with two low-alpha `radial-gradient`
+   glows, anchored to the hero's top-right and mid-left (`rgb(var(--nexus-accent-rgb) / 0.14` /
+   `/ 0.09` — very soft, impossible to read as decoration-for-decoration's-sake); in both themes the
+   glow uses the same `--nexus-accent-rgb`, so the same measurement holds on light and dark.
+2. A 2px gradient dot (`background: var(--nexus-ai-gradient)`) before `dict.home.eyebrow` — the AI
+   gradient the tokens already carried both themes already covered — the one place on this page a
+   viewer can see what the product is about without the page shouting.
+
+No copy was added. No motion was touched. No `.tsx` skeleton, layout rule, or DOM branch changed. The
+`page.tsx` count is unchanged: no deletion of the `Reveal` order, the `SearchBox` position, or the
+`filter(...) -> railSections` chain; the two new sibling `<div>`s carry no semantics and the `<Container>`
+becomes `relative` to anchor them, which is the paragraph the rules allow without re-planning the hero.
+
+**Verification.** `npx tsc --noEmit` in `apps/web` → 0; `npx vitest run` → **221/221 pass**. No e2e or
+visual-regression claim: Playwright visual snapshots were not re-run; the inline styles are purely
+additive to a `position: relative` subtree, so every existing snapshot line-family still holds — this is
+asserted by the contract of `Reveal`'s and the rails' layout, not proven by a test. Tokens.test.ts
+(`apps/web/src/lib/tokens.test.ts`) stays green untouched (no new token name was minted; the gradient is
+read from an existing one, not redeclared).
+
+**What this does NOT claim.** No claim that this page is "beautiful" in any global or design sense —
+subjective judgment belongs to the human operator; the unit only shows a designed home hero with two
+theme-adaptive glows and one signature dot. No CLS/FOUC/hidration claim was measured. No claim about
+screenshot/OS-FB mix or about other pages' visual consistency (that is a bigger tastefulness pass by
+itself, deliberately not bundled here). The dot uses the AI gradient — the eyebrow gradient like the rest
+of the module family refuses `useReducedMotion`, so this is purely static visual weight, nothing to
+reduce.
+
+- readers: `apps/web/app/page.tsx` (hero glow + eyebrow dot),
+  this ledger section.
