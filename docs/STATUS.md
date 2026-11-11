@@ -39304,3 +39304,48 @@ and not a release process. If the account or repository disables Actions at any 
 return 0 again and this section will still be true as written about this day.
 
 - readers: `.github/workflows/ci.yml` (the trigger line), this ledger section.
+
+## 906. D906 — the first CI run ever executed, and it said two things this repository had never been told
+
+**Goal.** D905 made pushes to `master` eligible for CI, which had never happened for this repository. The
+first run (`#1`, head SHA `d410bf1`) completed `failure` — and its two distinct root causes are the two
+units this section fixes. Neither would have been findable from any local gate; both were found by CI doing
+the one job it exists for.
+
+**Failure 1 — every downstream gate silently skipped because `changes` wrote its outputs nowhere.** In
+`.github/workflows/ci.yml`, the `changes` job computes `web/platform/ai/cloud/docs` from the push diff and
+each gated job has `if: needs.changes.outputs.x == 'true'`. The step's `p()` helper printed
+`name=value` to STDOUT — only the `docs` line piped into `$GITHUB_OUTPUT` (via `tee -a`), so
+`web/platform/ai/cloud` were ALWAYS empty, so `lint-type`, `platform`, `ai`, `cloud`, `security` were all
+ALWAYS skipped, and `e2e` ran anyway via `if: always()`. The "coverage" of this repository's CI since its
+creation has been: the unconditional `contract-drift` + the seed job's early steps inside `ai` — both of
+which happened to run because they need nothing. Fix: `p()` now appends `>> "$GITHUB_OUTPUT"` for every
+output (the `tee` idiom is gone), and a fetch/diff that yields an empty file list now falls back to
+`git ls-files` rather than gating everything OFF silently (previously: a fetch failure produced an empty
+diff, every gate evaluated `false` and every job skipped — the same disease, a second door).
+
+**Failure 2 — the e2e job's seed load died on `FATAL: role "runner" does not exist`.** The step
+`bash data/seed/load.sh` never printed its own `log` line; the runner's `psql` was invoked against the
+local socket as user `runner`. `data/seed/load.sh` reads `USER="${USER:-${PGUSER:-postgres}}"`, and `USER` is
+the POSIX-standard login-name variable — `runner` on every GitHub runner, anything at all on Windows
+shells. It was "working" locally only because Git Bash on Windows leaves `USER` unset, so the default won;
+`scripts/db_apply_migrations.sh` never had this bug (it reads its own `NEXUS_DB_SUPERUSER`). Fix: the
+script now reads `NEXUS_SEED_USER` / `PGUSER` / `postgres`, never ambient `USER`. The rest of the CI
+`cloud` job's chain (`nexus-insight` config as an env var import) was not otherwise affected.
+
+**The full record of run #1 (d410bf1):** `changes` success, `contract-drift` success, `e2e` FAILURE
+(failure 2), `platform`/`lint-type`/`ai`/`cloud`/`security` all **skipped** (failure 1), `required` FAILED
+because neither the failure nor the skips could read as green. This ledger does not claim any job passed
+that did not execute. Anything the first run did NOT prove (the platform suite, the ai suite, the cloud
+plane smokes — including D904's `cloud_lb_smoke.sh` under REAL memory conditions) is pending this fix; the
+next push re-runs everything and this section will not be rewritten.
+
+**What this section does NOT claim.** That CI is green after this push (it may surface further, previously
+undiscoverable failures — those get their own sections and are the normal output of a working gate, not a
+haze). That `load.sh` was truthful locally about `USER` before this fix on every platform. That the
+GitHub-Actions wiring was "tested" for anything beyond these two defects; `actions/runs` is still the
+authority, and watches are cheap.
+
+- readers: `.github/workflows/ci.yml` (the `changes` job's `p()` + fallback; no other wiring touched),
+  `data/seed/load.sh` (`USER` now reads `NEXUS_SEED_USER`/`PGUSER`/`postgres`),
+  This ledger section.

@@ -38,7 +38,13 @@ jobs:
           base="${{ github.event.pull_request.base.sha || github.event.before }}"
           git fetch --quiet origin "$base" 2>/dev/null || base=
           files=$(git diff --name-only ${base:+$base} HEAD || git ls-files)
-          p() { echo "$1=$(printf '%s\n' "$files" | grep -qE "$2" && echo true || echo false)"; }
+          # An empty diff means "no change detected" only when the base was really compared; a
+          # fetch failure must not silently skip every gate. Fall back to the whole tree.
+          [ -z "$files" ] && files=$(git ls-files)
+          # Every output must reach GITHUB_OUTPUT: previously only `docs` did (its line had the
+          # `tee -a`), so web/platform/ai/cloud were ALWAYS empty, every gated job skipped, and
+          # only the un-gated jobs ever ran — the pipeline looked green-green and never gated.
+          p() { printf '%s=%s\n' "$1" "$(printf '%s\n' "$files" | grep -qE "$2" && echo true || echo false)" >> "$GITHUB_OUTPUT"; }
           p web '^(apps/web|packages/ui|packages/types)/'
           p platform '^services/platform/'
           # D576 — the seed is the `ai` job's INPUT, not only the ai app's: this job generates the demo
@@ -48,7 +54,7 @@ jobs:
           # support, and nothing would notice.
           p ai '^(apps/ai|infra/config|data/seed/|scripts/(check|falsify)_collection_claims\.mjs)'
           p cloud '^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud))'
-          p docs '^(docs/|README\.md)' | tee -a "$GITHUB_OUTPUT"
+          p docs '^(docs/|README\.md)'
 
   lint-type:
     needs: changes

@@ -42,7 +42,11 @@ OUT="${SEED_OUT:-$HERE/out}"
 
 CONTAINER="${CONTAINER:-nexus-platform-postgres}"
 DB="${DB:-nexus}"
-USER="${USER:-${PGUSER:-postgres}}"
+USER="${NEXUS_SEED_USER:-${PGUSER:-postgres}}"
+# NOT ${USER:-...}: USER is a POSIX-standard env var (the LOGIN user — "runner" on every GitHub
+# runner, anything at all in Windows shells), so honoring it made psql try `-U runner`, and the CI
+# e2e job died on FATAL: role "runner" does not exist. A caller who genuinely wants a different
+# role sets NEXUS_SEED_USER or PGUSER, exactly as before.
 PSQL="${PSQL:-psql}"
 RESEED_DEPENDENTS="${RESEED_DEPENDENTS:-0}"
 SEED_ANCHOR="${SEED_ANCHOR:-0}"
