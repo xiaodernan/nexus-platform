@@ -39769,3 +39769,36 @@ single transition.
 
 - readers: `apps/web/src/components/console/console-table.tsx`,
   this ledger section.
+
+## 917. D917 — the edge's rate-limit map evicts the coldest key instead of wiping every client
+
+**Goal.** `EdgeRateLimitFilter`'s "bounded" map was documented as bounded — at `MAX_BUCKETS = 10 000`
+distinct clients it did NOT evict: it called `buckets.clear()` and inserted the current key, erasing
+EVERY legitimate client's token bucket at the ceiling. An attacker sending 10 001 distinct source-IP
+keys would reset the rate limiter of every real visitor behind the same edge — a self-inflicted denial
+of service at the platform's outermost door, in one branch of one `if`.
+
+**The fix.** The map is now an access-order LRU (`LinkedHashMap`, access-order=true, bounded by
+`removeEldestEntry` at `Math.max(1, MAX_BUCKETS)`), wrapped in a synchronized view as the gateway is
+Netty-reactive and multiple threads can interleave `filter()`. The eviction target is the coldest
+key, never all keys; a client whose key is alive stays in the map, and a flood of distinct keys now
+recycles cold buckets one at a time. The `MAX_BUCKETS` constant, the "bounded map" javadoc, the
+`tryAcquire` fast path, the actuator exemption and the 429-with-correlation-id body are unchanged —
+the defect was only ever the `clear()`.
+
+**Verification.** `EdgeRateLimitFilterTest` (new) 3/3 pass on the pure eviction policy, driven
+through a package-visible `newBucketMap(int)`: the coldest entry is evicted past the cap; the map
+never exceeds its cap under a 64-key rotating keyspace; and an actively-touched client's bucket
+survives a 10-insert flood (its capacity stays consumed — the `clear()` would have handed it a full
+bucket again). Full gateway suite: **14/14 pass** (EdgeRateLimitFilterTest 3 + EdgeTracingFilterTest
+6 + TokenBucketTest 5).
+
+**What this does NOT claim.** No load or performance test was run; no claim about eviction fairness
+(sub-nanosecond math aside, a client can still be evicted when the table is genuinely churning — the
+correct failure mode there is that a brand-new cold client starts at full capacity, which is the
+pre-existing semantics); the rate limiter is still per-process by design (the doc's own boundary —
+no cross-instance limiter is claimed). The enforcement path through a live exchange is not unit-covered
+beyond the map; it remains covered by the CI `cloud_retry_smoke.sh`/`cloud_lb_smoke.sh` wire evidence.
+
+- readers: `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java`,
+  `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/EdgeRateLimitFilterTest.java`.

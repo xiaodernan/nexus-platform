@@ -1,6 +1,8 @@
 package com.nexus.cloud.gateway;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -34,12 +36,29 @@ import reactor.core.publisher.Mono;
 @Component
 public class EdgeRateLimitFilter implements GlobalFilter, Ordered {
 
-    /** After {@link EdgeRequestIdFilter} (HIGHEST_PRECEDENCE) so even a 429 carries the correlation id. */
+    /**
+     * After {@link EdgeRequestIdFilter} (HIGHEST_PRECEDENCE) so even a 429 carries the correlation id. */
     public static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 10;
 
     private static final int MAX_BUCKETS = 10_000;
 
-    private final Map<String, TokenBucket> buckets = new java.util.concurrent.ConcurrentHashMap<>();
+    /**
+     * The token-bucket map. Access-order LRU bounded at {@code maxBuckets} — D917 closed the
+     * "drop everything at the ceiling" defect the previous code had: a flood from 10 001+ distinct
+     * client keys wiped EVERY legitimate client's bucket instead of evicting the least-recently-used
+     * one, resetting the rate-limit for all real traffic to favour an attacker with a big keyspace.
+     * Eviction keeps every client's bucket unless that client is the actual coldest entry.
+     */
+    private final Map<String, TokenBucket> buckets = newBucketMap(MAX_BUCKETS);
+
+    static Map<String, TokenBucket> newBucketMap(int maxBuckets) {
+        return Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, TokenBucket> eldest) {
+                return size() > Math.max(1, maxBuckets);
+            }
+        });
+    }
     private final long burst;
     private final long replenish;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -64,12 +83,6 @@ public class EdgeRateLimitFilter implements GlobalFilter, Ordered {
         }
         String key = clientKey(exchange);
         TokenBucket bucket = buckets.computeIfAbsent(key, k -> new TokenBucket(burst, replenish));
-        if (buckets.size() > MAX_BUCKETS) {
-            // Bounded map: drop everything (cheap, correct enough for a single dev edge) instead of OOMing.
-            buckets.clear();
-            bucket = new TokenBucket(burst, replenish);
-            buckets.put(key, bucket);
-        }
         if (bucket.tryAcquire()) {
             return chain.filter(exchange);
         }
