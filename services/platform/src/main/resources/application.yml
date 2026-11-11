@@ -102,6 +102,15 @@ nexus:
     # shorter than requested. Applies ONLY to set(); the D932 counter / D937 sliding window are untouched.
     ttl-jitter-enabled: ${NEXUS_CACHE_TTL_JITTER_ENABLED:false}
     ttl-jitter-spread-ms: ${NEXUS_CACHE_TTL_JITTER_SPREAD_MS:1024}
+  api_key:
+    # D933: bounded access-order LRU for verify() (hit or miss) + per-key touch() UPDATE throttle.
+    verify-cache-ttl-ms: ${NEXUS_API_KEY_VERIFY_TTL_MS:15000}
+    verify-cache-max: ${NEXUS_API_KEY_VERIFY_MAX:512}
+    touch-throttle-ms: ${NEXUS_API_KEY_TOUCH_THROTTLE_MS:60000}
+    touch-throttle-max: ${NEXUS_API_KEY_TOUCH_MAX:1024}
+    # D944: OFF by default — the D933 LRU remembers finished answers but does not coalesce concurrent
+    # MISSES for the same cold key. Flip true to collapse N in-flight DB loads for one key into ONE.
+    verify-singleflight-enabled: ${NEXUS_API_KEY_SINGLEFLIGHT_ENABLED:false}
   ratelimit:
     enabled: ${NEXUS_RATELIMIT_ENABLED:true}
     # D937: OFF by default — the shipped limiter stays D932's atomic fixed window. Set true to route

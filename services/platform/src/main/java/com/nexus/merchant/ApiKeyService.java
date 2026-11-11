@@ -6,6 +6,7 @@ import com.nexus.platform.AuditService;
 import com.nexus.platform.Json;
 import com.nexus.platform.PermissionService;
 import com.nexus.platform.Principal;
+import com.nexus.platform.Singleflight;
 import com.nexus.platform.TenantContext;
 import com.nexus.platform.TenantJdbc;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,11 +77,26 @@ public class ApiKeyService implements ApiKeyVerifier {
     private final long touchThrottleMs;
     private final int touchThrottleMax;
 
+    /**
+     * D944: opt-in singleflight over the D933 LRU's MISS path. The LRU remembers a finished answer but does
+     * nothing about N concurrent misses for the same cold key — each left the map lock and ran its own SELECT
+     * (the check-then-load window). When enabled, misses for one cache key coalesce into ONE load; peers join
+     * the in-flight future and share its result or its failure. Default OFF preserves D933 byte-for-byte.
+     */
+    private final Singleflight<String, Optional<Principal>> verifySingleflight;
+    private final boolean verifySingleflightEnabled;
+
+    /**
+     * D944 — Spring-primary constructor. Marked {@code @Autowired} because the 7-arg compatibility
+     * constructor below also exists (D931's lesson: two public constructors need an explicit primary).
+     */
+    @Autowired
     public ApiKeyService(TenantJdbc jdbc, PermissionService permissions, AuditService audit,
                          @Value("${nexus.api_key.verify-cache-ttl-ms:15000}") long verifyCacheTtlMs,
                          @Value("${nexus.api_key.verify-cache-max:512}") int verifyCacheMax,
                          @Value("${nexus.api_key.touch-throttle-ms:60000}") long touchThrottleMs,
-                         @Value("${nexus.api_key.touch-throttle-max:1024}") int touchThrottleMax) {
+                         @Value("${nexus.api_key.touch-throttle-max:1024}") int touchThrottleMax,
+                         @Value("${nexus.api_key.verify-singleflight-enabled:false}") boolean verifySingleflightEnabled) {
         this.jdbc = jdbc;
         this.permissions = permissions;
         this.audit = audit;
@@ -87,6 +104,8 @@ public class ApiKeyService implements ApiKeyVerifier {
         this.verifyCacheMax = verifyCacheMax;
         this.touchThrottleMs = touchThrottleMs;
         this.touchThrottleMax = touchThrottleMax;
+        this.verifySingleflightEnabled = verifySingleflightEnabled;
+        this.verifySingleflight = new Singleflight<>();
         this.verifyCache = new LinkedHashMap<>(16, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, VerifyEntry> eldest) {
@@ -99,6 +118,12 @@ public class ApiKeyService implements ApiKeyVerifier {
                 return size() > touchThrottleMax;
             }
         };
+    }
+
+    /** D944 compatibility constructor (singleflight OFF) — keeps every D933 test and programmatic caller working. */
+    public ApiKeyService(TenantJdbc jdbc, PermissionService permissions, AuditService audit,
+                         long verifyCacheTtlMs, int verifyCacheMax, long touchThrottleMs, int touchThrottleMax) {
+        this(jdbc, permissions, audit, verifyCacheTtlMs, verifyCacheMax, touchThrottleMs, touchThrottleMax, false);
     }
 
     @Transactional
@@ -187,7 +212,14 @@ public class ApiKeyService implements ApiKeyVerifier {
                     verifyCache.remove(cacheKey);
                 }
             }
-            Optional<Principal> loaded = loadForTenant(tenant, hash);
+            // D944: coalesce concurrent misses for THIS cache key into one DB load. The D933 lock above only
+            // guarded the cache MAP lookup and was released before the query — N cold-key callers each ran the
+            // SELECT. When enabled, the first miss loads and the rest join its future (same value or same
+            // failure); a failed load clears the in-flight entry so the next request retries. OFF (default)
+            // calls loadForTenant directly, byte-for-byte the D933 path.
+            Optional<Principal> loaded = verifySingleflightEnabled
+                    ? verifySingleflight.run(cacheKey, () -> loadForTenant(tenant, hash))
+                    : loadForTenant(tenant, hash);
             synchronized (verifyCache) {
                 verifyCache.put(cacheKey, new VerifyEntry(loaded, System.currentTimeMillis() + verifyCacheTtlMs));
             }

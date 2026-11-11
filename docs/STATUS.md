@@ -41000,3 +41000,83 @@ would be redundant); the `AdminDenied` role gate semantics, URL routing, cookie 
 
 - readers: `apps/web/src/components/console/admin-shell.tsx` (`AdminDenied`), `apps/web/src/lib/i18n/dict.ts`
   (the existing gate dict this consumes), this ledger entry.
+
+## 944. D944 — a burst of concurrent cold-key misses stops querying Postgres N times: opt-in singleflight over the D933 LRU's miss window
+
+**Goal.** The mandate asks for cache use, data-structure/algorithm and operating-systems (concurrency) knowledge,
+and front/back-end co-evolution. D933 gave `ApiKeyService.verify` a bounded LRU for the API-key pre-auth hot
+path, but the LRU remembers a FINISHED answer and does nothing about the window BEFORE one exists. This unit
+closes that window, complementing D940 (which decorrelates a batch of keys expiring at one instant): D940 handles
+"many keys, same expiry", D944 handles "one key, many simultaneous misses".
+
+**The defect.** D933's `verify()` does `synchronized(verifyCache) { hit? }`, then RELEASES the lock, runs
+`loadForTenant` (a raw tenant-scoped `SELECT`), and only afterwards re-locks to `put`. The lock guards the MAP,
+not the LOAD. N concurrent requests presenting the same freshly-issued or expired secret hash all miss, all leave
+the lock, and all N run the same query before any populates the entry — a cache-penetration / thundering-herd
+stampede on the unauthenticated pre-auth path, ahead of several filters. A "bigger LRU" cannot fix it: the
+entries do not exist yet.
+
+**The fix.** New pure, reusable in-process primitive `Singleflight<K,V>` (no Spring, Redis, clock or cache):
+`run(key, loader)` creates a fresh `CompletableFuture` and atomically `inflight.putIfAbsent(key, fresh)`. Only the
+caller whose putIfAbsent returns null becomes the owner; every peer receives the owner's future and `join()`s it,
+sharing the one value. The owner runs the loader on its OWN thread OUTSIDE any map lock — deliberately NOT
+`ConcurrentHashMap.computeIfAbsent(key, k -> loader.get())`, whose mapping function runs inside the per-bin lock
+(head-of-line blocking for other keys) and whose thrown exception propagates to only one caller, leaving peers
+unwoken. On success the owner `complete`s the future; on failure `completeExceptionally` wakes EVERY joiner with
+the same cause; a `finally inflight.remove(key, future)` (the conditional overload) clears the entry on BOTH
+paths, so a failed load cannot lock out the next request and a slow owner cannot erase a newer in-flight future.
+`putIfAbsent` is atomic, so exactly one owner is elected — no TOCTOU interval in which two callers both load.
+The primitive stores nothing after return: it is a coalescer, not a cache, and callers layer it over their own.
+
+**Opt-in, zero-risk default.** `ApiKeyService` gains an 8-arg Spring-primary `@Autowired` constructor with
+`nexus.api_key.verify-singleflight-enabled` (default `false`) and keeps the 7-arg compatibility constructor
+delegating with the flag OFF (every D933 test unchanged). `@Autowired` is explicit because two public
+constructors exist (D931's lesson). When OFF, `verify()` calls `loadForTenant` directly, byte-for-byte D933.
+When ON, only the MISS path wraps that load as `verifySingleflight.run(cacheKey, () -> loadForTenant(tenant,
+hash))`; the LRU lookup/put, TTL, revoke flush and touch throttle are untouched.
+
+**What is measured.** `SingleflightTest` **5/5** + `ApiKeyServiceSingleflightTest` **2/2** (**7/7** on this plane,
+all with deterministic `CountDownLatch` schedules, not sleeps-as-proof): (a) N=16 threads crossing one cold key
+together -> loader called ONCE, all receive the shared value; (b) a control WITHOUT coalescing reproduces the
+N-fold stampede, so the assertion is load-bearing; (c) a throwing loader reaches ALL 16 joiners with the same
+cause and the in-flight entry is cleared (the next `run` succeeds); (d) two different keys are in flight
+SIMULTANEOUSLY (no global lock / bin head-of-line blocking); (e) a null RESULT is a shareable value, a null key
+is rejected, and state is empty after return; (f) the WIRING test drives the REAL `verify()` with a Mockito
+`TenantJdbc` stub: ON -> ONE `firstForTenant` call for 12 concurrent misses, OFF -> 12 calls (the D933 window).
+The two WIRE-LEVEL smokes need only `javac`/`java` (no Docker, Redis or database): they COMPILE the actual
+`Singleflight.java` plus a generated harness and drive N=16 real JVM threads. `singleflight_smoke.sh` asserts
+`LOADS=1 / WAITERS=16`, a failure reaching 16/16 joiners and a cleared in-flight entry (the next call returns a
+fresh value); `falsify_singleflight_smoke.sh` deletes ONLY the `putIfAbsent` merge in a temp source copy (the real
+file is untouched) and requires "LOADS == 1" to REDDEN — it becomes 16, the N-fold stampede — while the
+intact-source control still collapses to 1.
+
+**Wiring.** `scripts/check_singleflight.mjs` is a pure source census: the atomic putIfAbsent merge (no
+get-then-put TOCTOU), complete/completeExceptionally, the conditional remove, the 8-arg `@Autowired` + 7-arg
+compat constructors with flag DEFAULT FALSE, the verify() miss-path branch, the no-`computeIfAbsent` guarantee,
+the unit/wire/falsifier arms and CI/ATLAS/CLOUD/census/ledger are bound — `--self-test` plants eight corruptions
+(merge->get-then-put, exception completion dropped, conditional remove lost, default flipped TRUE, verify branch
+removed, golden assertion weakened, wire smoke dropped from CI, census falsifier unbound), each reddening while
+the real plane holds. `.github/workflows/ci.yml` gains the reader on the chained wired-readers line and the two
+smokes on the cloud smoke chain — text-only edits, no cited line number moved. `docs/ATLAS.md`, `docs/CLOUD.md`,
+`docs/cloud_claims.yaml` (a D944 record bound to reader/smoke/falsifier) and this ledger carry the four corners.
+
+**Honesty follow-through (numbering).** Authored as D942, but a concurrent lane landed its own **D942** (cloud
+CI shallow-clone / blame-gate fix) during wiring, occupying ledger section 942 and git history. As with D937 and
+D940 before it, the whole unit was re-numbered **D944** end-to-end (source comments, gate, smokes, ATLAS/CLOUD/
+census, honesty anchor and this ledger), leaving the concurrent D942 intact. Three consecutive units hitting a
+concurrent number claim is now a recorded host pattern, not a surprise.
+
+**Not claimed.** That singleflight is ON anywhere: the flag defaults `false` and the D933 direct-load path is
+byte-for-byte preserved; that coalescing crosses a process or node (the in-flight table is per-JVM — a multi-pod
+plane can still issue one query per pod; a distributed lock is a different mechanism); that this is a cache (it
+stores no value after return); any latency or throughput improvement, or a real-Postgres stampede measured under
+load (the smoke loader is a counter, the unit loader a Mockito stub); or that a blocking loader is bounded —
+followers wait on it, so callers own their own timeout.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/Singleflight.java` (the pure coalescer),
+  `services/platform/src/main/java/com/nexus/merchant/ApiKeyService.java` (the opt-in miss-path wiring + two
+  constructors), `services/platform/src/main/resources/application.yml` (the default-off knob),
+  `services/platform/src/test/java/com/nexus/platform/SingleflightTest.java` (5/5),
+  `services/platform/src/test/java/com/nexus/merchant/ApiKeyServiceSingleflightTest.java` (2/2),
+  `scripts/check_singleflight.mjs`, `scripts/singleflight_smoke.sh`, `scripts/falsify_singleflight_smoke.sh`,
+  `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.

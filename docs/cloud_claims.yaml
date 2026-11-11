@@ -207,6 +207,14 @@
   not_claimed: Jitter is OFF by default (the D909 SETEX path still ships); no production cache was migrated, no hit-rate or backing-store stampede was measured under load, no cross-node claim beyond the hash being a pure portable function of the key, and the D932 fixed-window counter / D937 sliding window / setIfAbsent replay-dedup keep their own untouched TTL contracts
   honesty_anchor: D940's cache-TTL jitter is opt-in and off by default
 
+- id: D944
+  claim: An opt-in singleflight primitive collapses N concurrent loads for one key into ONE via an atomic putIfAbsent in-flight election (peers join the owner's CompletableFuture, share its value or its failure, and the conditional remove clears it), wired into ApiKeyService.verify()'s cold-key miss path so a burst of misses no longer stamps the backing store N times
+  smoke: singleflight_smoke.sh
+  falsifier: falsify_singleflight_smoke.sh
+  gate: check_singleflight.mjs
+  not_claimed: Singleflight is OFF by default (the D933 direct-load path still ships); the in-flight table is per-JVM with no cross-process or cross-node coalescing; it stores no value after return (it is not a cache); no latency or throughput number is claimed, no real-Postgres stampede was measured (the loader is a controlled counter), and a blocking loader blocks its followers (callers own their timeouts)
+  honesty_anchor: D944's singleflight is opt-in and coalesces only within one JVM
+
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane
   smoke: cloud_smoke.sh

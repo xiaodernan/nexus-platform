@@ -322,7 +322,7 @@ WITH g AS (SELECT subject_type, subject_id::text sid, merchant_id FROM permissio
   -- workspace grant. AuthorizationInterceptor asks for `principal.subjectId()` and `principal.userId()`,
   -- and both of those are ids on `users`, so a grant keyed to a `merchant_users` row id is unreachable at
   -- runtime (D31). The probe joins the way the interceptor does: the person, plus an active membership at
-  -- that merchant. `api_key` is ApiKeyService.java:67's own write — subject_id is the api_keys row id — and
+  -- that merchant. `api_key` is ApiKeyService.java:155's own write — subject_id is the api_keys row id — and
   -- it is filtered to live keys because ApiKeyService.verify looks a key up `and k.revoked_at is null`, so
   -- a grant filed under a revoked key authorises nothing; the same reading that gives merchant_users a
   -- `status = 'active'` filter. There is deliberately no `merchant` arm: V1:130 does not name one, the only
@@ -1209,7 +1209,7 @@ INSERT INTO ref_registry VALUES
   'orphan probe over user|merchant_user|api_key, the three types the build files grants under. D66 wrote '
   || 'this as "an agent or api_key grant would be an orphan by construction" and that was half wrong (D71 '
   || 'measured): `agent` has no writer so an orphan verdict is right, while `api_key` is written by '
-  || 'ApiKeyService.java:67 for every key the console creates, so the un-armed type made a legal row red. '
+  || 'ApiKeyService.java:155 for every key the console creates, so the un-armed type made a legal row red. '
   || '`merchant` was the invented arm and is gone.'),
  ('moderation_cases.subject_id', 'probe',
   'orphan probe over review|merchant|document|message; `listing` is in V1:574 and resolves to no table '
@@ -1339,7 +1339,7 @@ SELECT 'a seeded polymorphic vocabulary is bounded or probed',
 -- D69 counted the (type, key) pairs and which of them this file resolves, and stopped there. The permission_grants
 -- probe is what that blind spot had already cost: its UNION carried a `merchant` arm, a type V1:130 never names
 -- and no door writes (the three insert sites in the build are MerchantService.java:63 and
--- MerchantWorkspaceService.java:177, both 'user', and ApiKeyService.java:67, 'api_key'), while the type the
+-- MerchantWorkspaceService.java:177, both 'user', and ApiKeyService.java:155, 'api_key'), while the type the
 -- console really does write — one grant per scope for every API key — had no arm at all, so a perfectly legal
 -- row would have loaded red as an orphan. That is D67's mistake (an arm the door cannot produce, and no arm for
 -- one it can) in a new table, which is the only interesting thing about it: the habit does not generalize by
@@ -1396,7 +1396,7 @@ INSERT INTO poly_vocab VALUES
   'the seed''s owner preset; the referent is `users` because D31 makes the person, not the membership row, the '
   'key, so the arm joins through merchant_users and requires an active membership at the grant''s merchant'),
  ('permission_grants', 'api_key', 'arm', 'api_keys', 'door',
-  'ApiKeyService.java:67 writes one grant per scope for every key the console creates, and '
+  'ApiKeyService.java:155 writes one grant per scope for every key the console creates, and '
   'MerchantWorkspaceTest.java:404 counts them after a real POST /api/v1/merchant/api-keys; the arm drops '
   'revoked keys because ApiKeyService.verify looks a key up with `k.revoked_at is null`'),
  ('permission_grants', 'agent', 'no-referent', 'agents', 'declared',
@@ -1547,7 +1547,7 @@ SELECT 'the arm registry agrees with the probed-pair counts',
 -- case that is not a review case with "the other subject types have no decision state to write back to without
 -- their own routes (§127)"). Two name a writer that exists in the product but is never reached by the seed:
 -- `permission_grants.user` is filed by MerchantService.java:63 and MerchantWorkspaceService.java:177, and
--- `permission_grants.api_key` by ApiKeyService.java:67 when a merchant creates a key. `build` and `none` are
+-- `permission_grants.api_key` by ApiKeyService.java:155 when a merchant creates a key. `build` and `none` are
 -- those two states, and a waiver whose arm starts carrying rows goes red by itself — the exemption has to
 -- re-read its own assumption, which is the rule D77 wrote for the view kinds.
 
@@ -1566,7 +1566,7 @@ INSERT INTO arm_idle VALUES
  ('permission_grants', 'user', 'build', 'the two insert sites D71 found — MerchantService.java:63 and '
   || 'MerchantWorkspaceService.java:177 — file user grants at runtime, and generate.py seeds none: all 36 '
   || 'shipped grants are merchant_user'),
- ('permission_grants', 'api_key', 'build', 'ApiKeyService.java:67 files an api_key grant when a merchant '
+ ('permission_grants', 'api_key', 'build', 'ApiKeyService.java:155 files an api_key grant when a merchant '
   || 'creates a key (D71), a path the seed never takes, so the arm exists for rows none of this build ships');
 
 -- The exercised/idle split, read from the same poly_types the probes group over.
