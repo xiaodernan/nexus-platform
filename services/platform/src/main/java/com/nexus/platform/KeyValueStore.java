@@ -5,9 +5,10 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import jakarta.annotation.PreDestroy;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,11 +18,32 @@ import org.springframework.stereotype.Component;
  * Tiny key/value + counter abstraction so rate limiting and refresh-token replay detection can live
  * in Redis when it is reachable and in process memory when it is not (task requirement: "Redis-backed
  * + in-memory fallback when Redis absent"). The active backend is reported by {@code /api/v1/health}.
+ *
+ * <p>D909: the in-memory fallback used to be an unbounded {@link java.util.concurrent.ConcurrentHashMap}
+ * whose expired entries were only reclaimed when THEIR OWN key happened to be read again — a
+ * {@code rl:login:<ip>} bucket written at rate-limit time and never read again leaked forever (the
+ * same defect class as the AI tool cache's unbounded store, closed in D903). The fallback is now an
+ * access-order {@link LinkedHashMap} capped at {@code nexus.redis.fallback-max-entries} (default 4096,
+ * override via the same env convention as every other Redis knob): reads and writes refresh an
+ * entry's position, a write purges expired entries before inserting when the map is at capacity, and
+ * the eldest entry is evicted once the cap is reached — memory is bounded by the cap, not by the
+ * number of distinct keys this process has ever seen. The Redis fast path is untouched.
  */
 @Component
 public class KeyValueStore {
 
     private static final Logger log = LoggerFactory.getLogger(KeyValueStore.class);
+
+    /** One entry; the value is opaque to the store (Long.parseLong is the counter contract by key). */
+    private static final class Entry {
+        String value;
+        long expiresAt;
+
+        Entry(String value, long expiresAt) {
+            this.value = value;
+            this.expiresAt = expiresAt;
+        }
+    }
 
     private final boolean redisEnabled;
     private final String url;
@@ -30,15 +52,27 @@ public class KeyValueStore {
     private RedisClient client;
     private StatefulRedisConnection<String, String> connection;
     private RedisCommands<String, String> redis;
-    private final Map<String, long[]> memory = new ConcurrentHashMap<>(); // value stored via strings map below
-    private final Map<String, String> memoryValues = new ConcurrentHashMap<>();
+    /**
+     * Access-order LRU keyed by the store's logical key. Only ever touched under the map's own
+     * monitor; volatile never. The Redis fast path never reads this.
+     */
+    private final Map<String, Entry> memory;
+    private final int fallbackMax;
 
     public KeyValueStore(@Value("${nexus.redis.enabled:true}") boolean redisEnabled,
                          @Value("${nexus.redis.url:redis://127.0.0.1:6380/0}") String url,
-                         @Value("${nexus.redis.timeout-ms:400}") long timeoutMs) {
+                         @Value("${nexus.redis.timeout-ms:400}") long timeoutMs,
+                         @Value("${nexus.redis.fallback-max-entries:4096}") int fallbackMaxEntries) {
         this.redisEnabled = redisEnabled;
         this.url = url;
         this.timeoutMs = timeoutMs;
+        this.fallbackMax = Math.max(1, fallbackMaxEntries);
+        this.memory = Collections.synchronizedMap(new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, KeyValueStore.Entry> eldest) {
+                return size() > fallbackMax;
+            }
+        });
         if (redisEnabled) {
             try {
                 client = RedisClient.create(url);
@@ -84,6 +118,11 @@ public class KeyValueStore {
         closeRedis();
     }
 
+    /** purge of everything expired; bounded by the cap, called on the write path only. */
+    private void sweepExpired(long now) {
+        memory.values().removeIf(e -> e.expiresAt <= now);
+    }
+
     // ---- api ------------------------------------------------------------
 
     public Optional<String> get(String key) {
@@ -94,17 +133,17 @@ public class KeyValueStore {
                 degrade(e);
             }
         }
-        String v = memoryValues.get(key);
-        if (v == null) {
-            return Optional.empty();
+        synchronized (memory) {
+            Entry e = memory.get(key);
+            if (e == null) {
+                return Optional.empty();
+            }
+            if (e.expiresAt <= System.currentTimeMillis()) {
+                memory.remove(key);
+                return Optional.empty();
+            }
+            return Optional.of(e.value);
         }
-        long[] exp = memory.get(key);
-        if (exp != null && exp[0] < System.currentTimeMillis()) {
-            memoryValues.remove(key);
-            memory.remove(key);
-            return Optional.empty();
-        }
-        return Optional.of(v);
     }
 
     public void set(String key, String value, Duration ttl) {
@@ -116,8 +155,13 @@ public class KeyValueStore {
                 degrade(e);
             }
         }
-        memoryValues.put(key, value);
-        memory.put(key, new long[]{System.currentTimeMillis() + ttl.toMillis()});
+        long now = System.currentTimeMillis();
+        synchronized (memory) {
+            if (memory.size() >= fallbackMax) {
+                sweepExpired(now);
+            }
+            memory.put(key, new Entry(value, now + Math.max(1L, ttl.toMillis())));
+        }
     }
 
     public boolean setIfAbsent(String key, String value, Duration ttl) {
@@ -129,12 +173,17 @@ public class KeyValueStore {
             }
         }
         long now = System.currentTimeMillis();
-        long[] prev = memory.get(key);
-        if (prev != null && prev[0] > now && memoryValues.containsKey(key)) {
-            return false;
+        synchronized (memory) {
+            Entry prev = memory.get(key);
+            if (prev != null && prev.expiresAt > now) {
+                return false;
+            }
+            if (memory.size() >= fallbackMax) {
+                sweepExpired(now);
+            }
+            memory.put(key, new Entry(value, now + Math.max(1L, ttl.toMillis())));
+            return true;
         }
-        set(key, value, ttl);
-        return true;
     }
 
     /** Increment with window semantics: first write in a window sets the TTL. */
@@ -150,17 +199,25 @@ public class KeyValueStore {
                 degrade(e);
             }
         }
+        long now = System.currentTimeMillis();
         synchronized (memory) {
-            long now = System.currentTimeMillis();
-            long[] exp = memory.get(key);
-            String raw = memoryValues.get(key);
-            if (exp == null || exp[0] < now || raw == null) {
-                memory.put(key, new long[]{now + window.toMillis()});
-                memoryValues.put(key, "1");
+            if (memory.size() >= fallbackMax) {
+                sweepExpired(now);
+            }
+            Entry prev = memory.get(key);
+            if (prev == null || prev.expiresAt <= now) {
+                memory.put(key, new Entry("1", now + Math.max(1L, window.toMillis())));
                 return 1;
             }
-            long v = Long.parseLong(raw) + 1;
-            memoryValues.put(key, String.valueOf(v));
+            long v;
+            try {
+                v = Long.parseLong(prev.value) + 1;
+            } catch (NumberFormatException e) {
+                // a value was written by set() with a non-numeric string; restart the window honestly
+                memory.put(key, new Entry("1", now + Math.max(1L, window.toMillis())));
+                return 1;
+            }
+            prev.value = String.valueOf(v);
             return v;
         }
     }
@@ -174,11 +231,13 @@ public class KeyValueStore {
                 degrade(e);
             }
         }
-        long[] exp = memory.get(key);
-        if (exp == null) {
-            return 0;
+        synchronized (memory) {
+            Entry e = memory.get(key);
+            if (e == null) {
+                return 0;
+            }
+            return Math.max(0, (e.expiresAt - System.currentTimeMillis()) / 1000);
         }
-        return Math.max(0, (exp[0] - System.currentTimeMillis()) / 1000);
     }
 
     public void delete(String key) {
@@ -190,8 +249,16 @@ public class KeyValueStore {
                 degrade(e);
             }
         }
-        memoryValues.remove(key);
-        memory.remove(key);
+        synchronized (memory) {
+            memory.remove(key);
+        }
+    }
+
+    /** package-visible for the unit tests: exact size of the in-memory tier. */
+    int fallbackSize() {
+        synchronized (memory) {
+            return memory.size();
+        }
     }
 
     private boolean expire(String key, Duration ttl) {

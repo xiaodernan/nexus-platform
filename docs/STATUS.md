@@ -39438,3 +39438,38 @@ covering indexes (INCLUDE clauses) were added; none were needed for the observed
 partitioning for the same tables are separate open items in the plan (`docs/CONTINUITY_PLAN.md`).
 
 - readers: `infra/db/migrations/V11__read_path_indexes.sql`.
+
+## 909. D909 — the platform's in-memory fallback cache becomes a bounded LRU with a write-side sweep of expired entries
+
+**Goal.** The Java edge's Redis abstraction degrades to an in-process fallback when Redis is unreachable
+(documented fail-closed design, per `KeyValueStore`'s javadoc). That fallback — `memory` +
+`memoryValues`, two unbounded `ConcurrentHashMap`s — was the same defect class D903 closed in the AI
+tool cache and D902 closed in the tenant negative tier: entries were reclaimed only when THEIR OWN key
+was read again, so a rate-limit window written at request time and never read again leaked forever
+(measured shape: `rl:login:<ip>` buckets accumulate without bound on any host where Redis is absent —
+which is also exactly the code path every test in this repository exercises).
+
+**The fix.** One map: `memory` holds an access-order `LinkedHashMap` capped at
+`nexus.redis.fallback-max-entries` (default 4096, env-bindable like every other Redis knob). Every in-memory
+operation holds the map's monitor; reads move the entry to most-recent; writes purge all expired entries
+once the map is at capacity and evict the LRU entry past the cap (via `removeEldestEntry`). `increment`'s
+window semantics, `setIfAbsent`'s atomic compare, `remainingTtlSeconds` (now guarded by the same lock) and
+Redis fast path are all unchanged; a corrupted counter value restarts the window honestly instead of
+throwing `NumberFormatException` into the caller's request. A package-visible `fallbackSize()` exists for
+the unit tests. The `AdminSystemController`'s `key_value_backend=redis|in_memory` report is unchanged
+(no new backend state introduced).
+
+**Verification.** `services/platform/src/test/java/com/nexus/platform/KeyValueStoreTest.java` — 6/6 pass:
+fallback roundtrip without Redis; the bound holds and eldest is evicted; a write sweeps expired entries
+before the cap bites (a live entry is untouched); an LRU read makes the eldest escape fair; the increment
+window restarts at the boundary; `setIfAbsent` respects a live entry but overwrites an expired one. Full
+platform suite is green at this commit's HEAD — note that it was NOT green when this unit started: it
+exposed two pre-existing failures at HEAD (D910), both fixed in the following commit.
+
+**What this does NOT claim.** No measurement of Redis failover timing on a live plane (this is the
+in_memory tier's bound, not Redis's). No bound on REDIS keys via client-side TTL (Redis's own EXPIRE owns
+them; Redis 7.4 is the running instance locally and in CI). `fallbackMax` is entry-count, not bytes —
+a single oversized value still occupies one entry. No claim about eviction metrics (nothing exported).
+
+- readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java`,
+  `services/platform/src/test/java/com/nexus/platform/KeyValueStoreTest.java`.
