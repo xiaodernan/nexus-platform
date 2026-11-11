@@ -39664,3 +39664,29 @@ of any behaviour beyond the unit suite's assertions.
 
 - readers: `apps/ai/nexus_ai/tools/registry.py` (+ `heapq`),
   `apps/ai/nexus_ai/trust/verification.py` (+ per-kind bisect index and lazy rebuild).
+
+## 914. D914 — CI's e2e wait is no longer immortal: wait-on gets a hard 15-minute timeout
+
+**Goal.** Run #4 (`42999442752`, head `c6d75ed`) has been parked on the e2e job's **Boot services**
+step for over an hour — through which the step must: boot the platform (`mvn spring-boot:run`), boot
+the AI service, `npm ci` + `npm run build --workspace @nexus/web`, `npm run start`, and finally
+`npx wait-on` the three services. GitHub's attempt to reach the logs for an in-progress step returns
+`HTTP 404 BlobNotFound`, so what exactly was still running cannot be read from here, but two facts
+hold: (i) `npx wait-on` has **no default timeout** — a service that never boots hangs the step until
+GitHub's six-hour job limit evicts it, silently, and the failure arrives hours late with no artifact;
+(ii) the step's budget is unknowable from inside the runner, so the wall we were sitting on is the
+same wall this unit makes observable.
+
+**The fix.** The `Boot services` step now passes `--timeout 900000` (15 minutes) to `wait-on`, with a
+comment recording why. The job fails loudly, and by then the two `upload-artifact` steps and the
+`Run ...` steps report the evidence they always had. No other waits in the workflow change (the
+`ai` job's migrations wait is `docker exec`-guarded; `cloud` job's waits are `wait_for` loops inside
+the scripts, which carry their own limits).
+
+**What this does NOT claim.** It does not know why run #4's Boot services did not finish — memory or
+build length or something else; it only removes the forever-option. When run #4 concludes it will
+report its own cause honestly, whatever it is (the next unit will record it). It does not change
+whether the web build is or is not overdue, nor shorten the cold-start path; it only caps the tail
+risk on the tail.
+
+- readers: `.github/workflows/ci.yml` (the `e2e` job's Boot services step, and its comment).

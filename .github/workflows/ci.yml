@@ -340,7 +340,10 @@ jobs:
           (cd apps/ai && NEXUS_DATABASE_URL='postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test' NEXUS_LLM_PROVIDER=mock uv run uvicorn app.main:app --port 8000) &
           npm ci && npm run build --workspace @nexus/web
           npm run start --workspace @nexus/web &
-          npx wait-on http://127.0.0.1:8080/actuator/health http://127.0.0.1:8000/ai/v1/health http://127.0.0.1:3000
+          # wait-on hangs forever by default; a service that never boots (dead port, failed Flyway,
+          # OOM-killed JVM) would pin this job until GitHub's 6-hour job timeout. Cap it at 15
+          # minutes so a stuck plane stops the pipeline loudly instead of silently.
+          npx wait-on --timeout 900000 http://127.0.0.1:8080/actuator/health http://127.0.0.1:8000/ai/v1/health http://127.0.0.1:3000
       - name: Playwright — vertical slice, journeys, contract, visual
         env:
           NEXUS_WEB_URL: http://127.0.0.1:3000
