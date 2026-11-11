@@ -39473,3 +39473,50 @@ a single oversized value still occupies one entry. No claim about eviction metri
 
 - readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java`,
   `services/platform/src/test/java/com/nexus/platform/KeyValueStoreTest.java`.
+
+## 910. D910 — the platform unit suite had been red at HEAD: a 500 in the consumer thread list (an unterminated `where` fragment glued `order by` into a named parameter), and a test broken by Boot 3.5's second handler mapping
+
+**Goal.** While running the platform suite for the D909 change, two failures surfaced that existed at HEAD
+(both re-proved on a clean checkout of `c6d75ed` with `-Dtest='PermissionVocabularyTest,ConversationApiTest'`
+before any of this unit's edits existed): `ConversationApiTest.paginationIsCapped` and
+`PermissionVocabularyTest` (all three cases). Neither is caused by D909, and neither had a CI job that
+could have said so — this repository's `platform` job had never once executed (see D907).
+
+**Failure 1 — `GET /api/v1/conversations?limit=1000` returned `items: []` because Spring assembled the
+query `... c.user_id` + `order by ...` into `:user_idorder by ...`.** `ConversationRepository.listForUser`
+builds its `where` fragment with a text block that ENDS AT `:user_id` with no terminating whitespace —
+the very defect the author's own comment beside `listForMerchant` documents ("`:status` glued to `order`
+parses as one parameter") and that the merchant branch's trailing space avoids. `NamedParameterJdbcTemplate`
+reads `:user_idorder` as ONE parameter name; nothing is registered under it; the request dies with
+`InvalidDataAccessApiUsageException: No value supplied for the SQL parameter 'user_idorder'` — inside
+`ConversationApiTest` this surfaced as `items.size() == 0` on an assertion meant to read three rows
+(the route answered 500; the test only looked at `.path("items")`). Reproduced end-to-end on a live boot
+against `nexus_test` with a minted test JWT (same secret as the suite, direct `HS256`): the chain returned
+500 with the structured error envelope; after the fix the same request returns 200 with
+`{"items":[...],"next_cursor":null,"total_estimate":1}` and the probe rows were deleted afterwards.
+Fix: the shared `where` fragment now carries the separating newline before its closing delimiter — both
+occurrences (`listForUser` and `countForUser`; the latter was safe by luck of being the final fragment).
+`ConversationApiTest` is 10/10 green.
+
+**Failure 2 — `PermissionVocabularyTest` could not construct its bean.** The test autowired
+`RequestMappingHandlerMapping`; Spring Boot 3.5 also registers `controllerEndpointHandlerMapping`, so the
+unqualified injection fails with "expected single matching bean" before any assertion runs. Fix: a
+`@Qualifier("requestMappingHandlerMapping")` on the field with a one-line comment naming the two beans.
+`PermissionVocabularyTest` is 3/3 green.
+
+**Verification.** Full platform suite after these two fixes: **303 tests, 0 failures, 0 errors** (was: 303
+with 1 failure + 3 errors at HEAD). `ConversationApiTest` 10/10, `PermissionVocabularyTest` 3/3,
+`ConversationRepository`'s query observed by minted-token request, `KeyValueStoreTest` 6/6 from D909.
+This repository's `platform` CI job has still never executed in GitHub Actions; the fix is evidence on
+this host, and D907's `required` gate will now hold it to account on the next push where the diff's paths
+include `services/platform/**` (they did not for these commits' diffs).
+
+**What this does NOT claim.** That CI would have caught either failure before the fact — the wiring that
+would let it has only existed since D905. That the local `nexus_test` database is a valid replication of
+production schema — it matched V1-V10; V11 was applied to a throwaway only. That anything else at HEAD
+was audited; these were the two the suite itself surfaced.
+
+- readers: `services/platform/src/main/java/com/nexus/conversation/ConversationRepository.java`,
+  `services/platform/src/test/java/com/nexus/merchant/PermissionVocabularyTest.java`,
+  `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java` (modified: NO — green unchanged),
+  `docs/STATUS.md`.

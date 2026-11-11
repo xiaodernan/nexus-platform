@@ -91,7 +91,8 @@ public class ConversationRepository {
     public List<Map<String, Object>> listForUser(TenantContext tenant, UUID userId, int limit, int offset,
                                                  UUID merchantId) {
         String where = """
-                where c.tenant_id = :tenant_id and c.user_id = :user_id""";
+                where c.tenant_id = :tenant_id and c.user_id = :user_id
+                """;
         Map<String, Object> params = Json.map("user_id", userId, "limit", limit, "offset", offset);
         if (merchantId != null) {
             where = where + " and c.merchant_id = :merchant_id ";
@@ -110,7 +111,8 @@ public class ConversationRepository {
 
     public long countForUser(TenantContext tenant, UUID userId, UUID merchantId) {
         String where = """
-                where c.tenant_id = :tenant_id and c.user_id = :user_id""";
+                where c.tenant_id = :tenant_id and c.user_id = :user_id
+                """;
         Map<String, Object> params = Json.map("user_id", userId);
         if (merchantId != null) {
             where = where + " and c.merchant_id = :merchant_id ";

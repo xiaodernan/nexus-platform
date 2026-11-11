@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -32,7 +33,10 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 class PermissionVocabularyTest extends NexusIntegrationTest {
 
+    // Spring Boot 3.5 introduces a second handler mapping (controllerEndpointHandlerMapping), so the
+    // unqualified type is ambiguous and injection was failing before any assertion ran.
     @Autowired
+    @Qualifier("requestMappingHandlerMapping")
     private RequestMappingHandlerMapping mappings;
 
     @Autowired
