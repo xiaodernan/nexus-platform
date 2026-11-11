@@ -437,7 +437,12 @@ class Registry:
             if self._shared is not None:
                 shared_key = self._cache._key(spec=spec, arguments=args)
                 if shared_key is not None:
-                    raw = self._shared.get(shared_key[0], shared_key[1])
+                    # D962 — RedisTier uses the SYNC redis-py client: get() is a blocking socket
+                    # read (socket_timeout=1.0s). This dispatch is async and runs on the uvicorn
+                    # event loop, so a bare call here stalls EVERY concurrent request on this
+                    # worker and freezes the asyncio.wait_for tool timeout below. Offload the
+                    # blocking I/O to a thread; the await point also lets wait_for fire on time.
+                    raw = await asyncio.to_thread(self._shared.get, shared_key[0], shared_key[1])
                     if raw is not None:
                         self._emit(started, subject=subject, tool=tool,
                                    outcome="ok_cached_shared")
@@ -482,7 +487,9 @@ class Registry:
             if self._shared is not None:
                 shared_key = self._cache._key(spec=spec, arguments=args)
                 if shared_key is not None:
-                    self._shared.set(shared_key[0], shared_key[1], result, spec.cache_ttl_s)
+                    # D962 — same offload as the GET above: setex() is a blocking socket write.
+                    await asyncio.to_thread(self._shared.set, shared_key[0], shared_key[1],
+                                            result, spec.cache_ttl_s)
         self._emit(started, subject=subject, tool=tool, result=result, outcome="ok")
         return result
 
