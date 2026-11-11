@@ -137,6 +137,7 @@ services:
       NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
       NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
       NEXUS_PLATFORM_BASE_URL: http://platform:8080
+      NEXUS_PLATFORM_MODE: ${NEXUS_PLATFORM_MODE:-http}
       # Same shared secret as the platform's door — "configured for both sides or it behaves 501".
       NEXUS_AI_INTERNAL_TOKEN: ${NEXUS_AI_INTERNAL_TOKEN:-dev_nexus_internal_token_for_local_compose_0123456789abcdef}
       NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}

@@ -41885,3 +41885,19 @@ was live. The default-stub mode is unchanged.
 **Numbering.** D966 (geolocation), D967 (merchant-agent internal door) and D968 (card-media
 spec) were claimed by the concurrent lane while this unit was in flight (f19d0ad / 567d6d1 /
 3bd70c9), so the connection-reuse unit yields to D969 across every token.
+
+## 970. D970 — the e2e plane set the token it never used: NEXUS_PLATFORM_MODE stayed `stub`, so the agent's dialogue relay reached an in-memory echo that never sent `agent-message` through the internal door at all
+
+**Goal.** D967 wired `NEXUS_AI_INTERNAL_TOKEN` into the e2e boot line and the compose blocks — and the CI run still failed 2/2 ask-merchant-history retries with the SAME §142 reload signature: the merchant reply persists (it goes through the merchant's own BFF session directly), the consumer question and the agent answer do not. The cause was one env var under the two I had added, hiding inside `adapters/platform.py`'s default: `NEXUS_PLATFORM_MODE` unset selects `_STUB` — a deterministic in-memory stand-in that *accepts every relay call* and "persists" them to a list in the process's own memory. Nothing is ever POSTed to the platform's internal door, so the platform's internal receipt table never sees a message, and the latest-conversation hydration comes up with **only** the merchant-reply row (which the platform wrote itself on the merchant BFF reply POST).
+
+**The mechanism (read again now, with fresh eyes).** `apps/ai/nexus_ai/adapters/platform.py:_persist path`:
+1. `_persist_turn` calls `get_platform_client(deps.settings).append_conversation_message(...)`.
+2. `get_platform_client` reads `NEXUS_PLATFORM_MODE`: unset → defaults to `'stub'`.
+3. `StubPlatformClient.append_conversation_message` validates input, records the call into `self.calls`, and returns `{ stub: True, ... }` — a triumph for the caller, meaning the AI completes its SSE stream, which goes E2E through the wire — **but the platform is never told anything happened**.
+4. `apps/web` then hydrates `GET /api/v1/conversations/{id}` as `sender_type='user' | 'ai_agent'` — exactly nothing; the door receipt fails, the widget paints only the MERCHANT reply, and the §142 marker `{user-question-with-timestamp}` is never rendered.
+
+**The shape of the fix.** Two planes, two tokens. The e2e boot line adds `NEXUS_PLATFORM_MODE=http` immediately in-line before `NEXUS_PLATFORM_BASE_URL` so the helper sees a consistent env; compose's `ai` block gains `NEXUS_PLATFORM_MODE: ${NEXUS_PLATFORM_MODE:-http}` with the same default. The production gate stays byte-identical (D7+D969: if the deployment wants the stub, it still gets it by env; wire behavior otherwise unchanged). **The token outlives every relay** — D969's new pooled client rides `_request`, and a single `AsyncClient` sees `_persist_turn` twice per question (user + ai_agent) — but the transport facts stay opt-out, not opt-in.
+
+**What this does NOT claim.** Not that this is the last ask-merchant-history blocker; the CI rerun is the verifier. Not that `STUB` is bad: it is the documented dev shape. Not that any e2e test passed as a result of this edit alone — the whole chain has to agree: token present, mode=http, BFF wiring, hydrator, marker match. This unit removes exactly one.
+
+- readers: `.github/workflows/ci.yml` (the e2e AI-uvicorn line), `infra/docker-compose.yml` (the `ai` env block), `apps/ai/nexus_ai/adapters/platform.py` (`get_platform_client`, mode selection), the D967 run's artifact (`D:\d967_playwright_report` — the page snapshot confirmed the merchant reply and ONLY the merchant reply renders), and this ledger entry.
