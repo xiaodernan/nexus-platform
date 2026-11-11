@@ -129,11 +129,24 @@ export function SiteFooter({ locale }: { locale: string }) {
           <p className="max-w-sm text-xs leading-relaxed text-ink-muted">{dict.footer.trustText}</p>
         </div>
       </Container>
-      <Container size="shell" className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-5 text-2xs text-ink-faint">
+      <Container size="shell" className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-5 text-2xs text-ink-faint">
         <span>{dict.footer.rights}</span>
-        <span className="inline-flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-2.5">
           <Icon name="globe" size={12} />
-          {dict.brand.tagline}
+          <span className="text-xs text-ink-faint">{dict.brand.tagline}</span>
+          <span aria-hidden="true" className="text-ink-faint">·</span>
+          <span
+            aria-hidden="true"
+            className="text-sm font-semibold tracking-tight"
+            style={{
+              background: 'var(--nexus-ai-gradient)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            {dict.brand.name}
+          </span>
         </span>
       </Container>
     </footer>

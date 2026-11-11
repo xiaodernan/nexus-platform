@@ -41244,3 +41244,33 @@ The problem is precise: **`XADD` with `MAXLEN` embedded trims atomically on the 
 **Not claimed.** No new guarantees about publishing order or delivery beyond D928: the stream still cannot surviveRedis-sent across partial lettuce writes (fail-soft), no consumer group is bonded, the events publisher still swallows Redis unavailability without blocking the commerce path, and nothing claims the D931 at-most-once-split semantics for this tier (the D931 events-service still owns those). No throughput, latency, or capacity claims.
 
 **Why not `approximateTrimming()`**: approximate trimming is a radix-node optimisation that delays eviction until the radix tree restructures — it may result in **zero** entries being evicted even if explicit `MAXLEN` is requested. For the 2-32 ring the approximate operator never fires. `=` exact is what the module actually guarantees.
+
+## 955. D955 — the footer finally signs the wall: a clipped-text brand mark in the closing bar
+
+**Goal.** The mandate keeps pushing visual refinement at the tail end of every surface. The bottom of
+the footer — the last pixel a visitor's eye touches — was a thin slate-line row: `©` on the left,
+`{brand.tagline}` on the right. The header signs the site with a logo + accent bar; the hero speaks
+in a confident AI-gradient eyebrow; the merchant page gets a designed identity card; the signin page
+earned its single console-frame. The footer, contrastingly, clamoured for the same identity treatment — and
+delivering it adds zero client JavaScript, one dict read (`dict.brand.name`, already published), one
+tone-token reference, and one CSS rule.
+
+**The fix.** `apps/web/src/components/site-chrome.tsx` — the footer's closing bar adopts a refined
+tri-part rhythm: left keeps `© / tagline`, mid gets the tagline in a quieter ink-faint tone, then a
+hairline `·` divider, then the wordmark `{dict.brand.name}` rendered as gradient-clipped text
+(`background: var(--nexus-ai-gradient)`, `backgroundClip: text`, `color: transparent`) — the same
+theme-paired accent token the hero eyebrow and signin panel speak. No new copy, no new tokens, no
+new images, no new client JS. The whole change lives inside a server component that already shipped.
+
+**Verification.** `npx tsc --noEmit` — clean. Full web suite: **228/228 green** (no behavior moved,
+only the markup of the last bar and one new `aria-hidden` marker). Browser drive is NOT claimed
+(same as D938/D941 — decor change visible by comparing `git show HEAD`).
+
+**What this does NOT claim.** No new typeface, motion, or theme; the gradient accent is the single
+already-tracked-contract token (`--nexus-ai-gradient`, present in `:root:checked` and `.dark`); the
+wordmark is deliberately not decorative copy but a brand-owned surface; no live browser assertion
+ran; the agreement between this mark and the hero sign means nothing about the rest of the footer
+layout staying the same forever — only that it didn't change in this unit.
+
+- readers: `apps/web/src/components/site-chrome.tsx` (`SiteFooter`), this ledger entry,
+  `packages/ui/src/styles/tokens.css` (`--nexus-ai-gradient` contract).
