@@ -180,7 +180,7 @@
   smoke: events_group_smoke.sh
   falsifier: falsify_events_group_smoke.sh
   gate: check_events_group.mjs
-  not_claimed: Group mode is OFF by default; no XAUTOCLAIM of a dead consumer, no dead-letter, no persistent ring, no per-tenant partitioning, no transform, no ordering guarantee
+  not_claimed: Group mode is OFF by default; D950 adds opt-in XAUTOCLAIM of a dead consumer (default OFF, at-least-once, no fencing); no dead-letter, no persistent ring, no per-tenant partitioning, no transform, no ordering guarantee
   honesty_anchor: D931 NARROWS the group/replay boundary
 
 - id: D932
@@ -214,6 +214,13 @@
   gate: check_singleflight.mjs
   not_claimed: Singleflight is OFF by default (the D933 direct-load path still ships); the in-flight table is per-JVM with no cross-process or cross-node coalescing; it stores no value after return (it is not a cache); no latency or throughput number is claimed, no real-Postgres stampede was measured (the loader is a controlled counter), and a blocking loader blocks its followers (callers own their timeouts)
   honesty_anchor: D944's singleflight is opt-in and coalesces only within one JVM
+- id: D950
+  claim: An opt-in Redis consumer-group poll arm calls XAUTOCLAIM to reclaim pending entries a dead (never-ACKing) consumer left stranded — following the server cursor in a per-poll-bounded loop, pushing each rescued entry to the ring and XACK-ing it after the push — and exposes a reclaimed counter over GET /events/group so dead-consumer recovery is observable
+  smoke: events_claim_smoke.sh
+  falsifier: falsify_events_claim_smoke.sh
+  gate: check_d950.mjs
+  not_claimed: Claim mode is OFF by default (the D931 replay-only group path still ships); the "crash" is a server-side never-acked PEL state, not a killed JVM; XAUTOCLAIM is at-least-once, not exactly-once, does not fence the old owner, and its min-idle threshold is a heuristic so a slow-but-live consumer may be duplicated; no dead-letter, no retry/backoff, no persistent ring, no per-tenant partitioning, no transform, no ordering guarantee, and no latency/throughput number is claimed; both smokes fail (not skip) when Docker or live Redis on :6380 is absent
+  honesty_anchor: D950 NARROWS this clause, it does not erase it
 
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane

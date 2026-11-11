@@ -102,8 +102,6 @@ def test_shared_key_is_present_with_a_positive_ttl(monkeypatch):
 
     probe_merchant = f"probe-{uuid.uuid4()}"
     backend = demo_backend()
-    counter = {"n": 0}
-    original = backend.hours
 
     async def shaped(merchant_ids):
         # Return a stable, deterministic row for the probe merchant id

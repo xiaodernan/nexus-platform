@@ -76,7 +76,7 @@ async def maybe_register_eureka() -> Registration | None:
     service, not a boot failure."""
     if not eureka_enabled():
         return None
-    from py_eureka_client import eureka_client as ec
+    from py_eureka_client import eureka_client as ec  # type: ignore[import-untyped]
 
     server = os.environ.get("NEXUS_EUREKA_URI", "http://127.0.0.1:18761/eureka/")
     host = os.environ.get("NEXUS_EUREKA_HOST", "127.0.0.1")

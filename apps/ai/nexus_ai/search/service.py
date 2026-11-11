@@ -316,7 +316,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
     # D913: index the merchant's offerings once per pass when avoid filtering is live —
     # otherwise every row scans every offering (O(rows × offerings)). A partial map yields fewer
     # candidates, never different verdicts; the avoid lane only consults the row's own merchant.
-    _avoid_index = None
+    _avoid_index: dict[str, list[dict[str, Any]]] | None = None
     if filters.get("avoid"):
         _avoid_index = {}
         for o in offerings:
@@ -747,7 +747,7 @@ def _static_row_avoids_allergen(row: dict[str, Any], terms: set[str]) -> bool:
 
 
 def _static_avoids(row: dict[str, Any], avoid: Any,
-                   offerings: Sequence[dict[str, Any]] = ()) -> bool:
+                   offerings: Sequence[dict[str, Any]] | Mapping[str, list[dict[str, Any]]] = ()) -> bool:
     """Whether the live avoid clause would drop this row (D549).
 
     The live clause is the same legs in both lanes, and the lane only decides WHERE the last
@@ -783,7 +783,7 @@ def _static_avoids(row: dict[str, Any], avoid: Any,
         if isinstance(offerings, Mapping):
             candidates = offerings.get(mine, ())
         else:
-            candidates = (o for o in offerings if str(o.get("merchant_id") or "") == mine)
+            candidates = [o for o in offerings if str(o.get("merchant_id") or "") == mine]
         for o in candidates:
             if _static_row_avoids_text(o, terms) or _static_row_avoids_allergen(o, terms):
                 return True

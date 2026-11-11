@@ -35,8 +35,11 @@ import org.springframework.web.client.RestTemplate;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.datasource.url=jdbc:postgresql://127.0.0.1:5433/nexus_test",
-        "spring.datasource.username=nexus_app",
-        "spring.datasource.password=nexus_dev_app_only",
+        // Role split: locally, the restricted `nexus_app` role is provisioned by infra/postgres/init/00_roles.sql.
+        // CI provisions only the migrations, so the credentials come from the same env block the job exports.
+        // Dev falls back to the published dev credentials the seed/harness already uses.
+        "spring.datasource.username=${NEXUS_TEST_DB_USERNAME:${NEXUS_DB_USER:nexus_app}}",
+        "spring.datasource.password=${NEXUS_TEST_DB_PASSWORD:${NEXUS_DB_PASSWORD:nexus_dev_app_only}}",
         // Every @SpringBootTest with a distinct property set gets its own cached context, and every context holds
         // its own Hikari pool. At the base file's 20 the suite reached the container's connection ceiling and
         // began failing with "remaining connection slots are reserved for roles with the SUPERUSER attribute" —

@@ -63,28 +63,39 @@ fail() {
     exit 1
 }
 
-[ -f "$ROOT/.env" ] || fail "no root .env - the dev profile's credential chain lives there (run_platform_dev.sh)"
-
-# Caller overrides survive .env (D54's guard): the names come out of the service's own three config
-# files, not a list kept here, and no value is printed.
-KEPT=""
-RESTORE=""
-for key in $(grep -hoE '\$\{[A-Z][A-Z0-9_]{2,}' \
-                   "$ROOT/services/platform/src/main/resources/application.yml" \
-                   "$ROOT/services/platform/src/main/resources/application-dev.yml" \
-                   "$ROOT/services/platform/src/main/resources/application-cloud.yml" \
-               | sed -E 's/^\$\{//' | sort -u); do
-    [ -n "${!key:-}" ] || continue
-    KEPT="$KEPT $key"
-    RESTORE="$RESTORE $key=${!key}"
-done
-set -a
-# shellcheck disable=SC1091
-. "$ROOT/.env"
-set +a
-for pair in $RESTORE; do export "${pair%%=*}"="${pair#*=}"; done
-[ -n "$KEPT" ] || KEPT=" none"
-echo "caller overrides kept over .env:$KEPT" >&2
+if [ -f "$ROOT/.env" ]; then
+    # Caller overrides survive .env (D54's guard): the names come out of the service's own three config
+    # files, not a list kept here, and no value is printed.
+    KEPT=""
+    RESTORE=""
+    for key in $(grep -hoE '\$\{[A-Z][A-Z0-9_]{2,}' \
+                       "$ROOT/services/platform/src/main/resources/application.yml" \
+                       "$ROOT/services/platform/src/main/resources/application-dev.yml" \
+                       "$ROOT/services/platform/src/main/resources/application-cloud.yml" \
+                   | sed -E 's/^\$\{//' | sort -u); do
+        [ -n "${!key:-}" ] || continue
+        KEPT="$KEPT $key"
+        RESTORE="$RESTORE $key=${!key}"
+    done
+    set -a
+    # shellcheck disable=SC1091
+    . "$ROOT/.env"
+    set +a
+    for pair in $RESTORE; do export "${pair%%=*}"="${pair#*=}"; done
+    [ -n "$KEPT" ] || KEPT=" none"
+    echo "caller overrides kept over .env:$KEPT" >&2
+else
+    # No .env on disk — fall back to the same defaults a fresh clone/CI job can boot without a root
+    # .env. The caller's environment still wins. Credentials mirror the CI job's own service container:
+    # a disposable postgres on :5433 with password ci_secret, and the integration-test JWT secret.
+    export NEXUS_PLATFORM_DB_URL="${NEXUS_PLATFORM_DB_URL:-${NEXUS_DB_URL:-jdbc:postgresql://127.0.0.1:5433/nexus}}"
+    export NEXUS_PLATFORM_DB_USERNAME="${NEXUS_PLATFORM_DB_USERNAME:-${NEXUS_DB_USER:-postgres}}"
+    export NEXUS_PLATFORM_DB_PASSWORD="${NEXUS_PLATFORM_DB_PASSWORD:-${NEXUS_DB_PASSWORD:-ci_secret}}"
+    export NEXUS_JWT_SECRET="${NEXUS_JWT_SECRET:-ci_only_not_a_real_secret_0123456789abcdef}"
+    export NEXUS_REDIS_URL="${NEXUS_REDIS_URL:-redis://127.0.0.1:6380/0}"
+    export NEXUS_LLM_PROVIDER="${NEXUS_LLM_PROVIDER:-mock}"
+    echo "no root .env — falling back to CI/fresh-clone defaults (all exportable; caller wins)" >&2
+fi
 
 # The platform's declared name, read not retyped: Eureka lists it uppercased, the health body lower.
 PLATFORM_NAME="$(sed -n 's/^[[:space:]]*name:[[:space:]]*\([A-Za-z0-9._-]*\)[[:space:]]*$/\1/p' \

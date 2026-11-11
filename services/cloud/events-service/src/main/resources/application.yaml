@@ -46,6 +46,14 @@ nexus:
     group-name: ${NEXUS_EVENTS_GROUP_NAME:nexus-events-readers}
     # Empty means "a distinct UUID per process"; set it explicitly only for a deliberate replay test.
     consumer-name: ${NEXUS_EVENTS_CONSUMER_NAME:}
+    # D950: opt-in dead-consumer pending reclamation (needs group-enabled=true too). Default false
+    # keeps D931's group path byte-for-byte. XAUTOCLAIM steals entries idle longer than
+    # claim-min-idle-ms from ANY consumer (including one that crashed and never ack'd) to this reader,
+    # bounded to claim-max-batches x claim-batch-size entries per poll so a wedged PEL cannot starve a tick.
+    claim-enabled: ${NEXUS_EVENTS_CLAIM_ENABLED:false}
+    claim-min-idle-ms: ${NEXUS_EVENTS_CLAIM_MIN_IDLE_MS:60000}
+    claim-batch-size: ${NEXUS_EVENTS_CLAIM_BATCH_SIZE:50}
+    claim-max-batches: ${NEXUS_EVENTS_CLAIM_MAX_BATCHES:8}
 
 logging:
   level:
