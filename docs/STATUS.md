@@ -39399,3 +39399,42 @@ but the compiler. That pip-audit will report zero vulnerabilities; it is advisor
 - readers: `.github/workflows/ci.yml` (`required` + pip-audit steps), `.gitleaks.toml` (new),
   `apps/ai/nexus_ai/orchestrator/executor.py` (unused import removed),
   `apps/ai/tests/test_the_orchestrator_plans_the_min_necessary_steps.py` (unused import removed).
+
+## 908. D908 — V11: fifteen read-path indexes, verified against a throwaway database, dropped after measurement
+
+**Goal.** The schema's read-path indexes grew with V1-V10 without ever being audited as a whole. The
+sweep (every `CREATE TABLE`, every `CREATE INDEX`, every `repository.java` filter, cross-checked
+column-by-column against V1-V10) found the hot commerce/read tables with ZERO supporting index on their
+filters:
+
+- `cart_items (cart_id)` / `(offering_id)` / `(reservation_id)` — every cart read joins `cart_items`;
+- `order_items (order_id)` — every order view; no index at all beyond PK;
+- `payments (order_id)` / `(provider, provider_ref)` — order reads and every webhook;
+- `refunds (payment_id)` — refund sweeps;
+- `handoffs (conversation_id)` / `(merchant_id)` — the merchant inbox;
+- `moderation_cases (subject_id)` — the moderation queue's typical lookup;
+- `user_identities (user_id)` — account deletion / identity fan-out;
+- `resource_pools (merchant_id)` / `(offering_id)` — reservation capacity reads;
+- `categories (name) WHERE kind='merchant'` — the MerchantCards correlated subquery the file's own
+  comment documents as having "exploded on nexus_test";
+- `permission_grants (merchant_id)` — grant reconciliation / reconciliation sweeps complete the V8 FK.
+
+**The fix.** `infra/db/migrations/V11__read_path_indexes.sql` — `CREATE INDEX IF NOT EXISTS` for all
+fifteen, no partial semantics except the documented `categories` one, English comments naming the
+repository that needs each. `IF NOT EXISTS` everywhere (fresh bootstrap and hand-created environments
+are both no-ops, exactly V10's rule). Zero enforcement/backfill/drops — pure indexes.
+
+**Verification.** Against a THROWAWAY database (`nexus_gate_v11`, created inside the compose postgres,
+V1-V10 applied, V11 applied, then dropped; the live `nexus` database was never touched): all fifteen
+indexes exist on exit (census query), the merchant-card category subquery now plans as an
+`Index Only Scan using categories_merchant_name_idx` (was a seq scan on `categories.name`), and the
+migration replays idempotently. `psql --single-transaction` semantics apply to CI, where the `ai` job
+also applies this file to `nexus_test`.
+
+**What this does NOT claim.** No query plan was measured against real production volumes (there is no
+production corpus on this machine; the `nexus_gate_v11` measurement was on an empty schema — plan shapes
+only). No write-amplification trade was measured; these are btree indexes on low-write columns. No
+covering indexes (INCLUDE clauses) were added; none were needed for the observed filters. Caching and
+partitioning for the same tables are separate open items in the plan (`docs/CONTINUITY_PLAN.md`).
+
+- readers: `infra/db/migrations/V11__read_path_indexes.sql`.
