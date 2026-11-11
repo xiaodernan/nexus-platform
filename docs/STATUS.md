@@ -41558,3 +41558,58 @@ exactly the next observation, not a settled fact here; neither is the claim that
 flakes are cleared by this. No new tests were needed: wait-on is the unit's gate by construction —
 name the contract between the probe and the probed door, and the gate follows.
 - readers: `.github/workflows/ci.yml` (lines 343, 350), this ledger entry.
+
+## 961. D961 — the e2e suite was passing against mock fixtures: the BFF read the wrong env names and WebKit was never installed (Chromium-only CI hid it)
+
+**Goal.** D960 got the platform booted for the first time in this job's history, the wait-on probe
+cleared (HTTP GET against the GET-only FastAPI health route), and Playwright finally RAN — and every
+observable outcome of that run was read, not guessed (`gh run` `43099714271`, 2026-11-12; e2e job
+`130793605398`, logs `D:\d960_e2e.log`, exit 1). Two distinct failure classes printed their own
+fingerprints, and both are repaired here.
+
+**What the log showed (the two classes, named).**
+
+1. **The 16 `[mobile]` failures were `browserType.launch: Executable doesn't exist at
+   /home/runner/.cache/ms-playwright/webkit-2359/pw_run.sh`.** The mobile project runs
+   `devices['iPhone 13']` (a WebKit device), but the job's install step installed only chromium
+   (`npx playwright install --with-deps chromium`). Zero test code ran in the mobile project — it died
+   at browser launch. Fixed in the install line: `npx playwright install --with-deps chromium webkit`.
+2. **The 6 `[desktop]` failures all trace to the BFF and its env names.**
+   - `ask-merchant.spec.ts` and `ask-merchant-history.spec.ts` fail at the very first line:
+     `page.request.post(${WEB}/api/nexus/auth, …)` — the web BFF proxies to the platform's
+     `/api/v1/auth/demo`, and its own base URL resolves from **`PLATFORM_API_BASE_URL`**
+     (`apps/web/src/lib/env.ts`, server-side only), not the `NEXUS_PLATFORM_URL` the CI job exports.
+     In a fresh CI environment the default is `http://127.0.0.1:8090` — the platform is on 8080, so the
+     upstream fetch connection-refuses and the BFF answers 502: `resp.ok() === false`, every
+     demo-login call fails, and with them every "consumer asks the merchant" journey.
+   - The same class of mismatch hits the AI leg: **`AI_API_BASE_URL`** defaults to `http://127.0.0.1:8010`
+     while every other coordinate in the job points at 8000.
+   - `NEXT_PUBLIC_DATA_MODE` is unset, so `IS_MOCK` defaults to true — the browser suite was
+     **rendering the fixture mock path, not the seeded stack the job boots**. The contract specs pass
+     regardless (they hit the platform directly on 8080 from the Playwright fixture), and the consumer
+     pages "passed" because fixture cards are always available. The job spent ten minutes migrating,
+     seeding and booting a real stack, and the browser never spoke to it. That is the same
+     "connection-plane confusion" class D952 fixed for credentials, one layer up.
+   - The two remaining desktop failures (`vertical-slice.spec.ts:96` cards visible after the refinement
+     click; `:143` first-card `href` read) are downstream of the same un-live plane; they are NOT
+     separately declared fixed.
+
+**The repair (three one-line edits in ci.yml, the file keeps its 535 lines and every cited line number).**
+
+- Build line: `PLATFORM_API_BASE_URL=http://127.0.0.1:8080 AI_API_BASE_URL=http://127.0.0.1:8000 NEXT_PUBLIC_DATA_MODE=live npm ci && npm run build --workspace @nexus/web`
+  (`NEXT_PUBLIC_*` inlines at build time, so live must be present on this command).
+- Start line: `PLATFORM_API_BASE_URL=http://127.0.0.1:8080 AI_API_BASE_URL=http://127.0.0.1:8000 npm run start --workspace @nexus/web &`
+  (server-side runtime only; DATA_MODE already inlined).
+- Install line: `npx playwright install --with-deps chromium webkit`.
+
+**Not claimed.** CI has not run against this commit — the next push observes whether live mode renders
+the real stack's cards on `/search?q=` queries and whether WebKit runner selection behaves; every
+desktop BFF failure should now route at the platform (or reveal real breakage this unit cannot see).
+Mock mode stays the correct default for dev without services (`NEXT_PUBLIC_DATA_MODE` is env-driven);
+nothing about fixture mode itself changed — this job simply stops using it as its verification plane.
+The mobile project now RUNS on WebKit for the first time; its 16 launch failures are expected to become
+real test results, which may include real product failures. Same for the ask-merchant journeys against
+the real mock-provider LLM. No Green halo is asserted for any cell of the matrix until the run lands.
+
+- readers: `.github/workflows/ci.yml` (lines 345, 346, 357), `apps/web/src/lib/env.ts` (the resolution
+  this unit aligns to), the D960 log (`D:\d960_e2e.log`), this ledger entry.
