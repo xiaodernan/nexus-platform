@@ -11,10 +11,12 @@ import com.nexus.platform.TenantJdbc;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +34,71 @@ public class ApiKeyService implements ApiKeyVerifier {
     private final PermissionService permissions;
     private final AuditService audit;
 
-    public ApiKeyService(TenantJdbc jdbc, PermissionService permissions, AuditService audit) {
+    /**
+     * D933: one bound answer for a key-hash lookup (valid / invalid) until its TTL expires. The
+     * empty principal is cached too, so a client stuck in a bad-secret retry loop stops asking
+     * the database on every attempt — bounded by {@code verifyCacheMax}.
+     */
+    private static final class VerifyEntry {
+        final Optional<Principal> principal;
+        final long expiresAt;
+
+        VerifyEntry(Optional<Principal> principal, long expiresAt) {
+            this.principal = principal;
+            this.expiresAt = expiresAt;
+        }
+    }
+
+    /**
+     * D933: `verify()` is the hot pre-auth path for every `nx_`-keyed caller — raw-SQL JOIN per
+     * authenticated request with no cache anywhere. A bounded access-order LRU (same shape as the
+     * D912/D909 caches) capped at {@code verifyCacheMax} and valid for {@code verifyCacheTtlMs}
+     * (`<=0` bypasses entirely). Writes that invalidate a key — {@link #revoke} — flush the whole
+     * map synchronously, so this process never answers stale for a revoked key after the revoke
+     * returns. A failed lookup is never cached. Cross-instance invalidation is absent: a peer
+     * process' cached entry may outlive a revoke by at most the TTL (the same staleness
+     * D912/D902 already accept on this same auth path).
+     */
+    private final LinkedHashMap<String, VerifyEntry> verifyCache;
+    private final long verifyCacheTtlMs;
+    private final int verifyCacheMax;
+
+    /**
+     * D933: `touch()` wrote `api_keys.last_used_at = now()` on EVERY authenticated request — a
+     * one-row UPDATE with zero reads piggy-backing dispatch order. The hook now emits at most one
+     * UPDATE per key per {@code touchThrottleMs} (`<=0` bypasses, restoring old per-request write
+     * amplification). The access-order LRU caps the tracked ids at {@code touchThrottleMax}; a
+     * freshly evicted id simply touches again. last_used_at may therefore lag reality by up to the
+     * throttle window — document, don't hide.
+     */
+    private final LinkedHashMap<UUID, Long> touchSeen;
+    private final long touchThrottleMs;
+    private final int touchThrottleMax;
+
+    public ApiKeyService(TenantJdbc jdbc, PermissionService permissions, AuditService audit,
+                         @Value("${nexus.api_key.verify-cache-ttl-ms:15000}") long verifyCacheTtlMs,
+                         @Value("${nexus.api_key.verify-cache-max:512}") int verifyCacheMax,
+                         @Value("${nexus.api_key.touch-throttle-ms:60000}") long touchThrottleMs,
+                         @Value("${nexus.api_key.touch-throttle-max:1024}") int touchThrottleMax) {
         this.jdbc = jdbc;
         this.permissions = permissions;
         this.audit = audit;
+        this.verifyCacheTtlMs = verifyCacheTtlMs;
+        this.verifyCacheMax = verifyCacheMax;
+        this.touchThrottleMs = touchThrottleMs;
+        this.touchThrottleMax = touchThrottleMax;
+        this.verifyCache = new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, VerifyEntry> eldest) {
+                return size() > verifyCacheMax;
+            }
+        };
+        this.touchSeen = new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<UUID, Long> eldest) {
+                return size() > touchThrottleMax;
+            }
+        };
     }
 
     @Transactional
@@ -104,17 +167,41 @@ public class ApiKeyService implements ApiKeyVerifier {
         }
         jdbc.crossTenantUpdate("delete from permission_grants where subject_type = 'api_key' and subject_id = :id",
                 Json.map("id", keyId));
+        flushVerifyCache();
         audit.record(tenant, "user", actorId, "revoke_api_key", "api_key", keyId, null, null, null, Json.map(),
                 null, null);
     }
 
     @Override
     public Optional<Principal> verify(String rawKey, TenantContext tenant) {
+        String hash = sha256(rawKey);
+        if (verifyCacheTtlMs > 0) {
+            String cacheKey = tenant.tenantId() + ":" + hash;
+            long now = System.currentTimeMillis();
+            synchronized (verifyCache) {
+                VerifyEntry hit = verifyCache.get(cacheKey);
+                if (hit != null && hit.expiresAt > now) {
+                    return hit.principal;
+                }
+                if (hit != null) {
+                    verifyCache.remove(cacheKey);
+                }
+            }
+            Optional<Principal> loaded = loadForTenant(tenant, hash);
+            synchronized (verifyCache) {
+                verifyCache.put(cacheKey, new VerifyEntry(loaded, System.currentTimeMillis() + verifyCacheTtlMs));
+            }
+            return loaded;
+        }
+        return loadForTenant(tenant, hash);
+    }
+
+    private Optional<Principal> loadForTenant(TenantContext tenant, String hash) {
         Optional<Map<String, Object>> row = jdbc.firstForTenant(tenant, """
                 select k.id, k.merchant_id, k.scopes, m.tenant_id
                 from api_keys k join merchants m on m.id = k.merchant_id
                 where k.key_hash = :hash and m.tenant_id = :tenant_id and k.revoked_at is null
-                """, Json.map("hash", sha256(rawKey)));
+                """, Json.map("hash", hash));
         return row.map(r -> new Principal("api_key", Json.uuid(r, "id"), null, tenant.tenantId(), "api_key",
                 Json.uuid(r, "merchant_id"), null, null, "api_key"));
     }
@@ -122,7 +209,32 @@ public class ApiKeyService implements ApiKeyVerifier {
     @Override
     public void touch(UUID keyId) {
         // api_keys has no tenant column; the id comes from a row we just tenant-verified in verify().
+        if (touchThrottleMs > 0) {
+            long now = System.currentTimeMillis();
+            synchronized (touchSeen) {
+                Long last = touchSeen.get(keyId);  // access-order map: the get re-pins the entry's recency
+                if (last != null && now - last < touchThrottleMs) {
+                    return;
+                }
+            }
+        }
         jdbc.crossTenantUpdate("update api_keys set last_used_at = now() where id = :id", Json.map("id", keyId));
+        if (touchThrottleMs > 0) {
+            synchronized (touchSeen) {
+                touchSeen.put(keyId, System.currentTimeMillis());
+            }
+        }
+    }
+
+    /**
+     * Flush every cached verify answer. Called by {@link #revoke} after a key dies so this process
+     * never answers stale for it afterwards — the same discipline {@code PermissionService} applies
+     * to grant writes (D912).
+     */
+    private void flushVerifyCache() {
+        synchronized (verifyCache) {
+            verifyCache.clear();
+        }
     }
 
     static String sha256(String value) {

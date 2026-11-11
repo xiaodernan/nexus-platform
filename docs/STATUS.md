@@ -40448,3 +40448,61 @@ per-instance limiter over a different store.
   `scripts/check_atomic_ratelimit.mjs`, `scripts/ratelimit_atomicity_smoke.sh`,
   `scripts/falsify_ratelimit_atomicity_smoke.sh`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`,
   `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.
+
+## 933. D933 — the API-key door stops asking Postgres on every authenticated request: a bounded LRU for verify, a throttle for touch
+
+**Goal.** The user asked for networking and systems knowledge applied to make the code faster and more
+sound. Reading `AuthFilter` against `ApiKeyService` exposed the hottest un-cached path in the monolith:
+every authenticated `nx_` request did a joined two-table `SELECT` (`api_keys` JOIN `merchants`) and then an
+unconditional `UPDATE api_keys SET last_used_at = now()` — a read AND a write on every request, no matter
+how many times the same key had been seen in the previous millisecond. The human-session path has no such
+cost (the bearer token is stateless), and D912 proved this exact class of fix on the authorization door;
+this unit applies the same discipline to the authentication door itself.
+
+**The fix.** Two independent, separately-configured pieces, both in `ApiKeyService`:
+
+1. **`verify()` cache** — a bounded access-order `LinkedHashMap` keyed `tenantId + ":" + sha256(rawKey)`,
+   valid for `nexus.api_key.verify-cache-ttl-ms` (default 15000, `<=0` bypasses), capped at
+   `nexus.api_key.verify-cache-max` (default 512). It caches the FULL `Optional<Principal>` — a valid
+   key is served warm, and a rejected key (401 `invalid_api_key`) is served warm too, with the
+   negative arm explicitly motivated by the classic "client stuck in a bad-secret retry loop" pattern
+   (D902's bogus-`X-Tenant` flood is the same shape one filter earlier). A failed lookup is NEVER
+   cached (the exception propagates; the map is untouched).
+2. **`touch()` write-throttle** — at most one `UPDATE` per key per `nexus.api_key.touch-throttle-ms`
+   (default 60000, `<=0` bypasses and restores the old per-request write), tracked in a second
+   access-order LRU capped at `nexus.api_key.touch-throttle-max` (default 1024). An evicted key simply
+   touches again. `last_used_at` may therefore lag reality by up to the throttle window — recorded
+   here, not hidden.
+
+**Invalidation.** `revoke()` flushes the whole verify cache synchronously after a successful update —
+the same flush-total discipline D912 applies to grant writes. This process therefore never answers
+stale for a revoked key after `revoke()` returns. Cross-instance staleness is bounded by the TTL and
+is NOT claimed to be invalidated by any bus; a key revoked on one replica may still authenticate on
+another for at most `ttl` (15s default) — the same staleness bound the authorization cache on this
+same door has carried since D912.
+
+**Verification.** `ApiKeyServiceCacheTest` — **12/12 pass**: valid key served from cache within TTL
+(with principal equality), rejected key cached (the DB is asked once for a stream of identical bad
+presentations), DB failure not cached, revocation visible to the very next `verify()` through this
+service (flush-on-revoke, exactly the D912 assertion shape), TTL expiry, zero-TTL bypass, LRU eviction
+order with cap 2 (three distinct keys, access re-pins, four DB reads), touch writes once per window,
+touch writes again after the window, zero-throttle restores the per-request write, a failed touch is
+retried on the next request (the throttle slot is claimed only after a successful UPDATE), and the
+touch LRU eviction order with cap 2. Full platform suite: **330 tests, exactly one failure —
+`ForwardedHeaderTrustTest.frameworkHandsTheLoginGateToTheCaller`**, the recorded pre-existing
+full-suite-only red (it passes 3/3 solo, confirmed again this session both before and after the
+change; the identity/audit path this unit does not touch). The other previously-noted full-suite
+red (`RateLimitEnforcementTest.authLadderRefusesTheForgedEscape`) was green in this run. My unit
+moves no other test.
+
+**What this does NOT claim.** No cross-instance invalidation (no Redis pub/sub, no event bus wiring for
+this path); no staleness bound tighter than the configured TTL on a peer process; no change to
+`permission_grants` visibility (that cache is D912's, unchanged); the `touch()` throttle means
+`last_used_at` is approximate by up to 60s — observability dashboards built on it must treat minute-
+granularity as the resolution; and the verify cache does NOT bound the cost of a flood of *distinct*
+forged keys (their cardinality is unbounded — the LRU bounds memory, not the SELECT rate of a
+brute-force space this measure never pretended to touch).
+
+- readers: `services/platform/src/main/java/com/nexus/merchant/ApiKeyService.java` (the two caches,
+  the flush, the throttle), `services/platform/src/test/java/com/nexus/merchant/ApiKeyServiceCacheTest.java`
+  (12/12), this ledger entry.
