@@ -6,6 +6,9 @@ import io.lettuce.core.XGroupCreateArgs;
 import io.lettuce.core.XReadArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +66,8 @@ public class EventsReader {
     private final String url;
     private final Duration pollEvery;
     private final EventsRing ring;
+    private final Counter pollTicks;
+    private final Counter pollFailures;
     private final boolean groupEnabled;
     private final String groupName;
     private final String consumerName;
@@ -76,7 +81,9 @@ public class EventsReader {
     private boolean groupReady = false;
 
     /** Spring must use THIS constructor: the 4-arg one below exists only for D929-era unit tests, and
-     *  with two constructors and no @Autowired the container falls back to a nonexistent no-arg one. */
+     *  with two constructors and no @Autowired the container falls back to a nonexistent no-arg one.
+     *  D939: the MeterRegistry is injected explicitly, not via field injection, so every claim about
+     *  the meters can be asserted in a unit test against a SimpleMeterRegistry. */
     @Autowired
     public EventsReader(
             @Value("${nexus.events.enabled:true}") boolean enabled,
@@ -85,7 +92,8 @@ public class EventsReader {
             @Value("${nexus.events.ring-size:32}") int ringSize,
             @Value("${nexus.events.group-enabled:false}") boolean groupEnabled,
             @Value("${nexus.events.group-name:nexus-events-readers}") String groupName,
-            @Value("${nexus.events.consumer-name:}") String consumerName) {
+            @Value("${nexus.events.consumer-name:}") String consumerName,
+            MeterRegistry meters) {
         this.enabled = enabled;
         this.url = url;
         this.pollEvery = Duration.ofMillis(pollMs);
@@ -97,11 +105,31 @@ public class EventsReader {
         // default makes impossible.
         this.consumerName = (consumerName == null || consumerName.isBlank())
                 ? UUID.randomUUID().toString() : consumerName;
+        this.pollTicks = Counter.builder("nexus.events.poll.ticks")
+                .description("pollOnce() attempts on an enabled reader (disabled readers never tick)")
+                .register(meters);
+        this.pollFailures = Counter.builder("nexus.events.poll.failures")
+                .description("pollOnce() attempts that threw and were swallowed after logging")
+                .tag("mode", groupEnabled ? "group" : "tail")
+                .register(meters);
+        Gauge.builder("nexus.events.ring.evictions", ring, EventsRing::evictions)
+                .description("entries the bounded ring evicted at its cap; the overload signal")
+                .baseUnit("evictions")
+                .register(meters);
+    }
+
+    /** D931 constructor shape kept: existing callers and test sites that pass 7 args build their own
+     *  (discarded) SimpleMeterRegistry; Spring wires the @Autowired 8-arg constructor above. */
+    public EventsReader(boolean enabled, String url, long pollMs, int ringSize,
+                        boolean groupEnabled, String groupName, String consumerName) {
+        this(enabled, url, pollMs, ringSize, groupEnabled, groupName, consumerName,
+                new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
     }
 
     /** D929 constructor kept verbatim: seven existing tests and every caller that builds a tail reader. */
     public EventsReader(boolean enabled, String url, long pollMs, int ringSize) {
-        this(enabled, url, pollMs, ringSize, false, "nexus-events-readers", "");
+        this(enabled, url, pollMs, ringSize, false, "nexus-events-readers", "",
+                new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
     }
 
     /** Called by the scheduled tick below. */
@@ -109,6 +137,7 @@ public class EventsReader {
         if (!enabled) {
             return;
         }
+        pollTicks.increment();
         try {
             ensureConnection();
             if (groupEnabled) {
@@ -118,6 +147,7 @@ public class EventsReader {
             }
             lastOkNanos.set(System.nanoTime());
         } catch (Exception e) {
+            pollFailures.increment();
             log.warn("events_reader poll_failed group={} reason={}", groupEnabled, e.toString());
         }
     }

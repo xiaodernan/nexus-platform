@@ -40752,3 +40752,50 @@ is a separate per-instance limiter over a different store.
   `scripts/check_sliding_window.mjs`, `scripts/sliding_window_smoke.sh`,
   `scripts/falsify_sliding_window_smoke.sh`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`,
   `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.
+
+## 939. D939 — the events-service meters the /actuator door was missing: poll attempts, swallowed failures, ring evictions
+
+**Goal.** The mandate asks for reasonable cache/MQ/observability usage at the same honesty bar the other
+plane members meet. D929's events-service duplicates the observability gap D918 closed on `nexus-insight`:
+counters exist on the sidecar's data plane (`/events/count`, `/events/group`) but nothing at
+`/actuator/metrics` — and this service catches EVERY poll exception by design (fail-soft, by contract),
+which made a silently dying poll loop invisible to any metrics scraper forever.
+
+**The fix.** Constructor-injected `MeterRegistry` (never field-injected; every claim assertable in a test),
+wired exactly where `EventsReader` does its work:
+- `nexus.events.poll.ticks` — counter, incremented once per ENABLED `pollOnce()` (a disabled reader never
+  ticks — asserted at 0, not at `@Ignore`);
+- `nexus.events.poll.failures` — counter, tagged `mode=tail|group` BY CONSTRUCTION (one meter per mode, so a
+  group-mode deployment can never read as a shared bucket), incremented once per swallowed exception —
+  the exact exception the service catches and logs at `warn`;
+- `nexus.events.ring.evictions` — a passive `Gauge` bound to the ring's new `evictions` counter, incremented
+  in the ONE place eviction happens (`EventsRing.removeEldestEntry`).
+
+The D929 4-arg (`EventsReader(boolean, String, long, int)`) and D931 7-arg (`... Consumer Consumer`)
+constructor shapes are kept source-compatible — each supplies its own throwaway registry — so no existing
+call site moves. Spring wires the `@Autowired` 8-arg constructor; nothing outside the class changed except
+`EventsRing` gaining its eviction counter (visible only through the gauge and `evictions()`).
+
+**Verification.** `EventsMetricsTest` — **5/5**: disabled reader ticks nothing (0/0); a refused-Redis tail
+reader shows `ticks=2`, `failures{mode=tail}=2`; a refused-Redis group reader shows `failures{mode=group}=1`
+and NO tail meter (`find(...tag("mode","tail")).counters()` is empty — the modes are not one bucket);
+the gauge stands at 0 before any push; and the live-Redis arm — 3 publishes into a ring of capacity 2 —
+asserts `total_seen=3 buffered=2` and `gauge=1.0` (skipped on an absent plane per the module's existing
+`assumeTrue` convention). The module's full suite stays green: **EventsMetricsTest 5/5, EventsGroupReaderTest
+3/3, EventsRingTest 3/3, EventsViewControllerTest 4/4 — 15/15**; the cloud reactor `mvn -B -q test` exits 0
+with the new source on board.
+
+**What this does NOT claim.** Exposure is unchanged — the service's `management.endpoints.web.exposure.include`
+stays `health,info,metrics`, no route, no auth posture changed (dev-plane posture; the deliberately absent
+`circuitbreakers`/`refresh` stays absent). No cross-process aggregation (two instances export their own
+counters; nothing sums them), no time-series persistence, no dashboards, alerts or queries written or
+verified. No smoke participates in the cloud chain (this unit's gate is the unit suite, as with D933), and
+no new census row is invented — a claim without a proof would be decoration. The gauge counts ring evictions,
+not event types (`template`/`type` are deliberately not tags; D931's `/events/group` is the event-awareness
+surface). No production load or uptime claim; no benchmark ran.
+
+- readers: `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsReader.java` (meter
+  registration, tick/failure increments, `@Autowired` 8-arg constructor),
+  `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsRing.java` (eviction counter),
+  `services/cloud/events-service/src/test/java/com/nexus/cloud/events/EventsMetricsTest.java` (5/5),
+  `docs/CLOUD.md` (the not-claimed bullet, space separated), this ledger entry.

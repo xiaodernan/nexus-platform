@@ -12,10 +12,15 @@ final class EventsRing {
 
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, Map<String, String>> eldest) {
-            return size() > cap;
+            if (size() > cap) {
+                evictions.incrementAndGet();
+                return true;
+            }
+            return false;
         }
     };
     private final AtomicLong seen = new AtomicLong();
+    private final AtomicLong evictions = new AtomicLong();
 
     EventsRing(int cap) {
         if (cap < 1) {
@@ -48,6 +53,11 @@ final class EventsRing {
 
     long totalSeen() {
         return seen.get();
+    }
+
+    /** Evictions this ring has shrugged off at the cap — the signal the gauge binds to. */
+    long evictions() {
+        return evictions.get();
     }
 
     int capacity() {
