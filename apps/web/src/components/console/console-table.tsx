@@ -43,7 +43,7 @@ export function ConsoleTable({
         </thead>
         <tbody className="divide-y divide-line">
           {rows.map((cells, rowIndex) => (
-            <tr key={rowIndex} className="align-top">
+            <tr key={rowIndex} className="align-top transition-colors hover:bg-surface-muted/50">
               {cells.map((cell, cellIndex) => (
                 <td key={cellIndex} className="px-3 py-2.5 text-ink-strong">
                   {cell}

@@ -39739,3 +39739,33 @@ before.
 
 - readers: `apps/ai/nexus_ai/nlu/canonical.py`, `apps/ai/nexus_ai/search/service.py`,
   `apps/ai/nexus_ai/search/ranking.py`, `docs/STATUS.md`.
+
+## 916. D916 — the console's operator tables get one affordance back: a row hover, tuned to the token scale
+
+**Goal.** The console's table rows were inert — no visual feedback on hover, so an operator scanning a
+hundred-row inbox had to track the cursor by eye across columns of narrow text. §155 treats a competent
+read experience as part of the product surface, not as decoration.
+
+**The fix.** `ConsoleTable` rows carry `transition-colors hover:bg-surface-muted/50` — the muted fill
+shifting to the faintest token on the scale, the same lift the ink/neutral ramp already uses elsewhere in
+the console (consistent with the card surfaces and the design tokens.css scale). The change is one class
+list; no row layout, no cell semantics, no reset of the ARIA/`align-top` contract, no new dependency.
+
+**The honest detour inside this unit.** A first cut also dropped the table's `min-width: 44rem` in the
+same edit, reasoning that `min-w-full` would make small screens friendlier. It would not: the wrapper
+carries `overflow-x-auto`, so the `44rem` floor is what keeps dense entity columns legible on a phone by
+letting the grid scroll inside it. Removing the floor would have let the table collapse and crush its
+cells on exactly the device the operator least deserves to fight. The `44rem` floor was restored before
+this ledger was written; the diff therefore carries only the hover.
+
+**Verification.** `npx tsc --noEmit` in `apps/web` → 0; `npx vitest run` → **221/221 pass**. No e2e claim
+(the console suite was not re-run as a browser harness in this unit; the affordance is a class list, and
+Playwright was not touched).
+
+**What this does NOT claim.** A colour-contrast audit of the hover shade against every cell content
+context — the token is used elsewhere in the consoles; any defect found in production is a token bug, not
+this diff's. No keyboard focus variant for rows (rows are not interactive). No animation work beyond the
+single transition.
+
+- readers: `apps/web/src/components/console/console-table.tsx`,
+  this ledger section.
