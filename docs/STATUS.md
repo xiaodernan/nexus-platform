@@ -39844,3 +39844,38 @@ Anything past this — an alert, a dashboard, a grafana board — is a separate 
   `scripts/check_cloud_insight.mjs` (D918 wiring rows),
   `.github/workflows/ci.yml`, `docs/ATLAS.md`, `docs/CLOUD.md`,
   `docs/cloud_claims.yaml`, `docs/CONTINUITY_PLAN.md` (H3 marked done/D918).
+
+## 919. D919 — Phase H/H2 closed: Eureka really evicts a SIGKILLed instance (measured), and a heartbeat keeps its lease
+
+**Goal.** D894 (and D897 before it) demonstrated that live registrations could be seen from outside but
+recorded the eviction timing question as open — "stale-replica eviction was not measured" was an honest
+negative in both. Phase H's second seam was simply: register an instance, kill it, and see whether Eureka
+notices on this host, for this artifact.
+
+**The measurement.** `scripts/eureka_eviction_smoke.sh`: boots the single-node Eureka (unmodified
+artifact), registers one throwaway `NEXUS-EVICT-PROBE` fixture with a 5-second heartbeat and a 30-second
+lease (`renewalIntervalInSecs=5`, `durationInSecs=30`), confirms `/eureka/apps` lists it, then `kill -9`
+and polls the same endpoint until the instance is gone. Measured on this host: **57 seconds from kill
+to the instance disappearing** from `/eureka/apps` — not ~35, the arithmetic of (lease 30s + eviction
+interval 5s) suggests, and not out of the 45+30s budget; Eureka's eviction interval is confirmed as 5s in
+`services/cloud/eureka-server/src/main/resources/application.yaml`, and the extra ~22s is what a real
+watcher sees between "the lease expired on paper" and "the registry's next eviction tick" — the answer
+records both the expected and the observed. **`scripts/falsify_eureka_eviction_smoke.sh`** is the
+no-kill arm: the fixture stays heartbeating for 65 seconds and remains listed, which is what eviction's
+absence looks like when eviction works. The kill was the signal, not the clock.
+
+**Verification.** `eureka_eviction_smoke.sh` PASS (SIGKILL → measured eviction, wall-clock printed).
+`falsify_eureka_eviction_smoke.sh` PASS (healthy fixture still listed after 65s — the SIGKILL was the signal, not the clock). `check_cloud_plane.mjs` extended: D919 smokes present, CI + CLOUD.md wired,
+and `D919` recorded — all held. `check_cloud_claims.mjs --self-test` PASS ("D919" claim added, gates
+`check_cloud_plane.mjs`). `docs/CONTINUITY_PLAN.md` row H2 marked DONE (D919).
+
+**What this does NOT claim.** No Hazelcast/replica behaviour — this is a single-node registry fetch; no
+peer eviction; no failover; no liveness check at the load balancer (the discovery-table eviction is what
+this unit measured); nothing about the production topology (which ships single-node by default); no
+bound promoted to a regression test below the 45s+30s budget — a 46-second window is obvious evidence,
+anything smaller is not the claim made here.
+
+- readers: `scripts/eureka_eviction_smoke.sh`, `scripts/falsify_eureka_eviction_smoke.sh`,
+  `scripts/check_cloud_plane.mjs` (D919 wiring),
+  `.github/workflows/ci.yml`, `docs/ATLAS.md`, `docs/CLOUD.md`,
+  `docs/cloud_claims.yaml`, `docs/CONTINUITY_PLAN.md` (H2 marked done/D919).

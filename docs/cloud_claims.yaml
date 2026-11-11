@@ -159,6 +159,14 @@
   not_claimed: No production-load behaviour, no dashboard, no alert, no OTLP export, no monotonicity promise on the counter, no exposure beyond this dev plane
   honesty_anchor: D918's metrics are counters over ONE throwaway process
 
+- id: D919
+  claim: Eureka evicts a SIGKILLed instance within a measurable window after the process dies
+  smoke: eureka_eviction_smoke.sh
+  falsifier: falsify_eureka_eviction_smoke.sh
+  gate: check_cloud_plane.mjs
+  not_claimed: No replica replication, no failover, no production topology, no sub-window bound promoted to a regression test beyond the measured host, no cross-host measurement
+  honesty_anchor: eureka_eviction_smoke
+
 - id: D853
   claim: The compose cloud profile and image recipe are defined for the whole plane
   smoke: cloud_smoke.sh

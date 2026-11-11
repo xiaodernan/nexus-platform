@@ -154,6 +154,21 @@ check('CLOUD.md no longer claims "No HA" outright', 'docs/CLOUD.md', !cm.include
 check('CLOUD.md keeps the pair out of the deployed plane', 'docs/CLOUD.md',
   /HA is PROVEN IN AN EXPERIMENT, NOT SHIPPED/.test(cm));
 
+/* D919 — the eviction claim is a measurement, wired and honestly scoped. Deleting the smoke,
+ * unwiring it from CI/CLOUD.md, or replacing the no-kill arm with a no-op is drift. */
+const EVICTION_SMOKE = 'scripts/eureka_eviction_smoke.sh';
+const EVICTION_FALSIFIER = 'scripts/falsify_eureka_eviction_smoke.sh';
+check('D919 eviction smoke ships', EVICTION_SMOKE, existsSync(join(root, EVICTION_SMOKE)));
+check('D919 eviction falsifier ships', EVICTION_FALSIFIER, existsSync(join(root, EVICTION_FALSIFIER)));
+mustContain('D919 eviction smoke measures SIGKILL eviction', EVICTION_SMOKE, 'kill -9');
+mustContain('D919 eviction smoke polls until evicted', EVICTION_SMOKE, 'dead=1');
+mustContain('D919 falsifier keeps a healthy fixture listed', EVICTION_FALSIFIER, 'still listed after 65s');
+for (const s of ['eureka_eviction_smoke.sh', 'falsify_eureka_eviction_smoke.sh']) {
+  check(`CI cloud job invokes ${s}`, CI, ciText.includes(s));
+  check(`CLOUD.md lists ${s}`, 'docs/CLOUD.md', cm.includes(s));
+}
+mustContain('CLOUD.md records D919', 'docs/CLOUD.md', 'D919');
+
 if (failures.length) {
   console.log('CLOUD PLANE — FAIL');
   for (const f of failures) console.log('  - ' + f);
