@@ -116,24 +116,21 @@ public class MeController {
     }
 
     /**
-     * §106: requesting deletion erases PII now and records the request for the retention job.
+     * §106: requesting deletion erases PII now and records the request for the retention sweeper.
      *
      * <p>The two column lists come from {@link IdentityRepository}'s erasure declaration, not from a list
      * typed here, so what the audit signs and what the response promises is what the statement did. The
      * {@code scope} key and the notice say what this request does <em>not</em> reach: rows in other tables
-     * that copied the person's contact values (a booking's {@code contact}, a notification's payload, an
-     * audit or event row, a saved search's intent) stay where they are, because they are rows about another
-     * record or about the platform's own trail, and the retention workflow that would clear them is still
-     * recorded as {@code todo} in the traceability table's privacy row ({@code docs/TRACEABILITY.md},
-     * requirement 100 — the same workflow {@code docs/DATABASE.md} documents as the §106 data-retention
-     * workflow), with no scheduled job behind it in this build. A response that said "all personal data was
-     * erased" was refuted by the schema census in D309; this one is not.
+     * that copied the person's contact values (a reservation's {@code contact}, an order's, a notification's
+     * {@code payload}, and their saved searches) stay where they are at the moment of this request, because
+     * they are rows about another record or about the platform's own trail. The retention sweeper
+     * ({@link RetentionSweeper}) is what reaches them on the next sweep — passing them through is exactly the
+     * documented behaviour of this door: they complete only once the sweeper runs, and the completion is
+     * recorded in {@code deletion_requests.completed_at}.
      *
-     * <p>The request this door files is filed {@link IdentityRepository.DeletionState#PENDING}: what happened at
-     * the moment of the request is the users row and its identity links, and the workflow that would clear the
-     * copies still outstanding — and move the row to {@code completed} with its {@code completed_at} — is the one
-     * the paragraph above says does not exist. Both columns come from that one declaration, in the repository's
-     * insert, so this sentence and the row the ledger holds cannot be filed apart from each other.
+     * <p>The moment this request files is the one this door performs: the users row and its identity
+     * links, filed as {@link IdentityRepository.DeletionState#PENDING}. The sweeper's executions are the
+     * only path that moves that row to {@code completed} with its {@code completed_at}.
      */
     @DeleteMapping
     public Map<String, Object> delete(HttpServletRequest request) {
@@ -155,7 +152,7 @@ public class MeController {
                 "notice", "Only your own users row and its identity links were erased — see erased_columns."
                         + " Rows in other tables that copied your contact values, and your transaction records,"
                         + " are untouched: scope names the boundary. A deletion_request row was filed for the"
-                        + " §106 retention workflow, which no job in this build reads yet.");
+                        + " §106 retention sweeper, which is the path that will complete the copies on its run.");
     }
 
     /**

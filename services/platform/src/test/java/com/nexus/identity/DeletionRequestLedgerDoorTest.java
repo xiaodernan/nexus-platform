@@ -33,16 +33,21 @@ import org.springframework.test.context.ActiveProfiles;
  * platform had done everything it was ever going to do about it.
  *
  * <p>These cases pin the ledger to the act: a request whose deletion the platform performed inside the same
- * request is filed as completed with its completion moment set, and a request that hands work to a workflow this
- * build does not have stays pending with no completion moment. {@code docs/TRACEABILITY.md}'s requirement 100 row
- * is still {@code todo} for the retention workflow and this file does not pretend otherwise — it refuses to let a
- * completed act be recorded as a pending one.
+ * request is filed as completed with its completion moment set, and a request that hands work to the retention
+ * sweeper stays pending until the sweeper runs. {@code docs/TRACEABILITY.md}'s requirement 100 row now has a
+ * real job behind it: {@code RetentionSweeper}. A test that pins "forever pending" would be a false regression
+ * assertion of the exact thing the retention workflow is supposed to fix — design, not a bug.
  */
 @ActiveProfiles("test")
 class DeletionRequestLedgerDoorTest extends NexusIntegrationTest {
 
     @Autowired
     IdentityRepository users;
+
+    /** The new sweep class, constructed inline against the same jdbc template this test drives. */
+    private RetentionSweeper sweeper() {
+        return new RetentionSweeper(new com.nexus.platform.TenantJdbc(jdbc));
+    }
 
     private record Person(Tenant tenant, UUID id, String token) {
     }
@@ -155,22 +160,96 @@ class DeletionRequestLedgerDoorTest extends NexusIntegrationTest {
     }
 
     @Test
-    @DisplayName("The account erase stays a pending request with no completion moment")
-    void accountEraseFilesAPendingRequestWithNoCompletion() {
+    @DisplayName("The retention sweep wipes the contact/payload copies and deletes saved searches")
+    void theRetentionSweepActuallySweepsTheCopies() {
+        Tenant tenant = newTenant("sweeper");
+        UUID merchant = newMerchant(tenant, "sweeper-merchant", "published");
+        UUID personId = newUser(tenant, "sweeper-" + tag(), "consumer");
+        String contact = Json.write(Json.map("phone", "+85260001234", "email", "sweeper@example.test"));
+
+        // Plant the rows: one reservation, one order, one notification, one saved search — all owned by this user.
+        jdbc.update("""
+                insert into reservations (tenant_id, merchant_id, user_id, code, offering_id, contact, starts_at, status)
+                values (:t, :m, :u, :code, null, cast(:c as jsonb), now() + interval '1 day', 'pending')
+                """,
+                new MapSqlParameterSource("t", tenant.id()).addValue("m", merchant)
+                        .addValue("u", personId).addValue("c", contact).addValue("code", "PROBE-" + tag()));
+        jdbc.update("""
+                insert into orders (tenant_id, merchant_id, user_id, code, contact, currency, total, status)
+                values (:t, :m, :u, :code, cast(:c as jsonb), 'HKD', 100.00, 'created')
+                """,
+                new MapSqlParameterSource("t", tenant.id()).addValue("m", merchant)
+                        .addValue("u", personId).addValue("c", contact).addValue("code", "PROBE-" + tag()));
+        jdbc.update("""
+                insert into notifications (tenant_id, audience, user_id, merchant_id, channel, template,
+                                           payload, status)
+                values (:t, 'consumer', :u, :m, 'in_app', 'probe', cast(:c as jsonb), 'pending')
+                """,
+                new MapSqlParameterSource("t", tenant.id()).addValue("m", merchant)
+                        .addValue("u", personId).addValue("c", contact));
+        jdbc.update("""
+                insert into saved_searches (user_id, query, intent)
+                values (:u, 'sweeper-example', '{"probe": true}'::jsonb)
+                """,
+                new MapSqlParameterSource("u", personId));
+
+        // Erase (soft) the person's own row — the retention sweep must finish the job.
+        ResponseEntity<String> answer = exchange(HttpMethod.DELETE, tenant,
+                token(tenant, personId, "consumer"), "/api/v1/me", null);
+        assertThat(answer.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Sanity: the erase does NOT touch the copies — they are exactly the rows the sweeper is for.
+        assertThat(String.valueOf(row("select contact from reservations where user_id = :u",
+                Map.of("u", personId)).get("contact")).replaceAll("\\s", ""))
+                .as("the erase leaves the reservation's contact copy untouched").isNotEqualTo("{}");
+
+        com.nexus.identity.RetentionSweeper.SweepReport report = sweeper().sweepPendingDeletionRequests(1000, 0);
+        assertThat(report.processed()).as("at least the account row this test filed").isGreaterThanOrEqualTo(1);
+        // Counting the tables the sweep reached is global on a shared test database — the useful
+        // claim is the one about THIS user's rows; other users' pending rows are not this test's to assert about.
+        assertThat(count("select count(*) from reservations where user_id = :u and contact != '{}'::jsonb",
+                Map.of("u", personId)))
+                .as("the sweeper reached this user's reservation contact copy").isZero();
+        assertThat(request(personFor(tenant, personId, "consumer"), "account").status())
+                .as("the erase request is the one the sweep completes").isEqualTo("completed");
+
+        assertThat(String.valueOf(row("select contact from reservations where user_id = :u",
+                Map.of("u", personId)).get("contact")).replaceAll("\\s", ""))
+                .as("the reservation's contact jsonb is erased by the sweep").isEqualTo("{}");
+        assertThat(String.valueOf(row("select contact from orders where user_id = :u",
+                Map.of("u", personId)).get("contact")).replaceAll("\\s", ""))
+                .as("the order's contact jsonb is erased by the sweep").isEqualTo("{}");
+        assertThat(String.valueOf(row("select payload from notifications where user_id = :u",
+                Map.of("u", personId)).get("payload")).replaceAll("\\s", ""))
+                .as("the notification's payload is rewritten to an empty object by the sweep").isEqualTo("{}");
+        assertThat(count("select count(*) from saved_searches where user_id = :u", Map.of("u", personId)))
+                .as("saved searches are deleted entirely").isZero();
+    }
+
+    private Person personFor(Tenant tenant, UUID id, String role) {
+        return new Person(tenant, id, token(tenant, id, role));
+    }
+
+    @Test
+    @DisplayName("The account erase stays a pending request, and the retention sweep completes it")
+    void accountEraseFilesAPendingRequestUntilTheRetentionSweepRuns() {
         Person person = consumer();
 
         erase(person);
 
-        assertThat(requests(person, "account")).as("the erase door files its request, as it did before this"
-                + " unit — the row is what the §106 retention workflow is meant to be driven from").isEqualTo(1);
+        assertThat(requests(person, "account")).as("the erase door files its request").isEqualTo(1);
         Filed filed = request(person, "account");
-        assertThat(filed.status())
-                .as("the erase reaches only the users row and its identity links, so the copies the person's"
-                        + " contact values left in other tables are still outstanding: this request is genuinely"
-                        + " pending").isEqualTo("pending");
-        assertThat(filed.hasCompletion())
-                .as("and a pending request may not carry a completion moment, or the ledger would claim a"
-                        + " workflow this build does not have has finished").isFalse();
+        assertThat(filed.status()).as("the erase itself only reaches the users row and its identity links,"
+                + " so the copies still sit in reservations, orders, notifications and saved searches"
+                + " — the row genuinely cannot be completed at erase time").isEqualTo("pending");
+        assertThat(filed.hasCompletion()).isFalse();
+
+        // The retention workflow performs the remaining step:
+        com.nexus.identity.RetentionSweeper.SweepReport report = sweeper().sweepPendingDeletionRequests(1000, 0);
+        assertThat(report.processed()).as("at least this account row was swept").isGreaterThanOrEqualTo(1);
+        Filed completed = request(person, "account");
+        assertThat(completed.status()).isEqualTo("completed");
+        assertThat(completed.hasCompletion()).isTrue();
     }
 
     @Test

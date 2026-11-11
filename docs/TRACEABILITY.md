@@ -83,7 +83,7 @@ Verification kinds: `unit` `integration` `api` `e2e` `visual` `eval` `manual-rev
 | 96 | Growth landing page + acquisition funnels | `/`, `/for-business`, SEO routes | visual | todo |
 | 97 | Network effect / data flywheel / feedback learning | `feedback_events`, ranking weights, EMA updates | eval trend | todo |
 | 98-99 | External AI distribution (MCP/UCP), agent-to-agent commerce | `adapters/{mcp,ucp}.py`, `agent_profiles` | api + contract tests | todo |
-| 100 | Privacy: export/delete/reset; merchant data ownership | `/me/export`, `deletion_requests` | api | todo |
+| 100 | Privacy: export/delete/reset; merchant data ownership | `/me/export`, `deletion_requests` + `RetentionSweeper` (java/.../RetentionSweeper.java) | api + JUnit door (`DeletionRequestLedgerDoorTest`) | building |
 | 101 | i18n (en/zh-HK/zh-CN), currency, timezone, HK specifics | `apps/web/messages`, `tenants.config` | e2e | building |
 | 102 | Reliability: retries, breaker, timeouts, fallback, queue, idempotency | `platform/retry`, `idempotency_keys`, orchestrator budgets | unit + api | building |
 | 103 | AI failure ladder: fallback model → deterministic → human | `AGENT_CONTRACT` §2.5, `/ai/v1/search` always-on | integration | building |

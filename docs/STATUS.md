@@ -40056,3 +40056,47 @@ dedicated visual regression lane, not in this unit.
 
 - readers: `apps/web/src/lib/tokens.test.ts` (new describe block),
   this ledger section.
+
+## 925. D925 — §106 stops being a `todo`: the retention sweeper actually performs the second half of deletion
+
+**Goal.** The codebase's own record of §106 honesty said: the erase door files a `deletion_requests` row and
+erases the users row's own PII; it does not touch the copies the person's contact values left in other tables
+(reservations' `contact`, orders' `contact`, notifications' `payload`, saved searches' intent). The retention
+sweeper the spec asked for existed nowhere, and every caller and reader carried the same comment admitting it.
+
+**The fix.** `services/platform/src/main/java/com/nexus/identity/RetentionSweeper.java` — a `@Service` added
+this unit. It reads `deletion_requests` where `status='pending'`, nullifies `reservations.contact`,
+`orders.contact`, `notifications.payload` (to `'{}'::jsonb`) for the requesting user, deletes the user's
+`saved_searches`, and flips the request to `status='completed'` with `completed_at=now()`. The tick is
+`@Scheduled(fixedDelayString="${nexus.retention.sweep-interval-ms:3600000}", ...)` on the
+{@code @EnableScheduling} root (`NexusApplication.java`), but the tick itself is inert by default —
+`nexus.retention.enabled` (default `false`) gates it, so tests and a dev plane never sweep without a
+maintainer opting in. The sweeper is a deliberately narrower copy of what a production retention run would be;
+it does NOT scrub audit trails (accountability), does not call external processors, and does not understand
+FK-less commerce copies outside the four tables named.
+
+**Verification.** `DeletionRequestLedgerDoorTest.theRetentionSweepActuallySweepsTheCopies` — newly written —
+plants a reservation, order, notification and saved search for one user, soft-erases the user, then calls the
+sweeper and asserts (a) the request goes `completed`, (b) the reservation's and order's `contact` are `{}`,
+(c) the notification's `payload` is `{}`, (d) the saved searches count zero, (e) `SweepReport` reflects at
+least one row. Full class **8/8 green** (this unit's rewrite included the rewrite of the two previously-
+committed door tests that pinned "pending forever" as the correct behaviour — they now assert the pending
+row is completed by the sweeper).
+
+**Doc contract.** `MeController.java` javadoc + notice rewritten to say what now exists (the sweeper completes
+a pending request on its next tick, and the row flips to `completed` with `completed_at`). `TRACEABILITY.md`
+row 100 moved from `todo` to `building` (not `done` — no prod cron verify). `DATABASE.md` §deletion_requests
+is extended to name the sweeper and its shape. The woven tick is paid for by `@EnableScheduling` on the root.
+
+**What this does NOT claim.** No production deployment of the sweeper has ever run; real data may exist whose
+per-tenant distribution would make the `LIMIT 1000` window tight; the `nexus.retention.enabled=false` default
+means the delete path only works when a maintainer opts in explicitly; no audit-trail scrub, ever, by design;
+no promise that this build's sweep rate matches any GDPR/CCPA calendar — this is a capability, not a schedule
+or an SLA.
+
+- readers: `services/platform/src/main/java/com/nexus/identity/RetentionSweeper.java`,
+  `services/platform/src/main/java/com/nexus/identity/MeController.java`,
+  `services/platform/src/main/java/com/nexus/NexusApplication.java` (@EnableScheduling),
+  `services/platform/src/test/java/com/nexus/identity/DeletionRequestLedgerDoorTest.java`,
+  `docs/DATABASE.md`, `docs/TRACEABILITY.md` (row 100),
+  `docs/STATUS.md`.

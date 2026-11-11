@@ -189,6 +189,12 @@ Grouped by domain; the ER overview in §10 shows relationships. "Owner role" = w
 - **`agent_profiles`** (protocol ucp|mcp|a2a, capabilities, payment_handlers, status) + **`external_principals`**
   (protocol, client_id, scopes, `linked_user_id`) — the §43–§45 external-agent surface, served only via adapters.
 - **`deletion_requests`** — §106 data-retention workflow (account|memory|personalization|export).
+  Every account erase and every personalization reset writes one row here so the request is itself
+  auditable. The `RetentionSweeper` (services/platform/src/main/java/com/nexus/identity/RetentionSweeper.java)
+  reads rows where `status='pending'`, nullifies the person's copies in `reservations.contact`,
+  `orders.contact` and `notifications.payload`, deletes their `saved_searches`, and marks each row
+  `status='completed'` with `completed_at=now()`. The tick is opt-in via `nexus.retention.enabled`
+  (default off); tests drive `sweepPendingDeletionRequests` directly.
 
 ## 4. Seed & honesty plumbing (§86, §109)
 `data_origin`/`data_origin` defaults are `'demo'` on `merchants`, `reviews`, `collections`. The `data/seed` generator
