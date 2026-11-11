@@ -40672,3 +40672,83 @@ gradient rail outside the two themes the token contract pins.
 
 - readers: `apps/web/app/merchant/page.tsx` (the identity card), this ledger entry,
   `apps/web/src/lib/tokens.test.ts` (the `--nexus-ai-gradient` contract this frame relies on).
+
+## 937. D937 — the rate limiter gains an opt-in Redis-ZSET sliding window that closes fixed-window's boundary burst
+
+**Goal.** The mandate asks for Redis, data-structure/algorithm and operating-systems knowledge to be applied
+so the software is faster, sounder and better fitted to the hardware. D932 made the fixed-window limit
+counter's INCR+first-write EXPIRE atomic, but atomicity is not accuracy: a FIXED window has a boundary burst.
+With limit N per W, a caller sends N hits just before the edge and N just after, and gets **2N** through in a
+span far shorter than W — the reset, not the rate, is what throttles. This unit closes that property with a
+SLIDING window, the first Redis sorted-set (ZSET) use in this tree.
+
+**The defect (bounded by D932, not fixed by it).** `RateLimiter.check` charges a `nexus:rl:<scope>:<principal>`
+bucket via `KeyValueStore.increment`, whose window is anchored to the first write and reset on expiry. Two
+clients of the same principal on either side of that reset are counted in two independent buckets. The
+`Retry-After` and `X-RateLimit-Remaining` headers stay correct for each bucket; the aggregate over any
+W-wide interval silently doubles.
+
+**The fix.** `KeyValueStore.SLIDING_WINDOW_LUA` runs FOUR commands in ONE Lua `EVAL` —
+`ZREMRANGEBYSCORE key -inf (now-W)` drops hits at or before the cutoff, `ZADD key now member` appends this
+hit, `PEXPIRE key W` reclaims idle keys, `return redis.call('ZCARD', key)` counts the survivors. Because Redis
+executes a script on one thread, "sweep, count, append" is indivisible: two concurrent callers cannot both
+read `count < limit` and both append (a TOCTOU race). Scores are epoch ms; the window is the half-open
+`(now-W, now]`, so an injected `nowMs` pins the boundary exactly. All four commands take ARGV (never
+string-interpolated), keeping the script text constant and EVALSHA-cacheable. `slidingWindow` is exposed in
+two forms: a deterministic `(key, windowMs, nowMs, member)` overload for tests and a wall-clock
+`(key, windowMs)` production overload that mints a UUID member. The in-memory fallback keeps the same
+half-open semantics over a per-key, comma-encoded timestamp list, bounded by the D909 cap and swept on the
+write path. **D932's `increment` / `INCR_AND_EXPIRE_LUA` and the fixed-window path are untouched.**
+
+**Opt-in.** `RateLimiter` gains `nexus.ratelimit.sliding-enabled` (default `false`, env
+`NEXUS_RL_SLIDING_ENABLED`), a `slidingEnabled` field and `usingSlidingWindow()`. When OFF (the shipped
+default) `check()` still calls `store.increment(key, window)`; when ON it calls
+`store.slidingWindow(key, window.toMillis())`. Both feed the SAME `Outcome`, `429 + Retry-After +
+X-RateLimit-Remaining` contract and the SAME key namespace. `application.yml` carries the default-off leaf.
+
+**What is measured.** `SlidingWindowTest` — **6/6 pass** alongside `KeyValueStoreAtomicityTest` 2/2 and
+`KeyValueStoreTest` 6/6 (**14/14** on this plane). Four evidence tiers: (a) LIVE Redis (:6380) — a real
+ZSET counts hits, the sweep drops scores at/before the cutoff at `t=W`, a hit at `t=2W+1` sees `ZCARD`
+back to 1, and `PEXPIRE` armed a reclaiming ttl; (b) BOUNDARY BURST — the fixed-window model admits
+`2×limit` across the edge while the sliding tally, pinned to the same schedule with injected `nowMs`,
+admits only `limit`; (c) FALSIFIER — a no-sweep model (the fixed-window reset) admits `2×limit`, proving
+the burst assertion is load-bearing; (d) ATOMICITY/bounds/routing — a Mockito `RedisCommands` arm asserts
+ONE `eval` of the source Lua with no bare `zadd`/`zcard`/`zremrangebyscore`, the fallback never exceeds its
+cap across 60 writes / 12 keys, and `RateLimiter` selects fixed vs sliding by the flag. The two WIRE-LEVEL
+smokes run against the live `nexus-platform-redis` on `:6380` extracting the Lua from the SOURCE: the
+positive smoke measures fixed admitting `2×limit=4` while sliding holds the same burst to `limit=2`, then
+reopens a full window later; `falsify_sliding_window_smoke.sh` deletes ONLY the `ZREMRANGEBYSCORE` line and
+requires the reset assertion to REDDEN (`ZCARD` climbs to 6 = permanent throttle) while the intact-script
+control resets to 1.
+
+**Wiring.** `scripts/check_sliding_window.mjs` is a pure source census: the Lua body holds all four ZSET
+commands, `slidingWindow` calls `eval` with no split commands, the cutoff is derived from injected `nowMs`,
+the opt-in default is FALSE, the D932 fixed path and bounded fallback survive, the positive + falsifier
+smokes' load-bearing assertions exist, and CI/ATLAS/CLOUD/census/ledger are bound — `--self-test` plants
+eight corruptions (sweep erased, eval swapped to zadd, default flipped TRUE, RateLimiter branch removed,
+fallback cap sweep dropped, falsifier assertion weakened, wire smoke dropped from CI, census falsifier
+unbound), each reddening while the real plane holds. `.github/workflows/ci.yml` gains the reader on the
+chained wired-readers line and the two smokes on the cloud smoke chain — text-only edits, no cited line
+number moved. `docs/ATLAS.md`, `docs/CLOUD.md`, `docs/cloud_claims.yaml` (a D937 record bound to the reader,
+smoke and falsifier) and this ledger carry the four-corner wiring.
+
+**Honesty follow-through.** D932's ledger and CLOUD honesty clause recorded "a ZSET sliding window is a
+separate, UNSHIPPED seam". This unit makes that seam real but leaves it OPT-IN and OFF by default, so the
+clause is reworded — not deleted — to say the ZSET window exists as D937 while fixed windows remain the
+shipped behaviour.
+
+**Not claimed.** That sliding mode is ON anywhere: `nexus.ratelimit.sliding-enabled` defaults `false` and
+every scope still routes through D932's fixed window unless flipped; that `nowMs` is a real clock (the
+test injects it to pin the boundary — production passes wall-clock); cross-node behaviour beyond Redis's
+single-threaded script execution; production throughput or request-latency improvement (argued from the
+ZSET op count, not benchmarked); that the in-memory fallback is as fast as Redis (it is bounded and swept,
+not measured against the Redis tier); or that the edge gateway's D917 token bucket uses this store — that
+is a separate per-instance limiter over a different store.
+
+- readers: `services/platform/src/main/java/com/nexus/platform/KeyValueStore.java`,
+  `services/platform/src/main/java/com/nexus/platform/RateLimiter.java`,
+  `services/platform/src/main/resources/application.yml`,
+  `services/platform/src/test/java/com/nexus/platform/SlidingWindowTest.java`,
+  `scripts/check_sliding_window.mjs`, `scripts/sliding_window_smoke.sh`,
+  `scripts/falsify_sliding_window_smoke.sh`, `docs/CLOUD.md`, `docs/cloud_claims.yaml`,
+  `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.

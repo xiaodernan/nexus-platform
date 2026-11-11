@@ -290,6 +290,111 @@ public class KeyValueStore {
         }
     }
 
+    /**
+     * D937 — an atomic SLIDING-window limiter, the first Redis sorted-set (ZSET) use in this tree.
+     *
+     * <p>D932 made the fixed-window counter's INCR+first-write EXPIRE atomic, but a fixed window has a
+     * boundary burst: with limit N per W, a caller can send N just before the boundary and N just after and
+     * get 2N through in a span far shorter than W. A sliding window answers a stricter question — "how many
+     * hits are in the last W milliseconds, at THIS instant?" — so no matter where a boundary falls, any
+     * W-wide interval contains at most N accepted hits.
+     *
+     * <p>The whole operation is ONE Lua {@code EVAL}, because "sweep old hits, count, admit-and-append" must
+     * be indivisible or two concurrent callers both read count &lt; limit and both append (a TOCTOU race).
+     * Redis runs a script on one thread, so the four commands are one transaction:
+     * <ol>
+     *   <li>{@code ZREMRANGEBYSCORE key -inf cutoff} — drop every hit at or before {@code now-W};</li>
+     *   <li>{@code ZCARD key} — the number of surviving hits in the open window;(a)</li>
+     *   <li>{@code ZADD key now member} — append THIS hit, scored by its millisecond timestamp;</li>
+     *   <li>{@code PEXPIRE key windowMs} — so an idle key is reclaimed instead of lingering forever.</li>
+     * </ol>
+     * (a) The member is a caller-supplied unique token (a UUID from {@link #slidingWindow}), so two hits in
+     * the same millisecond are two ZSET members, not one overwrite. Scores are epoch ms; the window is the
+     * HALF-OPEN interval {@code (now-W, now]}, which is why the sweep uses an inclusive {@code -inf cutoff}.
+     * All four commands take ARGV (never string-interpolated), keeping the script text constant/EVALSHA-able.
+     *
+     * <p>Every call appends a hit (including one that will be refused), so the returned ZCARD is the count
+     * AFTER this hit — exactly {@link #increment(String, Duration)}'s "caller compares count to limit"
+     * contract. Recording refused hits is deliberate: it keeps the Redis and fallback tiers identical and
+     * means a burst cannot reset its own window by being throttled. The ZSET is bounded by the rate × window
+     * and reclaimed by PEXPIRE; no production throughput is claimed here.
+     *
+     * <p>{@code nowMs} is injectable so a test can pin the clock and PROVE the boundary property without
+     * sleeping; production passes {@link System#currentTimeMillis()}. The D932 fixed-window path is untouched.
+     */
+    static final String SLIDING_WINDOW_LUA =
+            "redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1]) "
+          + "redis.call('ZADD', KEYS[1], ARGV[2], ARGV[3]) "
+          + "redis.call('PEXPIRE', KEYS[1], ARGV[4]) "
+          + "return redis.call('ZCARD', KEYS[1])";
+
+    /**
+     * Sliding-window count over the last {@code windowMs} milliseconds, at the injected {@code nowMs}.
+     * Returns the number of hits in the window AFTER appending this one; the caller decides admission by
+     * comparing to its limit. The D932 fixed-window {@link #increment} path is untouched.
+     */
+    public long slidingWindow(String key, long windowMs, long nowMs, String member) {
+        if (redis == null && tryReconnect()) { /* re-probed successfully */ }
+        if (redis != null) {
+            try {
+                long w = Math.max(1L, windowMs);
+                long cutoff = nowMs - w;
+                Object result = redis.eval(SLIDING_WINDOW_LUA, io.lettuce.core.ScriptOutputType.INTEGER,
+                        new String[]{key}, String.valueOf(cutoff), String.valueOf(nowMs),
+                        member, String.valueOf(w));
+                return ((Number) result).longValue();
+            } catch (Exception e) {
+                degrade(e);
+            }
+        }
+        // ---- bounded in-memory fallback: same half-open window semantics, D909-style cap+sweep ----
+        // A per-key list of hit timestamps (epoch ms). Entries are pruned by score on every write, so the
+        // tail can never grow beyond `limit + 1` in normal use; the OUTER map is the bounded LRU, so the
+        // number of distinct sliding keys is capped too. Both tiers together keep memory O(cap × limit).
+        long w = Math.max(1L, windowMs);
+        long cutoff = nowMs - w;
+        synchronized (memory) {
+            if (memory.size() >= fallbackMax) {
+                sweepExpired(nowMs);
+            }
+            String hitsKey = "nexus:sw:" + key;
+            Entry prev = memory.get(hitsKey);
+            StringBuilder hits = new StringBuilder();
+            long live = 0;
+            if (prev != null && prev.expiresAt > nowMs) {
+                for (String tok : prev.value.split(",", -1)) {
+                    if (tok.isEmpty()) {
+                        continue;
+                    }
+                    try {
+                        long ts = Long.parseLong(tok);
+                        if (ts > cutoff) { // half-open (now-W, now]
+                            if (live > 0) {
+                                hits.append(',');
+                            }
+                            hits.append(ts);
+                            live++;
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // a corrupt token is dropped, never allowed to grow the list
+                    }
+                }
+            }
+            if (live > 0) {
+                hits.append(',');
+            }
+            hits.append(nowMs);
+            long count = live + 1;
+            memory.put(hitsKey, new Entry(hits.toString(), nowMs + w));
+            return count;
+        }
+    }
+
+    /** Production convenience overload: wall-clock now and a unique member per call. */
+    public long slidingWindow(String key, long windowMs) {
+        return slidingWindow(key, windowMs, System.currentTimeMillis(), java.util.UUID.randomUUID().toString());
+    }
+
     public long remainingTtlSeconds(String key) {
         if (redis == null && tryReconnect()) { /* re-probed successfully */ }
         if (redis != null) {

@@ -96,6 +96,9 @@ nexus:
     timeout-ms: 400
   ratelimit:
     enabled: ${NEXUS_RATELIMIT_ENABLED:true}
+    # D937: OFF by default — the shipped limiter stays D932's atomic fixed window. Set true to route
+    # every scope through the Redis-ZSET sliding window (no boundary burst, still bounded + fallback).
+    sliding-enabled: ${NEXUS_RL_SLIDING_ENABLED:false}
     auth-requests: ${NEXUS_RL_AUTH:10}
     auth-window-seconds: ${NEXUS_RL_AUTH_WINDOW:300}
     ai-requests: ${NEXUS_RL_AI:20}

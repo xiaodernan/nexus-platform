@@ -142,6 +142,9 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_atomic_ratelimit.mjs` | D932: the Redis limit counter's INCR+first-write EXPIRE live in ONE Lua `EVAL` (no counter without a ttl), with a live-Redis positive arm and a mock falsifier that reproduces the TTL-less lockout on the legacy split, plus the two wire-level smokes' assertions and CI/CLOUD/ATLAS/census/ledger wiring; `--self-test` plants eight corruptions |
 | `scripts/ratelimit_atomicity_smoke.sh` | D932: the live-Redis proof of the split fix — INCR now arms TTL atomically; the next INCR counts without re-arming the fixed window |
 | `scripts/falsify_ratelimit_atomicity_smoke.sh` | D932: the mock falsifier that reproduces the TTL-less lockout on the legacy split path while the D932 path stays clean |
+| `scripts/check_sliding_window.mjs` | D937: the atomic Redis-ZSET sliding window closes fixed-window's boundary burst — all four ZSET commands in ONE Lua EVAL, injected nowMs, opt-in default OFF, D932 fixed path preserved, bounded fallback, source + CI/ATLAS/CLOUD/census/ledger wiring; `--self-test` plants eight corruptions |
+| `scripts/sliding_window_smoke.sh` | D937: live-Redis proof that fixed admits 2×limit across a boundary while the source Lua's sliding window holds it to limit, then a hit a window later sweeps old scores and reopens it |
+| `scripts/falsify_sliding_window_smoke.sh` | D937: deletes the `ZREMRANGEBYSCORE` line from the source Lua and requires the reset assertion to REDDEN (ZCARD keeps climbing = permanent throttle) while the intact-script control still resets to 1 |
 | `scripts/check_comment_citations.mjs` | citations in source comments |
 | `scripts/check_atlas.mjs` | this page: every path exists, every reader/document/smoke is listed |
 
