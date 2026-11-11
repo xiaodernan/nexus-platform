@@ -41685,3 +41685,76 @@ with every BFF call (`page.request.post(${WEB}/api/nexus/auth …)`) answering n
 **What this does NOT claim.** That every remaining ask-merchant failure is discharged by this knob — `§34 cards after refinement`, the anonymous-visitor UX expectations in `ask-merchant-history.spec.ts:67` (sign-in prompt vs 403/401) and `card-media.spec.ts:95` (streamed-search-surface card artwork, mobile) may keep red for reasons untriggered by rate limits; each will be read after the run lands. The 300s/10 rule stays in force for real deployments; nothing in this unit weakens it outside this job. No claim about the interplay of `fullyParallel: true` with this budget beyond what the fingerprint shows (the auth failures cluster in the second half of the suite, retries included).
 
 - readers: `.github/workflows/ci.yml` (line 343), `services/platform/src/main/java/com/nexus/platform/RateLimitFilter.java` (the scope this relaxes, `application.yml` `${nexus.ratelimit.auth-requests:10}`), `docs/API_CONTRACT.md` (auth-ip §1/§47), the D963 log (`D:\d963_e2e.log`), this ledger entry.
+
+## 965. D965 — Eureka graceful shutdown called the async client stop() bare, so the de-registration DELETE never left the process and a dead AI replica stayed discoverable until its lease expired
+
+**The hole.** `apps/ai/nexus_ai/discovery.py` `Registration.stop` is `async def`. The client it
+holds is the object `await ec.init_async(...)` returns, and that client `stop()` is *also* an
+`async def` in `py_eureka_client`: it cancels the heartbeat renew timer, then awaits a DOWN
+register and a `cancel()` DELETE — two real network writes. Calling an `async def` only
+**creates** a coroutine object; it never schedules it. Before D965 the shutdown hook ran
+`self.client.stop()` BARE. So on graceful shutdown the de-registration DELETE was never sent,
+the heartbeat timer was never cancelled, and the interpreter exited with
+`RuntimeWarning: coroutine was never awaited`. The surrounding `try/except Exception` could not
+help: a bare async call raises nothing at the call site, so there was nothing to catch. With the
+opt-in registry plane enabled (`NEXUS_AI_EUREKA_ENABLED=true`), a killed AI replica therefore
+stayed listed in Eureka until its 10s lease self-expired, during which the `lb://` edge could
+still route traffic to a process that was already gone. This is the inverse sibling of D962:
+there a *blocking sync* call sat ON the async event loop; here an *async* call was left OFF the
+loop entirely.
+
+**The fix, one line.** `await asyncio.wait_for(self.client.stop(),
+timeout=_DEREGISTER_TIMEOUT_S)` with `_DEREGISTER_TIMEOUT_S = 2.0`. The `await` makes the
+de-registration actually leave the process; the bound keeps the documented *shutdown must never
+hang on a down registry* contract (a hung registry times out and the 10s lease self-expires).
+`asyncio.TimeoutError` IS an `Exception`, so the existing `except Exception` still logs-and-
+degrades exactly as before. Everything else is byte-for-byte unchanged: the FastAPI lifespan
+`await stop_eureka(eureka_registration) -> await registration.stop()` caller chain stays
+awaited, the heartbeat renew/cancel tasks, the opt-in env gate, and the fail-open boot path. No
+client-library rewrite, no new dependency, no behaviour change while the registry is disabled.
+
+**Why the shipped tests were blind.** There was no discovery test at all; and because a bare
+coroutine call raises nothing, even a serial test that merely invoked `stop()` would have seen
+no failure — only a `RuntimeWarning` at garbage collection, easy to miss under `pytest -q`. The
+offline probe `apps/ai/tests/test_eureka_deregister_is_awaited.py` closes that gap with four
+arms: a stub client whose `async stop()` flips a `de_registered` flag; a positive arm that
+drives the real `Registration.stop()` and requires the flag set; a timeout arm proving a
+hanging registry cannot hang shutdown; and a bound-configuration arm. Its one-flipped-variable
+falsifier monkeypatches `asyncio.wait_for` to a `drop` shim that discards the client coroutine
+without running it — reproducing the pre-D965 bare-call starvation — and requires the flag to
+stay clear plus a `never awaited` RuntimeWarning. Reverting the single product line back to the
+bare call was verified to REDDEN the positive arm with that exact real-world warning; restoring
+it returns GREEN.
+
+**The structural gate.** `scripts/check_eureka_deregister.mjs` judges source text and wiring:
+the bounded await is present, no bare `self.client.stop()` line remains (line-anchored, because
+the fixed line legitimately contains that substring as an argument), the fail-open/heartbeat/
+caller-await contracts survive, the probe ships all four arms with its one-variable falsifier,
+and CI/ATLAS/ledger are wired. Its `--self-test` plants fifteen corruptions plus one GREEN
+control, each cause-checked with an `expect` tag, a D954 no-op snapshot guard, and a D959
+line-anchored D965 ledger-heading match (the reader own prose quotes the heading, so a plain
+substring test would be a vacuous needle). The harness reads the `expect` tag from *either*
+tuple shape from the start: D962 first self-test run bound only `arm.expect` while the tags
+lived in a third tuple slot and silently scored thirteen arms GREEN/WRONG — that lesson is
+baked in here.
+
+**Wiring.** CI line 171 self-test chain runs `check_eureka_deregister.mjs --self-test` beside
+its siblings; the file holds at 535 cited-line-stable lines, and the ai-job `uv run pytest -q`
+executes the probe. ATLAS lists both the reader and the probe; this D965 ledger heading is the
+anchor. Full `verify_all --report` is green with the new reader joining the census.
+
+**What this does NOT claim.** That a live Eureka DELETE was observed, that any test ran today,
+that a FastAPI worker was actually shut down, or any timing or latency number. The proof is
+structural (the reader) plus an offline stub-driven behavioural probe; no Eureka, network,
+database or JVM was live.
+
+- readers: `apps/ai/nexus_ai/discovery.py` (the awaited, bounded de-registration call),
+  `apps/ai/nexus_ai/api/app.py` (the awaited lifespan caller),
+  `apps/ai/tests/test_eureka_deregister_is_awaited.py` (the four-arm behavioural probe),
+  `scripts/check_eureka_deregister.mjs` (this unit structural reader),
+  `.github/workflows/ci.yml` (line 171 self-test chain), `docs/ATLAS.md` (reader + probe rows),
+  `.workbuddy/memory/2026-11-12.md` (work log)
+
+**Numbering.** D963 (build-env prefix) and D964 (anonymous auth-ip budget) were claimed by the
+concurrent lane while this unit was in flight (a1ae390 / 9561f51), so the Eureka de-registration
+unit yields to D965 across every token.

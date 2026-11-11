@@ -32,6 +32,11 @@ from contextlib import suppress
 log = logging.getLogger("nexus_ai.discovery")
 
 _HEARTBEAT_INTERVAL_S = 5.0
+# D965 — de-registration is an `await`ed network call (EurekaClient.stop() sends a DOWN
+# register then a DELETE). It MUST be awaited or the coroutine never runs and the dead
+# replica stays in the registry until its 10s lease expires; but shutdown must never hang
+# on a registry that is itself down, so bound it. The lease self-expires either way.
+_DEREGISTER_TIMEOUT_S = 2.0
 
 
 def eureka_enabled() -> bool:
@@ -64,7 +69,12 @@ class Registration:
                 await self._task
             self._task = None
         try:
-            self.client.stop()
+            # D965 — EurekaClient.stop() is `async def`: a bare call only CREATES the
+            # coroutine and never schedules it, so the DOWN register + DELETE never leave
+            # the process (and Python logs "coroutine was never awaited"). Await it so the
+            # de-registration actually happens, but under a timeout so a down registry
+            # cannot hang shutdown — the 10s lease self-expires if this times out or fails.
+            await asyncio.wait_for(self.client.stop(), timeout=_DEREGISTER_TIMEOUT_S)
         except Exception:  # the lease expires on its own; shutdown must never hang on it
             log.warning("eureka de-registration failed — lease will expire on its own", exc_info=True)
 
