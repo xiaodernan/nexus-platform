@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { Badge } from '@nexus/ui';
+import { Badge, EmptyState, Icon } from '@nexus/ui';
 
 import { SESSION_COOKIE } from '@/lib/env';
 import { getDict } from '@/lib/i18n';
@@ -35,17 +35,35 @@ export function AdminDenied({ access, locale }: { access: Extract<AdminAccess, {
   if (access.reason === 'sign_in_required') {
     return (
       <ConsoleContainer>
-        <p className="text-sm text-ink-muted">{gate.signIn}</p>
-        <Link href="/signin" className="mt-3 inline-flex text-xs font-medium text-accent hover:underline">
-          {dict.signin.submit}
-        </Link>
+        {/* §68's authority boundary, at the same designed idiom as the merchant sign-in stop:
+            one EmptyState, dict-sourced copy, never the data behind the gate. */}
+        <EmptyState
+          icon="shield"
+          title={gate.signIn}
+          action={
+            <Link
+              href="/signin"
+              className="inline-flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:border-accent"
+            >
+              <Icon name="arrowRight" size={13} />
+              {dict.signin.submit}
+            </Link>
+          }
+          className="mt-8"
+        />
       </ConsoleContainer>
     );
   }
   if (access.reason === 'forbidden') {
     return (
       <ConsoleContainer>
-        <p className="text-sm text-warning">{gate.forbidden(access.statedRole ?? '—')}</p>
+        {/* Same idiom, one tier down: the signed-in member lacks the platform role. Kept honest —
+            no invented CTA: a role is granted by an operator, not by retrying this page. */}
+        <EmptyState
+          icon="shield"
+          title={gate.forbidden(access.statedRole ?? dict.console.common.notStated)}
+          className="mt-8"
+        />
       </ConsoleContainer>
     );
   }

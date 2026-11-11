@@ -40966,3 +40966,37 @@ it is not; it only opens the door the clone closed. And no audit was made of any
 class of plane defect, because none other runs a blame-gated reader.
 
 - readers: `.github/workflows/ci.yml` (line 152, one line), this ledger entry.
+
+## 943. D943 — the admin console's authority gate earns the same designed idiom the merchant sign-in stop has
+
+**Goal.** The mandate's front-end half: this repository treats its review-impression surfaces as first-class.
+`MerchantChrome`'s `SignInRequired` (`EmptyState`, dict-sourced, icon `lock`) is the merchant console's
+designed stop state; the `/admin` sibling in `AdminDenied` was still two bare paragraphs — a signed-out
+administrator met a wall of plain text instead of the designed frame every other §23/§47/§68 console opens with.
+The inconsistency was visible, and the admin gate is where every reviewer/ops person lands first in live mode.
+
+**The fix.** `apps/web/src/components/console/admin-shell.tsx` — the two pre-data denial states are moved onto
+the same idiom, with dict-sourced copy only:
+
+1. `sign_in_required` — a single `EmptyState` (icon `shield`, title = the existing `dict.console.adminConsole
+   .gate.signIn` sentence — no new copy manufactured for this state), one action: `dict.signin.submit` →
+   `/signin`, accent-bordered (Peer to the merchant stop link; no behaviour change, no redirect);
+2. `forbidden` — `EmptyState` with icon `shield` and title = `gate.forbidden(access.statedRole ?? dict.console
+   .common.notStated)` (the existing role template, substituting the existing `common.notStated` placeholder
+   for the literal em-dash, consistent with the settings-page convention) — deliberately NO action: a role is
+   granted by an operator, not by retrying the page, so the state names the boundary without pretending to fix it.
+
+The `unverified` branch keeps its `ReadFailure` (the §105 error-contract pattern is already correct there and
+out of scope for this unit). The copy is not invented anywhere — the gate dict already carried both sentences.
+
+**Verification.** `npx tsc --noEmit` — clean. Full web suite: **228/228 green** (this is markup/design only; no
+logic moved). Browser drive of the wall in live mode NOT performed and NOT claimed; the opt-out of visual
+verification remains the honest line (D938/D941 parity).
+
+**What this does NOT claim.** Nothing about the live admin data reads (`adminCountersRead`, `adminSearchAnalyticsRead`
+etc. untouched); no `aria-live` announcement of the denial (the gate is the page's whole content — announcements
+would be redundant); the `AdminDenied` role gate semantics, URL routing, cookie handling, and the
+`adminGate` decision matrix in `lib/console-admin.ts` are all untouched — this is presentation only.
+
+- readers: `apps/web/src/components/console/admin-shell.tsx` (`AdminDenied`), `apps/web/src/lib/i18n/dict.ts`
+  (the existing gate dict this consumes), this ledger entry.
