@@ -150,6 +150,10 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - { uses: actions/checkout@v4, with: { fetch-depth: 0 } }
+      # The events-service and its sibling Spring Cloud modules' unit tests finally run in CI — every
+      # future change, meter or wiring breaks a test and reddens this step.
+      - name: the cloud reactor's unit tests run before any smoke (no committed CI stage executed these before)
+        run: mvn -B -f services/cloud/pom.xml test
       # One toolchain is enough: the sidecar compiles with --release 21, which JDK 25 supports,
       # and the platform the lb smoke boots targets release 25.
       - uses: actions/setup-java@v4

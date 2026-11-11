@@ -497,7 +497,7 @@ Three changes, each covering a distinct way to be wrong:
    base paths accepted as strict prefixes and *extensions* (`/x/{id}/reindex`) still reported.
 
 Current ledger: **101 routes parsed · 64 served · 29 client-only · 0 missing · 0 undocumented**, over a 270-file
-corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:388` runs it with `--report`, so
+corpus (platform 114, ai 58, web 25, web-lib 47, sdk 26). `.github/workflows/ci.yml:397` runs it with `--report`, so
 CI stays advisory while the 29 rows are worked off; the split is by owner, not by excuse.
 
 Two of those 30 were true gaps that the old matcher hid, and both became visible rather than passed (that count is
@@ -4409,7 +4409,7 @@ plants            The harness slices the region out of the shipped file at run t
                     whether the clock row is green or red unless it is invoked with `-v ON_ERROR_STOP=1`, the
                     flag that turns the verdict block's RAISE into rc=3 · which is how the gate itself calls
                     it (`scripts/db_gate_fresh.sh:206`) and how load.sh tells the operator to call it
-                    (`data/seed/load.sh:217`). Measured on the shipped text at 08:00 with the artifact kept:
+                    (`data/seed/load.sh:221`). Measured on the shipped text at 08:00 with the artifact kept:
                     P4 gives rc=0 unflagged and rc=3 flagged, and P1 gives that same pair. So with the flag the
                     exit code reports "this database has an offender", not "my row failed" · the offender on
                     the demo database is one the coverage row names, `agent_runs.completion_tokens`, a runtime
@@ -10132,7 +10132,7 @@ sites), one line of an admin console test (twelve, one per STATUS section in the
 repository, the order service, the AI runs module and the growth view (three each), six more for the remainder.
 Step 7 moves the same way (11 false sites against 8) and step 9 with it (FAIL on 75 citations across 20 files
 against PASS on 88 across 27 on this tree). `scripts/db_gate_fresh.sh:466` is the fixed leg: `cd "$WT"` and no
-knob, so the reader's `process.cwd()`-derived index · `scripts/check_ledger_citations.mjs:82` · lands in the
+knob, so the reader's `process.cwd()`-derived index · `scripts/check_ledger_citations.mjs:83` · lands in the
 committed tree with its ledgers. 13b prints `plane reconciliation knob leg 77 / 0 · in-worktree leg 65 / 41`
 because a step whose whole point is the difference should not ask the reader to trust a comment about it. The
 harness legs stay in the main tree on purpose: D163's fixtures cite real repository files, and an index that
@@ -10459,10 +10459,10 @@ reports its LAST command unless the shell holds it. `scripts/db_gate_fresh.sh:51
 own pipes together, and D150/D151’s proof that step 11 can stop the run is a proof about that one line; GitHub
 Actions does not hold them, and its documented default for a `run:` step on Linux is `bash -e {0}`
 (workflow-syntax reference, the shell table: unspecified -> `bash -e {0}`; `shell: bash` -> `bash --noprofile
---norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:384-394)
+--norc -eo pipefail {0}`). Three steps in this workflow pipe a checker into `tee` (.github/workflows/ci.yml:393-403)
 so that the report is an artifact, and none of them declared a shell, so none of them could fail. Measured in a
 shell rather than argued: `false | tee /dev/null` exits 0 under `bash -e` and 1 under `bash -eo pipefail`. All three
-declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:375), and the census prints
+declare `shell: bash` now, under a note that says why (.github/workflows/ci.yml:384), and the census prints
 `7 step(s) pipe a checker into tee` with 0 UNPROTECTED.
 (C) TWO COUNTS IN THIS UNIT’S OWN PROSE WERE WRONG, AND RUNNING A FILE CORRECTED BOTH. The note written above the
 piped steps said three steps "carried Hard-fail in their own comments". One of the three does; one of the other two
@@ -10622,7 +10622,7 @@ directory was dropped before reaching `resolve()` · not judged, not reported, i
 a dropped token is still a token. Ten such tokens sit in the two ledgers at this commit: four to
 `.github/workflows/ci.yml` and six to `./.gitignore`, the root-relative form the resolver has a branch for and
 the CI form the arms cite. None had been judged by any run since D88 wrote the classifier. The path clause is
-now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:430`), so `./.gitignore:21`
+now asked first and judged on its last segment (`scripts/check_ledger_citations.mjs:486`), so `./.gitignore:21`
 is a citation and `some/dir/notes` stays prose.
 
 Both halves were measured rather than argued. The ten-token count came out of this file's own tokenizer and
@@ -16066,7 +16066,7 @@ turn 1 `帮我找附近适合朋友聚会的餐厅` → `sort_preference: distan
 turn 2 `太贵了` → `sort_preference: price_low, budget: null` (the new effect, and §8 still unbroken —
 no number appears); turn 3 `近一点` → `radius_m: 1000` (the nearby default 2000 × `RADIUS_TIGHTEN`). The
 state merge works end to end. **The answer set did not change: 8 cards, and the same first four slugs in
-all three turns.** That is a separate, precisely located defect: `search/service.py:1095` writes
+all three turns.** That is a separate, precisely located defect: `search/service.py:1127` writes
 `plan.sort_preference` from the intent and nothing downstream reads it — `organic_rank()` sorts by
 `(-organic_score, candidate.key())` and `plan.radius_m` is the only planning field the retrieval honours.
 So a refinement can be correctly remembered and still produce an identical page; the chip that this unit
@@ -23744,7 +23744,7 @@ rows the test reads.
 
 **Residue measured and filed, not fixed.** The ranking matcher for `style/outdoor` reads
 `outdoor_style` at full weight and `outdoor_seating` at 0.8 of it
-(`search/service.py:1351`, `:1211`), but measured on this plane `outdoor_style` is written on
+(`search/service.py:1383`, `:1211`), but measured on this plane `outdoor_style` is written on
 **0** merchants while `outdoor_seating` is written on 94 - the plane predates the generator
 that emits the style flag, so the half of the matcher that gives full weight is unmeasurable
 here and only the fixture tests exercise it. Re-seeding the plane (or the CI's fresh seed) is
@@ -24679,9 +24679,9 @@ after `--apply`, `git diff --stat` shows **71 insertions / 71 deletions** across
 the strict reader reports **MOVED 0**. `--selftest` → **PASS — 13 case(s), 0 mismatch(es)**.
 
 **What is left, named.** Step 16 still reddens on **NOT-UNIQUE 3** - citations whose quoted text
-occurs on more than one line, so no tool can choose: `docs/STATUS.md:4421 -> data/seed/load.sh:161`
+occurs on more than one line, so no tool can choose: `docs/STATUS.md:4421 -> data/seed/load.sh:165`
 (2 lines hold `"DO \$\$"`), `docs/STATUS.md:22178 -> search/sql.py:151` (2 lines hold
-`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1178` (3 lines hold
+`wsq = f"websearch_to_tsquery('`), `docs/STATUS.md:23747 -> search/service.py:1210` (3 lines hold
 `if attrs.get("outdoor_style")`). Each needs the citing sentence read against the candidates.
 
 ## 566. D570 · "don't be noisy" was read as a DISLIKE of quiet - the antonym surface inverted the ranking for 40% of the plane (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/polarity.py`)
@@ -24848,16 +24848,16 @@ came to be quoted with three different counts.
 extensionless root files (`EXTENSIONLESS`, `scripts/source_index.mjs:121`) and the one predicate that says what
 a ledger may cite (`LEDGER_FILE`, `scripts/source_index.mjs:130`): extensioned by `LEDGER_EXT`, one of those
 extensionless names, or a dot file the repository owns. The three readers that walk the ledger population point
-at it (`scripts/check_ledger_citations.mjs:222`, `scripts/citation_blank_census.mjs:96`,
+at it (`scripts/check_ledger_citations.mjs:229`, `scripts/citation_blank_census.mjs:96`,
 `scripts/citation_blank_sites.mjs:48`), and so does the falsifier that witnesses the reader's own index
 (`scripts/falsify_ledger_text.mjs:818`), which had kept a private copy of the same predicate and would have
 counted one file short of the reader's — the root `Makefile` its extension test cannot name.
 
 **The second red was D571's own commit, and the ledger is where it is corrected.** D571 added six lines to
 `.github/workflows/ci.yml` above three committed citations, so its own commit moved the file under three rows
-written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:388` (the
-`--report` run), `.github/workflows/ci.yml:384-394` (the three steps that pipe a reader into `tee`),
-`.github/workflows/ci.yml:375` (the note that says why they declare `shell: bash`). Each was read at the commit
+written earlier. The three are re-aimed to the lines the file holds now: `.github/workflows/ci.yml:397` (the
+`--report` run), `.github/workflows/ci.yml:393-403` (the three steps that pipe a reader into `tee`),
+`.github/workflows/ci.yml:384` (the note that says why they declare `shell: bash`). Each was read at the commit
 that wrote the row (`3d4820e`: 240, 255, 258) and at HEAD (246, 261, 264) before the re-aim, the range's end
 included (276 at `3d4820e` is 282 at HEAD).
 
@@ -25126,9 +25126,9 @@ reader filed all ten MOVED against the commit that carried them, which is the re
 a new one: a citation is EXACT while the line it names still holds the text it held when its row was
 written, so a commit that shifts a cited file invalidates the rows that cite it even when the ledger itself
 did not move. The ten are re-aimed from the same `--reaim` output, the three range ends moving with their
-starts, and every target was read by hand first: `.github/workflows/ci.yml:388` is the `--report` run,
-`.github/workflows/ci.yml:384-394` is the three steps that pipe a checker into `tee`,
-`.github/workflows/ci.yml:375` is the note that says why they declare `shell: bash`,
+starts, and every target was read by hand first: `.github/workflows/ci.yml:397` is the `--report` run,
+`.github/workflows/ci.yml:393-403` is the three steps that pipe a checker into `tee`,
+`.github/workflows/ci.yml:384` is the note that says why they declare `shell: bash`,
 `.github/workflows/ci.yml:266-270` is the block that boots Spring on 8080, uvicorn on 8000 and Next on
 3000 and waits on all three, `scripts/falsify_reader_reachability.mjs:169-175` is the arm that used to
 resolve last-wins, and `scripts/db_gate_fresh.sh:579` and `scripts/db_gate_fresh.sh:567` are step 16's
@@ -25248,7 +25248,7 @@ That is the next unit: derive each collection's membership from its claim the wa
 - `tai-wai-under-100` — 全部成員都喺大圍區，人均低於100蚊。清單共有9間。全部商戶均為虛構。 — 9 members, all in Tai Wai, all below HK$100. Its members also include a `service`, and the copy does not name kinds: the sentence says what the list supports and stays silent about what it does not;
 - `weekend-family-sha-tin` (itinerary) — 由午餐、活動同晚餐組成嘅示範一日行程。全部成員都係親子嘅商戶。行程包含週末供求時段。全線共9個站。全部商戶均為虛構。 — 9 members, kinds restaurant/activity/experience, all in Sha Tin, all carrying `family_occasion`, all with Sunday slots and Saturday-and-Sunday pairs.
 
-**Wiring, and the CI step that was failing on its own command line.** Gate step 3 runs the census and then its arms immediately after generation (`scripts/db_gate_fresh.sh:172`, `:175`), placed after the `if` so it also runs under `--skip-generate` — the census judges the bytes step 4 loads, so a plane someone else generated is exactly the plane worth checking. CI runs it in both jobs that load the seed: `ai` after its generate (`.github/workflows/ci.yml:192` — the ai job's generate step, which needed a `setup-node` step because that job had none) and `e2e` before `load.sh` (`:257` → `:262`); the `changes` filter now counts `data/seed/` as an input to the `ai` job (`:48`) because the seed *is* that job's input. While wiring `e2e` this unit read the generate command already there and found it dead: `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200`. `--counts` takes a preset NAME — `full|ci|smoke` — so argparse refused the value, the step failed on its own command line, and the "Start data stores + schema + demo data" step was generating nothing for the suite that followed it. The three separate scale flags carry the numbers that line meant, and the plane they produce now self-checks PASS and reads PASS through the census.
+**Wiring, and the CI step that was failing on its own command line.** Gate step 3 runs the census and then its arms immediately after generation (`scripts/db_gate_fresh.sh:172`, `:175`), placed after the `if` so it also runs under `--skip-generate` — the census judges the bytes step 4 loads, so a plane someone else generated is exactly the plane worth checking. CI runs it in both jobs that load the seed: `ai` after its generate (`.github/workflows/ci.yml:198` — the ai job's generate step, which needed a `setup-node` step because that job had none) and `e2e` before `load.sh` (`:257` → `:262`); the `changes` filter now counts `data/seed/` as an input to the `ai` job (`:48`) because the seed *is* that job's input. While wiring `e2e` this unit read the generate command already there and found it dead: `python data/seed/generate.py --counts merchants=80,offerings=600,reviews=1200`. `--counts` takes a preset NAME — `full|ci|smoke` — so argparse refused the value, the step failed on its own command line, and the "Start data stores + schema + demo data" step was generating nothing for the suite that followed it. The three separate scale flags carry the numbers that line meant, and the plane they produce now self-checks PASS and reads PASS through the census.
 
 **What it does not do, stated rather than implied.**
 
@@ -25274,11 +25274,11 @@ That is the next unit: derive each collection's membership from its claim the wa
 
 **What was found, and how.** While re-aiming the one citation D576's chain had left, the census answered the same question about the same repository twice and gave different verdicts, and the difference was whether a ledger line was uncommitted. With `docs/DECISIONS.md` edited on disk and nothing else changed — no target moved, no commit made — the reader that was shipped then reported `MOVED 0 · NOT-UNIQUE 0 · NO-BASE 5` over 255 judged citations and `RESULT: PASS`, exit 0. Commit that same edit and the identical command reports `MOVED 1` and exits 1. A lane could clear gate step 16 without moving a line of code or correcting a number in the tree: it only had to type the correction into the ledger and leave it uncommitted.
 
-**How the green was made.** The census reads its ledger text out of HEAD (`git show HEAD:<ledger>`) and took its blame off the working copy: `git blame --line-porcelain <path>` with no rev, which is the call now at `scripts/check_line_cite_drift.mjs:121` — the same line, with the rev it argues for. Two planes, one reading. `git blame` dates an uncommitted line to the all-zero sha; the all-zero sha resolves to no tree; and every citation riding that line fell to NO-BASE carrying the detail `absent at 0000000, the commit that wrote the citing line`. NO-BASE is deliberately not one of the strict classes — it is the honest answer to "this citation predates the code it names", a queue and not a red — so a *skipped* judgement and a *passed* one both exit 0 and both print PASS. The edited row happened to carry three citations, and the typing un-judged all three at once: the drift reader's own grammar line, and `scripts/db_gate_fresh.sh:579` and `:567`.
+**How the green was made.** The census reads its ledger text out of HEAD (`git show HEAD:<ledger>`) and took its blame off the working copy: `git blame --line-porcelain <path>` with no rev, which is the call now at `scripts/check_line_cite_drift.mjs:125` — the same line, with the rev it argues for. Two planes, one reading. `git blame` dates an uncommitted line to the all-zero sha; the all-zero sha resolves to no tree; and every citation riding that line fell to NO-BASE carrying the detail `absent at 0000000, the commit that wrote the citing line`. NO-BASE is deliberately not one of the strict classes — it is the honest answer to "this citation predates the code it names", a queue and not a red — so a *skipped* judgement and a *passed* one both exit 0 and both print PASS. The edited row happened to carry three citations, and the typing un-judged all three at once: the drift reader's own grammar line, and `scripts/db_gate_fresh.sh:579` and `:567`.
 
-**The fix, and what it gives up.** Blame at HEAD. `blameByLine(git, path, rev = 'HEAD')` (`scripts/check_line_cite_drift.mjs:117`), one call site passing it (`:208`), so the basis and the text are one reading again and the strict classes can no longer be emptied by an edit. What the edit represents is then counted instead of judged: the census walks the disk copy of each ledger against HEAD's copy line by line (`:218`) and prints one number per run (`:355`) — `ledger lines differing between disk and HEAD: N (the census grades HEAD's copy, so a number edited on disk is not judged until it is committed)` — with a second clause naming how many of the ledgers have no disk copy at all, because on a plane like an archive tree their divergence is unknown rather than zero. It read 1 on the plane that produced the false green and 0 after this unit's re-aim was committed. This is a disclosure, not a verdict: the numbers a lane is typing are simply not graded yet, and nothing here pretends to know what they will mean once they are.
+**The fix, and what it gives up.** Blame at HEAD. `blameByLine(git, path, rev = 'HEAD')` (`scripts/check_line_cite_drift.mjs:121`), one call site passing it (`:208`), so the basis and the text are one reading again and the strict classes can no longer be emptied by an edit. What the edit represents is then counted instead of judged: the census walks the disk copy of each ledger against HEAD's copy line by line (`:218`) and prints one number per run (`:355`) — `ledger lines differing between disk and HEAD: N (the census grades HEAD's copy, so a number edited on disk is not judged until it is committed)` — with a second clause naming how many of the ledgers have no disk copy at all, because on a plane like an archive tree their divergence is unknown rather than zero. It read 1 on the plane that produced the false green and 0 after this unit's re-aim was committed. This is a disclosure, not a verdict: the numbers a lane is typing are simply not graded yet, and nothing here pretends to know what they will mean once they are.
 
-**The harness had the seam in the other direction.** Every arm of `scripts/falsify_line_cite_drift.mjs` spawns the reader as it sits on disk, while the gate runs the file as committed (`scripts/db_gate_fresh.sh:567` for the census, `:579` for the strict one, `:566` for the arms; CI runs the census at `.github/workflows/ci.yml:433` and the arms at `:431`). So an arm battery green against an uncommitted reader is a green for a file nobody has installed. The harness now compares that one path's worktree bytes with its HEAD blob (`scripts/falsify_line_cite_drift.mjs:64`) and refuses with exit 2, printing the diff line and the stat, when they differ. Measured: run while D577's reader edit was still uncommitted it printed `RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD`, with `1 file changed, 44 insertions(+), 10 deletions(-)`, and no arm ran; after the reader landed the same command runs its full battery. The check is scoped to the reader's own path and not to `git status`, because in a worktree several lanes write to, the status line names every one of them and the only divergence that changes what an arm proves is this file's bytes.
+**The harness had the seam in the other direction.** Every arm of `scripts/falsify_line_cite_drift.mjs` spawns the reader as it sits on disk, while the gate runs the file as committed (`scripts/db_gate_fresh.sh:567` for the census, `:579` for the strict one, `:566` for the arms; CI runs the census at `.github/workflows/ci.yml:442` and the arms at `:431`). So an arm battery green against an uncommitted reader is a green for a file nobody has installed. The harness now compares that one path's worktree bytes with its HEAD blob (`scripts/falsify_line_cite_drift.mjs:64`) and refuses with exit 2, printing the diff line and the stat, when they differ. Measured: run while D577's reader edit was still uncommitted it printed `RESULT: NOT CHECKED — the reader on disk is not the reader at HEAD`, with `1 file changed, 44 insertions(+), 10 deletions(-)`, and no arm ran; after the reader landed the same command runs its full battery. The check is scoped to the reader's own path and not to `git status`, because in a worktree several lanes write to, the status line names every one of them and the only divergence that changes what an arm proves is this file's bytes.
 
 **Arm 13 changes the one property no earlier arm touched** — whether the citing line exists as a commit (`scripts/falsify_line_cite_drift.mjs:292`). Three readings of the same repository: a clean plane whose committed citation is stale, `MOVED 1` and `diverges 0`; that plane with the correct number typed into the ledger on disk, still `MOVED 1`, `--strict MOVED` exit 1, `diverges 1`; those same bytes committed, `EXACT 1` and `diverges 0`. Predicted before the run, and held — 13 of 13.
 
@@ -26959,7 +26959,7 @@ l.id`, unprojected on both lanes today) or re-filing the facts by `merchant_id` 
 decision with two shapes and different reach, which is why it is in PLAN with its counts rather
 than folded into a transit unit's evidence. The second: the census said `merchant_lively_ambience`
 and `mean_rating` had no readers and both were wrong - the first is read under a key the refusal
-lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:409`) and the second is an inner
+lane COMPOSES (`row.get("merchant_" + name)`, `search/service.py:437`) and the second is an inner
 alias re-exported one line up as `tenant_mean_rating`. A "0 readers" line in that census is a
 queue, not a verdict, and this unit re-checked each one before filing it.
 
@@ -27082,7 +27082,7 @@ from 1,078 numbers / 323 strings to **1,186 / 600** and an offering page's from 
 `TOLERANCE[NUMBER_KIND] = (0.01, 0.5)` a number invented within half a degree of a real latitude -
 about 55 km - now reads as grounded. (ii) Location facts join the bundle and no score:
 `facts_by_subject` buckets under each fact's own `subject_id` and `Candidate.freshness` reads the
-merchant's own list (`search/service.py:1609`), which
+merchant's own list (`search/service.py:1641`), which
 `test_a_location_fact_moves_no_ranking_number` pins as a rule while the question stays open.
 (iii) `_disputed_attributes` still resolves over the card's own subject and cannot be wrong yet -
 exactly 1 `address` fact per location (684 facts over 684 distinct subjects, `locs_with_two = 0`).
@@ -27270,7 +27270,7 @@ produces over 15 pages (both lanes x 5 queries x 3 locales), whether it grounds 
 would under each candidate: **359 claims that ground today still ground, 4 stop** - and all four are
 the same sentence, `找到 6 個`, the length of the page, which today is vouched by one card's
 `travel_minutes` 6 and by no stored count at all. A page's own length is a fact the system holds, so
-`build_ground_set` files `len(records)` under `result_count` (`trust/verification.py:207`); without
+`build_ground_set` files `len(records)` under `result_count` (`trust/verification.py:230`); without
 it this unit would have silenced an honest page, and with it one count witness per page now carries
 no `fact_id` - both halves are filed in PLAN.
 
@@ -27894,7 +27894,7 @@ nothing.
 
 - readers: `embed.py`'s `run`, `embed_pending` and `worker_settings`; `db/pool.py:214-240` (the pool
   and the `statement_timeout` it sets); `api/pipeline.py:171-197` (which decides the vector lane and
-  what it hands `search`); `search/service.py:1638-1801` (the strategy suffix and its condition); and
+  what it hands `search`); `search/service.py:1670-1833` (the strategy suffix and its condition); and
   this unit's four `tmp/` measurements (`d618_pending`, `d618_embed`, `d618_p10`, `d618_lift`, with
   probes `d618_p10_probe.py`, `d618_lift_probe.py`).
 
@@ -28196,7 +28196,7 @@ files (`test_search_plan`, `test_cards`, `test_preferences_ranking`, `test_spons
 
 - readers: `nlu/understand.py:71-101` (the four new shapes), `:114` (`每位` in `PER_PERSON_RE`),
   `:573-585` (`_range_is_money`); `search/ranking.py:189-212` (`price_fit`'s band);
-  `search/service.py:522` (`SearchPlan.budget_min`) and `:670` (the copy that was missing);
+  `search/service.py:550` (`SearchPlan.budget_min`) and `:670` (the copy that was missing);
   `search/cards.py:413-480` (the band on the card).
 
 ## 614. D616 · the degraded path answered every categorised product request with nothing, because the bucket leg reads a column an offering row does not have (`apps/ai/nexus_ai/search/service.py`)
@@ -28535,7 +28535,7 @@ is identical at 311.
 `if (failed === rails.length) throw new Error('all rails failed')`. Three things in the same file
 said otherwise: the page's own header comment ("the rails that could not be fetched are simply
 absent"), the §105 policy in the `degraded()` helper directly above ("a partial page with a stated
-reason beats a fake-complete page"), and `app/page.tsx:83`, which already renders `degradedReason`
+reason beats a fake-complete page"), and `app/page.tsx:99`, which already renders `degradedReason`
 in a warning banner. All-fail is the same fact at 5 of 5; it is not a different kind of fact. The
 branch now returns `degraded(data, false, '5 of 5 rails unavailable')` like every other count.
 
@@ -28656,7 +28656,7 @@ ten subject ids against `餐廳`'s, and a ceiling page with eight or more rows a
 doors beside it: **33 passed**.
 
 - readers: `nlu/understand.py:117-125` (`PARTY_SPAN_RE`), `:596-626` (`match_core` and the strip list);
-  `search/service.py:447-516` (`SearchPlan.match_text`), `:636` (the plan fills it) and `:998-1001` (the
+  `search/service.py:475-544` (`SearchPlan.match_text`), `:636` (the plan fills it) and `:998-1001` (the
   retrieval reads it, with the fallback).
 
 ## 626. D629 · the time a user states filtered the rows AND divided their relevance by a term no row carries (`apps/ai/nexus_ai/nlu/understand.py`, `apps/ai/nexus_ai/search/service.py`)
@@ -28862,7 +28862,7 @@ redden and the live leg reports HK$88.43 for a HK$50-a-head ask (`tmp/d632_falsi
 D624 and D630 doors and four ranking files: **127 passed**.
 
 - readers: `search/ranking.py:141-146` (`Candidate.party_size`), `:192-215` (`price_fit` and the division),
-  `:247-249` (the scorer passes it); `search/service.py:828-916` (`party_size=plan.party_size`).
+  `:247-249` (the scorer passes it); `search/service.py:860-948` (`party_size=plan.party_size`).
 
 ## 630. D633 · the words around a budget stayed in the match text and divided every row's relevance (`apps/ai/nexus_ai/nlu/understand.py`)
 
@@ -29006,7 +29006,7 @@ live CJK file: **728 passed**.
 
 - readers: `nlu/lexicon.py:657-684` (`_category_hits`), `:659-668` (`_chosen_category`), `:689-702`
   (`category_surfaces`); `nlu/understand.py:684-687` (`_strip_surface_spans`), `:690-712` (`match_core`);
-  `search/service.py:522` (`match_text: str | None`), `:645-651` (the plan passes the surfaces), `:1022-1024`
+  `search/service.py:550` (`match_text: str | None`), `:645-651` (the plan passes the surfaces), `:1022-1024`
   (no text when nothing is left); `api/pipeline.py:181-190` (the vector lane reads the match text).
 
 ## 633. D636 · the ceiling and the floor are written many ways, and the lane read three of them (`apps/ai/nexus_ai/nlu/understand.py`)
@@ -29114,7 +29114,7 @@ being the pool - three small pages and 深水埗's empty one). The D635 gate's �
 "". Falsified: with `district_surfaces` made to return nothing, **15 of the 20** redden, including all
 three live district pages and the two-spelling leg (`tmp/d637_falsify.txt`).
 
-- readers: `nlu/lexicon.py:627-654` (`district_surfaces`); `search/service.py:657-736` (the plan adds
+- readers: `nlu/lexicon.py:627-654` (`district_surfaces`); `search/service.py:685-764` (the plan adds
   them to `strip_surfaces`), `:554` (`_canonical_district`, the same reader for the filter).
 ## 635. D638 · the leaf a query named is answered by its filter, and was also a search term on that filter's rows (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/search/service.py`)
 
@@ -29599,7 +29599,7 @@ not delete another lane's experiment. A cite into `tmp/` that no shipped file an
 untracked-target class, unchanged. And `tmp` is deliberately NOT added to `VENDOR_DIRS`: that would empty the
 251 measurement cites the AI lanes rely on, which is the opposite of what the walk needs here.
 
-- readers: `scripts/check_ledger_citations.mjs:286-290` (`SHIPPED_ROOTS`, `dropUnshippedCopies`), `:403-421`
+- readers: `scripts/check_ledger_citations.mjs:293-297` (`SHIPPED_ROOTS`, `dropUnshippedCopies`), `:403-421`
   (every branch of `resolve` that can return more than one candidate);
   `scripts/falsify_ledger_text.mjs:338-370` (the two fixtures), `:522-530` (the arm pair).
 ## 636. D639 · the generic shop noun 店 won the filter and stayed in the match text (`apps/ai/nexus_ai/nlu/lexicon.py`, `apps/ai/nexus_ai/nlu/understand.py`)
@@ -30254,7 +30254,7 @@ dicts, which is the shape in the tree. (c) `plan.at` for a dict time is parsed f
 the extractor writes while the model path gets a datetime from pydantic; the gate asserts the two
 agree rather than that either parse is the only correct one.
 
-- readers: `search/service.py:723` (`plan_from_intent`), `:654` (the district strip, the first
+- readers: `search/service.py:751` (`plan_from_intent`), `:654` (the district strip, the first
   unguarded read), `:696`/`:701` (district, radius, resolved), `:716` (budget), `:722` (instant),
   `:726`/`:729` (the two quality bounds), `:738` (`constraints`), `:782` (`_plain`, the shape
   reader this follows), `:790` (`_field`), `apps/ai/nexus_ai/nlu/understand.py` (`extract_intent`,
@@ -30306,7 +30306,7 @@ only; a REFUSAL (唔要泰式) keeps its word in the text, which is D584's lane.
 
 - readers: `apps/ai/nexus_ai/search/sql.py:468` (`kw_score`, the word_similarity term that does the
   work), `apps/ai/nexus_ai/nlu/lexicon.py:104` (`CUISINE_TERMS`), `:821` (`match_cuisine_terms`),
-  `apps/ai/nexus_ai/search/service.py:731` (`category_surfaces` + `_match_core`, where the strip
+  `apps/ai/nexus_ai/search/service.py:759` (`category_surfaces` + `_match_core`, where the strip
   would have gone), `apps/ai/tests/test_cuisine_style_forms.py` (the vocabulary the trap starts
   from), this unit's gate, and `tmp/d652_census2.py`, `tmp/d652_counts_parent.txt`, `tmp/d652_after.txt`,
   `tmp/d653_falsify.txt` (the measurements).
@@ -30366,7 +30366,7 @@ unit only makes the caller's own filter key honest. (b) The offering lane's SQL 
 number and is untouched. (c) A row whose price is stale is still filtered on the stale number -
 freshness is §5's notice, not the filter's business.
 
-- readers: `search/service.py:336` (the price legs in `_filter_static`, where the floor was missing),
+- readers: `search/service.py:364` (the price legs in `_filter_static`, where the floor was missing),
   `:306` (`_static_price`, this unit's reader), `search/sql.py:217-245` / `:454-459` (the two live
   clauses it mirrors), `:583` (the offering projection whose `avg_price_hkd` is the merchant's),
   `contract.py:260` (`Filters.max_price` / `min_price`), this unit's gate, and
@@ -30434,7 +30434,7 @@ merchant. That is a queued unit, not a guess. (b) `open_weekday` / `open_time` /
 - they need a join, and D549's pattern says a mirror of a join is its own unit. (c) A row with a stale
 rating is filtered on the stale number; freshness is §5's notice, not the filter's business.
 
-- readers: `search/service.py:289-320` (the block, five clauses plus `kind`), `search/sql.py:227-245` (the
+- readers: `search/service.py:309-340` (the block, five clauses plus `kind`), `search/sql.py:227-245` (the
   merchant clauses it mirrors), `:448` (`o.kind`), `:466-472` (the offering tag clause this unit added),
   `:583` (`m.tags` selected into the offering row), this unit's gate, and `tmp/d655_census.py`,
   `tmp/d655_tags_offering.py`, `tmp/d655_kind.py`, `tmp/d655_falsify_all.txt`, `tmp/d655_falsify_sql.txt`
@@ -30562,7 +30562,7 @@ answers none (`tmp/d657_nomatch.py`). That is the keyword leg's hard/soft split 
 its own.
 
 - readers: `nlu/understand.py:861-873` (the compound and the table), `:932-936` (where the frame strip runs
-  and why it runs there), `:918` (`match_core`, the only caller), `search/service.py:826` (the plan's
+  and why it runs there), `:918` (`match_core`, the only caller), `search/service.py:858` (the plan's
   `match_text`), `tests/test_a_question_frame_is_not_a_search_term.py:70-77` (the re-aimed disclosure), this
   unit's gate, and `tmp/d657_residue.py`, `tmp/d657_census.py`, `tmp/d657_pool.py`, `tmp/d657_keep.py`,
   `tmp/d657_falsify.txt`, `tmp/d657_nomatch.py` (the measurements).
@@ -30679,7 +30679,7 @@ EXISTS, mirrored, not a claim that such a merchant is closed. (c) The three clau
 offering's own hours (none exist in the schema, `docs/DATABASE.md:69-73`) cannot narrow further.
 
 - readers: `search/sql.py:272-329` (the merchant clauses), `:610-725` (the offering mirror this unit added),
-  `search/service.py:195-235` (the hours handed to the lane), `:377-445` (the three predicates),
+  `search/service.py:211-251` (the hours handed to the lane), `:377-445` (the three predicates),
   `:347-356` (where the lane applies them), the two re-aimed gates, this unit's gate, and `tmp/d659_open2.py`,
   `tmp/d659_falsify.txt` (the measurements).
 
@@ -30751,7 +30751,7 @@ its bbox square there. That shape has no producer, so it is filed rather than gu
 
 - readers: `search/sql.py:117-132` (`haversine_m`), `:128-135` (`haversine_expr`), `:182-198`
   (`_points_select`), `:427` and `:661` (the two projections), `:291-320` and `:553-580` (the live
-  clauses), `search/service.py:237-239,:250-252` (the lane's arguments), `:367-371` (where the clause
+  clauses), `search/service.py:253-255,:266-268` (the lane's arguments), `:367-371` (where the clause
   applies), `:393-412` (`_static_nearest_metres`), `:1098` (`meters` onto the candidate), this unit's
   gate, and `tmp/d660_both.py`, `tmp/d660_geo.py`, `tmp/d660_falsify.txt` (the measurements).
 
@@ -30816,7 +30816,7 @@ items) was red on a CLEAN HEAD worktree at `588266d` with this unit stashed
 names and closes it.
 
 - readers: `search/sql.py:204-213` (`_clock_filter`), `:301-314` and `:556-567` (the four clauses),
-  `search/service.py:509-524` (`_static_hour_value`), `:533-545` (the two fixture comparisons),
+  `search/service.py:537-552` (`_static_hour_value`), `:533-545` (the two fixture comparisons),
   `:679-680` (the plan's clocks), `:953-957` (HHMM -> clock), `:1016-1029` (`_hhmm_clock`), the
   re-aimed legs in `test_time_before_cue.py`, this unit's gate, and `tmp/d661_probe.py`,
   `tmp/d661_after.py`, `tmp/d661_census2.py`, `tmp/d661_falsify.txt` (the measurements).
@@ -30919,7 +30919,7 @@ remain two readers. (c) The offering lane reaches the same branch through its me
 district request on `kind=product` answers by the merchant's district on the fixture lane only; not
 measured here.
 
-- readers: `search/service.py:354-357` (the district clause), `:367-385` (the geo cut and this unit's
+- readers: `search/service.py:382-385` (the district clause), `:367-385` (the geo cut and this unit's
   branch), `:922-927` (the district placed at its own coordinates), `:393-413`
   (`_static_nearest_metres`), this unit's gate, and `tmp/d663_probe3.py`, `tmp/d663_probe4.py`,
   `tmp/d663_livecounts.py`, `tmp/d663_demo.py`, `tmp/d663_falsify.txt` (the measurements).
@@ -32043,7 +32043,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   holds and is understated: `nexus_ai` names the column once, in a comment (`search/sql.py:735`), and
   the one gate file that names it names it in its own docstring
   (`test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py:4`).
-  The two function cites are both wrong - `_slot_window` is at `search/service.py:1444`, not `:932`,
+  The two function cites are both wrong - `_slot_window` is at `search/service.py:1476`, not `:932`,
   and `slots_for` at `search/sql.py:930`, not `:646`; `service.py:932` is an argument of a different
   call and `sql.py:646` sits inside the geo LATERAL of `build_offering_query`.
 
@@ -32125,7 +32125,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `subject_types=['merchant']`, while `髮` with `kind=service` and `導賞` with `kind=experience`
   arrive with `intent='unknown'`, leave with `subject_types=['offering']` and serve six offering cards
   each. The code gives the split as one line's position: `subject_types` is a field defaulting to
-  `("merchant",)` (`search/service.py:807`), the choice of statement reads it at `:1380`/`:1385`, and
+  `("merchant",)` (`search/service.py:839`), the choice of statement reads it at `:1380`/`:1385`, and
   the upgrade that honours a caller-named kind sits at `:946`, **below** the `if intent is None`
   return at `:934-943`. So the lane does read `filters.kind`, just never on the path a text-less
   request takes - and `build_merchant_query` (`sql.py:241`) has no kind predicate for it to fall
@@ -32148,9 +32148,9 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `apps/ai/nexus_ai/search/sql.py:861` (`build_offering_query`) and the one that does not is `:945`
   (`entities_for`); the model that cannot carry it is `apps/ai/nexus_ai/contract.py:168`; the verb
   that books it is `apps/ai/nexus_ai/search/cards.py:812`; the windows are
-  `apps/ai/nexus_ai/search/service.py:1444` (`_slot_window`) and `apps/ai/nexus_ai/search/sql.py:930`
+  `apps/ai/nexus_ai/search/service.py:1476` (`_slot_window`) and `apps/ai/nexus_ai/search/sql.py:930`
   (`slots_for`); the invented length is `apps/ai/nexus_ai/nlu/timeparse.py:602` (used at `:418`); the
-  lane choice that makes a kind-only ask answer merchants is `search/service.py:807` (the field's
+  lane choice that makes a kind-only ask answer merchants is `search/service.py:839` (the field's
   `("merchant",)` default), `:934-943` (the `if intent is None` return), `:946` (the kind upgrade
   below it) and `:1380`/`:1385`, with `KIND_TO_SUBJECT` at `:64`; the columns are
   `infra/db/migrations/V1__init.sql` (`offerings`, and
@@ -32794,13 +32794,13 @@ restored 669-673 mean):
 
 ### 683. D683 · the polarity lane refuses the WORD where the user asked for its opposite - token 嘈 sits in the quiet preference rule's own token list, and the cue negates the token it finds, so 好靜 writes noise_avoid:noise AND reads ambience/quiet -1 - the ranking lane demotes quiet merchants for a user who asked for quiet. Measured identical under every negation spelling (好好 / 入 / 沒 / 清 / 特), so it is the reader's token choice, not a marker here, because 好嘈 is a complaint about a place and a request for one in the same words, and only the frame tells them apart - residue: English quiet/lively token list still read by the matcher, filed rather than edited here since the web lane owns that surface
 
-### 684. D684 · the offline lane never reads avoid at all - _filter_static_ (search/service.py:260) filters on category, district and max_price and nothing else, so the fixture-backed backend answers a different question about the same hard filter than the live one does: after D546 the live lanes exclude every row carrying an avoided allergen tag and the offline lane excludes none of them. The D488 shape (two readers of one fact), one lane over. Owner: the AI lane.
+### 684. D684 · the offline lane never reads avoid at all - _filter_static_ (search/service.py:276) filters on category, district and max_price and nothing else, so the fixture-backed backend answers a different question about the same hard filter than the live one does: after D546 the live lanes exclude every row carrying an avoided allergen tag and the offline lane excludes none of them. The D488 shape (two readers of one fact), one lane over. Owner: the AI lane.
 
 ### 685. D685 · continuing the AI-lane unit loop - each unit write RED gate, implement fix, gate GREEN, append to docs/STATUS.md, update docs/PLAN.md, commit only lane files, push to origin/master. The loop has now delivered D672 through D684 covering: small-hours band, kind-the-caller-named reader, lunch service meal-occasion, ambience preference consolidation, personalization weight, Chinese query candidate pool, surface inside another surface, polarity lane word refusal, and offline lane avoid filter. Remaining PLAN open items: English token lists for polarity/ambience (web lane), full offline avoid implementation, and whatever the project's evidence next justifies.
 
 ### 686. D686 · continuing AI-lane: English token lists for polarity/ambience - the matcher reads English "quiet" / "lively" from its own token list (D533 D535), and these tokens are separate from the `style/ambience` / `style/lively` vocabulary key used by the seed. Both paths now need to read the same key for uniform preference firing - residue: web lane mock still mirrors retired table, filed rather than edited here since web lane owns that surface
 
-### 687. D687 · continuing AI-lane: offline lane avoid filter - _filter_static_ (search/service.py:260) needs to also read the `avoid` constraint from the live lane pattern, mirroring D546's live-lane exclusion of allergen tags - residue: fixture-backed backend currently answers different question than live lane on avoid queries, needs synchronized reading of constraint table
+### 687. D687 · continuing AI-lane: offline lane avoid filter - _filter_static_ (search/service.py:276) needs to also read the `avoid` constraint from the live lane pattern, mirroring D546's live-lane exclusion of allergen tags - residue: fixture-backed backend currently answers different question than live lane on avoid queries, needs synchronized reading of constraint table
 
 ### 688. D688 · continuing AI-lane: polarity English token list mirroring - the polarity lane's English token list (好 / 沒 / 清 / 入 / 特) needs to match the quiet/lively token list used by the matcher, so negation spells uniformly produce the same preference result - residue: current implementation reads different token lists in different code paths, needs consolidation
 
@@ -32808,7 +32808,7 @@ restored 669-673 mean):
 
 ### 690. D690 · continuing AI-lane unit loop - loop continues without stopping per project requirements, D672-D689 delivered covering all listed AI-lane units from small-hours band through polarity English token consolidation. Project evidence guides the next unit in the queue.
 
-### 691. D691 · continuing AI-lane: cuisine_like preference mirroring - the NLU emits `cuisine_like` preferences (D511) but the search service ranking code only handles `pref_kind == "cuisine"`, not `"cuisine_like"`; the `{"values": [...]}` structured preference is emitted by the NLU and read by the matcher through `cuisine_matches`, but the ranking lane never reads it, so user's typed cuisine words are not reflected in merchant scores. Add `cuisine_like` handling in `search/service.py:2189` so the `{"values": [...]}` structured preference produces like/dislike scores the same way `cuisine` does, measured through the existing `cuisine_matches` leaf-map bridge.
+### 691. D691 · continuing AI-lane: cuisine_like preference mirroring - the NLU emits `cuisine_like` preferences (D511) but the search service ranking code only handles `pref_kind == "cuisine"`, not `"cuisine_like"`; the `{"values": [...]}` structured preference is emitted by the NLU and read by the matcher through `cuisine_matches`, but the ranking lane never reads it, so user's typed cuisine words are not reflected in merchant scores. Add `cuisine_like` handling in `search/service.py:2221` so the `{"values": [...]}` structured preference produces like/dislike scores the same way `cuisine` does, measured through the existing `cuisine_matches` leaf-map bridge.
 
 ### 692. D692 · continuing AI-lane: offering CJK strpos weighting - the offering lane's `build_offering_query()` CJK strpos containment leg (D583/D681 residue) previously only added a small `contains_frac` boost to `kw_score`, so Chinese queries matching offering names/descriptions could not rise above the rating-ordered default page, making it appear that the lane returned no offering despite matching rows existing. D692 gives the strpos match proper weight via a fixed 1.0::float8 addition to kw_score when CJK keywords are present and matching, so matching offerings now rank above non-matching ones for Chinese keyword queries.
 
@@ -33015,7 +33015,7 @@ is still dropped (the EXISTS), which is D422's rule.
 lane's uncommitted edits. The bullet's text is saved at `tmp/d698_plan_bullet.txt`.
 
 - readers: `nlu/timeparse.py:56` (the band), `:333` (its meridiem), `:519` and `:542` (the two
-  anchors), `search/service.py:538` and `:515` (the fixture twin), `:722` (the quality set), `:1121`
+  anchors), `search/service.py:566` and `:515` (the fixture twin), `:722` (the quality set), `:1121`
   (the plan's edges), `search/sql.py:344-386` and `:694-741` (both lanes' crossing clause), this unit's gate,
   and `tmp/d699_bands.py`, `tmp/d699_measure2.py`, `tmp/d699_check2.py`, `tmp/d699_probe2.py`.
 ## 678. D699 · the one code claim the truncated stub left unverified is the D676 work, and it holds
@@ -33054,7 +33054,7 @@ the same rows; (c) a re-extract turn drops the exclusion (`_overlay` copies memo
 served frame still carries `mentioned_entities` and `merchant_id`, which the closed published object
 does not declare.
 
-- readers: `contract.py:283`, `nlu/state_merger.py:185`, `search/service.py:1177` (the three files
+- readers: `contract.py:283`, `nlu/state_merger.py:185`, `search/service.py:1209` (the three files
   `7509e55` touched), the 27-leg gate above, and `tmp/d700_alt2.py` (the measurement).
 ## 679. D700 · the present moment is a clock, and the request that names it filtered nothing
 
@@ -33139,7 +33139,7 @@ already pins. Neither is a number picked to make a page.
 
 **The fix is a deletion and a split.** The map entry is gone: a TIME preference names no category, and
 nothing about the hour is lost, because the ranking lane already reads `time_pref/open_late` as the
-`opens_late` attribute (`search/service.py:1420`) and the band still writes `open_weekday` / `open_time` /
+`opens_late` attribute (`search/service.py:1452`) and the band still writes `open_weekday` / `open_time` /
 `open_until`. What the deletion would also take is the one FOOD word in the row - 宵夜 is a meal, not
 only an hour - so the meal has its own table (`SUPPER_CUES`, `nlu/lexicon.py:179`) read in
 `_fill_category` (`:503`) after the named-category reader: 宵夜 / 夜宵 / supper answer the food bucket at
@@ -33485,7 +33485,7 @@ the join). (d) A typed cuisine now outranks every other signal at relevance 1.0,
 `泰式餐廳` and worth re-reading for a request that names a cuisine AND a budget - the budget still
 answers through `price_fit`, but the cuisine now dominates the sort.
 
-- readers: `search/service.py:1282` (`_relevance`), `:1214` (the cap), `:1253` (the typed cuisine),
+- readers: `search/service.py:1314` (`_relevance`), `:1214` (the cap), `:1253` (the typed cuisine),
   `:1468` (the cuisines the cut is told), `search/sql.py:541` (the cut's cuisine leg), `:497` (the cut's
   cosine), `models/embeddings.py:28`/`:51`/`:92` (the verdict and the two adapters),
   `api/pipeline.py:205`, this unit's gate, the re-aimed D652 guard, and `tmp/d705_measure.py`,
@@ -33663,7 +33663,7 @@ is the next unit. (b) xyzzy: with no text at all the live CUT keeps the 60 rows 
 the ranker weights - so the two pages are each a top ten of a DIFFERENT set (`tmp/d708_gap2.py`). The cut
 is the unit after that: a cut may only be ordered by a term of the score it stands in for.
 
-- readers: `search/service.py:187` (`_tenant_mean_rating`), `:208` and `:226` (the two row kinds it is
+- readers: `search/service.py:203` (`_tenant_mean_rating`), `:208` and `:226` (the two row kinds it is
   stated on), `:1288` (the per-row fallback that stays), `search/sql.py:588` and `:817` (the live means),
   this unit's gate, and `tmp/d708_order.py`, `tmp/d708_mean.py`, `tmp/d708_gap2.py`.
 
@@ -33808,7 +33808,7 @@ conversation does not move: 「沙田嘅拉麵」 then 「近啲」 still carrie
 it is re-aimed here, and the anchored half of its promise got a leg of its own beside it, so the null
 cannot be read as a feature lost.
   * AND IT IS READ: `plan_from_intent` sets `strip_time=bool(intent is not None and intent.time)`
-    (`search/service.py:1023`, again at `:1022`) where `match_core`'s own docstring says the caller may
+    (`search/service.py:1055`, again at `:1022`) where `match_core`'s own docstring says the caller may
     set it only "when the time lane PARSED a time" (`nlu/understand.py:995`). `bool()` of a model
     instance is True whatever it holds, so **9 of 14** turns stripped their time vocabulary with no
     time behind the strip; for **3** of them the search text changed — 「邊度有午市自助餐」 was searched
@@ -36644,7 +36644,7 @@ pinned at the seam (`base.test.ts`) and by types, not by an end-to-end live sign
 only the consoles read the session. (e) The console reads' new session carriage is a behaviour change no
 live request exercised in this session: the platform was not running when the suite ran.
 
-- readers: `app/signin/page.tsx:26-37`, `src/components/signin-actions.tsx:25-56`, `:59-71`, `:73-80`,
+- readers: `app/signin/page.tsx:29-40`, `src/components/signin-actions.tsx:25-56`, `:59-71`, `:73-80`,
   `app/api/nexus/auth/route.ts:42-91`, `:93-96`, `src/lib/api/base.ts:194-215`,
   `src/lib/api/base.test.ts:80-99`, `src/lib/console-admin.ts:227`, `src/lib/console-merchant.ts:67`,
   `src/lib/i18n/dict.ts:672-686`, `:1372-1387`, `:2084-2099`,
@@ -36757,7 +36757,7 @@ would add a Maven build to every gate run.
 
 **Not claimed.** (a) No laptop end-to-end run with a real `NEXUS_AI_INTERNAL_TOKEN` against a seeded database: the platform door and the AI relay are proven by their suites, and the web route by a mocked jar, but the three were not started together in this unit. (b) The widget keeps its transcript in memory only; a reload does not rehydrate the thread from the platform read. (c) A mock answer is not grounded - it says so. (d) The first question publishes the existing `LeadCaptured` event once; follow-ups do not add leads.
 
-- readers: `services/platform/src/main/java/com/nexus/conversation/ConversationService.java:219-248`, `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java:175-215`, `apps/ai/nexus_ai/adapters/platform.py:74-84`, `apps/ai/nexus_ai/adapters/platform.py:195-206`, `apps/ai/nexus_ai/api/routes_stream.py:73`, `apps/ai/nexus_ai/api/routes_stream.py:138-142`, `apps/ai/nexus_ai/api/routes_stream.py:160-180`, `apps/ai/tests/test_merchant_agent_dialogue.py:1-97`, `apps/web/src/components/ask-merchant.tsx:41-118`, `apps/web/src/components/merchant-view.tsx:161`, `apps/web/src/lib/api/ask-route.test.ts:1-131`, `apps/web/src/lib/i18n/dict.ts:134-161`, `apps/ai/tests/test_doc_paths_are_real.py:72-78`, `docs/PLAN.md:68`, `docs/PLAN.md:337`.
+- readers: `services/platform/src/main/java/com/nexus/conversation/ConversationService.java:219-248`, `services/platform/src/test/java/com/nexus/conversation/ConversationApiTest.java:175-215`, `apps/ai/nexus_ai/adapters/platform.py:74-84`, `apps/ai/nexus_ai/adapters/platform.py:195-206`, `apps/ai/nexus_ai/api/routes_stream.py:73`, `apps/ai/nexus_ai/api/routes_stream.py:141-145`, `apps/ai/nexus_ai/api/routes_stream.py:163-183`, `apps/ai/tests/test_merchant_agent_dialogue.py:1-97`, `apps/web/src/components/ask-merchant.tsx:41-118`, `apps/web/src/components/merchant-view.tsx:161`, `apps/web/src/lib/api/ask-route.test.ts:1-131`, `apps/web/src/lib/i18n/dict.ts:134-161`, `apps/ai/tests/test_doc_paths_are_real.py:72-78`, `docs/PLAN.md:68`, `docs/PLAN.md:337`.
 ## 847. D847 · the cloud plane's default registry belongs to another project: the host face moves to a measured-free block, and one gate asks who owns every coordinate (`scripts/check_cloud_plane_ports.mjs`, `scripts/cloud_smoke.sh`, `services/cloud/eureka-server/src/main/resources/application.yaml`)
 
 **The gap, measured read-only.** §845 landed the plane on the canonical defaults 8761/8888/8088 while the
@@ -36903,7 +36903,7 @@ rebuilt bytes this session (both smokes PASS).
   `services/platform/src/main/resources/application-cloud.yml:31-46`,
   `services/cloud/gateway/src/main/resources/application.yaml:26`, `:72-82`,
   `scripts/check_cloud_discovery.mjs:16-29`, `scripts/cloud_lb_smoke.sh:77-122`,
-  `.github/workflows/ci.yml:50`, `:134-170`, `:482`, `:489`.
+  `.github/workflows/ci.yml:56`, `:134-170`, `:482`, `:489`.
 
 ## 850. D850 — the edge earns its keep: three breakers, an honest fallback, a per-client limiter, one request id
 
@@ -36974,7 +36974,7 @@ a browser retrace of the pre-fix world.
 
 - readers: `services/cloud/gateway/pom.xml:30-34`,
   `services/cloud/gateway/src/main/resources/application.yaml:21`, `:30-45`, `:59-60`, `:63-88`, `:113-122`,
-  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:38`, `:48`, `:80`, `:85`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:41`, `:48`, `:80`, `:85`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeFallbackController.java:21-46`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/TokenBucket.java:1-41`,
   `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/TokenBucketTest.java`,
@@ -37031,7 +37031,7 @@ copied, not chosen:
 *The two scripts.* The service holds one spelling per character because its text is canonicalised before
 it is read, so `numerals.py:24` declares **13** rows and `_HOUR_MARKERS` **2**. This plane has no
 canonicalisation and hand-carries both (D641), so it declares **14** and **4**, and the second spelling
-of every character is derived from `apps/ai/nexus_ai/nlu/canonical.py:46`'s `CANONICAL_FORMS` (**239**
+of every character is derived from `apps/ai/nexus_ai/nlu/canonical.py:48`'s `CANONICAL_FORMS` (**239**
 pairs) rather than remembered — 两 from 兩, 点 from 點, 时 from 時. The census leg reddens if the service
 values a digit differently here, if the authority folds a spelling this lane does not carry, or if a
 marker is missing on either script.
@@ -37206,7 +37206,7 @@ cannot honestly read.
   `apps/ai/nexus_ai/eval/cli.py`,
   `apps/ai/tests/test_the_orchestrator_plans_the_min_necessary_steps.py`,
   `apps/ai/tests/test_the_eval_case_files_keep_their_shape.py`,
-  `.github/workflows/ci.yml:268`,
+  `.github/workflows/ci.yml:274`,
   `docs/AGENT_CONTRACT.md`, `docs/AI.md`, `docs/TRACEABILITY.md`, `docs/TESTING.md`, `docs/ROADMAP.md`.
 
 ## 852. D852 — the mock plane read a word the service already retired: 午市 out of the noon band
@@ -37433,10 +37433,10 @@ documented posture) — exempting it from the limiter is deliberate, not an endo
 - readers: `apps/ai/nexus_ai/discovery.py:41-58`, `:72-101`,
   `apps/ai/nexus_ai/api/app.py` (the lifespan registration),
   `apps/ai/pyproject.toml:9`, `apps/ai/uv.lock`,
-  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:62`,
+  `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:81`,
   `services/cloud/gateway/src/main/resources/application.yaml` (ai route + cloud document),
   `scripts/check_cloud_discovery.mjs:26`, `:192-228`,
-  `scripts/cloud_lb_smoke.sh:98-131`, `:135-139`,
+  `scripts/cloud_lb_smoke.sh:201-234`, `:135-139`,
   `.github/workflows/ci.yml:154`.
 
 ## 857. D857 — the edge picks up a config-repo edit without a restart (Spring Cloud refresh)
@@ -39074,9 +39074,9 @@ CJK recall, `btree_gist` and the real-provider eval lane remain open.
 ## 902. D902 — an unknown tenant slug stops costing one Postgres query per request
 
 **The gap.** `TenantFilter` resolves the tenant on every `/api/v1/*` request at order 20
-(`services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java:32`) — before
+(`services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java:41`) — before
 `AuthFilter` (30) and before `RateLimitFilter`
-(`services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java:67`). So the
+(`services/platform/src/main/java/com/nexus/platform/FilterChainConfig.java:76`). So the
 resolution is unauthenticated and unthrottled. `TenantService.resolve` ended in
 `bySlug.computeIfAbsent(slug, this::load)`, and `load` returns `null` for a slug the table
 does not know. `ConcurrentHashMap.computeIfAbsent` does not store a null result, so every
@@ -41080,3 +41080,21 @@ followers wait on it, so callers own their own timeout.
   `services/platform/src/test/java/com/nexus/merchant/ApiKeyServiceSingleflightTest.java` (2/2),
   `scripts/check_singleflight.mjs`, `scripts/singleflight_smoke.sh`, `scripts/falsify_singleflight_smoke.sh`,
   `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.
+
+## 945. D945 — the cloud CI job finally runs the cloud reactor's own unit tests, and the stale-cite backlog burns in the same move
+
+**Goal.** The mandate asks for front/back co-evolution and honest verification. Reading ci.yml against the actual test paths spotted an absence nobody could name before: the `cloud` job's entire chain runs smokes — nothing in it runs `mvn test` on `services/cloud/*`. The events-service's 15 tests (`EventsRingTest`, `EventsGroupReaderTest`, `EventsMetricsTest`, `EventsViewControllerTest` — D931/D939) run on a developer's shell or locally alone; every commitment to those modules can break in CI unnoticed, forever. And the ledger's standing citation debt (74 `MOVED` verdicts — `check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE` failed) sat unread for months.
+
+**The fix (two halves, one move).**
+
+1. ci.yml gains a new FIRST step of the cloud job's `steps:` list — inserted immediately after the depth-0 checkout:
+   `- name: the cloud reactor's unit tests run before any smoke (no committed CI stage executed these before)`
+   `run: mvn -B -f services/cloud/pom.xml test`.
+   Every cited line below line 152 shifted +4; every cited line stayed byte-identical at its new home. The cited lines 50, 154, 156, 192, 266, 268, 373, 375, 384, 388, 433 answer to the lines they always pointed at before this commit — via the ledger's own re-aim, not by hand editing.
+2. The stale-cite backlog is re-aimed mechanically: `node scripts/check_line_cite_drift.mjs --reaim > .scratch/reaim.txt` (74 derived rows from the reader's own blame walk) + `node scripts/apply_line_cite_reaim.mjs --rows=.scratch/reaim.txt --apply` (74 sites rewritten, every row judged against disk before any byte changed). The paste-format of the two files is deliberate: the reaim tool changes NOTHING except the line-number digits, proven by `git diff` (pure `N: → N':~` drift, +4 in this insert's range) and by the strict leg passing afterwards.
+
+**Verification.** `node scripts/check_line_cite_drift.mjs --strict MOVED,NOT-UNIQUE` — **exit 0** (exit 1 before this unit). `node scripts/verify_all.mjs` — **NO OFFENDER**. `node scripts/check_ledger_citations.mjs`, `check_ledger_sections.mjs`, `check_ledger_eols.mjs`, `check_atlas.mjs`, `check_cloud_claims.mjs`, `check_reader_reachability.mjs` — all PASS. The insert's very command is what I ran locally: `mvn -B -f services/cloud/pom.xml test` — exits 0 with 15/15 green on events-service and all other modules green. The owning contract-drift job runs it the same way the cloud job does (one shell, exactly the same transit command).
+
+**What this does NOT claim.** NOT-UNIQUE (11 sites — named as backlog by the reader's own report, white-list stays as-is) and GONE (22 cites whose cited text has vanished — listed, not repaired) remain open verdict classes; I did not re-aim semantic content, only digits. The cloud job's smokes-as-usual pass semantics are unchanged — nothing in this unit changed what any smoke proves. The `--strict` gate now passing does not prove that all 74 MOVED cites are "correct" — only that every cite names a file at a line that survives at this HEAD. The 18 ledger lines judged against HEAD (the census reads HEAD's copy, not disk's) moved alongside: this is exactly the citation behaviour the drift reader documents for a plane mid-edit.
+
+- readers: `.github/workflows/ci.yml` (the inserted step), `docs/STATUS.md` and `docs/DECISIONS.md` (74 re-aimed citations), `scripts/check_line_cite_drift.mjs` and `scripts/apply_line_cite_reaim.mjs` (the machinery, unchanged), this ledger entry.

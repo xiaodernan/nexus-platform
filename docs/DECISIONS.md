@@ -5249,9 +5249,9 @@ because the domain has one value" — does not contain the wall clock anywhere i
 measuring something the sentence never promised. On a machine where the load spends twenty minutes after
 stamping `facts` and the gate then reads this file, `now()` is a fact about the machine.
 
-What the row asks now is the question the sentence means. `data/seed/load.sh:158` records the window the load
+What the row asks now is the question the sentence means. `data/seed/load.sh:162` records the window the load
 itself runs inside — `nexus.seed_started` and `nexus.seed_finished`, epoch seconds read from the server's
-clock by a statement at `data/seed/load.sh:167`, so a host/container clock disagreement cannot widen or narrow
+clock by a statement at `data/seed/load.sh:171`, so a host/container clock disagreement cannot widen or narrow
 the window — and `data/seed/quality.sql:2389` keeps a degenerate timestamp column when its value falls between
 the two bounds widened by 600 seconds at each end. Nothing in the row is measured against `now()` any more, and
 the width of the load stops mattering: the value is inside the window whether the load takes two minutes or two
@@ -5332,7 +5332,7 @@ rc=0 without the flag and rc=3 with it — and with the flag rc=3 reports only t
 which on the demo database the coverage row names eleven of, four of them in `agent_runs`; it does not report
 this row's verdict. So the only reading that
 separates the four arms is the printed row, and a verdict carried by an exit code has to carry the invocation
-beside it; `data/seed/load.sh:217` already tells the operator which invocation that is, and
+beside it; `data/seed/load.sh:221` already tells the operator which invocation that is, and
 `scripts/db_gate_fresh.sh:206` is the gate using it.
 
 **Gates.** Three official 8-step runs of `scripts/db_gate_fresh.sh --keep`, all ending `RESULT: PASS — 216 quality
@@ -5408,13 +5408,13 @@ travels with the dataset.
 into `out/00_truncate.sql` as one comment line, `-- seed-base: 2026-09-22 11:00:00+08`, in the same
 `write_outputs()` call that writes the CSVs beside it, in a file that call deletes before it starts. That
 placement is the whole design: the carrier cannot outlive the data it describes, because the only way to have
-data is to have run the call that rewrote the carrier. `data/seed/load.sh:65` reads the line back in
+data is to have run the call that rewrote the carrier. `data/seed/load.sh:69` reads the line back in
 preflight — before the container check, before the connection, before the load — and refuses with
 `SEED_ANCHOR=1 needs a '-- seed-base: <instant>' line` if the shape is wrong, so a dataset whose base cannot
 be published is refused in the second it is noticed rather than after ten minutes of loading it.
-`data/seed/load.sh:90` gates that read on the same `SEED_ANCHOR=1` that D89 introduced, and
-`data/seed/load.sh:174` records it as `ALTER DATABASE … SET nexus.seed_base`, called beside the window bounds
-at `data/seed/load.sh:193`. `scripts/db_gate_fresh.sh:193` turns all three on for the database it owns. One
+`data/seed/load.sh:94` gates that read on the same `SEED_ANCHOR=1` that D89 introduced, and
+`data/seed/load.sh:178` records it as `ALTER DATABASE … SET nexus.seed_base`, called beside the window bounds
+at `data/seed/load.sh:197`. `scripts/db_gate_fresh.sh:193` turns all three on for the database it owns. One
 flag, one carrier, one stamp, no new table: `tables=58` is unchanged.
 
 **The gate reads it and refuses to guess.** `data/seed/quality.sql:72` defines `seed_now` — `known`, `ts`, and
@@ -10639,7 +10639,7 @@ WHY IT WAS BELIEVED. D176 wired step 13 with the plane knobs — `--dir`/`--head
 `--quality` for step 7 — and recorded what they printed: "step 8 PASS with 0 offenders" on the committed plane,
 against the forty-one D174 had measured by hand in a clean checkout. Both numbers were correct and they were not
 the same question. A plane knob relocates the TEXT a reader censuses; every reader here builds its SOURCE INDEX
-from the directory it was started in — `scripts/check_ledger_citations.mjs:82` is `const ROOT = process.cwd();`,
+from the directory it was started in — `scripts/check_ledger_citations.mjs:83` is `const ROOT = process.cwd();`,
 and `scripts/check_comment_citations.mjs:53` takes its ROOT from the script's own location but hands that cwd to
 the child it scores the comment plane with. So the knob leg was asking "do this clean checkout's sentences name
 files that exist HERE", and HERE is the shared working copy, where the other lanes' untracked `com.nexus.admin`,
@@ -12264,7 +12264,7 @@ Steps 14-18 close the inventory. The two console readers refuse honestly ("no pa
 
 ## D276 - the 26 MOVED line citations are re-aimed from writer-time text, and the gate's strict step passes on a committed plane
 
-Run 4 measured the strict backlog and run 5 carried it unchanged: 26 MOVED verdicts, every one a line-number citation into scripts/falsify_quality_seam.mjs or scripts/falsify_ledger_text.mjs whose target line had shifted as those harnesses grew. This unit re-aims them - 27 ledger lines, 38 number spans - and verifies every span against writer-time text before any digit moves. The 26 judged starts are taken from the reader's own --reaim rows (the grammar those rows were judged under is the CITE regex at scripts/check_line_cite_drift.mjs:88). The 7 co-located range ends are proven by whole-block writer-to-HEAD comparison rather than the single-line match a start gets. One comma-shorthand re-aimed 444 to 447 on docs/DECISIONS.md:10981 is invisible to the reader and is verified through the judged sibling row that names the same target with a full path (docs/DECISIONS.md:11224). Four searched tokens (:343, :353-356, :671, and the wrapped :681-686) are verified by unique-position search with backward extension capped at 5 lines. Every replacement is digits-only, asserted per changed line; both files keep their line counts (STATUS 13135, DECISIONS 12262), so no other citation moved. Landed as 20dde06 via cacheinfo staging with a staged-set assertion and a numstat of exactly 27 lines each way, then measured on a fresh plane at that commit: EXACT 128 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 144 judged, and step 16 (scripts/db_gate_fresh.sh:590) passes --strict MOVED,NOT-UNIQUE with rc=0; the plain reader of step 15 (scripts/db_gate_fresh.sh:578) reports 128/144 still naming their line.
+Run 4 measured the strict backlog and run 5 carried it unchanged: 26 MOVED verdicts, every one a line-number citation into scripts/falsify_quality_seam.mjs or scripts/falsify_ledger_text.mjs whose target line had shifted as those harnesses grew. This unit re-aims them - 27 ledger lines, 38 number spans - and verifies every span against writer-time text before any digit moves. The 26 judged starts are taken from the reader's own --reaim rows (the grammar those rows were judged under is the CITE regex at scripts/check_line_cite_drift.mjs:89). The 7 co-located range ends are proven by whole-block writer-to-HEAD comparison rather than the single-line match a start gets. One comma-shorthand re-aimed 444 to 447 on docs/DECISIONS.md:10981 is invisible to the reader and is verified through the judged sibling row that names the same target with a full path (docs/DECISIONS.md:11224). Four searched tokens (:343, :353-356, :671, and the wrapped :681-686) are verified by unique-position search with backward extension capped at 5 lines. Every replacement is digits-only, asserted per changed line; both files keep their line counts (STATUS 13135, DECISIONS 12262), so no other citation moved. Landed as 20dde06 via cacheinfo staging with a staged-set assertion and a numstat of exactly 27 lines each way, then measured on a fresh plane at that commit: EXACT 128 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 of 144 judged, and step 16 (scripts/db_gate_fresh.sh:590) passes --strict MOVED,NOT-UNIQUE with rc=0; the plain reader of step 15 (scripts/db_gate_fresh.sh:578) reports 128/144 still naming their line.
 
 ## D277 - run 6 walks the full 18-step inventory at 7e2f846, step 16's strict pass is clean inside a run that ends there, and D275's step 13 row is corrected from its own preserved log
 
