@@ -106,6 +106,14 @@ public class RedisEventStream {
     /**
      * Publish one event to {@code nexus:events}. Logs at warn level and returns on any failure;
      * never throws.
+     *
+     * <p>D928 shipped {@code XADD} followed by a separate {@code XTRIM}, so between the two commands a
+     * burst could grow the stream arbitrarily — the bound was an expectation, not an invariant. D953
+     * folds the bound into the single command: {@code XADD stream MAXLEN = N * ...}, which Redis
+     * executes atomically on one thread, so no client can observe the stream above the cap no matter how
+     * fast its publishers are. The stand-alone {@code XTRIM} is removed because it duplicated the bound
+     * the single command already enforces, and trimming is exact (`MAXLEN = N`) because the ring is
+     * small enough that approximate trimming would never kick in.
      */
     public boolean publish(DomainEvents.NexusDomainEvent event) {
         StatefulRedisConnection<String, String> conn = connection;
@@ -113,14 +121,15 @@ public class RedisEventStream {
             return false;
         }
         try {
-            String id = conn.sync().xadd(STREAM_KEY, Map.of(
+            // Exact trimming is deliberate: with only 2-32 entries in the ring, 'approximate' would
+            // evict no entries at all, and the boundary guarantee would be a lie.
+            String id = conn.sync().xadd(STREAM_KEY,
+                    new io.lettuce.core.XAddArgs().maxlen(maxLen).exactTrimming(),
+                    Map.of(
                     "template", event.template(),
                     "tenant_id", event.tenantId().toString(),
                     "type", event.getClass().getSimpleName(),
                     "payload", MAPPER.writeValueAsString(event)));
-            // Cheap self-trim: keep the stream bounded without a separate background job.
-            conn.sync().xtrim(STREAM_KEY, io.lettuce.core.XTrimArgs.Builder.maxlen(
-                    maxLen).approximateTrimming());
             log.debug("events_stream published id={} template={}", id, event.template());
             return true;
         } catch (Exception e) {

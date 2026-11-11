@@ -52,6 +52,26 @@ class RedisEventStreamTest {
     }
 
     @Test
+    @DisplayName("With maxLen=2 the stream holds at most 2 entries after five publishes (D953 atomic bound)")
+    void theAtomicXaddBoundIsLoadBearingUnderBurst() {
+        RedisClient live = probe();
+        assumeTrue(live != null, "live Redis not reachable at 127.0.0.1:6380 — skipping live arm");
+        live.connect().sync().flushdb();
+
+        RedisEventStream stream = new RedisEventStream(true, "redis://127.0.0.1:6380/0", 2);
+        stream.init();
+        for (int i = 0; i < 5; i++) {
+            assertThat(stream.publish(sampleEvent())).isTrue();
+        }
+
+        Long len = live.connect().sync().xlen("nexus:events");
+        assertThat(len).isEqualTo(2L);
+
+        stream.shutdown();
+        live.shutdown();
+    }
+
+    @Test
     @DisplayName("A live Redis accepts the XADD into nexus:events with the schema the seed documents")
     void aLiveRedisAcceptsTheEvent() {
         RedisClient live = probe();
