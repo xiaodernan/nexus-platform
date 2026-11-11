@@ -40918,3 +40918,51 @@ retain their own untouched TTL contracts.
   `services/platform/src/test/java/com/nexus/platform/TtlJitterTest.java` (10/10, live arm),
   `scripts/check_ttl_jitter.mjs`, `scripts/ttl_jitter_smoke.sh`, `scripts/falsify_ttl_jitter_smoke.sh`,
   `docs/CLOUD.md`, `docs/cloud_claims.yaml`, `docs/ATLAS.md`, `.github/workflows/ci.yml`, this ledger section.
+
+## 942. D942 — the cloud CI job was self-broken since the parity readers landed: shallow clones cannot pass blame gates
+
+**Goal.** The mandate: CI on GitHub must reach a terminal state eventually; never accept "jobs never run".
+While the queue still cancels most pushes, one thing became finally visible in run **#37** (on `cc8ecca`,
+the D939 events-service commit): the `cloud` job ALSO LEFT THE DARK, its reader chain walked every
+self-test and then **refused the whole plane with exit 2** at
+`verify_line_cite_parity.mjs`:
+
+```
+RESULT: NOT CHECKED — an engine refused to judge the ledger; two refusals are not an agreement
+  no-prefetch: RESULT: NOT CHECKED — this clone is shallow, so blame dates every line to the grafted commit
+  prefetch:    RESULT: NOT CHECKED — this clone is shallow, so blame dates every line to the grafted commit
+##[error]Process completed with exit code 2.
+```
+
+**Root cause (pre-existing, not introduced by any D9xx unit).** The parity readers walk ledger cites and
+blame them to the commit that WROTE each cited line. On the default `actions/checkout@v4` depth-1 clone,
+every blame dates to the grafted commit, so the reader REFUSES to judge — by design, exactly like its
+`check_line_cite_drift.mjs` sibling refuses to print a confident row of EXACTs on a shallow plane. The
+`contract-drift` job already ships `fetch-depth: 0` for exactly this reason (ci.yml:373-376 carry the
+comment and the knob). The `cloud` job — which runs the same parity reader on its chained wiring line —
+never had it, and no prior cloud run ever walked this far (cancel-in-progress kept the job dark; this is
+the FIRST time the chain ran end to end far enough to fail). **The defect was still never in the repo;
+it is, and was, in the checkout step.**
+
+**The fix.** ONE line, content-only, zero line-count change — line 152 now reads
+`- { uses: actions/checkout@v4, with: { fetch-depth: 0 } }` (a single flow-mapped mapping astrix to the
+`contract-drift` job's two-line form, chosen so every line below stays byte-identical: the cited lines
+50, 154, 156, 192, 266, 268, 375, 384, 388, 433 are all untouched). YAML re-parsed clean: all nine jobs
+intact; `jobs.cloud.steps[0]` projects exactly `{uses, with}`.
+
+**Verification.** `verify_line_cite_parity.mjs` passes 0-drift locally with full history (no-prefetch
+33.5s, prefetch 7.0s, 4.8× speedup) — proving the failure was the clone, not the tree. `yaml.safe_load`
+re-parsed `.github/workflows/ci.yml`: all nine jobs intact; `jobs.cloud.steps[0]` projects exactly
+`{uses, with}`. This unit's own CI run is the decisive check, and its conclusion is not knowable
+before it runs — the queue remains a coin-flip, so this entry does NOT claim a green GitHub runner.
+
+**What this does NOT claim.** That every smoke in the cloud chain will pass end-to-end, on schedule,
+or ever: several smokes hang off Docker/live Eureka (events/atomicity/sliding-window/jitter), `e2e` was
+in_progress when run #37 was cancelled, and later pushes cancel earlier runs. That the SAME shallowness
+plagues every parity reader: `verify_citation_engine_parity.mjs` and `verify_ledger_cite_parity.mjs` read
+HEAD blobs without `blame` and are NOT blame-limited (only `check_line_cite_drift.mjs` is); the cloud
+chain died at exactly the one blame reader in the list. That any later red would be caused by this fix —
+it is not; it only opens the door the clone closed. And no audit was made of any other job for the same
+class of plane defect, because none other runs a blame-gated reader.
+
+- readers: `.github/workflows/ci.yml` (line 152, one line), this ledger entry.
