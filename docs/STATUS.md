@@ -42511,3 +42511,12 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **Verified.** `node scripts/check_cloud_filter_covers_chain.mjs` prints the full hold list (44 chain readers admitted + smoke helpers admitted + own CI wiring); verify_all remains 59 PASS / 0 FAIL; the very push landing this unit re-triggers the cloud job (a push touching `scripts/check_cloud_filter_covers_chain.mjs` matches the new `check_` arm), so the verifier-of-record for D1005's fix runs green under the funnel this unit widens.
 
 - readers: `scripts/check_cloud_filter_covers_chain.mjs`, this ledger entry, `.github/workflows/ci.yml`.
+## 1007. D1007 — the RBAC e2e lottery is deterministic now: anonymity is proved in a fresh browser context, not on the same signed-in page whose hydration it races
+
+**The flake.** CI runs (two consecutive circles) red and flaky-passed on `tests/e2e/specs/consumer/ask-merchant-history.spec.ts::an anonymous visitor cannot read another consumer's thread (RBAC, D5)`: the test re-uses `page` to `page.goto` the merchant page after asking with the same signed-in consumer cookie, then expects `getByText(marker)` to count 0. Whether it passed was decided by hydration timing — the D997 family's same lottery in a different costume (`page.request.post('/api/nexus/auth', {role:'consumer'})` leaves the cookie in the jar; the page quite often renders the thread; the assertion races Playwright's retry).
+
+**The fix.** The shop’s cookie jar untouched for the write path; the read path now uses `browser.newContext()` — a FRESH context with no consumer session whatsoever — `anonPage.goto(...)`, expects the ask surface button visible, then `getByText(marker)` count 0. RBAC is now proved where it belongs: the anonymous reader never saw the session at all. The signed-in-reload sibling test is unchanged (its positive assertion is deterministic).
+
+**Verified.** The spec compiles and the test is routed into CI’s e2e job (unchanged wiring). No product, BFF, or merchant code moves; no assertion weakened. CI is the verifier of record — the next master run must pass both consumer specs without retry.
+
+- readers: the spec itself, this ledger entry.

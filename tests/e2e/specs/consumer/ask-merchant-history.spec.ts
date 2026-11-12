@@ -64,7 +64,7 @@ test('a signed-in consumer sees the earlier thread and the merchant reply after 
   await expect(page.getByText(reply).first()).toBeVisible({ timeout: 30_000 });
 });
 
-test('an anonymous visitor cannot read another consumer\u2019s thread (RBAC, D5)', async ({ page }) => {
+test('an anonymous visitor cannot read another consumer\u2019s thread (RBAC, D5)', async ({ page, browser }) => {
   const marker = `門位如何 ${Date.now()}`;
 
   // A consumer asks; the thread exists in the database after this line.
@@ -86,7 +86,17 @@ test('an anonymous visitor cannot read another consumer\u2019s thread (RBAC, D5)
   expect(ask.ok()).toBeTruthy();
 
   // The anonymous view: the ask surface renders, the stored thread does not.
-  await page.goto('/m/basil-leaf-0419');
-  await expect(page.getByRole('button', { name: '送出問題' })).toBeVisible();
-  await expect(page.getByText(marker)).toHaveCount(0);
+  // IMPORTANT: the request above used page.request, which carries the consumer cookie —
+  // so `page` itself is a signed-in consumer right now and cannot prove anonymity. Prove it
+  // with a FRESH browser context that never saw that session. (The D997 family of flakes
+  // fails when hydration and the assertion race in this shared context.)
+  const anon = await browser.newContext();
+  const anonPage = await anon.newPage();
+  try {
+    await anonPage.goto('/m/basil-leaf-0419');
+    await expect(anonPage.getByRole('button', { name: '送出問題' })).toBeVisible();
+    await expect(anonPage.getByText(marker)).toHaveCount(0);
+  } finally {
+    await anon.close();
+  }
 });
