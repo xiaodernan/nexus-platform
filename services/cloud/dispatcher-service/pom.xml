@@ -46,6 +46,16 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
     </dependency>
+    <!-- D994: the seventh member imports the Config Server like the gateway (D857), the
+         monolith (D872) and insight (D889). This starter brings spring-cloud-config-client,
+         the `optional:configserver:` import resolver, @RefreshScope and POST /actuator/refresh.
+         Eureka's transitive spring-cloud-context exposes refresh but NOT the config-client, so
+         without this the import is a dead declaration and /dispatcher/config stays 'local'.
+         The import is optional in application.yaml: a dev-plane observer still boots config-down. -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>

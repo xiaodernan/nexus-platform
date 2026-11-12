@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -75,6 +76,17 @@ public class DispatcherWorker {
     private final ReentrantLock drainLock = new ReentrantLock();
     private volatile boolean running = true;
 
+    /**
+     * D994 — the production constructor is the ONE Spring autowiring candidate. The D975
+     * offline-probe seam below adds a SECOND constructor; with two constructors and no
+     * {@code @Autowired} marker, Spring cannot pick one and falls back to a no-arg constructor,
+     * which does not exist — the context dies with {@code NoSuchMethodException: <init>()}.
+     * Every unit test calls {@code new DispatcherWorker(...)} directly, so this latent boot
+     * failure was invisible until the first smoke that actually boots the dispatcher JVM
+     * (dispatcher_config_smoke.sh). Marking this constructor keeps the probe seam intact while
+     * giving Spring an unambiguous injection point.
+     */
+    @Autowired
     public DispatcherWorker(HookProperties props) {
         this(props, HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(2_500L))
