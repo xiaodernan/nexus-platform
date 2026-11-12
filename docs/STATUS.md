@@ -42446,3 +42446,10 @@ RESULT: FAIL — 3 offender(s)
 ci_ensure_redis|dispatcher_config_|insight_|eureka_|events_|ratelimit_|sliding_window_|ttl_jitter_|singleflight_|
 fixture_insight_upstream))`) — the cloud chain runs smokes for every one of those prefixes, yet they never matched the old filter,
 so a chain-critical script change did not re-trigger the job that must falsify it; the chain was invisible to exactly the pushes it proves.
+## 1000. D1000 — the events-group smoke's "green" was sum seeing a mid-drain snapshot; the falsifier arm measured exactly this on CI
+
+**The red.** D996's cloud chain (and D999's rerun) ran `falsify_events_group_smoke.sh` and printed: `total_seen: A=3 B=5 sum=8 … PASS: consumer group partitions 8 entries across two readers …` then `FAIL: the main smoke stayed GREEN with the group disabled — the SPLIT claim is not falsifiable`. The group property was fine; the smoke *looked* like it proved exactly-once but was measuring a sum that can hit `N` at any split ratio before both readers have drained the whole stream. `/events/group` itself showed the tail arm reporting `delivered:0` for BOTH readers, and `enabled:false` — i.e. the falsifier flip worked, the drain was never complete.
+
+**The fix.** `scripts/events_group_smoke.sh` now polls to the FULL expectation per mode — `2*N` when group-enabled=false (each independent tail reader must see EVERY entry), `N` when true — with the threshold computed once up front instead of `sum >= N` regardless of mode. The load-bearing `sum != N` assertion stays exactly as it was, so the falsifier arm keeps its single flipped variable and the red, when it fires, still names `2N` explicitly. Verified locally: the group arm drains A=4/B=4 sum=8 (SPLIT HOLDS), the tail arm stalls at sum=16 and reds with `sum=16 != N=8`, and the falsifier passes — red attributable to the flipped variable, never to a drain artifact.
+
+- readers: `scripts/events_group_smoke.sh` + `scripts/falsify_events_group_smoke.sh` (CI chain), this ledger entry.

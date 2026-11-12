@@ -97,17 +97,22 @@ for i in $(seq 1 "$N"); do
     redis XADD nexus:events "*" template lead_new tenant_id "t-$i" type LeadCaptured payload "{\"i\":$i}" >/dev/null
 done
 
-# Poll until the SUM of both readers' total_seen reaches at least N (2N in tail mode).
-sum=0
-for attempt in $(seq 1 40); do
+# Poll until the SUM of both readers' total_seen is steady at its FULL expectation: 2N under tails
+# (each independent reader must see EVERY entry), N under group (the exactly-once split). Breaking
+# at N in tail mode captures a mid-drain snapshot where reads were still converging — (measured on
+# CI: A=3 B=5 sum=8 printed as a clean pass). The per-mode budget is computed once, up front.
+SUM_EXPECT="$N"
+[ "$GROUP_OFF" = "1" ] && SUM_EXPECT=$((2 * N))
+sum=0; ca=0; cb=0
+for attempt in $(seq 1 60); do
     ca=$(curl -fsS --max-time 3 "http://127.0.0.1:$A_PORT/events/count" 2>/dev/null | grep -oE '"total_seen":[0-9]+' | grep -oE '[0-9]+' || echo 0)
     cb=$(curl -fsS --max-time 3 "http://127.0.0.1:$B_PORT/events/count" 2>/dev/null | grep -oE '"total_seen":[0-9]+' | grep -oE '[0-9]+' || echo 0)
     sum=$((ca + cb))
-    if [ "$sum" -ge "$N" ]; then break; fi
+    if [ "$sum" -ge "$SUM_EXPECT" ]; then break; fi
     sleep 1
 done
 echo "  total_seen: A=$ca B=$cb sum=$sum (expected exactly $N under group, 2*$N=$((2*N)) under tails)"
-[ "$sum" -ge "$N" ] || fail "readers drained only $sum of $N entries"
+[ "$sum" -ge "$SUM_EXPECT" ] || fail "readers drained only $sum of $SUM_EXPECT (group=$GROUP_FLAG) — not a complete drain"
 
 # THE load-bearing assertion: a single assertion template, flipped only by GROUP_OFF.
 if [ "$sum" -ne "$N" ]; then
