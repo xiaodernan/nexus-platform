@@ -12,17 +12,32 @@ from nexus_ai.models.router import ModelRouter
 
 _POOL_CACHE: dict[str, dict[str, LLMAdapter]] = {}
 
+#: D983 — `config.Settings.request_timeout_s` (env `NEXUS_REQUEST_TIMEOUT_S`) used to be
+#: parsed and then NEVER read: both live adapters were constructed without `timeout_s`, so
+#: `HttpLLMAdapter.__init__`'s hard-coded 20.0s won and the operator's knob was dead. Against a
+#: slow OpenAI-compatible proxy that 20s ceiling made the D982 live intent path degrade to
+#: `mock` on most turns. The knob must survive to BOTH adapters, and the cache key must carry
+#: it too — otherwise changing the timeout would keep handing back the old client.
+DEFAULT_REQUEST_TIMEOUT_S = 45.0
+
+
+def _request_timeout(settings: Any) -> float:
+    """D983: the operator's timeout, with a safe default for dummy/test settings."""
+    return float(getattr(settings, "request_timeout_s", DEFAULT_REQUEST_TIMEOUT_S))
+
 
 def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
     """Ordered pool: configured provider first, `mock` last so the ladder always lands."""
     pool: dict[str, LLMAdapter] = {}
     provider = settings.llm_provider
+    timeout_s = _request_timeout(settings)
     if provider == "anthropic":
         pool["anthropic"] = AnthropicAdapter(
             base_url=settings.llm_base_url or AnthropicAdapter.default_base_url,
             api_key=settings.llm_api_key,
             models={"cheap": settings.llm_model_cheap, "mid": settings.llm_model_mid,
                     "reason": settings.llm_model_reason},
+            timeout_s=timeout_s,
         )
     elif provider == "openai":
         pool["openai"] = OpenAIAdapter(
@@ -30,6 +45,7 @@ def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
             api_key=settings.llm_api_key,
             models={"cheap": settings.llm_model_cheap, "mid": settings.llm_model_mid,
                     "reason": settings.llm_model_reason},
+            timeout_s=timeout_s,
         )
     pool["mock"] = MockAdapter()
     return pool
@@ -39,7 +55,9 @@ def get_pool(settings: Any | None = None) -> dict[str, LLMAdapter]:
     from nexus_ai.config import get_settings
 
     settings = settings or get_settings()
-    key = f"{settings.llm_provider}|{settings.llm_base_url}"
+    # D983: the timeout is part of the pool identity. Two settings objects that differ only
+    # in request_timeout_s must NOT share a cached httpx client (that would re-kill the knob).
+    key = f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"
     if key not in _POOL_CACHE:
         try:
             _POOL_CACHE[key] = build_adapters(settings)
