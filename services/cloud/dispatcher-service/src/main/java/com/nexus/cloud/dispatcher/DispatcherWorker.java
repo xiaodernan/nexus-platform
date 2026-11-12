@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -62,18 +62,32 @@ public class DispatcherWorker {
     private volatile boolean running = true;
 
     public DispatcherWorker(HookProperties props) {
+        this(props, HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(2_500L))
+                .build(), null);
+    }
+
+    /**
+     * D975: offline-probe seam. {@code drainPool == null} keeps the production fixed pool; a probe
+     * passes its own (typically single-threaded) pool so it can occupy the scheduler thread and
+     * prove whether a slow delivery starves the poll loop. {@code httpClient} is injectable so no
+     * probe ever touches the network.
+     */
+    DispatcherWorker(HookProperties props, HttpClient httpClient, ExecutorService drainPool) {
         this.props = props;
         this.breaker = new CircuitBreaker();
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(2_500L))
-                .build();
-        int workers = Math.max(1, Math.min(4, Runtime.getRuntime().availableProcessors() / 2));
-        ThreadFactory factory = r -> {
-            Thread t = new Thread(r, "dispatcher-drainer");
-            t.setDaemon(true);
-            return t;
-        };
-        this.drainPool = Executors.newFixedThreadPool(workers, factory);
+        this.httpClient = httpClient;
+        if (drainPool != null) {
+            this.drainPool = drainPool;
+        } else {
+            int workers = Math.max(1, Math.min(4, Runtime.getRuntime().availableProcessors() / 2));
+            ThreadFactory factory = r -> {
+                Thread t = new Thread(r, "dispatcher-drainer");
+                t.setDaemon(true);
+                return t;
+            };
+            this.drainPool = Executors.newFixedThreadPool(workers, factory);
+        }
     }
 
     /** Hand an event to the dispatcher; returns how many hooks it was enqueued for. */
@@ -143,7 +157,13 @@ public class DispatcherWorker {
         }
     }
 
-    /** Fixed-cadence drain. Each tick promotes at most 10 deliveries through the drain pool. */
+    /** Fixed-cadence drain. Each tick promotes at most 10 deliveries through the drain pool.
+     *  D975: dispatch is fire-and-forget ON THE SCHEDULER THREAD. Spring's default scheduling pool
+     *  has one thread, shared with {@code DispatcherReader.pollOnce}; a synchronous future.get here
+     *  used to hold that thread hostage for the whole batch (up to 10 x 20 s on a hung hook), so the
+     *  stream consumer stopped being polled and D973's leave-unacked backpressure could never drain.
+     *  The scheduler now only SUBMITS; each completion callback (success or failure) decrements
+     *  inFlight, keeping the queue.size()+inFlight backpressure gauge exact. */
     @Scheduled(fixedDelayString = "${nexus.dispatcher.drain-ms:50}",
                initialDelayString = "${nexus.dispatcher.initial-drain-ms:250}")
     public void drainTick() {
@@ -157,15 +177,16 @@ public class DispatcherWorker {
             }
             if (batch.isEmpty()) return;
             inFlight.addAndGet(batch.size());
-            List<Future<?>> futures = new ArrayList<>(batch.size());
+            // D975: submit only — never future.get on the scheduling thread.
             for (ScheduledDelivery delivery : batch) {
-                futures.add(drainPool.submit(() -> attempt(delivery)));
+                CompletableFuture.runAsync(() -> attempt(delivery), drainPool)
+                        .whenComplete((unused, error) -> {
+                            if (error != null) {
+                                log.warn("dispatcher drain future failed: {}", error.toString());
+                            }
+                            inFlight.decrementAndGet();
+                        });
             }
-            for (Future<?> future : futures) {
-                try { future.get(20, TimeUnit.SECONDS); }
-                catch (Exception e) { log.warn("dispatcher drain future failed: {}", e.toString()); }
-            }
-            inFlight.addAndGet(-batch.size());
         } finally {
             drainLock.unlock();
         }

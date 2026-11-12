@@ -41971,3 +41971,54 @@ spec) were claimed by the concurrent lane while this unit was in flight (f19d0ad
 **What this does NOT claim.** No live-traffic memory or latency number was measured; no throughput or footprint figure is asserted. The O(cap) bound is a structural property proven by the offline probe, not a benchmark. The reader `scripts/check_embedding_cache_bounded.mjs` judges source text and wiring only. The `_CACHE_MAX = 4096` default is a policy choice, not a measured optimum.
 
 - readers: `apps/ai/nexus_ai/models/embeddings.py` (product), `apps/ai/nexus_ai/api/app.py` (lifespan shutdown hook), `apps/ai/tests/test_d974_embedding_cache_is_bounded.py` (probe), `scripts/check_embedding_cache_bounded.mjs` (source reader), `.github/workflows/ci.yml` (line 171 self-test chain), `docs/ATLAS.md`, and this ledger entry.
+
+## 975. D975 — the webhook dispatcher's drain tick held Spring's only scheduling thread on a synchronous `future.get`, starving the very stream consumer D973 gave it
+
+**Goal.** Make the drain tick dispatch fire-and-forget so a slow or hung outbound webhook can never
+stop `nexus:events` from being consumed, without changing a single D973 delivery/backpressure
+contract.
+
+**The hole.** `DispatcherWorker.drainTick` submitted up to 10 deliveries to `drainPool`, then looped
+over the returned `Future`s calling `future.get(20, TimeUnit.SECONDS)` ON the `@Scheduled` thread.
+`@EnableScheduling` with no `spring.task.scheduling.pool.size` means Spring Boot uses a default pool
+of ONE thread, and `DispatcherReader.pollOnce` — the XREADGROUP consumer that XACKs and reclaims the
+pending list — is scheduled on that same thread. A single hook whose HTTP `send` hung blocked the
+whole batch: up to 10 x 20 s of exclusive hold. During that window `pollOnce` never ran, so entries
+that the reader had deliberately left un-ACKed as backpressure could never be re-read, and the
+queue's capacity signal had nothing to act on. This is not a style issue: it is a positive-feedback
+congestion that inverts the exact bounded-queue + backpressure guarantee D973 shipped.
+
+**The fix.** `drainTick` now only SUBMITS: `CompletableFuture.runAsync(() -> attempt(delivery),
+drainPool).whenComplete(...)`, and the completion callback decrements `inFlight` once (on success or
+failure). `inFlight` is still armed by `batch.size()` on dispatch, and the backpressure predicate
+`queue.size() + inFlight.get() >= maxQueue` is untouched — the gauge is now MORE exact (per-completion
+rather than one batch-wide subtraction after all futures). `future.get`, `List<Future<?>>` and
+`inFlight.addAndGet(-batch.size())` are removed. A package-visible
+`DispatcherWorker(HookProperties, HttpClient, ExecutorService)` seam lets the offline probe inject a
+gate HTTP client and its own drain pool; the production single-arg constructor is unchanged.
+`drainLock`, fixed cadence, batch cap, retry/jitter, breaker, DLQ park, HMAC signing and the `/actuator`
+state shape are byte-for-byte.
+
+**Disproof, not a claim.** `services/cloud/dispatcher-service/src/test/java/com/nexus/cloud/dispatcher/
+DispatcherWorkerDrainTest.java` is fully offline (gate `HttpClient` parked on a `CountDownLatch`, a
+single-thread executor standing in for Spring's one scheduling thread, injected drain pool — no
+network, Redis, or JVM container). It proves 7 arms: (1) a fast-hook healthy control; (2) a LEGACY
+control that re-enacts `submit` then `future.get` and asserts the poll probe is starved, proving the
+gate really can starve so arm (3) is load-bearing; (3) the positive hung-hook arm — the poll probe
+must run within 3 s while the delivery is parked in HTTP `send`, and the delivery still dispatches
+after release; (4) `inFlight` returns exactly to zero over 6 deliveries; (5) backpressure refuses new
+work while `inFlight` occupies capacity and releases it on callback; (6) the signed HMAC header is
+still present; (7) an attempt-cap failure parks to DLQ, not silent loss. One-variable causal check:
+flipping the product back to a synchronous `future.get` makes arm (3) RED at its poll assertion in
+4.02 s; restoring non-blocking dispatch turns it GREEN. `mvn -pl dispatcher-service -am test -o`:
+23 tests pass (up from 16), 3 consecutive stable runs.
+
+- source reader: `scripts/check_dispatcher_drain_nonblocking.mjs` — product/App seam, probe arms and
+  CI/ATLAS/ledger wiring; `--self-test` plants 29 corruptions + a GREEN control with D954 no-op and
+  D959 line-anchored guards, a reddening twin for every forward offender, and restores-the-bug,
+  drop-callback, drop-gauge-release and weaken-assertion arms.
+- readers: `services/cloud/dispatcher-service/src/main/java/com/nexus/cloud/dispatcher/
+  DispatcherWorker.java` (product), `services/cloud/dispatcher-service/src/test/java/com/nexus/cloud/
+  dispatcher/DispatcherWorkerDrainTest.java` (offline probe).
+- wiring: CI line 171 self-test chain (535 lines stable), ATLAS reader + probe paths, this ledger.
+  `verify_all` PASS, reader reachability grows by one.
