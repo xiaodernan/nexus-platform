@@ -42529,3 +42529,17 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **Verified.** Reader wired into the chain; ledger heading present; verify_all remains 60 PASS / 0 FAIL; D1008's own CI circle is the verifier of record.
 
 - readers: `scripts/check_cloud_filter_covers_chain.mjs` (that one arm only), this ledger entry.
+## 1009. D1009 — master is green end-to-end again: the dispatcher-eureka join (D1004), the d981/CI-self-test re-aims (D1005), the filter widening (D1006), the RBAC determinism (D1007) and the arm fix (D1008) all shipped
+
+**Milestone.** Push `dd28d8c` (D1007 + D1008) — `43322523596` — completes green across `changes`, `contract-drift`, `cloud`, `e2e` and `required`; `ai`, `platform`, `lint-type`, `security` skipped by policy. The cloud job passes all steps end-to-end:
+- the cloud reactor's unit tests,
+- migration application,
+- lb smoke (eureka registration of the monolith; Admin lists NEXUS-GATEWAY),
+- refresh smokes (gateway and monolith hot config),
+- retry + trace + plane smokes (D875 retries; W3C trace; D897 HA failover; D900 insight trace),
+- ai-admin smoke (FastAPI service shows UP in the Spring Admin window),
+with the dispatcher had registered itself into the eureka view (D1004) before the admin phase and the line-171 self-test chain lasts green — the exact step that reddened the D1004 and D1006 circles.
+
+**This milestone merely records** the D1004–D1008 arc's exit state. The arc: the dispatcher joined the plane (D1004); CI exposed a reader-arm defect that D1005 fixed (marker pointed at lines D1003 deleted); the changes-job cloud filter proved blind to check_-prefixed readers (D1006, caught by D99 1006/1008); the RBAC spec flakiness died deterministically in a fresh browser context (D1007); the D1006 filter's first arm was empty and reddened after the fix (D1008). Every commit in the arc landed in this one bisectable session on master.
+
+- readers: this ledger entry; scripts/check_cloud_filter_covers_chain.mjs; tests/e2e/specs/consumer/ask-merchant-history.spec.ts.
