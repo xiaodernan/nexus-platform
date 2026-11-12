@@ -19,6 +19,16 @@
  *       (slidingWindowSize, minimumNumberOfCalls, failureRateThreshold, waitDurationInOpenState)
  *       and registerHealthIndicator, and the rate-limit knobs NEXUS_GATEWAY_RATE_BURST /
  *       NEXUS_GATEWAY_RATE_REPLENISH are wired with the documented defaults (10 / 5).
+ *
+ *       D996 — the E3 thresholds are read from the `circuitbreaker:` SUBTREE's `instances:` only,
+ *       never from the first `platform:`/`ai:`/`web:` anywhere under `resilience4j:`. D995 added a
+ *       sibling `timelimiter:` with instances of the SAME three names (each carrying nothing but
+ *       `timeoutDuration: 3s`), placed BEFORE `circuitbreaker:`. The old reader sliced from the
+ *       `resilience4j:` root and matched each id's first occurrence — the empty timelimiter block —
+ *       so it reported all five thresholds missing on correct YAML (CI run 43252673446, line 169,
+ *       "E3 resilience4j platform/ai/web: missing registerHealthIndicator, …"). Anchoring to the
+ *       breaker subtree makes the gate immune to sibling-block order while still reddening on a
+ *       genuinely missing threshold (the --self-test corruption arms prove both directions).
  *   E4  EdgeFallbackController.java serves all three fallbacks (platform/ai/web) as 503 with the
  *       contract error shape `edge_upstream_unavailable` and the request id from the edge filter.
  *       Since D875 each door is an @RequestMapping accepting GET/POST/PUT/PATCH/DELETE, so a
@@ -40,6 +50,7 @@
  *   node scripts/check_cloud_edge.mjs --dir=<repo-root-copy>   # census a planted plane
  *   node scripts/check_cloud_edge.mjs --report                 # print, always exit 0
  *   node scripts/check_cloud_edge.mjs --verbose                # name every check
+ *   node scripts/check_cloud_edge.mjs --self-test              # E3 subtree judge: corruption arms
  *
  * Exit: 0 no offender · 1 an offender · 2 not checkable (a core surface unreadable).
  */
@@ -53,10 +64,85 @@ const FLAGS = {
   '--dir': { kind: 'value', unit: 'path' },
   '--report': { kind: 'switch' },
   '--verbose': { kind: 'switch' },
+  '--self-test': { kind: 'switch' },
 };
 const parsed = parseFlags(process.argv.slice(2), FLAGS);
 if (!parsed.ok) { console.log(`RESULT: NOT CHECKED — ${parsed.reason}`); process.exitCode = 2; }
+else if (parsed.flag['--self-test']) { process.exitCode = selfTest(); }
 else { process.exitCode = main(parsed.value, parsed.flag); }
+
+/* D996 — pure E3 threshold judge over a gateway YAML string.
+ *
+ * The three thresholds blocks live at `resilience4j: > circuitbreaker: > instances: > <id>:` with
+ * a specific indentation depth (resilience4j at col 0, circuitbreaker at 2, instances at 4, each
+ * id at 6). We find the `circuitbreaker:` key by its exact indentation, then the `instances:` key
+ * directly under it, then each id block under THAT — so a sibling `timelimiter:` (D995) with
+ * identically-named instances can never be mistaken for the breaker thresholds regardless of the
+ * order the two siblings are written in. A bare `platform:` occurrence elsewhere is not enough.
+ *
+ * Returns `{ gaps, held, cbFound, instFound }`: `gaps[id]` is the list of missing threshold keys for
+ * that id ([] = all five held); `cbFound`/`instFound` guard against a vacuous match. No I/O, no
+ * regex over the whole file, so it is trivially falsifiable in memory. */
+export function judgeE3(yaml) {
+  const NEED = ['registerHealthIndicator', 'slidingWindowSize', 'minimumNumberOfCalls', 'failureRateThreshold', 'waitDurationInOpenState'];
+  const IDS = ['platform', 'ai', 'web'];
+  const lines = String(yaml).split(/\r?\n/);
+  const col = (l) => (l.match(/^ */) || [''])[0].length;
+  const eff = (l) => l.trim() !== '' && !/^\s*#/.test(l); // ignore blank + comment lines when walking the tree
+
+  // Walk the INDENTATION TREE, not "first occurrence anywhere". A key is a direct child only if it
+  // is the first effective line after its parent at the expected column, before the parent's region
+  // ends (the next effective line at column <= parent's column). This is what makes the judge immune
+  // to a sibling `timelimiter:` — wherever it sits — without ever borrowing its `platform:` block.
+  const r4 = lines.findIndex((l) => /^resilience4j:\s*(?:#.*)?$/.test(l));
+  const regionEnd = (from, parentCol) => {
+    for (let i = from; i < lines.length; i += 1) if (eff(lines[i]) && col(lines[i]) <= parentCol) return i;
+    return lines.length;
+  };
+  const r4End = r4 < 0 ? -1 : regionEnd(r4 + 1, 0);
+
+  // circuitbreaker: is a col-2 direct child of resilience4j:. Scan ALL col-2 effective children in
+  // the region and match the KEY — never assume it is first (a sibling timelimiter: may precede it,
+  // which is precisely the CI 43252673446 layout this judge must survive).
+  let cb = -1;
+  if (r4 >= 0) for (let i = r4 + 1; i < r4End; i += 1) {
+    if (eff(lines[i]) && col(lines[i]) === 2 && /^ {2}circuitbreaker:\s*(?:#.*)?$/.test(lines[i])) { cb = i; break; }
+  }
+  const cbEnd = cb < 0 ? -1 : regionEnd(cb + 1, 2);
+
+  // instances: must be a col-4 direct child of the circuitbreaker: subtree — NOT the timelimiter's
+  // one. `cbEnd` stops at the next col-2 sibling, so the two siblings' instances: are disjoint.
+  let inst = -1;
+  if (cb >= 0) for (let i = cb + 1; i < cbEnd; i += 1) {
+    if (eff(lines[i]) && col(lines[i]) === 4 && /^ {4}instances:\s*(?:#.*)?$/.test(lines[i])) { inst = i; break; }
+  }
+  const instEnd = inst < 0 ? -1 : regionEnd(inst + 1, 4);
+
+  const gaps = {};
+  const held = {};
+  for (const id of IDS) {
+    // Each id: is a col-6 direct child of instances:, scoped strictly inside [inst+1, instEnd) —
+    // a second block with the same name in the timelimiter sibling is beyond instEnd and invisible.
+    let idStart = -1;
+    if (inst >= 0) for (let i = inst + 1; i < instEnd; i += 1) {
+      if (eff(lines[i]) && col(lines[i]) === 6 && new RegExp(`^ {6}${id}:\\s*(?:#.*)?$`).test(lines[i])) { idStart = i; break; }
+    }
+    let body = '';
+    if (idStart >= 0) {
+      const bodyLines = [];
+      for (let i = idStart + 1; i < instEnd; i += 1) {
+        if (!eff(lines[i])) { bodyLines.push(lines[i]); continue; }
+        if (col(lines[i]) <= 6) break; // next sibling id or the end of instances:
+        bodyLines.push(lines[i]);
+      }
+      body = bodyLines.join('\n');
+    }
+    const missing = NEED.filter((k) => !body.includes(k));
+    gaps[id] = missing;
+    held[id] = missing.length === 0;
+  }
+  return { gaps, held, cbFound: cb >= 0, instFound: inst >= 0, need: NEED, ids: IDS };
+}
 
 function main(value, flag) {
   const VERBOSE = Boolean(flag['--verbose']);
@@ -119,15 +205,20 @@ function main(value, flag) {
     note(`E2 route ${id} carries a breaker + fallback`, ok, `block-read:${block.length > 0}`);
   }
 
-  /* E3 — the trip thresholds and the limiter knobs */
-  for (const id of ['platform', 'ai', 'web']) {
-    const section = yaml.slice(yaml.search(/resilience4j:\s*\n/));
-    const inst = new RegExp(`${id}:\\s*\\n([\\s\\S]*?)(\\n\\s{6}[A-Za-z][A-Za-z0-9_-]*:|$)`).exec(section);
-    const body = inst ? inst[1] : '';
-    const need = ['registerHealthIndicator', 'slidingWindowSize', 'minimumNumberOfCalls', 'failureRateThreshold', 'waitDurationInOpenState'];
-    const missing = need.filter((k) => !body.includes(k));
-    if (missing.length) charge('E3', `resilience4j ${id}: missing ${missing.join(', ')}`);
-    note(`E3 resilience4j ${id} thresholds`, missing.length === 0, missing.length ? `missing:${missing.join(',')}` : 'all five');
+  /* E3 — the trip thresholds (D996: scoped to the circuitbreaker.instances subtree) and the limiter knobs */
+  const e3 = judgeE3(yaml);
+  if (!e3.cbFound || !e3.instFound) {
+    // A missing subtree is one structural defect, not three per-id ones.
+    charge('E3', `no ${e3.cbFound ? 'instances:' : 'circuitbreaker:'} subtree under resilience4j: — the breaker thresholds cannot be read`);
+    for (const id of e3.ids) note(`E3 resilience4j ${id} thresholds`, false, e3.cbFound ? 'instances-missing' : 'circuitbreaker-missing');
+  } else for (const id of e3.ids) {
+    const missing = e3.gaps[id];
+    if (missing.length) {
+      charge('E3', `resilience4j ${id}: missing ${missing.join(', ')}`);
+      note(`E3 resilience4j ${id} thresholds`, false, `missing:${missing.join(',')}`);
+    } else {
+      note(`E3 resilience4j ${id} thresholds`, true, 'all five');
+    }
   }
   const burst = /rate-limit-burst:\s*\$\{NEXUS_GATEWAY_RATE_BURST:10\}/.test(yaml);
   const replenish = /rate-limit-replenish:\s*\$\{NEXUS_GATEWAY_RATE_REPLENISH:5\}/.test(yaml);
@@ -238,4 +329,123 @@ function main(value, flag) {
   }
   console.log(`RESULT: PASS — ${checks.length} checks, no offender`);
   return 0;
+}
+
+/* D996 self-test — the E3 subtree judge must be order-immune AND still falsifiable.
+ * Every corruption arm mutates an in-memory YAML string (no JVM, no file writes) and must redden
+ * the RIGHT id for the RIGHT reason; the real plane and a benign reorder must stay green. This is
+ * the regression guard for CI run 43252673446: before D996, the sibling `timelimiter:` block stole
+ * the threshold match and 3 ids went red on correct YAML. */
+function selfTest() {
+  const GATEWAY_YAML = 'services/cloud/gateway/src/main/resources/application.yaml';
+  const real = readFileSync(join(ROOT, GATEWAY_YAML), 'utf8');
+  const base = judgeE3(real);
+  const allHeld = (j) => j.cbFound && j.instFound && j.ids.every((id) => j.held[id]);
+  const sig = (j) => `${j.cbFound}|${j.instFound}|${j.ids.map((id) => `${id}:${j.gaps[id].join(',')}`).join(';')}`;
+  const baseSig = sig(base);
+  const NEED = base.need;
+
+  // Helpers over the raw lines. `timelimiterFirst` reconstructs the EXACT layout that reddened CI
+  // run 43252673446: the sibling timelimiter: (same platform/ai/web names, only timeoutDuration)
+  // placed ABOVE circuitbreaker:. It works from whichever order the shipped YAML currently uses.
+  const linesOf = (y) => y.split(/\r?\n/);
+  const colOf = (l) => (l.match(/^ */) || [''])[0].length;
+  const effOf = (l) => l.trim() !== '' && !/^\s*#/.test(l);
+  const siblingBlock = (y, key) => {
+    const lines = linesOf(y);
+    const start = lines.findIndex((l) => new RegExp(`^ {2}${key}:\\s*(?:#.*)?$`).test(l));
+    if (start < 0) return null;
+    let end = start + 1;
+    for (; end < lines.length; end += 1) if (effOf(lines[end]) && colOf(lines[end]) <= 2) break;
+    return { start, end, body: lines.slice(start, end) };
+  };
+  const timelimiterFirst = (y) => {
+    const tl = siblingBlock(y, 'timelimiter');
+    const cb = siblingBlock(y, 'circuitbreaker');
+    if (!tl || !cb || tl.start < cb.start) return y; // already first (or absent) — caller checks change
+    const lines = linesOf(y);
+    const out = lines.slice(0, cb.start).concat(tl.body, lines.slice(cb.start, tl.start), lines.slice(tl.end));
+    return out.join('\n');
+  };
+
+  // Each arm: [label, yaml, expectTag, predicate(j) -> bool, wantChange]. A RED arm must both
+  // CHANGE the judged plane (D954 no-op guard) AND redden for its RIGHT reason (for-cause).
+  const arms = [];
+
+  // 1 — GREEN control: the shipped plane holds all five thresholds on all three ids.
+  arms.push(['real plane holds all thresholds', real, 'GREEN', allHeld, false]);
+
+  // 2 — the CI 43252673446 repro made GREEN by D996: timelimiter ABOVE the breaker, identical
+  //     names, empty threshold bodies. The OLD reader ("first platform: under resilience4j:") would
+  //     report 3 ids missing; the subtree judge must stay green. This is THE regression pin.
+  const tlFirst = timelimiterFirst(real);
+  arms.push(['timelimiter ABOVE breaker stays green (CI 43252673446 repro)', tlFirst, 'GREEN-ORDER', allHeld, true]);
+
+  // 3 — a missing threshold on each id must redden THAT id, for cause (not a sibling).
+  for (const id of base.ids) {
+    const lines = linesOf(real);
+    const cb = siblingBlock(real, 'circuitbreaker');
+    const inst = lines.findIndex((l, i) => i > cb.start && /^ {4}instances:/.test(l));
+    const start = lines.findIndex((l, i) => i > inst && new RegExp(`^ {6}${id}:`).test(l));
+    if (start >= 0) for (let i = start + 1; i < lines.length; i += 1) {
+      if (lines[i].includes('slidingWindowSize:')) { lines[i] = lines[i].replace('slidingWindowSize:', 'windowSizeErased:'); break; }
+      if (lines[i].trim() && colOf(lines[i]) <= 6) break;
+    }
+    arms.push([`${id} slidingWindowSize erased reddens ${id} for cause`, lines.join('\n'), `RED:${id}`,
+      (j) => j.gaps[id].includes('slidingWindowSize') && base.ids.every((o) => o === id || j.held[o]), true]);
+  }
+
+  // 4 — structural: drop circuitbreaker's own `instances:` -> NOT vacuously green. A weaker judge
+  //     that fell through to the timelimiter's `instances:` (which is exactly what an earlier D996
+  //     draft did) would pass here; the subtree-scoped one must go uncheckable.
+  {
+    const lines = linesOf(real);
+    const cb = siblingBlock(real, 'circuitbreaker');
+    const drop = lines.findIndex((l, i) => i > cb.start && /^ {4}instances:/.test(l));
+    if (drop >= 0) lines.splice(drop, 1);
+    arms.push(['breaker instances: erased is not vacuously green', lines.join('\n'), 'RED-NOINST',
+      (j) => j.cbFound && !j.instFound && base.ids.every((id) => !j.held[id]), true]);
+  }
+
+  // 5 — the wrong-block trap, on the CI repro layout: all five thresholds moved OUT of the breaker
+  //     and INTO the timelimiter platform block (so a whole-file grep WOULD pass). The subtree judge
+  //     must read only the breaker and stay red for all three ids.
+  {
+    const lines = linesOf(tlFirst);
+    const cb = lines.findIndex((l) => /^ {2}circuitbreaker:/.test(l));
+    const tl = lines.findIndex((l) => /^ {2}timelimiter:/.test(l));
+    // strip the five keys from every breaker id block
+    for (let i = cb + 1; i < lines.length; i += 1) {
+      if (/^ {6}(platform|ai|web):/.test(lines[i])) for (let k = i + 1; k < lines.length; k += 1) {
+        if (lines[k].trim() && colOf(lines[k]) <= 6) break;
+        if (NEED.some((n) => lines[k].includes(n + ':'))) lines[k] = '        # erased-from-breaker';
+      }
+    }
+    // seed the five keys into the timelimiter platform block (whole-file grep sees them)
+    let seeded = false;
+    for (let i = tl + 1; i < cb; i += 1) if (/^ {6}platform:/.test(lines[i])) {
+      lines.splice(i + 1, 0, ...NEED.map((k) => `        ${k}: 999`)); seeded = true; break;
+    }
+    arms.push(['thresholds seeded only into timelimiter stay red', lines.join('\n'), 'RED-WRONGBLOCK',
+      (j) => seeded && j.instFound && base.ids.every((id) => !j.held[id]), true]);
+  }
+
+  // 6 — D954 no-op guard is enforced per-arm below: an arm that did not change the plane is a defect.
+  let allCaught = true;
+  for (const [label, armYaml, expect, ok, wantChange] of arms) {
+    const j = judgeE3(armYaml);
+    const changed = armYaml !== real;
+    const noop = changed !== wantChange;
+    const pass = !noop && ok(j);
+    console.log(`  self-test  ${label.padEnd(62)} ${pass ? 'as-expected' : 'DEFECT'} [${expect}] sig=${sig(j)}${noop ? ' NOOP!' : ''}`);
+    if (!pass) allCaught = false;
+  }
+  if (!allHeld(base)) {
+    console.log(`  self-test  ${'real plane must hold before any arm'.padEnd(62)} DEFECT sig=${baseSig}`);
+    allCaught = false;
+  } else {
+    console.log(`  self-test  ${'real plane must hold before any arm'.padEnd(62)} as-expected`);
+  }
+  console.log(`  self-test  E3 subtree judge all arms as-expected: ${allCaught} (${arms.length} arms)`);
+  return allCaught ? 0 : 1;
 }

@@ -192,9 +192,17 @@ if (SELF_TEST) {
     ['insight_config guard removed', mutate(real, R[2], GUARD, 'if true; then'), `GUARD:${R[2]}`],
     ['insight_config POSIX else arm erased', mutate(real, R[2], POSIX_ARM, 'TMP_REPO_JAVA="file:///"'), `POSIX:${R[2]}`],
     ['one required script erased from census', { files: real, present: new Set([...present].filter((p) => p !== R[2])) }, 'REQUIRED-ABSENT'],
+    // D995 follow-through: the census is sourced from ALL discovered *.sh that mention cygpath
+    // (judge's `cygScripts`), so the vacuous arm must erase cygpath from that whole set — not just
+    // the fixed REQUIRED three. A fourth guarded script (dispatcher_config_smoke.sh, D994) joined
+    // the plane; erasing only REQUIRED left that one's cygpath intact, so the census never went
+    // empty and CENSUS-NONVACUOUS never fired — the arm false-greened as REQUIRED-GUARD instead,
+    // reddening CI's line-171 chain on this push. Erase from cygList(real, allSh) to test the real
+    // vacuous guard; R4's REQUIRED-GUARD offenders may co-occur but CENSUS-NONVACUOUS is now in
+    // the list, so the for-cause `[expect]` check passes again.
     ['all cygpath mentions removed (vacuous census)', (() => {
       const f = new Map(real);
-      for (const p of cygList(real, R)) f.set(p, (f.get(p) ?? '').split('cygpath').join('true'));
+      for (const p of cygList(real, allSh)) f.set(p, (f.get(p) ?? '').split('cygpath').join('true'));
       return { files: f };
     })(), 'CENSUS-NONVACUOUS'],
     ['CI cloud_refresh invocation cut', mutate(real, ciPath, `bash ${R[0]}`, 'bash scripts/_absent.sh'), `CI-INVOKE:${R[0]}`],

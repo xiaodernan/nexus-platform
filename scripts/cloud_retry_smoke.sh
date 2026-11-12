@@ -9,7 +9,8 @@
 #      (500 + 500 + 200), proving the two retries fired before the answer landed
 #   4. POST /api/v1/health through the gateway -> never retried (exactly one fixture hit) and never 405
 #   5. POST to the dead-upstream web route -> 503 edge_upstream_unavailable (D875's method-agnostic fallback)
-#      POST is never retried; the method-agnostic 503 envelope is asserted on the dead-upstream web routet returns
+#      POST is never retried; the method-agnostic 503 envelope is asserted on the dead-upstream web
+#      route, where a genuinely failing upstream exists (the fixture's fail budget is spent by step 3)
 #
 # Usage:  scripts/cloud_retry_smoke.sh
 # Env:    FLAKY_PORT (fixture port, default 18101), NEXUS_SMOKE_GATEWAY_PORT (default 18093)

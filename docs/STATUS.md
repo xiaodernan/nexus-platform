@@ -42394,3 +42394,31 @@ Fixture log/gateway log evidence (this unit's repro, preserved in `/tmp/nexus-cl
 **Verified end-to-end:** GET 200, exactly 3 fixture hits (retry fires), metrics list includes `http.server.requests`, `resilience4j.circuitbreaker.*`, `resilience4j.timelimiter.calls`; POST through the fixture → 200, exactly one hit, not 405; POST /web-check → 503 `edge_upstream_unavailable` (method-aware envelope); metric = 1.
 
 - readers: `scripts/cloud_retry_smoke.sh` (in the CI cloud chain), this ledger entry.
+
+## 996. D996 — the E3 edge reader read breaker thresholds from the FIRST `${id}:` under `resilience4j:`, so D995's sibling `timelimiter:` stole the match and reddened CI on correct YAML
+
+**The hole.** D995's push (head 6109a9f) got as far as the cloud job's `Edge wiring reads` step (CI run 43252673446) and stopped there — before any smoke, so D995's own `cloud_retry_smoke.sh` fix was never exercised on CI. The red was not the smoke:
+
+```
+RESULT: FAIL — 3 offender(s)
+  - E3 resilience4j platform: missing registerHealthIndicator, slidingWindowSize, minimumNumberOfCalls, failureRateThreshold, waitDurationInOpenState
+  - E3 resilience4j ai: missing …
+  - E3 resilience4j web: missing …
+```
+
+`check_cloud_edge.mjs` E3 sliced `yaml.slice(yaml.search(/resilience4j:\s*\n/))` and, per id, regex-matched the FIRST `${id}:\s*\n` block. D995 had just added `resilience4j.timelimiter.instances.{platform,ai,web}.timeoutDuration=3s` **above** `circuitbreaker:`. The first `platform:`/`ai:`/`web:` was therefore the timelimiter's own block (one key, no thresholds), and all five threshold keys were reported missing. The thresholds were present and correct in the breaker subtree the whole time — a false red born of a reader that keyed on first occurrence instead of tree position.
+
+**Two lanes, one root, complementary fixes.** The concurrent lane's D995 follow-through (a869a0d) moved `timelimiter:` **below** `circuitbreaker:`. That unblocks this CI run, but it leaves the reader fragile: the YAML's sibling order is now load-bearing, and the lane's own comment admits "a reader elsewhere keys on the first `platform:` token under this key". D996 fixes the reader instead — E3 now walks the **indentation tree** and reads the five thresholds from `resilience4j: > circuitbreaker: > instances: > ${id}:` **by key within that subtree**, scanning all col-2 children for `circuitbreaker:` and all col-4 children of its region for `instances:` (never the timelimiter's), then each col-6 id inside `instEnd`. Sibling position is irrelevant; a whole-file grep can no longer be satisfied from the wrong block. Both fixes stay: the YAML is tidier, and the gate is now order-immune.
+
+**Falsifiable reader.** `judgeE3(yaml)` is a pure function (no I/O) exported from the reader; `--self-test` plants 7 in-memory corruptions and requires each to behave for its right reason while the real plane holds — D954 no-op guard, D959-style for-cause, GREEN control:
+
+* GREEN: the shipped plane holds all five thresholds on all three ids.
+* GREEN-ORDER (the CI 43252673446 repro): the `timelimiter:` sibling reconstructed **above** `circuitbreaker:` with identical instance names and empty threshold bodies — the OLD reader's exact false-red layout — must stay green.
+* RED: erasing `slidingWindowSize` from each breaker id reddens **only that id**, for cause.
+* RED-NOINST: erasing the breaker's own `instances:` is **uncheckable, never vacuously green** (an earlier D996 draft that fell through to the timelimiter's `instances:` failed here — the self-test caught it).
+* RED-WRONGBLOCK: seeding all five thresholds only into the `timelimiter` platform block (a whole-file grep would pass) stays red for all three ids — subtree scoping, not text presence.
+* CI runs `node scripts/check_cloud_edge.mjs --self-test` in the line-171 chain (535 lines preserved).
+
+**Also in this commit:** `scripts/cloud_retry_smoke.sh` step-5 header's garbled tail (`…web routet returns`) is rewritten to the actual contract; and D993 reader `scripts/check_config_repo_uri_portable.mjs`'s vacuous-census corruption arm (commit 6109a9f's message claimed it folded, but it was never in that commit's tree) is finally committed — it now erases `cygpath` across **all** discovered `*.sh` so the fourth guarded script (D994's `dispatcher_config_smoke.sh`) cannot keep the census non-vacuous and false-green the arm.
+
+- readers: `scripts/check_cloud_edge.mjs --self-test` (CI line-171 chain), `scripts/check_config_repo_uri_portable.mjs --self-test`, this ledger entry.
