@@ -1,6 +1,7 @@
 package com.nexus.catalog;
 
 import com.nexus.merchant.MerchantPermissions;
+import com.nexus.notification.event.DomainEvents;
 import com.nexus.platform.ApiException;
 import com.nexus.platform.AuditService;
 import com.nexus.platform.Json;
@@ -18,6 +19,7 @@ import jakarta.validation.constraints.Size;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,12 +71,14 @@ public class ReservationController {
     private final ReservationService reservations;
     private final AuditService audit;
     private final PermissionService permissions;
+    private final ApplicationEventPublisher events;
 
     public ReservationController(ReservationService reservations, AuditService audit,
-                                 PermissionService permissions) {
+                                 PermissionService permissions, ApplicationEventPublisher events) {
         this.reservations = reservations;
         this.audit = audit;
         this.permissions = permissions;
+        this.events = events;
     }
 
     @PostMapping
@@ -117,6 +121,15 @@ public class ReservationController {
         ReservationService.Booking booking = reservations.book(tenant, userId, slot, body.partySize(),
                 contactRow, blankToNull(body.notes()), body.offeringId());
         Map<String, Object> row = booking.row();
+        events.publishEvent(new DomainEvents.ReservationChanged(
+                tenant.tenantId(), userId,
+                Json.uuid(row, "merchant_id"), Json.uuid(row, "id"),
+                null, "pending",
+                Json.map("code", Json.str(row, "code"),
+                        "slot_id", Json.str(row, "slot_id"),
+                        "party_size", Json.integer(row, "party_size"),
+                        "offering_id", body.offeringId() == null ? null : body.offeringId().toString(),
+                        "reused", booking.reused())));
         audit.record(request, "reservation_create", "reservation", Json.uuid(row, "id"),
                 Json.uuid(row, "merchant_id"), null,
                 Json.map("code", Json.str(row, "code"), "slot_id", Json.str(row, "slot_id"),
@@ -175,6 +188,15 @@ public class ReservationController {
         ReservationService.Cancellation cancelled = reservations.cancel(tenant, held);
         String before = Json.str(held, "status");
         Map<String, Object> result = cancelled.row();
+        if (!cancelled.replay()) {
+            events.publishEvent(new DomainEvents.ReservationChanged(
+                    tenant.tenantId(), Req.userId(request),
+                    Json.uuid(result, "merchant_id"), Json.uuid(result, "id"),
+                    before, "cancelled",
+                    Json.map("code", Json.str(result, "code"),
+                            "slot_id", Json.str(result, "slot_id"),
+                            "reason", body == null ? null : body.reason())));
+        }
         audit.record(request, "reservation_cancel", "reservation", Json.uuid(result, "id"),
                 Json.uuid(result, "merchant_id"), Json.map("status", before, "code", Json.str(result, "code")),
                 Json.map("status", Json.str(result, "status"), "code", Json.str(result, "code")),

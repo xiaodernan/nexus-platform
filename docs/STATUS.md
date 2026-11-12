@@ -42151,3 +42151,19 @@ The product's honest-empty contract (§155: "empty state is a valid state") was 
 `@nexus/web` and `@nexus/ui` typecheck clean; full production `next build` succeeds end-to-end on the whole app with the component present; console a11y reader (grid of 40 body-text token x ground pairs, tightest 4.75:1) passes.
 
 - readers: `packages/ui/src/feedback/States.tsx`, this ledger entry.
+
+## 985. D985 — the commerce lane speaks on the wire: reservations emit onto nexus:events, and the dispatch plane finally hears commerce
+
+**Goal.** Prove end-to-end, in the application's own request path, that a reservation lifecycle event reaches `nexus:events`. D928/D929/D931/D950/D973 built the carrier, the groups, reclamation and the dispatcher — but the commerce lanes emitted nothing: only `ConversationService` published, so `ReservationChanged` fired for nobody. An operator arming `Reservation*` on the dispatcher's hooks (D973) saw an empty wire. This unit wires the reservation surface to speak, and proves it with a live Redis wire.
+
+**The shape.**
+
+`ReservationController.book()` and the holder's `cancel` (`PATCH /api/v1/reservations/{id}`) emit `ReservationChanged` through Spring's `ApplicationEventPublisher` (the exact mechanism `ConversationService` uses for `LeadCaptured`/`HandoffResolved`), same-request, fail-soft via `NotificationEventListener.on()`, whose `events.publish(event)` is called FIRST and never rolls back the business op. Booking emits `fromStatus=null, toStatus="pending"` with `code`, `slot_id`, `party_size`, `offering_id`, `reused`. Cancellation emits only on a real transition: `if (!cancelled.replay())` guards against double-emit on a repeated cancel — the idempotent re-cancel stays silent, and `fromStatus` carries the pre-cancel status, `toStatus="cancelled"`, `code`, `slot_id`, `reason`.
+
+`ReservationEventsStreamTest` (new, in the platform module) boots a Spring context with the whole bridge ENABLED (`nexus.events.redis-stream-enabled=true`, Redis at `NEXUS_REDIS_URL` — the platform job's own service), books and cancels over the real HTTP+DB path, reads `nexus:events` back with Lettuce `XREVRANGE`, and asserts both events landed with the exact reservationId. Verified locally: 2/2 pass on the live `nexus_test` + 6380 Redis; `ReservationApiTest` 18/18; `ReservationEventsStreamTest` type-checks and boots cold on the base harness (bean scope kept at the platform default).
+
+**What was verified.** Reservation wire observed in Redis post-suite: `ReservationChanged{toStatus: pending, reservationId: <itest>, slot_id: …, party_size: 2, offering_id: null, reused: false}` and `{fromStatus: pending, toStatus: cancelled, reason: "changed my mind"}`. `scripts/check_reservation_events_stream.mjs` holds controller field + constructor + imports + TWO emission sites with toStatus literals + replay guard + reused flag + DomainEvents record/template-derision + listener ordering + bounded XADD + test-side bridge re-enable + asserts + reservation-prefix copy derivation + CI/ATLAS/ledger wiring; `--self-test` plants 13 corruptions, each reddening for its expect tag, plus a GREEN control.
+
+**What this does NOT claim.** No deployed dispatch target received anything (the dispatcher is source-only, operator-armed, see D973); no claim of idempotency inside the dispatcher or at any webhook; no claim that bookings not made through these two doors (merchant accept / reschedule / no-show transitions) are wired — the merchant-side status transitions remain silent for the same reason they were silent before (separate door, next unit if wanted); no claim about `nexus:events` capacity beyond the existing `maxlen 1000` XADD bound (which is exactly right for the demo).
+
+- readers: `scripts/check_reservation_events_stream.mjs`, this ledger entry, `services/platform/src/test/java/com/nexus/catalog/ReservationEventsStreamTest.java`.
