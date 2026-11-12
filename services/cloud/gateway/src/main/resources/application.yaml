@@ -94,21 +94,6 @@ nexus:
     rate-limit-replenish: ${NEXUS_GATEWAY_RATE_REPLENISH:5}
 
 resilience4j:
-  # D995: resilience4j's Reactor integration applies an unconfigured default of 1s to every
-  # upstream call. On this dev plane (or any cold fixture/machine), the first request after a
-  # pool is built outruns that window — the gateway then aborts the call, counts it as one
-  # circuit-breaker failure, and answers 503 edge_upstream_unavailable even while the upstream
-  # serves fine (exactly what the CI/DEV-plane retry smoke observed on the GET arm). A 3s
-  # budget matches the cold-start httpclient connect/response timeout above and still fails
-  # fast on a genuinely dead call.
-  timelimiter:
-    instances:
-      platform:
-        timeoutDuration: 3s
-      ai:
-        timeoutDuration: 3s
-      web:
-        timeoutDuration: 3s
   circuitbreaker:
     instances:
       platform:
@@ -135,6 +120,22 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
+  # D995: resilience4j's Reactor integration applies an unconfigured default of 1s to every
+  # upstream call. On this dev plane (or any cold fixture/machine), the first request after a
+  # pool is built outruns that window — the gateway then aborts the call, counts it as one
+  # circuit-breaker failure, and answers 503 edge_upstream_unavailable even while the upstream
+  # serves fine (exactly what the CI/DEV-plane retry smoke observed on the GET arm). A 3s
+  # budget matches the cold-start httpclient connect/response timeout above and still fails
+  # fast on a genuinely dead call. Keep BELOW `circuitbreaker:` — a reader elsewhere keys on
+  # the first `platform:` token under this key.
+  timelimiter:
+    instances:
+      platform:
+        timeoutDuration: 3s
+      ai:
+        timeoutDuration: 3s
+      web:
+        timeoutDuration: 3s
 
 eureka:
   client:
