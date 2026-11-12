@@ -95,8 +95,12 @@ export function judge(files, present) {
   has(WORKER, 'inFlight.addAndGet(batch.size())', 'gauge armed on dispatch', 'GAUGE-ARM');
   countAtLeast(WORKER, 'inFlight.decrementAndGet()', 1,
       'gauge released in completion callback', 'GAUGE-RELEASE');
-  has(WORKER, 'queue.size() + inFlight.get() >= props.getMaxQueue()',
-      'backpressure predicate survives', 'BACKPRESSURE');
+  // D978 extended the predicate with +pendingRetries (deferred retries now occupy a slot). The
+  // D975 claim is that queue+inFlight are STILL in the gate and it still refuses at maxQueue;
+  // assert that invariant on whatever the current predicate is, not on the old two-term literal
+  // (which would make D975 red on a healthy D978 plane — a stale-citation failure, not a defect).
+  has(WORKER, 'queue.size() + inFlight.get() + pendingRetries.get() >= props.getMaxQueue()',
+      'backpressure predicate survives (D978 three-term)', 'BACKPRESSURE');
 
   /* R4 — the offline injection seam (no probe ever touches the network). */
   has(WORKER, 'DispatcherWorker(HookProperties props, HttpClient httpClient, ExecutorService drainPool)',
@@ -204,7 +208,7 @@ const cases = [
   ['gauge release removed', (p) => p.set(WORKER, t(WORKER).replaceAll(
       'inFlight.decrementAndGet();', '/* gauge release removed */')), 'GAUGE-RELEASE'],
   ['backpressure predicate removed', (p) => p.set(WORKER, t(WORKER).replace(
-      'queue.size() + inFlight.get() >= props.getMaxQueue()', 'false')), 'BACKPRESSURE'],
+      'queue.size() + inFlight.get() + pendingRetries.get() >= props.getMaxQueue()', 'false')), 'BACKPRESSURE'],
   ['injection seam collapsed', (p) => p.set(WORKER, t(WORKER).replace(
       'DispatcherWorker(HookProperties props, HttpClient httpClient, ExecutorService drainPool)',
       'DispatcherWorker(HookProperties props, HttpClient httpClient)')), 'INJECT-SEAM'],
