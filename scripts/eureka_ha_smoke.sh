@@ -56,7 +56,18 @@ cleanup() {
     wait 2>/dev/null || true
 }
 trap cleanup EXIT
-fail() { echo "FAIL: $*" >&2; echo "logs: $LOG_DIR" >&2; exit 1; }
+fail() {
+    echo "FAIL: $*" >&2
+    echo "logs: $LOG_DIR" >&2
+    # Same guidance as the LB smoke: the runner is ephemeral; CI failures are unpost-mortem-able
+    # unless the failure itself carries the evidence. Dump the child logs the reader would need.
+    for f in "$LOG_DIR"/fixture-*.log "$LOG_DIR"/eureka*.log; do
+        [ -f "$f" ] || continue
+        echo "----- $f"
+        tail -n 80 "$f" || true
+    done
+    exit 1
+}
 
 if [ ! -f "$CLOUD/eureka-server/target/app.jar" ] || [ "${NEXUS_HA_SKIP_BUILD:-0}" != 1 ]; then
     "$MVN" -q -B -o -f "$CLOUD/pom.xml" -pl eureka-server -DskipTests package || fail "maven build"
@@ -159,7 +170,7 @@ register_fixture() {
 
 wait_registered() {
     local app="$1" port="$2" label="$3" out="$4" attempt=0
-    while [ "$attempt" -lt 30 ]; do
+    while [ "$attempt" -lt 90 ]; do
         if fetch_apps "$port" "$out" && grep -qF "$app" "$out"; then
             echo "  $label directly registered $app"
             return 0

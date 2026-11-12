@@ -78,7 +78,7 @@ def register():
         },
         'leaseInfo': {'renewalIntervalInSecs': 5, 'durationInSecs': 30},
     }}
-    for attempt in range(40):
+    for attempt in range(120):  # ~60s worst case (3s timeout + 0.5s backoff per try); a loaded host needs this room
         try:
             code = _request('POST', f'{EUREKA}apps/{APP}', body)
             if code in (200, 204):

@@ -227,7 +227,7 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/falsify_insight_admin_smoke.sh` | D892: boots the plane with insight deliberately absent and requires the admin smoke to FAIL while both servers are up |
 | `scripts/insight_circuit_smoke.sh` | D895: after repeated upstream failures a Feign breaker's REAL actuator state is OPEN, while the plane view still says `unavailable` |
 | `scripts/falsify_insight_circuit_smoke.sh` | D895: with the driving calls removed the "a breaker must be OPEN" assertion must FAIL |
-| `scripts/eureka_ha_smoke.sh` | D894: explicit zones + non-self-registering nodes; registrations cross the wire in BOTH directions with `actionType=ADDED` |
+| `scripts/eureka_ha_smoke.sh` | D894: explicit zones + non-self-registering nodes; registrations cross the wire in BOTH directions with `actionType=ADDED` | D999: fixture registration has ~60s of room (120 attempts) and the direct-registration poll 90s — enough for a cold runner to win instead of losing to boot contention; `fail()` dumps child logs like the LB smoke |
 | `scripts/falsify_eureka_ha_smoke.sh` | D894: with peer wiring removed the replication assertion must FAIL while both nodes are up |
 | `scripts/cloud_ai_admin_smoke.sh` | the FastAPI service shows UP in Spring Boot Admin |
 | `scripts/check_launcher_log_mode.sh` | launcher log mode |

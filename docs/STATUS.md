@@ -42433,3 +42433,16 @@ RESULT: FAIL — 3 offender(s)
 **Verified.** `bash scripts/ci_ensure_redis.sh` on this host → "nexus-platform-redis already reachable on :6380 — reusing it (idempotent)". `bash scripts/eureka_eviction_smoke.sh` → PASS (evicted 60s after SIGKILL; within the widened budget). No redis smoke content, Lua, or test assertion was changed; no gateway/config/smoke other than the two above.
 
 - readers: `scripts/ci_ensure_redis.sh` (CI chain head), this ledger entry, `scripts/eureka_eviction_smoke.sh`, `.github/workflows/ci.yml`.
+## 999. D999 — the eureka HA two-node smoke stopped being a CI lottery: fixture registration now has ~60s of room, the reader knows why when it still fails
+
+**The flake.** The manual rerun of master (run 43263144638, full lane execution) died at `eureka_ha_smoke.sh`'s phase B as `"NEXUS-HA-PROBE-B never registered with node2"` — the artifact-phase-A actually passed (`node1 directly registered NEXUS-HA-PROBE` / `node2 … ADDED` logged). Re-soaking the same smoke locally in both states passes reliably, and the CI rerun alternately passes the same phase — cold-JVM contention with two Eureka instances and two fresh fixtures booting simultaneously on one constrained runner.
+
+**The stop being a lottery.** `scripts/fixture_insight_upstream.py`'s registration loop widened from 40 attempts (~20s) to 120 (~60s) so a registration that lands a few seconds late on a loaded host is not a false red; `scripts/eureka_ha_smoke.sh`'s direct-registration poll widened from 30s to 90s to match; `fail()` now dumps the child fixture/eureka tails exactly like the LB smoke (D989) so the next red carries its own evidence in the CI log instead of an unreachable `/tmp` directory.
+
+**Not changed:** the 45s/10s replication poll budget, the two timed-phase sequence, the zone wiring, no product or Eureka config edits. No claim the smoke is now deterministic under every host class — only that its two budgets no longer cliff-edge at cold-boot contention time, and a failure reads the child logs instead of silence. The same smoke passed locally twice after the change.
+
+- readers: `scripts/eureka_ha_smoke.sh` (CI chain, in D896 HA-failover step), this ledger entry, `scripts/fixture_insight_upstream.py`.
+- Also in this commit: the `changes` job's `cloud` path grep widened (`^scripts/(cloud|check_cloud|falsify_cloud|
+ci_ensure_redis|dispatcher_config_|insight_|eureka_|events_|ratelimit_|sliding_window_|ttl_jitter_|singleflight_|
+fixture_insight_upstream))`) — the cloud chain runs smokes for every one of those prefixes, yet they never matched the old filter,
+so a chain-critical script change did not re-trigger the job that must falsify it; the chain was invisible to exactly the pushes it proves.

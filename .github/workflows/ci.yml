@@ -53,7 +53,7 @@ jobs:
           # arms must run this job — otherwise the copy can go back to claiming what its members do not
           # support, and nothing would notice.
           p ai '^(apps/ai|infra/config|data/seed/|scripts/(check|falsify)_collection_claims\.mjs)'
-          p cloud '^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud))'
+          p cloud '^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud|ci_ensure_redis|dispatcher_config_|insight_|eureka_|events_|ratelimit_|sliding_window_|ttl_jitter_|singleflight_|fixture_insight_upstream))'
           p docs '^(docs/|README\.md)'
 
   lint-type:
