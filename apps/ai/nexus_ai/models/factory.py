@@ -51,13 +51,24 @@ def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
     return pool
 
 
+def pool_key(settings: Any) -> str:
+    """D983 follow-through — the ONE definition of a pool cache identity.
+
+    A caller that pre-seeds `_POOL_CACHE` (e.g. the framing-parity probe injecting a fake
+    live adapter) must derive the key the same way `get_pool` looks it up, or the injection
+    silently misses and the test measures the mock floor while believing it measured live.
+    D983 added the timeout term here and that coupling bit CI until this function existed.
+    """
+    return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"
+
+
 def get_pool(settings: Any | None = None) -> dict[str, LLMAdapter]:
     from nexus_ai.config import get_settings
 
     settings = settings or get_settings()
     # D983: the timeout is part of the pool identity. Two settings objects that differ only
     # in request_timeout_s must NOT share a cached httpx client (that would re-kill the knob).
-    key = f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"
+    key = pool_key(settings)
     if key not in _POOL_CACHE:
         try:
             _POOL_CACHE[key] = build_adapters(settings)

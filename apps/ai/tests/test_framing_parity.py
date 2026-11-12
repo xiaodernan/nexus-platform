@@ -115,7 +115,10 @@ def test_mock_and_live_framing_are_byte_identical(offline_env, deterministic):
     live_settings = Settings(llm_provider="anthropic", llm_base_url="https://api.invalid",
                              embedding_provider="hashing", database_url="",
                              internal_token="")
-    key = f"{live_settings.llm_provider}|{live_settings.llm_base_url}"
+    # D983 follow-through: derive the injection key from the SAME pure function `get_pool`
+    # uses, or a 2-segment hand-rolled key silently misses the 3-segment (timeout-bearing)
+    # cache and the "live" stream is actually measured on the mock floor.
+    key = factory.pool_key(live_settings)
     factory._POOL_CACHE[key] = {"claude-live": FakeLiveAdapter(), "mock": MockAdapter()}
     try:
         deterministic(None)
@@ -145,7 +148,10 @@ def test_live_run_declares_live_provider(offline_env):
     live_settings = Settings(llm_provider="anthropic", llm_base_url="https://api.live",
                              embedding_provider="hashing", database_url="",
                              internal_token="")
-    key = f"{live_settings.llm_provider}|{live_settings.llm_base_url}"
+    # D983 follow-through: derive the injection key from the SAME pure function `get_pool`
+    # uses, or a 2-segment hand-rolled key silently misses the 3-segment (timeout-bearing)
+    # cache and the "live" stream is actually measured on the mock floor.
+    key = factory.pool_key(live_settings)
     factory._POOL_CACHE[key] = {"claude-live": FakeLiveAdapter(), "mock": MockAdapter()}
     try:
         with TestClient(create_app(live_settings)) as c:

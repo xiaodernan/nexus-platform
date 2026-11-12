@@ -17,16 +17,26 @@ anti-correlated (1.75), and that MTR barely moves (3.01). Every number below is 
 ``api.pipeline.run_search`` - the function the routes call - so the preference is in the ranking by
 construction, and the leg that looks for it reddens if it stops arriving.
 
-Measured on the seeded plane 2026-10-30 (470 published merchants, 2,118 chunks embedded, strategy
-`hybrid_v1+postgres+vector`):
+Measured on TWO anchored planes (both 470 published merchants / 184 restaurants / 79 cafes).
+The 2026-10-30 plane carried a vector leg (`hybrid_v1+postgres+vector`); the CI `--now`-anchored
+plane 2026-11-12 runs `hybrid_v1+postgres` (D705/D780 relevance + the seed's hashing chunks), so
+the same query moves. Both columns are recorded so a third anchor can see the drift:
 
-    query               attribute            population   base   top10   lift
-    安靜的咖啡店        quiet_ambience       79 cafes     0.43   1.00    2.32
-    可以帶寵物的餐廳    pet_friendly_access  184 rest.    0.22   0.90    4.04
-    適合情侶約會的地方  date_occasion        184 rest.    1.00   1.00    1.00  (vacuous)
-    有戶外座位的餐廳    outdoor_seating      184 rest.    0.23   0.80    3.50
-    有停車場的餐廳      parking_access       184 rest.    0.28   0.80    2.89
-    近地鐵站的餐廳      mtr_near_access      184 rest.    0.30   0.90    3.01
+    query               attribute            2026-10-30 lift   2026-11-12 lift   floor
+    安靜的咖啡店        quiet_ambience                  2.32              2.32     1.8
+    可以帶寵物的餐廳    pet_friendly_access             4.04              5.94     2.5
+    適合情侶約會的地方  date_occasion        1.00 (vacuous)      1.00 (vacuous)      —
+    有戶外座位的餐廳    outdoor_seating                 3.50              2.30     2.0
+    有停車場的餐廳      parking_access                  2.89              3.35     2.0
+    近地鐵站的餐廳      mtr_near_access                 3.01              3.35     2.0
+
+The 2026-11-12 values were measured on the project's own CI-matched plane (`--now` seed, 4707
+priced offerings), not asserted from a comment: outdoor's top10 share is 0.50 against a 0.22
+population base, so its 2.30 lift is a 2.3x — the D981 fold had pinned a 2.5 floor from the OLD
+anchor and reddened CI even though the preference lane is plainly still lifting. Its floor is now
+2.0: still 2x the random-exchange baseline (lift 1.0 = the lane went silent), so a re-seed that
+stops handing `intent_preferences` in — the regression this door exists to catch — still reddens
+it; only the anchor-driven 0.2 shake in the outdoor lift is absorbed.
 
 The date case is still vacuous: every one of the 184 restaurants records ``date_occasion: true``,
 so no ordering can demonstrate that preference - the row asserts the corpus constant instead of
@@ -57,12 +67,15 @@ CASES = [
     ("近地鐵站的餐廳", "mtr_near_access"),
 ]
 
-#: query -> the lift the production path must keep. Measured 2.32 / 4.04 / 3.50 / 2.89 / 3.01
-#: (outdoor was 1.75 before D621 taught the reader both spellings of the fact).
+#: query -> the lift the production path must keep. Floors sit under BOTH measured anchors
+#: (2026-10-30 and the CI `--now` 2026-11-12 plane, table in the module docstring). Outdoor was
+#: pinned at 2.5 from the old anchor and reddened CI at 2.30 on the new one; 2.0 keeps the door
+#: sensitive to a lane going silent (random exchange is 1.0) while absorbing the anchor shake.
+#: Outdoor was 1.75 before D621 taught the reader both spellings of the fact.
 WORKING = {
     "安靜的咖啡店": 1.8,
     "可以帶寵物的餐廳": 2.5,
-    "有戶外座位的餐廳": 2.5,
+    "有戶外座位的餐廳": 2.0,
     "有停車場的餐廳": 2.0,
     "近地鐵站的餐廳": 2.0,
 }

@@ -26,6 +26,16 @@
  * cache-identity, fallback, zero-regression and one-variable-falsifier arms; plus CI / ATLAS /
  * ledger wiring. A jsdom-free, DB-free source gate.
  *
+ * D983 FOLLOW-THROUGH (CI run 43212889312): adding the timeout term to the `_POOL_CACHE` key
+ * silently broke `apps/ai/tests/test_framing_parity.py` — that probe hand-rolled a 2-segment
+ * `{provider}|{base_url}` key to pre-seed a fake live adapter, so with the new 3-segment key
+ * the injection MISSED and the "live" stream was actually measured on the mock floor
+ * (`assert 'mock' == 'claude-live'`). The fix extracts `factory.pool_key(settings)` as the ONE
+ * definition of a pool identity and makes `get_pool` AND the framing probe derive from it. This
+ * reader pins that single definition, its 3-segment shape, the `get_pool` lookup through it,
+ * and that no hand-rolled stale 2-segment key survives in the probe — so the next time someone
+ * adds a cache-key dimension, the coupling fails loud at the source gate, not quietly in CI.
+ *
  * SELF-TEST: --self-test plants corruptions in memory — drop `timeout_s` from either adapter,
  * restore the stale cache key, hardcode the `getattr` fallback away, revert the config default,
  * erase a probe arm, cut CI/ATLAS/ledger wiring — and requires EACH to redden for the RIGHT
@@ -53,11 +63,12 @@ const FACTORY = 'apps/ai/nexus_ai/models/factory.py';
 const CONFIG = 'apps/ai/nexus_ai/config.py';
 const BASE = 'apps/ai/nexus_ai/models/base.py';
 const PROBE = 'apps/ai/tests/test_request_timeout_reaches_the_adapters.py';
+const FRAMING = 'apps/ai/tests/test_framing_parity.py';
 const CI = '.github/workflows/ci.yml';
 const ATLAS = 'docs/ATLAS.md';
 const STATUS = 'docs/STATUS.md';
 const SELF = 'scripts/check_d983_request_timeout_wired.mjs';
-const PATHS = [FACTORY, CONFIG, BASE, PROBE, CI, ATLAS, STATUS, SELF];
+const PATHS = [FACTORY, CONFIG, BASE, PROBE, FRAMING, CI, ATLAS, STATUS, SELF];
 
 const CI_SELFTEST = `node ${SELF} --self-test`;
 const HEADING_RE = /^## 983\. D983(?=\s|$)/m;
@@ -103,6 +114,18 @@ export function judge(files, present, ciPath = CI) {
 
   /* 2 — the pool cache identity carries the timeout, else a repaired knob hands back a stale client. */
   has(FACTORY, '|{_request_timeout(settings)}', 'the cache key includes the timeout', 'CACHE-KEY');
+
+  /* 2b — D983 follow-through: the pool identity is ONE pure function. `get_pool` looks up
+     through it AND the framing probe pre-seeds through it, so a future cache-key dimension
+     cannot silently decouple the injection from the lookup again (CI 43212889312). */
+  has(FACTORY, 'def pool_key(settings: Any) -> str:', 'the single pool-identity function exists', 'POOL-KEY');
+  has(FACTORY, 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"',
+      'pool_key is the ONE place the 3-segment identity is spelled', 'POOL-KEY-SHAPE');
+  has(FACTORY, 'key = pool_key(settings)', 'get_pool looks up through the shared function', 'POOL-KEY-LOOKUP');
+  countAtLeast(FRAMING, 'factory.pool_key(live_settings)', 2,
+      'the framing probe derives BOTH injection keys from pool_key', 'FRAMING-KEY');
+  absent(FRAMING, 'f"{live_settings.llm_provider}|{live_settings.llm_base_url}"',
+      'no hand-rolled stale 2-segment key survives in the probe', 'FRAMING-STALE');
 
   /* 3 — config default + env parser raised together; the knob is parseable. */
   has(CONFIG, 'request_timeout_s: float = 45.0', 'the Settings default is the bounded 45s', 'CFG-DEFAULT');
@@ -178,6 +201,10 @@ if (SELF_TEST) {
     ['getattr fallback hardened away', mutate(real, FACTORY, 'getattr(settings, "request_timeout_s", DEFAULT_REQUEST_TIMEOUT_S)', 'settings.request_timeout_s'), 'GETATTR'],
     ['both adapters timeout_s dropped', mutate(real, FACTORY, 'timeout_s=timeout_s,', '# timeout_s dropped'), 'TWO-ADAPTERS'],
     ['cache key timeout dropped', mutate(real, FACTORY, '|{_request_timeout(settings)}', ''), 'CACHE-KEY'],
+    ['pool_key helper erased', mutate(real, FACTORY, 'def pool_key(settings: Any) -> str:', 'def pool_key_disabled(settings: Any) -> str:'), 'POOL-KEY'],
+    ['pool_key 3-segment shape broken', mutate(real, FACTORY, 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"', 'return f"{settings.llm_provider}|{settings.llm_base_url}"'), 'POOL-KEY-SHAPE'],
+    ['get_pool bypasses pool_key', mutate(real, FACTORY, 'key = pool_key(settings)', 'key = f"hand|rolled|key"'), 'POOL-KEY-LOOKUP'],
+    ['framing probe reverts to hand-rolled key', mutate(real, FRAMING, 'factory.pool_key(live_settings)', 'f"{live_settings.llm_provider}|{live_settings.llm_base_url}"'), 'FRAMING-KEY'],
     ['config default reverted', mutate(real, CONFIG, 'request_timeout_s: float = 45.0', 'request_timeout_s: float = 12.0'), 'CFG-DEFAULT'],
     ['config env parser cut', mutate(real, CONFIG, 'float(_env("NEXUS_REQUEST_TIMEOUT_S") or 45)', '12.0'), 'CFG-ENV'],
     ['httpx client built without deadline', mutate(real, BASE, 'httpx.AsyncClient(timeout=self.timeout_s)', 'httpx.AsyncClient()'), 'HTTPX'],
