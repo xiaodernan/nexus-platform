@@ -77,8 +77,13 @@ fi
 
 echo "== generating offline dependency classpath =="
 timeout 180 "$MVN" -o -q -f "$CLOUD/pom.xml" -pl events-service \
-    dependency:build-classpath -Dmdep.outputFile="$BUILD/cp.txt" >"$BUILD/mvn.log" 2>&1 \
-    || { tail -20 "$BUILD/mvn.log"; fail "maven dependency:build-classpath"; }
+    org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath \
+    -Dmdep.outputFile="$BUILD/cp.txt" >"$BUILD/mvn.log" 2>&1 \
+    || { echo "  offline classpath build failed — retrying with network" ;
+         timeout 240 "$MVN" -q -f "$CLOUD/pom.xml" -pl events-service \
+         org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath \
+         -Dmdep.outputFile="$BUILD/cp.txt" >"$BUILD/mvn.log" 2>&1 \
+         || { tail -20 "$BUILD/mvn.log"; fail "maven dependency:build-classpath"; } }
 CP="$(cat "$BUILD/cp.txt")"
 [ -n "$CP" ] || fail "empty dependency classpath"
 # Git Bash on Windows runs the Windows javac and the Maven classpath uses ';'; Linux CI uses ':'.

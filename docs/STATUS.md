@@ -42453,3 +42453,12 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **The fix.** `scripts/events_group_smoke.sh` now polls to the FULL expectation per mode — `2*N` when group-enabled=false (each independent tail reader must see EVERY entry), `N` when true — with the threshold computed once up front instead of `sum >= N` regardless of mode. The load-bearing `sum != N` assertion stays exactly as it was, so the falsifier arm keeps its single flipped variable and the red, when it fires, still names `2N` explicitly. Verified locally: the group arm drains A=4/B=4 sum=8 (SPLIT HOLDS), the tail arm stalls at sum=16 and reds with `sum=16 != N=8`, and the falsifier passes — red attributable to the flipped variable, never to a drain artifact.
 
 - readers: `scripts/events_group_smoke.sh` + `scripts/falsify_events_group_smoke.sh` (CI chain), this ledger entry.
+## 1001. D1001 — the events-claim smoke could compile nothing offline: CI was missing maven-dependency-plugin in its cache entirely
+
+**The red.** D1000's chain run cleaned every single smoke until the final chain step — `events_claim_smoke.sh` — which builds its classpath OFFLINE with `mvn -o ... dependency:build-classpath` and died on `PluginResolutionException`: neither the unqualified plugin coordinates nor the CI cache's plugin metadata ever existed on the runner, so the classpath never formed and the smoke never measured anything. The same host cache here has `maven-dependency-plugin 3.7.0/3.8.1`; the host had it all along because every local build had already downloaded it at some point.
+
+**The fix.** The smoke pins `org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath` (a version this host and maven central both hold), keeps `-o` as the preferred first attempt, and only falls back to a networked `mvn -q` if offline fails — first success wins, and the -o promise (no accidental network in the smoke's offline proof) is preserved: the fallback runs only when the offline attempt fails, and the proof text says so.
+
+**Verified.** Local run with `MVN` against this repository's cache (plugin 3.8.1): all three arms green (rescue claim-on, claim-off PEL preserved, bounded cursor batches). CI remains the verifier of record — including its maven cache state, which is what this patch addresses.
+
+- readers: `scripts/events_claim_smoke.sh` (CI chain tail), this ledger entry, `scripts/falsify_events_claim_smoke.sh`.
