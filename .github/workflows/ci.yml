@@ -496,7 +496,7 @@ jobs:
     if: needs.changes.outputs.web == 'true' || needs.changes.outputs.platform == 'true' || needs.changes.outputs.ai == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - { uses: actions/checkout@v4, with: { fetch-depth: 0 } }
       - uses: actions/setup-node@v4
         with: { node-version: 24 }
       - run: npm audit --audit-level=high --workspaces --if-present || true
