@@ -139,8 +139,8 @@ export function judge(files, present, ciPath = CI) {
       'assert carried == ["r-c", "r-b", "r-a"]',
       'carried-verdict ordering is pinned distinct from ignored-verdict', 'FOLD-COORD-ASSERT');
   has('apps/ai/tests/test_the_nearest_station_the_geo_lane_fetches_is_not_on_the_card.py',
-      'assert "preference_match" in labels',
-      'transit-bullet silence is permitted ONLY via a stated preference', 'FOLD-PREF-ONLY');
+      'assert len(with_bullet) >= 5,',
+      'the plane provides the facts — at least five of six cards print the transit bullet', 'FOLD-PREF-ONLY');
 
   /* A — agent-plan contract lives once, in contract.py, as _Strict; the route only imports it. */
   count(CONTRACT, 'class AgentPlanRequest(_Strict):', 1, 'AgentPlanRequest defined exactly once in contract.py', 'A-REQ-ONCE');
@@ -273,7 +273,7 @@ if (SELF_TEST) {
         'assert carried == ["r-c", "r-b", "r-a"]', 'assert carried'), 'FOLD-COORD-ASSERT'],
     ['fold: preference-only silence guard dropped', mutate(real,
         'apps/ai/tests/test_the_nearest_station_the_geo_lane_fetches_is_not_on_the_card.py',
-        'assert "preference_match" in labels', 'assert True'), 'FOLD-PREF-ONLY'],
+        'assert len(with_bullet) >= 5,', 'assert True'), 'FOLD-PREF-ONLY'],
     ['CI self-test chain cut', mutate(real, ciPath, CI_SELFTEST, ''), 'CI-READER'],
     ['CI pytest probe schedule cut', mutate(real, ciPath, 'uv run pytest -q', 'uv run true'), 'CI-PROBE'],
     ['ATLAS reader row erased', mutate(real, ATLAS, SELF, 'scripts/_removed.mjs'), 'ATLAS-READER'],

@@ -90,7 +90,7 @@ DECLARED_EXTERNAL = {
 
 #: The third exemption class (after a future PROMISE and an EXTERNAL interpreter file): a
 #: directory of one-shot local probes that are deliberately NOT tracked. The lane writes its
-#: falsifier/measurement scripts under `tmp/` (`.gitignore:101`), so the documents that record
+#: falsifier/measurement scripts under `tmp/` (the root gitignore marks it), so the documents that record
 #: those runs name paths like `tmp/d635_leaf.py` that a clean checkout has no reason to hold.
 #: Naming one is naming a tool a reader ran, NOT a module the repository promises to ship — so
 #: "exists nowhere in the tracked tree" is the correct state for it, not a drift.
@@ -153,7 +153,7 @@ def _missing_modules(doc: Path, by_name: dict[str, list[str]]) -> list[str]:
     for match in MODULE.finditer(doc.read_text(encoding="utf-8")):
         raw = match.group(1).rstrip(".,;)")
         if raw.startswith("tmp/"):
-            # Measurement scaffolds: tmp/ is gitignored by design (.gitignore: `tmp`), so a
+            # Measurement scaffolds: the gitignored tmp directory at the repo root guarantees a
             # `tmp/dNNN_*.py` citation can never name a repo module. It names a measurement
             # script that existed at the time of the unit it is evidence for — nothing here.
             continue
