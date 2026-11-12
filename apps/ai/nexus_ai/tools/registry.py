@@ -67,11 +67,24 @@ class _Cache:
         self._clock = clock
         self._max = max_entries
         self._store: OrderedDict[tuple[str, str], tuple[float, Any]] = OrderedDict()
-        # D913: an expiry min-heap. Each entry is pushed exactly once, popped exactly once, so
-        # the heap operations are amortized O(log n) per write and O(1) per read. Lazy: stale
-        # (overwritten or delete-swept) heap entries are tolerated and detected on pop by checking
-        # the store still holds that exact (key, expires_at) pair.
-        self._expiry_heap: list[tuple[float, tuple[str, str]]] = []
+        # D913: an expiry min-heap. A live key has exactly one live heap tuple; the heap gives
+        # amortized O(log n) expiry without an O(n) store scan on every write.
+        # D972: the heap is LAZY — heapq has no O(log n) arbitrary delete, so an LRU eviction
+        # or an overwrite cannot reach a tuple already inside it. Those stale tuples used to
+        # linger until their TTL popped them, which is never while the clock is frozen: measured
+        # cap=8, 2000 writes -> 2000 heap tuples while the store held 8 (overwrite x500 -> 500).
+        # Two things now bound the heap by a constant multiple of the cap: a generation seq
+        # plus _heap_token marking exactly one LIVE tuple per key, and a compaction that
+        # rebuilds from live tuples once the length passes twice the cap. Compaction is
+        # O(len(heap)) once per O(cap) writes, so the amortized cost stays O(log n) per write
+        # (D913's contract) while the heap is now O(cap) — "bounded by the cap" as D903 promised.
+        self._expiry_heap: list[tuple[float, int, tuple[str, str]]] = []
+        # D972: the seq of the one live heap tuple for each key in _store. A tuple
+        # (expires, seq, ck) is live iff _heap_token.get(ck) == seq, ck is in _store, and
+        # _store[ck][0] == expires; otherwise it is stale and only waits to be discarded.
+        self._heap_token: dict[tuple[str, str], int] = {}
+        self._seq = 0
+        self._compact_factor = 2  # rebuild once the heap exceeds factor * max_entries + 1
 
     def _key(self, *, spec: ToolSpec, arguments: Mapping[str, Any]) -> tuple[str, str] | None:
         try:
@@ -91,18 +104,22 @@ class _Cache:
         expires_at, value = hit
         if self._clock() >= expires_at:
             del self._store[ck]
+            self._heap_token.pop(ck, None)  # D972: its heap tuple becomes stale; no leak of tokens
             return _MISS
         self._store.move_to_end(ck)
         return value
 
     def _sweep_expired(self, now: float) -> None:
         while self._expiry_heap and self._expiry_heap[0][0] <= now:
-            expires_at, ck = heapq.heappop(self._expiry_heap)
+            expires_at, seq, ck = heapq.heappop(self._expiry_heap)
+            # D972: only the generation still recorded in _heap_token may delete the store
+            # entry. Older generations (overwrites) and evicted/expired keys are stale tuples
+            # and are simply discarded, exactly as D913's lazy design intended.
             entry = self._store.get(ck)
-            # discard stale heap entries — the store moved on, the key was overwritten,
-            # or it was already swept by this loop
-            if entry is not None and entry[0] == expires_at:
+            if (self._heap_token.get(ck) == seq and entry is not None
+                    and entry[0] == expires_at):
                 del self._store[ck]
+                del self._heap_token[ck]
 
     def set(self, *, spec: ToolSpec, arguments: Mapping[str, Any], value: Any) -> None:
         ck = self._key(spec=spec, arguments=arguments)
@@ -111,11 +128,34 @@ class _Cache:
         now = self._clock()
         self._sweep_expired(now)
         expires = now + spec.cache_ttl_s
+        self._seq += 1
+        seq = self._seq
+        # D972: supersede any earlier generation for this key; its heap tuple goes stale.
+        self._heap_token[ck] = seq
         self._store[ck] = (expires, value)
-        heapq.heappush(self._expiry_heap, (expires, ck))
+        heapq.heappush(self._expiry_heap, (expires, seq, ck))
         self._store.move_to_end(ck)
         while len(self._store) > self._max:
-            self._store.popitem(last=False)
+            evicted_ck, _ = self._store.popitem(last=False)
+            # D972: invalidate the evicted key's live tuple so compaction can drop it.
+            self._heap_token.pop(evicted_ck, None)
+        # D972: heapq cannot delete an arbitrary element, so stale tuples (from evictions and
+        # overwrites) would otherwise linger until their TTL — unbounded while the clock is
+        # frozen. Rebuild from live tuples once past the bound; O(len(heap)) every O(cap)
+        # writes, so amortized O(log n) per write (D913) holds while the heap stays O(cap).
+        if len(self._expiry_heap) > self._compact_factor * self._max + 1:
+            self._compact_heap()
+
+    def _compact_heap(self) -> None:
+        """D972: rebuild the expiry heap from LIVE tuples only, keeping it O(max_entries)."""
+        live = [
+            (expires, seq, ck)
+            for expires, seq, ck in self._expiry_heap
+            if (self._heap_token.get(ck) == seq and ck in self._store
+                and self._store[ck][0] == expires)
+        ]
+        heapq.heapify(live)
+        self._expiry_heap = live
 
 
 #: sentinel for "no cache hit" — identity-compared only, never leaked out.
