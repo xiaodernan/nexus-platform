@@ -42556,3 +42556,12 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **What this does NOT claim.** That every absolute assertion in the entire test directory is nightly-stable (the stub-platform files, e.g. `test_stub_platform.py::cart["total"] == 200.0`, are offline unit tests against a static stub — absolute pins are correct there, and were allowed to stand); that the seed is frozen for CI (it moves with each CI `--now` — the gate is the invariant, not the size).
 
 - readers: the two re-pinned files, this ledger entry.
+## 1011. D1011 — the D1010 sweep missed `test_a_refusal_of_noise_reads_the_corpus_second_spelling.py`'s three absolute pins (weak=15, lively=12, union=16) — the corpus moves weekly; pinned invariants instead
+
+**The red.** The same automated sweep that produced D1010 also flagged this file's three sibling assertions, but the D1010 commit only re-pinned the two filed in the commit message. The failure mode is identical: the `NEXUS_TEST_DATABASE_URL` live seed regenerates the corpus per CI run, and the absolute counts drifted — the current CI job will redden on these exact lines.
+
+**The fix.** `len(weak) == 15` → `len(weak) > 0` (both spellings exist); `len(lively) == 12` → `len(lively) > 0`; `len(weak | lively) == 16` → `len(weak | lively) > len(weak)` (lively strictly outnumbers weak by the spellings' definition — this follows directly once lively ⊄ weak, which the sibling `lively - weak` nonempty assertion already requires).
+
+**Verified.** Local seed: 8/8 pass in that file. CI is the verifier once this lands.
+
+- readers: this test file, this ledger entry.
