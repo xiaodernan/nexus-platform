@@ -145,8 +145,10 @@ if (SELF_TEST) {
   }
   const arms = [
     ['filter reverts to the pre-D1006 cloud-only reader set',
-      mutate(real, CI, `ci_ensure_redis|dispatcher_config_|insight_|eureka_|events_|ratelimit_|sliding_window_|ttl_jitter_|singleflight_|fixture_insight_upstream`,
-             `ci_ensure_redis|dispatcher_config_|insight_|eureka_|events_`), 'FILTER-UNDERCOVER'],
+      mutate(real, CI,
+             `^(services/cloud/|services/platform/|scripts/(check_|verify_|falsify_|cloud|`,
+             `^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud|`),
+             'FILTER-UNDERCOVER'],
     ['filter drops the shared-reader catch-all',
       mutate(real, CI, `check_|verify_|falsify_`, `check_cloud_`), 'FILTER-UNDERCOVER'],
     ['filter line erased',

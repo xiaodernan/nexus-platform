@@ -42520,3 +42520,12 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **Verified.** The spec compiles and the test is routed into CI’s e2e job (unchanged wiring). No product, BFF, or merchant code moves; no assertion weakened. CI is the verifier of record — the next master run must pass both consumer specs without retry.
 
 - readers: the spec itself, this ledger entry.
+## 1008. D1008 — the D1006 reader's own 'revert to the pre-D1006 set' arm didn't revert to anything that bit
+
+**The red.** CI run 43319676658 — the first circle where the widened filter re-triggered cloud on a `check_` edit — died at the line-171 chain at `check_cloud_filter_covers_chain.mjs --self-test`: `filter reverts to the pre-D1006 cloud-only reader set GREEN (defect!)`. The arm trimmed `sliding_window_|ttl_jitter_|singleflight_|fixture_insight_upstream` from the regex but left the widened `check_|verify_|falsify_` in place; zero chain-reader escaped, zero offenders, and the self-test correctly flagged the arm as faulty. This was a marker defect, not a false green — the CI funnel was doing exactly the job D1006 built for it.
+
+**The fix.** The arm now swaps the exact pre-D1006 prefixes back: `^(services/cloud/|services/platform/|scripts/(cloud|check_cloud|falsify_cloud|…`, i.e. drops `check_|verify_|falsify_` wholesale. Thirty-four of the ~44 chain invocations now escape (every reader named `check_*.mjs`/`verify_*.mjs`), and the arm reddens for cause: local `--self-test` prints 7/7 red + the single GREEN control green.
+
+**Verified.** Reader wired into the chain; ledger heading present; verify_all remains 60 PASS / 0 FAIL; D1008's own CI circle is the verifier of record.
+
+- readers: `scripts/check_cloud_filter_covers_chain.mjs` (that one arm only), this ledger entry.
