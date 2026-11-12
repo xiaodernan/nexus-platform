@@ -301,7 +301,8 @@ for i in $(seq 1 25); do
 done
 [ "$limited" -ge 1 ] || fail "no 429 in 25 rapid calls (the limiter admitted all of them)"
 [ "$ok" -ge 1 ] || fail "no 200 in 25 rapid calls (the limiter refused everything; burst=10)"
-retry_after="$(grep -ih '^retry-after:' "$LOG_DIR"/d850_hdr_* | sed -E 's/^[Rr]etry-[Aa]fter:[[:space:]]*//' | tr -d '\r')"
+retry_after="$(grep -ih '^retry-after:' "$LOG_DIR"/d850_hdr_* | head -1 \
+    | sed -E 's/^[Rr]etry-[Aa]fter:[[:space:]]*//' | tr -d '\r')"
 [ "$retry_after" = "1" ] || fail "a 429 is missing Retry-After: 1 (saw: '${retry_after:-none}')"
 echo "  25 rapid calls -> $ok admitted, $limited refused; a 429 carries Retry-After: 1"
 
