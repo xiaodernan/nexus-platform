@@ -204,4 +204,29 @@ info="$(curl -fsS -H 'Accept: application/json' "http://127.0.0.1:$NEXUS_ADMIN_P
 echo "$info" | grep -q '"status":"UP"' || fail "the admin shows NEXUS-GATEWAY but not UP: $info"
 echo "  the admin shows NEXUS-GATEWAY as UP with its endpoints"
 
+echo "== the dispatcher joins the eureka view (D1004 — the admin server already lists it) =="
+DISP_PORT="${NEXUS_DISPATCHER_SMOKE_PORT:-19561}"
+NEXUS_DISPATCHER_EUREKA_ENABLED=true \
+NEXUS_EUREKA_URI="http://127.0.0.1:$EUREKA_PORT/eureka/" \
+NEXUS_DISPATCHER_URL="${NEXUS_REDIS_URL:-redis://127.0.0.1:6380/0}" \
+NEXUS_DISPATCHER_ENABLED=true \
+java -jar "$CLOUD/dispatcher-service/target/app.jar" \
+    --server.port="$DISP_PORT" \
+    --spring.profiles.active=dev,cloud \
+    >"$LOG_DIR/dispatcher-eureka.log" 2>&1 &
+PIDS+=("$!")
+wait_health dispatcher "$DISP_PORT"
+disp_listed=0
+attempt=0
+while [ "$attempt" -lt 90 ]; do
+    if curl -fsS -H 'Accept: application/json' "http://127.0.0.1:$NEXUS_ADMIN_PORT/instances" 2>/dev/null | grep -q '"name":"NEXUS-DISPATCHER"'; then
+        disp_listed=1
+        break
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+done
+[ "$disp_listed" = 1 ] || fail "the admin server never listed NEXUS-DISPATCHER (see $LOG_DIR/dispatcher-eureka.log)"
+echo "  /instances lists NEXUS-DISPATCHER as well, discovered live through the registry"
+
 echo "PASS: cloud plane smoke - eureka + config + gateway + admin"

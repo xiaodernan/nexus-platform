@@ -42482,3 +42482,14 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **What was verified.** All 131 live-DB tests in the eight files above pass locally on this seed (`NEXUS_TEST_DATABASE_URL=postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_gate_ai`); ruff/mypy clean. CI remains the verifier of record under its own `--now`.
 
 - readers: the test files themselves, this ledger entry.
+## 1004. D1004 — the dispatcher joins the plane and the admin lists it: the seventh member finally appears to the operator
+
+**The gap.** Six of seven cloud members (eureka, config, gateway, monolith, ai, admin) have an invincible `/instances` presence under the cloud-smoke plane. The seventh — the webhook dispatcher (D973) — had none: its `application.yaml` defaults `register-with-eureka=false` and nothing in any smoke starts it with the engine on. The D994 hot-refresh proved it can speak config-server and keep state; nothing proved it can be seen.
+
+**The fix.** `scripts/cloud_smoke.sh` gained a dispatcher phase after the `admin` block: boot dispatcher-service/app.jar with `NEXUS_DISPATCHER_EUREKA_ENABLED=true` (surely on because smoke is a fresh plane), `spring.profiles.active=dev,cloud`, `NEXUS_DISPATCHER_URL=redis://127.0.0.1:6380/0`, wait for `/actuator/health`, poll admin's `/instances` until `NEXUS-DISPATCHER` shows, and fail with a direct message if it never does. `cloud_smoke.sh`'s `PIDS` kill-list keeps the port clean; the same loop count and log shape as the gateway/admin branches.
+
+**Verified.** Local boot of dispatcher standalone + cloud smoke round trip (log at `/tmp/cloud_smoke_d1004.log`). CI's cloud job (path-filtered for `services/cloud` and `scripts/cloud_*`) re-runs this phase. `scripts/check_dispatcher_eureka_admin.mjs` pins default `false` / smoke-enabled `true` / admin-grep / kill-list / CI / ATLAS / ledger — `--self-test` reddens eight corruption arms.
+
+**This does NOT claim** that CI's cloud job will return green for this push (the chain is gated, D997 etc. still in flight), that the dispatcher serves any real hook (empty hook list — same as D973), or that the admin's granularity covers dispatcher detail — it now just sees the name + UP, like every other member.
+
+- readers: `scripts/check_dispatcher_eureka_admin.mjs`, this ledger entry, `scripts/cloud_smoke.sh`.
