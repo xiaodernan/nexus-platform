@@ -64,9 +64,15 @@ nexus:
 YAML
 
 echo "== start Config Server on :$CONFIG_PORT against the throwaway repo =="
-# Git Bash's mktemp dir lives in MSYS2's /tmp, which the JVM cannot resolve as a Windows path;
-# cygpath -m gives the drive-letter spelling, as scripts/cloud_refresh.sh already established.
-TMP_REPO_JAVA="file:///$(cygpath -m "$TMP_REPO" | sed 's|\\|/|g')"
+# D993: same cross-platform guard as cloud_refresh.sh / cloud_monolith_refresh.sh. mktemp -d yields
+# an absolute POSIX path on Linux (/tmp/...), already a valid file:// URI; only Git Bash/MSYS2 needs
+# cygpath -m for the drive-letter spelling. An unconditional cygpath emits a bare "file:///" on CI's
+# Linux runner (command not found -> the label never reaches the config server). Guard its presence.
+if command -v cygpath >/dev/null 2>&1; then
+    TMP_REPO_JAVA="file:///$(cygpath -m "$TMP_REPO" | sed 's|\\|/|g')"
+else
+    TMP_REPO_JAVA="file://$TMP_REPO"
+fi
 java -jar "$CLOUD/config-server/target/app.jar" \
     --server.port="$CONFIG_PORT" \
     --spring.cloud.config.server.native.search-locations="$TMP_REPO_JAVA" \

@@ -77,9 +77,17 @@ YAML
 echo "  $TMP_REPO/nexus-gateway.yml carries refresh-v1"
 
 echo "== start config server against the throwaway repo =="
-# Git Bash's mktemp dir lives in MSYS2's /tmp, which the JVM cannot resolve as a Windows path;
-# cygpath -m gives the drive-letter spelling (D:/...), and file:///D:/... binds in the probe.
-TMP_REPO_JAVA="file:///$(cygpath -m "$TMP_REPO" | sed 's|\\|/|g')"
+# D993: method from cloud_monolith_refresh.sh — mktemp -d yields an absolute POSIX path on Linux
+# (/tmp/...), which is already a valid file:// URI and must be used AS-IS; only Git Bash/MSYS2 needs
+# cygpath -m to spell it as a drive letter (D:/...) the JVM can resolve. An unconditional cygpath made
+# CI's Linux runner emit a bare "file:///" (command not found -> empty substitution), so the config
+# server read the filesystem root, never saw nexus-gateway.yml, and the gateway fell back to label
+# 'local' instead of the repo's refresh-v1. Guard on the command's presence, never assume it.
+if command -v cygpath >/dev/null 2>&1; then
+    TMP_REPO_JAVA="file:///$(cygpath -m "$TMP_REPO" | sed 's|\\|/|g')"
+else
+    TMP_REPO_JAVA="file://$TMP_REPO"
+fi
 echo "  config repo location: $TMP_REPO_JAVA"
 java -jar "$CLOUD/config-server/target/app.jar" \
     --server.port="$CONFIG_PORT" \

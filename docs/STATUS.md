@@ -42267,3 +42267,89 @@ Priority: explicit migration superuser secret (split-role production) > infra ro
 **Concurrency / fold.** While this unit was being diagnosed, a concurrent lane left two uncommitted, related edits in the shared tree: `scripts/cloud_lb_smoke.sh` gained a bounded `fail()` dump of each child log's tail (so a future CI failure shows the real cause instead of only an expired wait), and `services/cloud/gateway/src/main/resources/application.yaml` gained `connect-timeout/response-timeout: 4000` for cold-start health hops. Both were already in the working tree (mtimes 22:00/22:08, ~8 min idle) when I judged the lane stopped; per the standing "pick up an idled merge and finish it" authorization I fold them into this unit — the log dump is exactly the observability this diagnosis needed, and the gateway timeout is an honest cold-start guard. Neither touches the root cause (a crashed context), which the config fix owns. No other lane file was rewritten; my pathspec is exact.
 
 **What this does NOT claim:** that the CI cloud job has been re-run green (it is the wire verifier of record; this unit ships the fix + a source gate + a local scram reproduction, not a fresh CI result); that any live SCRAM handshake or migration runs inside CI from this reader (it does not — the real proof is the opt-in git-ignored probe above); that `gpt-6-sol` or any key/secret value appears anywhere in the repo (the fix passes one env var through to Flyway and prints nothing); that the migration policy / role split / V1–V12 content changed (none did); or that the sibling refresh smokes were independently boot-proven (they inherit the same config cascade by construction). D988–D990 remain this HEAD's ledger; D991 was left unused to avoid colliding with the concurrent lane's numbering; this unit takes D992.
+
+
+## 993. D993 — with platform-health green, the next cloud red was a Windows-only `cygpath` in the config-repo refresh smokes
+
+**Where the red moved (CI run 43239073952, head 68fdb85 — the D992 push).** This is the run that PROVES
+D992 worked: `platform :: success` and the cloud job got past `cloud_smoke.sh` and `cloud_lb_smoke.sh`
+(no more `platform never answered "status":"ok"` — the Flyway cascade fixed it) and advanced to the
+refresh smoke, where it red:
+```
+scripts/cloud_refresh.sh: line 82: cygpath: command not found
+  config repo location: file:///
+  FAIL: gateway resolved label 'local' instead of the repo's refresh-v1
+```
+`required :: failure` on `cloud :: failure`; all other jobs green/skipped. So D992's fix is
+CI-confirmed on the wire up to the next independent defect, which this unit takes.
+
+**The root cause (a Windows-only assumption in a CI-run script).** `cloud_refresh.sh:82` built the
+Config Server's native search URI as `TMP_REPO_JAVA="file:///$(cygpath -m "$TMP_REPO" | sed ...)".
+`mktemp -d /tmp/nexus-refresh-repo.XXXXXX` is an absolute POSIX path on Linux and already a valid
+`file:///tmp/...` URI; `cygpath -m` exists only to re-spell MSYS2's `/tmp/...` as `D:/...` for the
+JVM on Git Bash. On CI's Ubuntu runner `cygpath` is absent: the command substitution is empty,
+the URI collapses to bare `file:///` (filesystem root), Config Server never sees the throwaway
+`nexus-gateway.yml` (which carries `label: refresh-v1`), so the gateway falls back to its default
+label `local`. `insight_config_smoke.sh:69` carried the IDENTICAL unconditional line and would have
+been the next red once refresh was fixed (it runs later in the same cloud job's chain).
+
+**The proven shape already shipped.** `cloud_monolith_refresh.sh:84-89` already had the correct
+cross-platform guard, so this is not inventing a fix — it is propagating an existing, proven one:
+```
+if command -v cygpath >/dev/null 2>&1; then
+    TMP_REPO_JAVA="file:///$(cygpath -m "$TMP_REPO" | sed 's|\\|/|g')"
+else
+    TMP_REPO_JAVA="file://$TMP_REPO"
+fi
+```
+Applied verbatim to `cloud_refresh.sh` and `insight_config_smoke.sh`; the monolith script is
+untouched. On Linux the else arm yields `file:///tmp/nexus-...` (resolves the real repo); on Git
+Bash the then arm yields `file:///D:/...` (the drive-letter spelling the JVM needs).
+
+**Falsifiable branch probe (opt-in, git-ignored `tmp/d993_branch_probe.sh`, not in the commit).**
+ARM A (cygpath present) -> `file:///C:/Users/.../nexus-d993-probe...`, drive-letter URI the JVM
+resolves: YES. ARM B (the else arm a cygpath-less runner executes) -> `file:///tmp/nexus-d993-probe...`,
+NOT the bare `file:///` bug, and `nexus-gateway.yml` resolves under the URI path: YES. ARM C
+(the old unconditional expression with cygpath absent) -> the substitution is empty and the URI
+has no repo path -> Config Server reads the root -> label falls back to `local`. Probe exit 0.
+We cannot truly delete `cygpath` from a Git Bash PATH (it is an MSYS2 core tool in /usr/bin), so the
+POSIX arm is evaluated directly as the else-branch expression — which is exactly what a Linux
+runner executes when `command -v cygpath` fails; the SOURCE gate below pins the guard shape so the
+two can't drift.
+
+**Gate.** `scripts/check_config_repo_uri_portable.mjs` — SOURCE gate (starts no JVM/Config
+Server/gateway): every shipped `scripts/*.sh` mentioning `cygpath` must (R1) guard it with
+`command -v cygpath`, (R2) carry the bare POSIX `file://$TMP_REPO` else arm, (R3) have every
+`cygpath -m` invocation directly inside that guard (no naked second call); the three known scripts
+(`cloud_refresh` / `cloud_monolith_refresh` / `insight_config_smoke`) must all be present+guarded
+(R4, so deleting every cygpath mention cannot pass a vacuous census), each must be invoked by CI's
+cloud job, and CI/ATLAS/ledger wiring must hold (R5). `--self-test`: 18 corruption arms + D954
+no-op guard + D959 line-anchored `## 993.` heading + a GREEN control + real-plane control.
+Design lesson folded in from D976/D992: the census reads the SHIPPED scripts' structure, not a
+reader constant, so a guard-removal corruption reddens for its RIGHT expect tag (the first draft's
+`REQUIRED-NAKED` check contradicted the legal guarded shape and was removed; the naked-call arms
+now plant an extra invocation AFTER the guard, which the R3 per-line check catches).
+
+**Wiring / verification.** CI line 171 chain extended inline (still 535 lines); ATLAS reader row
++ all three script paths (213 cited paths); `bash -n` on both fixed scripts; check_atlas PASS;
+the cloud job in CI is the wire verifier of record for the refresh round trip and will re-run on
+this push. No secret, no `.env`, no key value in any D993 file (the repo is a throwaway mktemp dir).
+
+**Concurrency / boundary.** This unit was picked up after the D992 push revealed the moved red;
+the concurrent lane that had touched `cloud_lb_smoke.sh` / gateway yaml (folded into D992) made no
+further commits (reflog clean at `ecbf906` until my `68fdb85`). D993 touches only the two scripts
+with the unconditional cygpath + its reader + CI/ATLAS/ledger. D991/D992 numbering respected;
+D993 is this unit.
+
+**What this does NOT claim:** that the CI cloud job has been re-run fully green (the wire verifier
+of record re-runs on this push; this unit ships the fix + source gate + a local branch probe, not a
+fresh CI result); that any live Config Server refresh round trip passed locally (no JVM/gateway
+was booted here — the probe evaluates URI construction only); that the monolith refresh script
+changed (it was already correct); that config content / refresh semantics / the committed config
+repo changed (none did); or that insight_config_smoke's full chain was re-run (it inherits the
+same guard by construction and is invoked by the same CI chain). The reader is a structural
+census, not a runtime assertion.
+
+readers: `scripts/check_config_repo_uri_portable.mjs`, `scripts/cloud_refresh.sh`,
+`scripts/cloud_monolith_refresh.sh` (reference shape, unchanged), `scripts/insight_config_smoke.sh`,
+`docs/ATLAS.md`, `docs/STATUS.md` (§993), `.github/workflows/ci.yml` (line 171 chain).
