@@ -36,6 +36,14 @@ def next_code(path: str) -> int:
 
 
 class Handler(BaseHTTPRequestHandler):
+    # D995: the gateway's Netty client pools keep-alive connections. Under HTTP/1.0's
+    # connection-close-per-response default, the socket dies on every reuse and the pooled
+    # reader sees an abort — which the gateway reports as a timeout/exceptions and answers 503
+    # instead of passing the fixture's response through. HTTP/1.1 + Content-Length (always set)
+    # keeps the socket legitimately alive so the gateway's pool can reuse it, exactly like a real
+    # origin server would serve it.
+    protocol_version = 'HTTP/1.1'
+
     def _go(self):
         path = self.path
         code = next_code(path)

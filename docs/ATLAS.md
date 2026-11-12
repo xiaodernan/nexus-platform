@@ -198,7 +198,7 @@ all three in the wiring-reads step, while `scripts/verify_all.mjs` is the one-co
 | `scripts/cloud_lb_smoke.sh` | a real request through `lb://NEXUS-PLATFORM` and `lb://NEXUS-AI` |
 | `scripts/cloud_refresh.sh` | config edit lands at the edge, no restart |
 | `scripts/cloud_monolith_refresh.sh` | config edit lands on the monolith, same pid |
-| `scripts/cloud_retry_smoke.sh` | GET retries twice, POST never retries, honest 503 + 5xx counter |
+| `scripts/cloud_retry_smoke.sh` | GET retries twice, POST never retries, honest 503 + 5xx counter | D995: the POST arm 's 503-envelope witness moved off the budget-busted fixture path to the dead-upstream web route (deterministic), and the fixture speaks HTTP/1.1 keep-alive so Netty pools legitimately; resilience4j.timelimiter=3s pins the cold-start headroom the 1s Reactor default never had |
 | `scripts/cloud_trace_smoke.sh` | D884: W3C `traceparent` minted / continued / rejected honestly, measured against `scripts/fixture_trace_echo.py` |
 | `scripts/cloud_trace_fallback_smoke.sh` | D896: ONE inbound `traceparent` survives all three gateway answers — healthy 200, breaker 503 fallback and limiter 429 — with the same trace id and a fresh child span on each |
 | `scripts/falsify_cloud_trace_fallback_smoke.sh` | D896: with the AI route pointed at the healthy fixture, no 503 exists and the unchanged trace assertion MUST fail while the fixture, gateway and 200 control are all proven up |

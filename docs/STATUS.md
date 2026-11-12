@@ -42375,3 +42375,22 @@ readers: `scripts/check_config_repo_uri_portable.mjs`, `scripts/cloud_refresh.sh
 **What this does NOT claim.** No live cluster where ci.yml's cloud job has re-run green (wire verifier of record is this commit push; the smoke exists in the cloud chain for the next run). No claim about the events sidecar serving config values through its own endpoints (it exposes `/events/ring`, not a config view). No claim about refresh semantics outside the label (the throwaway repo only carries `nexus.dispatcher.label`).
 
 - readers: `scripts/check_d994_config_stack_complete.mjs`, this ledger entry, `scripts/dispatcher_config_smoke.sh`, `services/cloud/dispatcher-service/src/main/java/com/nexus/cloud/dispatcher/DispatcherConfigController.java`.
+## 995. D995 — the cloud retry smoke's POST arm had never been runnable: the 503 it asserted required both an exhausted fixture budget and a resilience4j default timeout of 1s; CI proved red, two structural fixes pinned it
+
+**The hole.** D993's CI run (43241914927, head 53b26e2) reached the last smoke in the cloud chain and stopped on `cloud_retry_smoke.sh`: `POST to a failing upstream answered 200, expected 503 edge_upstream_unavailable`. The assertion was impossible three distinct ways, each measured:
+
+* The fixture (`/api/v1/health`) is a monotonic per-path counter: GET consumed hits #1-3 (500, 500, 200) in the retry arm, so by the POST arm's turn `FAILS_FIRST=2` is spent and the fixture answers **200** — there is no failure left on that path to witness.
+* resilience4j's Reactor integration applies an *unconfigured* `timeoutDuration=1s` to every upstream call: the CI run plus this host's POST got the `TimeoutException("within 1000ms")` treatment before the fixture could even answer, and the breaker recorded it as failure.
+* the Python fixture served HTTP/1.0 (`connection close` per response) while the gateway's Netty client pools keep-alive sockets — every pooled reuse read an aborted socket (`HttpClientConnect - The connection observed an error`), and on a slow host that abort turned into the same 1000ms timeout.
+
+Fixture log/gateway log evidence (this unit's repro, preserved in `/tmp/nexus-cloud-retry/`): fixture recorded `HIT ready 200`, `hit /api/v1/health 500×2`, `200`, `200`; gateway `CircuitBreaker 'platform' recorded an exception as failure: TimeoutException`/`FAILURE_RATE_EXCEEDED 80.0`/CLOSED->OPEN/NOT_PERMITTED; web burst identical with DNS-resolution `DnsResolveContext` stack lines; the final envelope was the right `edge_upstream_unavailable` 503 on every dead-upstream call.
+
+**The fix.**
+
+* `scripts/fixture_flaky_upstream.py`: `protocol_version = 'HTTP/1.1'` — with `Content-Length` on every response the sockets are legitimately reusable by Netty's pool.
+* `services/cloud/gateway/src/main/resources/application.yaml`: `resilience4j.timelimiter.instances.{platform,ai,web}.timeoutDuration = 3s` (the 1s Reactor default had no basis on a cold dev plane or a slow fixture; nothing in the repo pinned it).
+* `scripts/cloud_retry_smoke.sh`: the POST arm keeps its exact, deterministic meaning (`one hit`, `never retried`, `never 405`) on the fixture path whose budget it needs; the `503 edge_upstream_unavailable` envelope assertion moves to the route with a genuinely failing upstream (`/web-check` → `NEXUS_WEB_URI=127.0.0.1:9`, deliberately closed) — that is where D875's method-agnostic fallback actually lives; the `nexus.edge.response.5xx` floor moves from `exactly 1` to `at least 1` so the budget-busted fixture POST (fast hosts answer its 200, slow hosts its 503) can never flake the metric.
+
+**Verified end-to-end:** GET 200, exactly 3 fixture hits (retry fires), metrics list includes `http.server.requests`, `resilience4j.circuitbreaker.*`, `resilience4j.timelimiter.calls`; POST through the fixture → 200, exactly one hit, not 405; POST /web-check → 503 `edge_upstream_unavailable` (method-aware envelope); metric = 1.
+
+- readers: `scripts/cloud_retry_smoke.sh` (in the CI cloud chain), this ledger entry.
