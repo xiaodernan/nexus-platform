@@ -178,7 +178,10 @@ assert_registry_is_ours
 echo "== start the monolith (profiles dev,cloud) =="
 start platform "$ROOT/services/platform/target/nexus-platform.jar" \
     --spring.profiles.active=dev,cloud --server.port="$PLATFORM_PORT"
-wait_for platform "http://127.0.0.1:$PLATFORM_PORT/api/v1/health" '"status":"ok"' 150
+# The boot budget for the platform/AI is env-tunable so CI (cold, slow runner) gets a wider budget than a development machine.
+PLATFORM_WAIT="${NEXUS_LB_PLATFORM_WAIT:-240}"
+AI_WAIT="${NEXUS_LB_AI_WAIT:-180}"
+wait_for platform "http://127.0.0.1:$PLATFORM_PORT/api/v1/health" '"status":"ok"' "$PLATFORM_WAIT"
 
 echo "== the registry learns the monolith =="
 registered=0
@@ -212,7 +215,7 @@ env NEXUS_AI_HOST_PORT="$AI_PORT" \
     uv run --directory "$ROOT/apps/ai" python start_ai.py >"$LOG_DIR/ai-lb.log" 2>&1 &
 PIDS+=("$!")
 echo "  ai started (pid $!)"
-wait_for ai "http://127.0.0.1:$AI_PORT/ai/v1/health" '"status":"ok"' 150
+wait_for ai "http://127.0.0.1:$AI_PORT/ai/v1/health" '"status":"ok"' "$AI_WAIT"
 
 echo "== the registry learns the AI =="
 registered_ai=0
@@ -298,8 +301,7 @@ for i in $(seq 1 25); do
 done
 [ "$limited" -ge 1 ] || fail "no 429 in 25 rapid calls (the limiter admitted all of them)"
 [ "$ok" -ge 1 ] || fail "no 200 in 25 rapid calls (the limiter refused everything; burst=10)"
-retry_after="$(grep -i '^retry-after:' "$LOG_DIR"/d850_hdr_* | head -1 \
-    | sed -E 's/^[^:]*[Rr]etry-[Aa]fter:[[:space:]]*//' | tr -d '\r')"
+retry_after="$(grep -ih '^retry-after:' "$LOG_DIR"/d850_hdr_* | sed -E 's/^[Rr]etry-[Aa]fter:[[:space:]]*//' | tr -d '\r')"
 [ "$retry_after" = "1" ] || fail "a 429 is missing Retry-After: 1 (saw: '${retry_after:-none}')"
 echo "  25 rapid calls -> $ok admitted, $limited refused; a 429 carries Retry-After: 1"
 

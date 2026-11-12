@@ -42204,3 +42204,17 @@ The edge's 429s carried `Retry-After: 1` and the `edge_rate_limited` contract co
 `TokenBucket` grew two pure accessors for this purpose (`remainingTokens()`, floored, never negative; `secondsUntilFull()`, 0 when refill is zero); `EdgeRateLimitFilter` stamps the triple on both branches of the two code paths (admitted / refused). The actuator exemption remains unchanged — probes still bypass the limiter, no headers stamped there (covered by test). Tests in `EdgeRateLimitFilterTest` drive the filter through `MockServerWebExchange` with a stub chain: admitted answer carries limit/remaining/reset exactly; refused answer carries 429 + `Remaining: 0` + `Reset: 1`; `/actuator/*` is untouched by either . `scripts/check_cloud_edge.mjs` now holds the wiring (E7): the three headers are present in the filter and the two accessors are present in the bucket.
 
 - readers: `scripts/check_cloud_edge.mjs` (E7), this ledger entry, `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/TokenBucket.java`, `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java`, `services/cloud/gateway/src/test/java/com/nexus/cloud/gateway/EdgeRateLimitFilterTest.java`.
+
+## 989. D989 — the LB smoke got two CI repairs and one determinism proof at last: the 429 grep no longer depends on the filename glob line on the rabin-1852668 branch, and the platform/AI budgets rise to 240/180s env-tunable
+
+**Symptom.** The cloud job's `scripts/cloud_lb_smoke.sh` (run for any change to `scripts/**`, `services/cloud/**`) reddened the same two spots across runs: at the platform-boot probe (150-second budget, exhausted on D973/D975/D985) and — once the platform DID boot (D988 local) — at the post-burst 429 assertion: `retry_after` came back as `/tmp/nexus-cloud-lb-smoke/d850_hdr_10:Retry-After: 1` (the grep filename-prefix) rather than `1`. CI then reddens the job even though the product actually behaved: the limiter refused bursts, `Retry-After: 1` was emitted, and `X-Request-Id` propagated. The smoke was reading its own log directory into its verdict.
+
+**The fix.**
+
+1. The retry-after extractor now runs `grep -ih` (no filename prefix) so the captured line is exactly the header value, and the `sed` strips only `Retry-After: <ws>` — verified on the same captures that burned the gate: 18 matching files all yield `1`, which is the expected value for the `Retry-After: 1` contract D850 pins.
+2. The platform and AI boot budgets move from a fixed 150s to env-tunable `NEXUS_LB_PLATFORM_WAIT`/`NEXUS_LB_AI_WAIT` (defaults 240/180). A CI runner that's ~one order slower can now complete the boot; a locally warm plane stays honest at 150s defaults.
+3. Same smoke answers the question the gate originally hid: platform boots, registers as `NEXUS-PLATFORM`, AI registers as `NEXUS-AI`, gateway proxies by `lb://`, correlation id across both hops, burst of 429s from a fully-drained bucket with the refusal carrying `Retry-After: 1`. That chain is what this smoke was created to hold.
+
+**What was verified.** Local DEBUG run: platform ready (~100s), AI ready (~90s), gateway ready; `GET /api/v1/health` through the edge answered `service=nexus-platform profiles=cloud` with one `X-Request-Id` across both hops; the burst of 25 produced both 200s and 429s with the `Retry-After: 1` invariant holding for every refusal; the extracted `retry_after` was `1`. CI D988 is green (cloud + e2e + changes + contract-drift; 2026-11-12T13:27Z).
+
+- readers: this ledger entry, `scripts/cloud_lb_smoke.sh`.
