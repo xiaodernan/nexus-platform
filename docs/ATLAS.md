@@ -109,7 +109,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_cloud_plane.mjs` | the whole sidecar plane: reactor, app names, load-bearing tokens, compose, CI, this doc family |
 | `scripts/check_cloud_plane_ports.mjs` | host coordinate ownership (free / ours / foreign) and one port map |
 | `scripts/check_cloud_discovery.mjs` | opt-in registration of platform + AI and `lb://` routing by profile |
-| `scripts/check_cloud_edge.mjs` | breakers, limiter, request-id, five-method fallbacks, smoke assertions |
+| `scripts/check_cloud_edge.mjs` | breakers, limiter, request-id, five-method fallbacks, smoke assertions | | D988's E7 claim extends this reader: the admitted and the refused answers both carry X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset; the actuator exemption stays; TokenBucket now exposes remainingTokens()/secondsUntilFull() |
 | `scripts/check_cloud_trace.mjs` | D884: W3C filter, strict grammar, Python participant, unit tests, smoke, CI step, honesty clause |
 | `scripts/check_cloud_trace_fallback.mjs` | D896: the 200/503/429 trace smoke, its no-degrade falsifier, the filter ORDER (tracing before the limiter), CI/ATLAS/ledger wiring, and a self-test that plants eight corruptions |
 | `scripts/check_cloud_ha_failover.mjs` | D897: the empty-cache anti-false-positive design, the primary kill, the LATE registration on the secondary, the single-registry falsifier, the NOT-SHIPPED honesty clause, and nine planted corruptions |

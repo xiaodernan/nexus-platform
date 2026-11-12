@@ -25,6 +25,22 @@ public final class TokenBucket {
         this.lastRefillNanos = System.nanoTime();
     }
 
+    /** Tokens left after the last refill, floored. Never negative. */
+    public synchronized int remainingTokens() {
+        refill();
+        return Math.max(0, (int) tokens);
+    }
+
+    /** Seconds until the bucket is full again; 0 when already full, or when refill is zero. */
+    public synchronized int secondsUntilFull() {
+        refill();
+        double missing = capacity - tokens;
+        if (missing <= 0 || refillPerSecond <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil(missing / refillPerSecond);
+    }
+
     /** Refills for the elapsed time, then admits (and charges) one token if any remain. */
     public synchronized boolean tryAcquire() {
         refill();

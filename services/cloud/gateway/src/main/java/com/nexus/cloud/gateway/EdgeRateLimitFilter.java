@@ -84,9 +84,18 @@ public class EdgeRateLimitFilter implements GlobalFilter, Ordered {
         String key = clientKey(exchange);
         TokenBucket bucket = buckets.computeIfAbsent(key, k -> new TokenBucket(burst, replenish));
         if (bucket.tryAcquire()) {
+            // IETF RateLimit: limit, remaining and reset-seconds travel on EVERY allowed answer,
+            // so a client can pace itself without probing the 429 — the refused answer says the same
+            // thing with remaining=0. Not information disclosure: everything here is public policy, and
+            // an orchestrator that wants to throttle this client needs it.
+            exchange.getResponse().getHeaders().set("X-RateLimit-Limit", String.valueOf(burst));
+            exchange.getResponse().getHeaders()
+                    .set("X-RateLimit-Remaining", String.valueOf(bucket.remainingTokens()));
+            exchange.getResponse().getHeaders()
+                    .set("X-RateLimit-Reset", String.valueOf(bucket.secondsUntilFull()));
             return chain.filter(exchange);
         }
-        return tooManyRequests(exchange);
+        return tooManyRequests(exchange, bucket);
     }
 
     private static String clientKey(ServerWebExchange exchange) {
@@ -94,9 +103,13 @@ public class EdgeRateLimitFilter implements GlobalFilter, Ordered {
         return remote != null && remote.getAddress() != null ? remote.getAddress().getHostAddress() : "unknown";
     }
 
-    private Mono<Void> tooManyRequests(ServerWebExchange exchange) {
+    private Mono<Void> tooManyRequests(ServerWebExchange exchange, TokenBucket bucket) {
         exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
         exchange.getResponse().getHeaders().set("Retry-After", "1");
+        exchange.getResponse().getHeaders().set("X-RateLimit-Limit", String.valueOf(burst));
+        exchange.getResponse().getHeaders().set("X-RateLimit-Remaining", "0");
+        exchange.getResponse().getHeaders()
+                .set("X-RateLimit-Reset", String.valueOf(bucket.secondsUntilFull()));
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         String requestId = exchange.getResponse().getHeaders().getFirst(EdgeRequestIdFilter.HEADER);
         Map<String, Object> error = Map.of(

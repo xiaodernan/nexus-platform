@@ -186,6 +186,29 @@ function main(value, flag) {
   }
   note('E5 limiter behaviour contract', rlChecks.every(([n]) => rl.includes(n)), 'GlobalFilter + order + env knobs + 429/Retry-After/edge_rate_limited');
 
+  /* E7 — the edge tells the truth about the budget: the IETF RateLimit triple rides the
+     admitted path AND the refused answer, so a client paces itself without probing the 429. */
+  const e7 = [
+    ['X-RateLimit-Limit', 'X-RateLimit-Limit wired'],
+    ['X-RateLimit-Remaining', 'X-RateLimit-Remaining wired'],
+    ['X-RateLimit-Reset', 'X-RateLimit-Reset wired'],
+  ];
+  for (const [needle, label] of e7) {
+    if (!rl.includes(needle)) charge('E7', `EdgeRateLimitFilter.java: ${label} not found`);
+  }
+  const e7Note = e7.every(([n]) => rl.includes(n));
+  if (BUCKET_JAVA !== undefined) {
+    const bkt = text[BUCKET_JAVA];
+    for (const needle of ['remainingTokens()', 'secondsUntilFull()']) {
+      if (!bkt.includes(needle)) charge('E7', `TokenBucket.java: ${needle} accessor missing`);
+    }
+    note('E7 admitted and refused answers carry the RateLimit triple',
+         e7Note && bkt.includes('remainingTokens()') && bkt.includes('secondsUntilFull()'),
+         'X-RateLimit-Limit/Remaining/Reset on admitted and refused answers; TokenBucket exposes remainingTokens + secondsUntilFull');
+  } else {
+    console.log('  note  E7 RateLimit triple wiring — TokenBucket.java missing (optional surface, claims unmeasured)');
+  }
+
   /* E6 — the smokes carry the proofs, so a gutted assertion cannot read as green */
   if (text[SMOKE] !== undefined) {
     const proofs = ['STATE_TRANSITION', 'edge_upstream_unavailable', "CircuitBreaker 'platform'"];
