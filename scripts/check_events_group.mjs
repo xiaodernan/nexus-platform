@@ -17,7 +17,8 @@
  * wiring. It runs on source text only; it starts no JVM and touches no Redis — the smoke owns that.
  *
  * SELF-TEST: `judge` is pure over (path -> text). `--self-test` plants corruptions in memory — an
- * XACK erased, the opt-in default flipped to TRUE, the /events/group mapping removed, the smoke's
+ * XACK erased (EVERY xack call site, D931's group drain and D950's XAUTOCLAIM reclaim alike), the
+ * opt-in default flipped to TRUE, the /events/group mapping removed, the smoke's
  * SPLIT assertion weakened, the falsifier's group-disable flipped, the honesty clause reverted to
  * "does not participate in consumer groups", and a deleted CI entry — and requires EACH to redden
  * while the real plane holds. A seam whose proof can vanish unnoticed is not a seam.
@@ -154,7 +155,10 @@ if (SELF_TEST) {
     const f = new Map(real);
     const text = f.get(path);
     if (!text.includes(from)) return { skipped: `plant token ${JSON.stringify(from)} absent in ${path}` };
-    f.set(path, text.replace(from, to));
+    // Replace EVERY occurrence. A plane with two `xack(` call sites (D931's group drain and
+    // D950's XAUTOCLAIM reclaim) cannot be corrupted by erasing only the first - the judge would
+    // still see a live XACK and the arm would wrongly stay green on a half-broken plane.
+    f.set(path, text.split(from).join(to));
     return { files: f };
   };
   const arms = [

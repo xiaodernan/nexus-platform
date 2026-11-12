@@ -42022,3 +42022,17 @@ flipping the product back to a synchronous `future.get` makes arm (3) RED at its
   dispatcher/DispatcherWorkerDrainTest.java` (offline probe).
 - wiring: CI line 171 self-test chain (535 lines stable), ATLAS reader + probe paths, this ledger.
   `verify_all` PASS, reader reachability grows by one.
+
+## 976. D976 — the events-group self-test corrupted only the FIRST `xack(` call site, so the seam the suite claimed to falsify stayed standing and the cloud job went red on a healthy plane
+
+**Symptom.** Master run `43136140978` (D975 push) went `cloud: failure` at the `check_events_group.mjs --self-test` arm: `self-test  XACK erased  GREEN (defect!) offenders=0` and then `all arms redden: false` → exit 1. Every other arm behaved; only this one stayed green.
+
+**Root cause.** The arm mutates `EventsReader.java` to replace `connection.sync().xack(` with a noop — "an XACK erased, can the wiring still claim the seam exists?". JavaScript `String.replace(from, to)` with a literal string erases ONLY THE FIRST match. Since D950 landed, `services/cloud/events-service/.../EventsReader.java` carries TWO XACK call sites (`xack(` in the D931 group drain and in D950's XAUTOCLAIM reclaim path, currently `EventsReader.java:277` and `:307`). The corrupted plane therefore still contained a real XACK, the D931 judge found nothing to flag, and the self-test arm — the very proof the reader exists to provide — silently passed on a half-broken plane. The file count for every other arm's token was 1 (verified: `GROUP_ENABLED:false`, `@GetMapping("/events/group")`, `"$sum" -ne "$N"`, `NEXUS_EVENTS_GROUP_OFF=1`, `does NOT backpressure into the platform`, the CI self-test invocation — all singletons). Only this token is plural.
+
+This is the same class of defect D972 fixed in the AI tool-result cache and D974/D975 fixed in the dispatcher: a fixture/harness that assumes singleness in a place the product no longer is. The line-cite gate exists for this exact shape on the citation plane; the readers had no equivalent for code-text plants.
+
+**Fix.** `scripts/check_events_group.mjs` — `mutate` now replaces EVERY occurrence: `text.split(from).join(to)` instead of `text.replace(from, to)`. No contract change to the judge, no new claim; the corrupted plane now actually has no XACK anywhere. Docblock updated to say so. Verified locally: `node scripts/check_events_group.mjs` forward PASS (54 holds); `--self-test` reddens all 7 arms (XACK erased now red, offenders=1).
+
+**Blast radius / what is NOT claimed.** The judge and its claims are untouched; only the self-test's corruption got stronger. No product code, no events-service behaviour, no ledger gates, no CI structure. The cloud job failed on the self-test harness, not on any product wiring: D931's seam was genuinely intact on master (the failing arm is the one that simulates the seam being broken).
+
+- readers: `scripts/check_events_group.mjs`, this ledger entry.
