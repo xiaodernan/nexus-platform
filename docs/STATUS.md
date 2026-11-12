@@ -21771,7 +21771,7 @@ Two defects in one seam, and each one hid the other.
 
 **The lane was shut from the other side.** `apps/ai/nexus_ai/api/pipeline.py` was created by `954decb` (D383, 2026-10-20) and has gated the query-vector call on `deps.settings.embedding_provider == "hashing"` for the whole of its life: the offline adapter was asked for a vector on every query and the semantic provider — the one AGENT_CONTRACT §6 names for paraphrase recall — never was. The vector lane it feeds is real and downstream code is ready for it (`search/sql.py` scores `1 - (c.embedding <=> $n::vector)` and floors it at `VECTOR_FLOOR`); only the supplier was refusing. The RAG route (`apps/ai/nexus_ai/api/routes_rag.py:47`) never carried that guard, so the product had two call sites asking the same question differently — and the broken method was reachable from the one that asked correctly, where its `except Exception` swallowed the `NameError` into a keyword-only retrieval logged at `info`.
 
-**The repairs.** One `/embeddings` request per call, and every response row placed by the `index` the endpoint itself reports (apps/ai/nexus_ai/models/embeddings.py:151-206), with a refusal wherever placement could not be trusted: an answer shorter than the inputs sent, an index outside them, the same index arriving twice, a vector of the wrong length, any row left unset. The zero fallback is gone and that is the part that mattered most: `chunks.embedding` is read by cosine, so a stored zero is not a missing score but a row that can never be retrieved again — a silent `[0.0] * dim` was permanent data damage, not a degrade. The pipeline now asks every provider (apps/ai/nexus_ai/api/pipeline.py:181-188) and a provider failure still floors to the keyword lane; the `# pragma: no cover` on that `except` is dropped because a witness runs it now.
+**The repairs.** One `/embeddings` request per call, and every response row placed by the `index` the endpoint itself reports (apps/ai/nexus_ai/models/embeddings.py:151-206), with a refusal wherever placement could not be trusted: an answer shorter than the inputs sent, an index outside them, the same index arriving twice, a vector of the wrong length, any row left unset. The zero fallback is gone and that is the part that mattered most: `chunks.embedding` is read by cosine, so a stored zero is not a missing score but a row that can never be retrieved again — a silent `[0.0] * dim` was permanent data damage, not a degrade. The pipeline now asks every provider (apps/ai/nexus_ai/api/pipeline.py:223-230) and a provider failure still floors to the keyword lane; the `# pragma: no cover` on that `except` is dropped because a witness runs it now.
 
 **Witnessing.** 25 cases in apps/ai/tests/test_embeddings.py, 8 of them new, driving the method through the production `client=` seam with a stub client: request body, URL and auth header; rows landing on the inputs their `index` names when the endpoint answers in reverse; a cached text costing no second request; each of the four refusals; and an injected client not being closed by the caller. 6 more in apps/ai/tests/test_the_semantic_lane_reaches_its_provider.py reach the same seam through `run_search`: the http provider is asked for the query, its vector arrives in the search call with `vector_lane=True`, the REAL `HttpEmbedding` asks over a stubbed wire, the offline hashing provider still feeds the lane (the repair must not trade the adapter that already worked), a provider outage keeps the SAME cards, and an empty query pays for no call. `tests/conftest.py:35,39` now clears `embeddings._CACHE` around every test, which is what that fixture's docstring had already promised ("every provider/embedding cache is reset") and did not do — a leaked cache row would answer a call-counting assertion from cache and hide the call it is measuring; the two per-class cache fixtures this row first wrote are deleted as duplicates of it.
 
@@ -25045,7 +25045,7 @@ an array, so React asks for no key at all. The thirteen are:
 - `packages/ui/src/primitives/Layout.tsx:127` — `Section`'s `children` in a two-child `<section>`.
 - `packages/ui/src/primitives/Select.tsx:132` — `Select`'s `label` in a two-child `<span>`.
 - `packages/ui/src/primitives/Tabs.tsx:140` — `Tab`'s `children` in a two-child `<button>`.
-- `packages/ui/src/feedback/States.tsx:78` — `ErrorState`'s `retryAction` in a two-child `<span>`.
+- `packages/ui/src/feedback/States.tsx:89` — `ErrorState`'s `retryAction` in a two-child `<span>`.
 - `packages/ui/src/trust/EntityCard.tsx:213` — `EntityRail`'s `action` in a two-child `<header>`, the one
   the console named.
 
@@ -27190,7 +27190,7 @@ skipped over the pipeline the gate sits in (`test_pipeline.py`, `test_search_pip
 `test_search_endpoint.py`, the four stream files, `test_trust_claim_kinds.py`,
 `test_the_trust_surface_is_used.py`, `test_compare_grid.py`,
 `test_understand_recommend_compare.py`, `test_live_search_contract.py` and the retrieval-citation
-door). The shipped consumer is one: `api/pipeline.py:265`,
+door). The shipped consumer is one: `api/pipeline.py:307`,
 `verify_generated_text(raw, pack.bundle, records=pack.items)`. `ruff check` clean on the source
 and the door.
 
@@ -27221,7 +27221,7 @@ boundary.
   the fix had to sit at the feed rather than at the match), `build_ground_set`'s fact loop and its
   `records`/`_flatten` loop, `_scalars`' `(key, value)` shape, `_feed`'s coordinate gate,
   `COORDINATE_LEAVES`, `_is_coordinate`, `verify_generated_text`'s one shipped call site at
-  `api/pipeline.py:265`, `VerificationReport.as_dict` (the report is the same object, it simply has
+  `api/pipeline.py:307`, `VerificationReport.as_dict` (the report is the same object, it simply has
   fewer numbers to lean on), and `tmp/d610_probe.py` + `tmp/d610_key_probe.py` +
   `tmp/d610_live.py` + `tmp/d610_arms.py` as the re-runnable measurements.
 
@@ -27286,7 +27286,7 @@ same 359.
 **Door: 22 rows**, red first at **16 failed, 6 passed**, green at **22 passed** -
 `apps/ai/tests/test_a_stored_number_vouches_only_for_a_claim_of_its_own_kind.py`, pure and DB-free.
 It reads the live shapes verbatim (a `price`, a `rating` and an `opening_hours` fact and the card
-dump `api/pipeline.py:265` passes as `records`) and pins both sides: four wrong-kind numbers are not
+dump `api/pipeline.py:307` passes as `records`) and pins both sides: four wrong-kind numbers are not
 witnesses, the page length is, the six keys that name a kind type themselves, the pool holds each
 stored number once (the duplicate add's arrest), and the copy a live card carries - `找到 6 個`,
 `距離你 470m`, `評分 4.4（40+ 條評價）`, `港鐵 Central 站步行 14 分鐘` - loses no claim.
@@ -27383,14 +27383,14 @@ so an `8 位` claim has no capacity witness. The page-length witness is one per 
 fact. And the probe that re-ran the whole page through `verify_generated_text` found a fifth reader
 of this gate, pre-existing and untouched here: a live merchant page's own reason bullets carry three
 ENTITY claims quoting the user's query - `「咖啡店」` - and all three are ungrounded, because the
-entities pool is built from card names and never from the request, and `api/pipeline.py:265` verifies
+entities pool is built from card names and never from the request, and `api/pipeline.py:307` verifies
 only the model's summary.
 
 - readers: `GroundSet.numbers`' shape and `add_number`'s new keyword, `GroundSet.find`'s numeric loop
   (its tolerance lookup is unchanged, and its text tail fallback is unchanged - the reason a
   `（40+ 條評價）` bullet still passes), `build_ground_set`'s record loop and the new page-length
   entry, `_feed`'s two adds folded into one, `_number_kind` beside `_attr_kind`,
-  `verify_generated_text`'s one shipped call site at `api/pipeline.py:265`,
+  `verify_generated_text`'s one shipped call site at `api/pipeline.py:307`,
   `VerificationReport.as_dict` (same object, fewer numbers to lean on), the two re-aimed files
   `tests/test_verification_ground.py` and `tests/test_verification_claims.py`, and
   `tmp/d611_probe.py` + `tmp/d611_probe2.py` + `tmp/d611_blast.py` + `tmp/d611_blast2.py` +
@@ -27887,13 +27887,13 @@ is right, which is the point of the first filed bullet. And the 3 s request budg
 claim is only that a batch write must not inherit it.
 
 **Filed to PLAN, three bullets by their own titles.** The lift door measures a lane the request path
-never uses (`embedding=None` while `api/pipeline.py:182-189` embeds every query when a provider is
+never uses (`embedding=None` while `api/pipeline.py:224-231` embeds every query when a provider is
 configured); `parking_access` lifts nothing with or without the vector lane; and the vector lane is
 ungraded in both directions, so a change that trades outdoor for pet moves the product and reddens
 nothing.
 
 - readers: `embed.py`'s `run`, `embed_pending` and `worker_settings`; `db/pool.py:214-240` (the pool
-  and the `statement_timeout` it sets); `api/pipeline.py:171-197` (which decides the vector lane and
+  and the `statement_timeout` it sets); `api/pipeline.py:213-239` (which decides the vector lane and
   what it hands `search`); `search/service.py:1670-1833` (the strategy suffix and its condition); and
   this unit's four `tmp/` measurements (`d618_pending`, `d618_embed`, `d618_p10`, `d618_lift`, with
   probes `d618_p10_probe.py`, `d618_lift_probe.py`).
@@ -27905,7 +27905,7 @@ live plane and printed six lifts for six sentences; two of its three findings we
 preferences do not lift and that parking is anti-correlated. The harness behind that table called
 `S.search(backend=..., plan=plan)` - and `search()` takes the query's preferences as a KEYWORD,
 `intent_preferences` (`service.py:942`), which the door never passed. The production pipeline does
-pass it (`api/pipeline.py:196-197`, from the same Intent the door had in hand). Measured 2026-10-30:
+pass it (`api/pipeline.py:238-239`, from the same Intent the door had in hand). Measured 2026-10-30:
 in the door's call the preference lane scores **0.5 - neutral - on every row of every case**
 (`tmp/d620_lift_prod.txt`, column "door"), so the table was the default ordering's base-rate
 correlation with each fact, published as the effect of the preference the user stated.
@@ -27951,7 +27951,7 @@ effect on a STATED preference is still unmeasured - §616's column is now known 
 comparison, which is the open bullet in PLAN.
 
 - readers: `service.py:1508-1609` (the transient preference branch), `service.py:942` (the parameter
-  the door omitted), `api/pipeline.py:171-197` (the production call site), `ranking.py:147` and
+  the door omitted), `api/pipeline.py:213-239` (the production call site), `ranking.py:147` and
   `:228` (the neutral score this door measures against), and this unit's four `tmp/` readings
   (`d620_lift_prod`, `d620_fired`, `d620_fired.txt` probe, `d620_old_door`).
 
@@ -28102,7 +28102,7 @@ preference. And `date_occasion` remains vacuous at 1.00/1.00 - §620's bullet.
 ranking; the preferenceless lane's top ten fires 0.0), the vacuous case, and D623's five bound legs.
 With nine neighbouring preference doors: **228 passed**. Readings in `tmp/d623_pairs.txt`.
 
-- readers: `tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py:181` (the bound),
+- readers: `tests/test_the_stated_preference_moves_the_ranking_of_the_live_plane.py:194` (the bound),
   `:120-124` (the preference-only call the bound is measured against), and
   `infra/config/ranking_weights.yaml:17,22` (the two weights that set the size of the trade).
 
@@ -28336,7 +28336,7 @@ FILES in a copy exported from `git archive 9ae67e8` - the commit this one ships 
 none of this unit's bytes - and gets 2 failed, 18 passed (`tmp/d616_attrib.txt`). Two are red
 there too: `test_citations_resolve.py::test_a_chunk_fact_id_resolves_to_a_fact_row` fails on its
 own assertion `the retrieval returned no chunk - the corpus is not reachable`
-(`apps/ai/tests/test_citations_resolve.py:69`, and `routes_rag.py` logs `chunk retrieval failed`
+(`apps/ai/tests/test_citations_resolve.py:74`, and `routes_rag.py` logs `chunk retrieval failed`
 on the same call), which is more than §613 recorded when it met this row and filed it as another
 lane's in-flight edit, because a base commit holds it now; and
 `test_vocabulary_is_the_reference.py::test_every_test_file_uses_characters_the_product_knows`
@@ -28640,7 +28640,7 @@ the SAME ten subject ids as `「餐廳」` (before: a different ten, 48 of 60 po
 `「100蚊以下嘅餐廳」` answers nine of ten rows at relevance 1.00 where it answered 0.11-0.16 before,
 with `total_estimate` still 184 - the strip changes which rows WIN, never which rows exist.
 
-**Not claimed.** The vector lane still embeds the WHOLE sentence (`api/pipeline.py:181-185`): only the
+**Not claimed.** The vector lane still embeds the WHOLE sentence (`api/pipeline.py:223-227`): only the
 keyword lane reads `match_text`, and with the hashing provider this door cannot say whether an embedding
 of 「100蚊以下嘅餐廳」 is better or worse than one of 「餐廳」 - a real provider must decide that
 asymmetry, and it is filed. Nothing here says the pool should be chosen by a text score at all when the
@@ -29007,7 +29007,7 @@ live CJK file: **728 passed**.
 - readers: `nlu/lexicon.py:657-684` (`_category_hits`), `:659-668` (`_chosen_category`), `:689-702`
   (`category_surfaces`); `nlu/understand.py:684-687` (`_strip_surface_spans`), `:690-712` (`match_core`);
   `search/service.py:550` (`match_text: str | None`), `:645-651` (the plan passes the surfaces), `:1022-1024`
-  (no text when nothing is left); `api/pipeline.py:181-190` (the vector lane reads the match text).
+  (no text when nothing is left); `api/pipeline.py:223-232` (the vector lane reads the match text).
 
 ## 633. D636 · the ceiling and the floor are written many ways, and the lane read three of them (`apps/ai/nexus_ai/nlu/understand.py`)
 
@@ -30001,7 +30001,7 @@ answers there, and API_CONTRACT §7 (`docs/API_CONTRACT.md:325`) makes that the 
 (`CartController.java:80`) as before; and `null` for `compare`. Making the null expressible needed the
 second file: `CardAction.endpoint` was declared `str`, so the one action the block names as client-side
 could only be sent by lying about its door - it is `Optional[str] = None` now, and the key stays present
-because `api/pipeline.py:228` dumps cards with `model_dump(mode="json")` and no `exclude_none`, which is
+because `api/pipeline.py:270` dumps cards with `model_dump(mode="json")` and no `exclude_none`, which is
 what `required` asks for. The agent button reads 問 / 问 / "Ask"; 詢 and 訊 are not in the character set
 `tests/test_vocabulary_is_the_reference.py` derives from the package's own data strings, so the word had to
 come from the set that is.
@@ -30258,7 +30258,7 @@ agree rather than that either parse is the only correct one.
   unguarded read), `:696`/`:701` (district, radius, resolved), `:716` (budget), `:722` (instant),
   `:726`/`:729` (the two quality bounds), `:738` (`constraints`), `:782` (`_plain`, the shape
   reader this follows), `:790` (`_field`), `apps/ai/nexus_ai/nlu/understand.py` (`extract_intent`,
-  the shape's writer), `apps/ai/nexus_ai/api/pipeline.py:175` (the model caller),
+  the shape's writer), `apps/ai/nexus_ai/api/pipeline.py:217` (the model caller),
   `apps/ai/tests/test_the_plan_reads_the_extractors_own_shape.py` (this unit's gate), and
   `tmp/d652_parity.py`, `tmp/d652_falsify.txt` (the measurements).
 
@@ -32040,11 +32040,11 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `MerchantContentController.java`, 1 in `CatalogReadTest.java`. 「the web 0 times」 - holds for
   `apps/web` (0) and `packages/ui/src` (0); the 11 lines that do name it are all in
   `packages/types/src`, which declares rather than reads. 「the AI lane's SQL never selects it」 -
-  holds and is understated: `nexus_ai` names the column once, in a comment (`search/sql.py:735`), and
+  holds and is understated: `nexus_ai` names the column once, in a comment (`search/sql.py:743`), and
   the one gate file that names it names it in its own docstring
   (`test_an_offering_that_cannot_seat_the_party_is_not_answered_for_it.py:4`).
   The two function cites are both wrong - `_slot_window` is at `search/service.py:1476`, not `:932`,
-  and `slots_for` at `search/sql.py:930`, not `:646`; `service.py:932` is an argument of a different
+  and `slots_for` at `search/sql.py:940`, not `:646`; `service.py:932` is an argument of a different
   call and `sql.py:646` sits inside the geo LATERAL of `build_offering_query`.
 
 **The 157, reproduced - and the census's negative is wrong.** `tmp/d671_measure.txt` section 3 reads
@@ -32073,7 +32073,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `experience` - the two kinds the 804 rows belong to, to the row. On the lane's side of the same
   contract, `apps/ai/nexus_ai/contract.py:168` is the whole `EntityCard` model and carries no
   `duration_minutes`, no `bookable`, no `min_party_size`/`max_party_size`, no `stock_quantity`, no
-  `purchasable` and no `season`; `search/sql.py:861` projects `o.kind, …, o.bookable,
+  `purchasable` and no `season`; `search/sql.py:871` projects `o.kind, …, o.bookable,
   o.min_party_size, o.max_party_size` into the offering row - three of the four Booking columns, the
   length dropped; and `entities_for` (`:945`) projects none of the four. So the road from the column
   to the field is missing at both ends, and the card type that publishes it is the card type the 804
@@ -32145,10 +32145,10 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
 
 **Readers.** The field is published in `packages/types/src/card.ts:151`/`:164` and
   `packages/types/src/schemas/entity_card.json:98`/`:117`/`:135`/`:196`; the row that could feed it is
-  `apps/ai/nexus_ai/search/sql.py:861` (`build_offering_query`) and the one that does not is `:945`
+  `apps/ai/nexus_ai/search/sql.py:871` (`build_offering_query`) and the one that does not is `:945`
   (`entities_for`); the model that cannot carry it is `apps/ai/nexus_ai/contract.py:168`; the verb
   that books it is `apps/ai/nexus_ai/search/cards.py:812`; the windows are
-  `apps/ai/nexus_ai/search/service.py:1476` (`_slot_window`) and `apps/ai/nexus_ai/search/sql.py:930`
+  `apps/ai/nexus_ai/search/service.py:1476` (`_slot_window`) and `apps/ai/nexus_ai/search/sql.py:940`
   (`slots_for`); the invented length is `apps/ai/nexus_ai/nlu/timeparse.py:602` (used at `:418`); the
   lane choice that makes a kind-only ask answer merchants is `search/service.py:839` (the field's
   `("merchant",)` default), `:934-943` (the `if intent is None` return), `:946` (the kind upgrade
@@ -32250,7 +32250,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `filters` object that carries a `kind` on one line, with `apps/web` and `packages` at 0 hits for a
   `filters` payload in any shape. So this is a published-surface repair, not a live traffic bug: no
   first-party caller sends it today, and any API caller may, because the model accepts it. One internal
-  caller reaches the same branch without HTTP: `api/pipeline.py:175` hands `plan_from_intent` the
+  caller reaches the same branch without HTTP: `api/pipeline.py:217` hands `plan_from_intent` the
   `intent` its caller resolved - which `run_search` accepts as `Intent | None` - together with the
   filters it was passed. What the branch chooses between, live: 313 experiences, 822 services and 3,572
   products that are `active` rows of a `published` merchant (4,707 offerings of every kind reachable),
@@ -32287,7 +32287,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   the raw value; the published `Literal` refuses that spelling at the API, so it is reachable only
   from an internal caller - pinned by a leg, filed as a clause. A kind ask with no sentence has no
   match text at all (`tmp/d672_measure.txt` records `match_text=''` for every text-less pass), and
-  `api/pipeline.py:181` opens with `if plan.match_text:` - so nothing is embedded, the pgvector lane
+  `api/pipeline.py:223` opens with `if plan.match_text:` - so nothing is embedded, the pgvector lane
   never runs, and the six offerings the fix now returns arrive in the statement's own order rather
   than a ranked one; filed as a clause, not repaired here. And the surface this unit repaired has no
   first-party caller: the census found 0 filters payloads in `apps/web` and `packages`, so a user
@@ -32349,7 +32349,7 @@ Three things this deliberately is not. It is not an `ORDER BY` on `entities_for`
   `DURATION_CARD_TYPES = frozenset({"service", "experience"})`, and the model gains a
   `@model_serializer(mode="wrap")` that pops the key on every other card type. The serializer is the
   unit's real shape, not a garnish: a closed object demands *absence*, which `Optional[int] = None`
-  cannot express in a `model_dump`, and the lane has two dump sites - `api/pipeline.py:228` and the
+  cannot express in a `model_dump`, and the lane has two dump sites - `api/pipeline.py:270` and the
   nested card list of `api/stream.py:117` - so the rule sits on the model rather than being written
   twice. `search/cards.py`: `build_card` passes `rec.get("duration_minutes")` straight through.
 
@@ -33486,9 +33486,9 @@ the join). (d) A typed cuisine now outranks every other signal at relevance 1.0,
 answers through `price_fit`, but the cuisine now dominates the sort.
 
 - readers: `search/service.py:1314` (`_relevance`), `:1214` (the cap), `:1253` (the typed cuisine),
-  `:1468` (the cuisines the cut is told), `search/sql.py:541` (the cut's cuisine leg), `:497` (the cut's
+  `:1468` (the cuisines the cut is told), `search/sql.py:549` (the cut's cuisine leg), `:497` (the cut's
   cosine), `models/embeddings.py:80`/`:51`/`:92` (the verdict and the two adapters),
-  `api/pipeline.py:205`, this unit's gate, the re-aimed D652 guard, and `tmp/d705_measure.py`,
+  `api/pipeline.py:247`, this unit's gate, the re-aimed D652 guard, and `tmp/d705_measure.py`,
   `tmp/d705_diff.py`, `tmp/d705_cost.py`, `tmp/d705_d652.py`, `tmp/d705_dbg.py`, `tmp/d705_prefonly.py`,
   `tmp/d705_table.py`.
 
@@ -33664,7 +33664,7 @@ the ranker weights - so the two pages are each a top ten of a DIFFERENT set (`tm
 is the unit after that: a cut may only be ordered by a term of the score it stands in for.
 
 - readers: `search/service.py:203` (`_tenant_mean_rating`), `:208` and `:226` (the two row kinds it is
-  stated on), `:1288` (the per-row fallback that stays), `search/sql.py:588` and `:817` (the live means),
+  stated on), `:1288` (the per-row fallback that stays), `search/sql.py:596` and `:817` (the live means),
   this unit's gate, and `tmp/d708_order.py`, `tmp/d708_mean.py`, `tmp/d708_gap2.py`.
 
 
@@ -34391,7 +34391,7 @@ outes_discover.py grid fallback, when no stored address fact is found but distri
 
 ## 749. D749 · kind synonym reached the filter but not the subject — both paths read the canonicalised value
 
-**The gap.** `_canonical_kind` maps caller synonyms (`item`→`product`, `shop`→`merchant`, etc.) into `plan.filters`, but the two `plan.subject_types` exits read `_plain(filters).get("kind")` — a fresh shallow COPY of the caller's RAW spelling. The canonicalisation reader therefore produced two different worlds for one caller: the predicate the offering query was built from (`product`) was not the predicate the subject reader answered against (`merchant`), so a text-less internal kind ask with a synonym never opened `offering_candidates` at all (the PLAN item's own measurement). The published `Literal` refuses these synonyms at the API (422), so the residue was reachable only via `api/pipeline.py:174` calling `plan_from_intent` directly.
+**The gap.** `_canonical_kind` maps caller synonyms (`item`→`product`, `shop`→`merchant`, etc.) into `plan.filters`, but the two `plan.subject_types` exits read `_plain(filters).get("kind")` — a fresh shallow COPY of the caller's RAW spelling. The canonicalisation reader therefore produced two different worlds for one caller: the predicate the offering query was built from (`product`) was not the predicate the subject reader answered against (`merchant`), so a text-less internal kind ask with a synonym never opened `offering_candidates` at all (the PLAN item's own measurement). The published `Literal` refuses these synonyms at the API (422), so the residue was reachable only via `api/pipeline.py:216` calling `plan_from_intent` directly.
 
 **The fix.** Both exits read the CANONICAL value, not a second raw copy:
 - intent-`None` path: the `D673` check is now `plan.filters.get("kind")` after `_canonical_kind(plan.filters)`;
@@ -37436,7 +37436,7 @@ documented posture) — exempting it from the limiter is deliberate, not an endo
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:81`,
   `services/cloud/gateway/src/main/resources/application.yaml` (ai route + cloud document),
   `scripts/check_cloud_discovery.mjs:26`, `:192-228`,
-  `scripts/cloud_lb_smoke.sh:212-245`, `:135-139`,
+  `scripts/cloud_lb_smoke.sh:215-248`, `:135-139`,
   `.github/workflows/ci.yml:154`.
 
 ## 857. D857 — the edge picks up a config-repo edit without a restart (Spring Cloud refresh)
@@ -42218,3 +42218,11 @@ The edge's 429s carried `Retry-After: 1` and the `edge_rate_limited` contract co
 **What was verified.** Local DEBUG run: platform ready (~100s), AI ready (~90s), gateway ready; `GET /api/v1/health` through the edge answered `service=nexus-platform profiles=cloud` with one `X-Request-Id` across both hops; the burst of 25 produced both 200s and 429s with the `Retry-After: 1` invariant holding for every refusal; the extracted `retry_after` was `1`. CI D988 is green (cloud + e2e + changes + contract-drift; 2026-11-12T13:27Z).
 
 - readers: this ledger entry, `scripts/cloud_lb_smoke.sh`.
+
+## 990. D990 — the line-cite backlog shrunk by every MOVED site the new lane touched: thirty citations re-pointed at the text they always named
+
+The 30 MOVED sites judged by the drift reader at HEAD (12 pre-existing D944-class + 18 introduced by the D981/D982/D973 refactor chain — api/pipeline.py shifted twice by my own D982 intent-instruction insertion and the D780 cap re-aims, search/sql.py by the D780 cap + D705 follow-ups, States.tsx by my D984, cloud_lb_smoke.sh by my D989 edits), all re-pointed mechanically with the reader's own blame rows. Dry-run produced zero refusals first.
+
+Re-aim counts by file: `api/pipeline.py` (15 sites, +42/+34/+40/+43 shifts), `api/pipeline.py` consumer line-cites via `search/sql.py` (6 sites), `States.tsx` (1, the EmptyState insertion), `tests` (2), `cloud_lb_smoke.sh` (1, the retry-after fix).
+
+- readers: `scripts/check_line_cite_drift.mjs` (REPORT/judge), `scripts/apply_line_cite_reaim.mjs`, this ledger entry.
