@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.nexus</groupId>
+    <artifactId>nexus-cloud</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nexus-dispatcher</artifactId>
+  <name>NEXUS Webhook Dispatcher</name>
+  <description>D973: a sidecar microservice that turns domain events on nexus:events into HMAC-signed outbound webhook deliveries, with enqueue-side backoff + deterministic jitter, a Redis DLQ, and a per-hook circuit breaker — the wire finally has a consumer with teeth</description>
+
+  <!--
+    This is the SIXTH Spring Cloud element on this plane (D847 eureka, D852 config, D854 gateway,
+    D885 insight, D886 admin, D929 events). It owns one Redis consumer-group read of nexus:events
+    and zero business logic beyond "if event.type matches a configured hook's pattern, POST a signed
+    envelope to hook.uri, retrying with exponential backoff + deterministic jitter, dead-lettering
+    after hook.maxAttempts failures and tripping the hook's circuit breaker after
+    hook.circuitBreakerThreshold consecutive failures". Outside that it is inert by default: with the
+    built-in empty hook list, every event leaves the stream without an outbound HTTP call.
+
+    Off by default: no Docker image, no production deployment claim, no claim that any particular
+    hook target should receive a POST. The config gate (non-empty hooks + enabled=true) is the only
+    switch. The point of this service is the MECHANISM (sign → enqueue → drain → retry → break →
+    park → replay), not any particular customer.
+  -->
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.lettuce</groupId>
+      <artifactId>lettuce-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>app</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

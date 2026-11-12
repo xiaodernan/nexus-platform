@@ -1,0 +1,64 @@
+server:
+  # D973: the seventh host coordinate on the plane. Declared between insight (19555) and
+  # events (19566) — the two adjacent sidecars. Free at declaration; retargeting the dispatcher
+  # to another port is a one-line env change.
+  port: ${NEXUS_DISPATCHER_PORT:19561}
+
+spring:
+  application:
+    name: nexus-dispatcher
+  config:
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  metrics:
+    enable:
+      jvm: true
+
+eureka:
+  client:
+    register-with-eureka: ${NEXUS_DISPATCHER_EUREKA_ENABLED:false}
+    fetch-registry: false
+    service-url:
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+
+nexus:
+  dispatcher:
+    # D973: the webhook dispatcher plane is OFF until an operator arms ≥1 hook (empty by default).
+    enabled: ${NEXUS_DISPATCHER_ENABLED:true}
+    url: ${NEXUS_DISPATCHER_URL:redis://127.0.0.1:6380/0}
+    poll-ms: ${NEXUS_DISPATCHER_POLL_MS:1000}
+    initial-poll-ms: ${NEXUS_DISPATCHER_INITIAL_POLL_MS:200}
+    drain-ms: ${NEXUS_DISPATCHER_DRAIN_MS:50}
+    initial-drain-ms: ${NEXUS_DISPATCHER_INITIAL_DRAIN_MS:250}
+    max-in-flight: ${NEXUS_DISPATCHER_MAX_IN_FLIGHT:64}
+    # Bounded queue — pushes back on the poll when full instead of silently growing memory.
+    max-queue: ${NEXUS_DISPATCHER_MAX_QUEUE:128}
+    # Empty hooks — no outbound HTTP ever leaves this process until an operator flips enabled
+    # entries in here. The list shape:
+    #   hooks:
+    #     alerts-slack:
+    #       eventTypes: "LeadCaptured,ReservationChanged"
+    #       uri: "https://hooks.example.com/services/T.../B.../xxx"
+    #       secret: "env:SLACK_SIGNING_SECRET"
+    #       maxAttempts: 5
+    #       baseDelayMs: 250
+    #       jitterMs: 100
+    #       timeoutMs: 5000
+    #       circuitBreakerThreshold: 3
+    #       enabled: true
+    hooks: {}
+
+logging:
+  level:
+    com.nexus.cloud.dispatcher: INFO
+    io.lettuce: WARN

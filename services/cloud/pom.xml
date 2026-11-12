@@ -46,6 +46,10 @@
          bounded in-memory ring and answers /events/* — the wire bus that every domain event rides
          onto finally has a reader on the plane. -->
     <module>events-service</module>
+    <!-- D973: the SIXTH service. It boots inert with zero hooks, subscribes to nexus:events
+         under its own consumer group, and — only when an operator arms a hook in the config —
+         signs and delivers HMAC-SHA256 webhooks with backoff+jitter and a DLQ. -->
+    <module>dispatcher-service</module>
   </modules>
 
   <dependencyManagement>
