@@ -42462,3 +42462,5 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **Verified.** Local run with `MVN` against this repository's cache (plugin 3.8.1): all three arms green (rescue claim-on, claim-off PEL preserved, bounded cursor batches). CI remains the verifier of record — including its maven cache state, which is what this patch addresses.
 
 - readers: `scripts/events_claim_smoke.sh` (CI chain tail), this ledger entry, `scripts/falsify_events_claim_smoke.sh`.
+
+**Milestone.** D1001's push (28c6070) turned the whole master pipeline green at `43284851614` — `changes`, `contract-drift`, `cloud`, `e2e`, `required` all success (other lanes skipped by policy). The cloud job passed all 17 steps end-to-end: the cloud reactor's unit tests, migrations, lb smoke, refresh smoke, monolith refresh smoke, retry+trace+plane smokes, ai-admin smoke — the whole Redis-Streams/Spring-Cloud/Redis-Config-refresh chain proved on the GitHub runner at last. This is the first full-green `master` of this run sequence.
