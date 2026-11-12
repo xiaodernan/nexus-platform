@@ -42543,3 +42543,16 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **This milestone merely records** the D1004–D1008 arc's exit state. The arc: the dispatcher joined the plane (D1004); CI exposed a reader-arm defect that D1005 fixed (marker pointed at lines D1003 deleted); the changes-job cloud filter proved blind to check_-prefixed readers (D1006, caught by D99 1006/1008); the RBAC spec flakiness died deterministically in a fresh browser context (D1007); the D1006 filter's first arm was empty and reddened after the fix (D1008). Every commit in the arc landed in this one bisectable session on master.
 
 - readers: this ledger entry; scripts/check_cloud_filter_covers_chain.mjs; tests/e2e/specs/consumer/ask-merchant-history.spec.ts.
+## 1010. D1010 — the D1003 sweep was incomplete: two more live-DB corpus-intent files still pinned absolute pool sizes; a sweep of the whole corpus found them, and the whole live-DB bundle passes under one seed
+
+**Scan.** After D1003, an automated grep across `apps/ai/tests/test_*.py` looked for `live[...] == <number>` / `fixture[...] == <number>` / `== <N≥2>, pools|both|plan|got|pages` and found four classes of nightly-stable live-DB assertions remaining:
+- `test_a_phrase_that_names_no_content_is_not_matched.py`: `got["total"] == 184` — a D628/D635 cross-lane pin; now `got["total"] == plain["total"]` (the invariant is "strip adds or removes nothing"; the number was a snapshot);
+- `test_the_small_hours_are_a_time_and_not_the_afternoon.py`: three pins (band 60, restaurant 0, point 21) — now same-plane equality, band ≤ 03:00 ≤ band ordering, and the docstring converted from a fixed-seed measurement quote to a seed-independence statement;
+- `test_an_offering_request_reaches_the_database_at_all.py`: `page == 10` (the page LIMIT constant, not a corpus figure — kept) and `on_page == 0` (a term nobody states; deterministic — kept);
+- historical D-series docstrings recording past measurement counts remain as dated evidence, not as gate assertions.
+
+**What was verified.** The full live-DB bundle for the corpus-intent family passes 154/154 on this seed (`NEXUS_TEST_DATABASE_URL=postgresql://nexus_ai:nexus_dev_ai_only@127.0.0.1:5433/nexus_gate_ai`): the D1003 files, the two re-pinned here, and adjacent D628/D635/D659 tests. CI remains the verifier of record; the AI job's nightly seed regenerates the corpus snapshot until a fix is needed, or until release pins the seed.
+
+**What this does NOT claim.** That every absolute assertion in the entire test directory is nightly-stable (the stub-platform files, e.g. `test_stub_platform.py::cart["total"] == 200.0`, are offline unit tests against a static stub — absolute pins are correct there, and were allowed to stand); that the seed is frozen for CI (it moves with each CI `--now` — the gate is the invariant, not the size).
+
+- readers: the two re-pinned files, this ledger entry.

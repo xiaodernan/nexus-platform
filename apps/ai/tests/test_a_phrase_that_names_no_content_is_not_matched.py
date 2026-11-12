@@ -134,6 +134,6 @@ def test_a_ceiling_no_longer_divides_every_rows_relevance(pages):
     assert got["rel"] == plain["rel"] == [0.0] * TOP_K, (got["rel"], plain["rel"])
     assert all(p is not None and p <= 100 for p in got["prices"]), got["prices"]
     assert plain["prices"][0] > 100, plain["prices"][0]
-    assert got["total"] == 184, (
-        f"the pool changed size ({got['total']}) - the strip must not add or remove rows, only stop "
+    assert got["total"] == plain["total"], (
+        f"the pool changed size ({got['total']} vs {plain['total']}) - the strip must not add or remove rows, only stop "
         "counting terms no row can meet")
