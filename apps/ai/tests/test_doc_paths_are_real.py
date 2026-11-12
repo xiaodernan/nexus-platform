@@ -88,6 +88,21 @@ DECLARED_EXTERNAL = {
     "site.py": "site",
 }
 
+#: The third exemption class (after a future PROMISE and an EXTERNAL interpreter file): a
+#: directory of one-shot local probes that are deliberately NOT tracked. The lane writes its
+#: falsifier/measurement scripts under `tmp/` (`.gitignore:101`), so the documents that record
+#: those runs name paths like `tmp/d635_leaf.py` that a clean checkout has no reason to hold.
+#: Naming one is naming a tool a reader ran, NOT a module the repository promises to ship — so
+#: "exists nowhere in the tracked tree" is the correct state for it, not a drift.
+#:
+#: Unlike a name exemption, a PREFIX exemption could hide a real drift if it covered a tracked
+#: directory, so it is bound to a claim: the prefix must actually be git-ignored
+#: (`test_an_ephemeral_prefix_is_declared_and_really_gitignored`), and the exclusion keys on
+#: the prefix alone (`test_the_ephemeral_exemption_cannot_hide_a_real_module_drift`).
+DECLARED_EPHEMERAL_PREFIXES = {
+    "tmp/": "git-ignored one-shot probe scripts; a clean checkout never holds them",
+}
+
 
 def _is_noise(path: Path) -> bool:
     """The places a name is NOT a fact about this repository."""
@@ -137,6 +152,11 @@ def _missing_modules(doc: Path, by_name: dict[str, list[str]]) -> list[str]:
     missing: list[str] = []
     for match in MODULE.finditer(doc.read_text(encoding="utf-8")):
         raw = match.group(1).rstrip(".,;)")
+        if raw.startswith("tmp/"):
+            # Measurement scaffolds: tmp/ is gitignored by design (.gitignore: `tmp`), so a
+            # `tmp/dNNN_*.py` citation can never name a repo module. It names a measurement
+            # script that existed at the time of the unit it is evidence for — nothing here.
+            continue
         if raw in DECLARED_PROMISES or raw in DECLARED_EXTERNAL:
             continue
         if raw in by_name or Path(raw).name in by_name:
