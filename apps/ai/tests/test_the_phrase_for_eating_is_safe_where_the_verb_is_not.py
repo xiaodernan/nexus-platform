@@ -152,8 +152,8 @@ def test_the_meal_that_already_worked_did_not_move(pages):
 
 
 def test_a_window_with_no_meal_is_still_the_whole_window(pages):
-    # the control on the live plane: 通宵 names an hour and no kind, so it answers the 100 open
-    # in it - the number D701 and D703 both pin.
+    # the control on the live plane: 通宵 names an hour and no kind, so the whole
+    # deep-night window answers - pool size varies with the nightly seed.
     got = pages["out"]["通宵"]
     # size varies with the nightly seed; the structural claim is the right plane answered
     assert 0 < got["total"] < pages["everything"], (got, pages["everything"])

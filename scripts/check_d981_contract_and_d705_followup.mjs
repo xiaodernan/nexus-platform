@@ -165,8 +165,15 @@ export function judge(files, present, ciPath = CI) {
   has(SUFFIX, 'the suffix was stripped out of the match text at all', 'suffix word-claim witness pinned at match_text level', 'B-SUFFIX-WITNESS');
 
   /* C — seed drift re-calibration + D604 shadow shape + D780 tag-leg cap present. */
-  has(PHRASE, 'assert 0 < got["total"] < pages["everything"], (got, pages["everything"])', 'the phrase-window assert pins the plane (live/nightly seed independent)', 'C-SUBSET-40');
-  has(PHRASE, 'assert 0 < got["total"] < pages["everything"], (got, pages["everything"])', 'the deep-night window pins the plane pins the plane', 'C-WINDOW-100');
+  // D1003 re-pinned these assertions from absolute pool sizes to the same-plane invariant.
+  // Each needle is a unique comment+assert block, so the plain assert substring no longer
+  // carries the count claim — the armed region is the whole comment+assert unit.
+  has(PHRASE,
+      '# the open-restaurant window is date-sensitive; pin the structural assertion only\n    assert 0 < got["total"] < pages["everything"], (got, pages["everything"])',
+      'the night-meal window pins the same-plane invariant', 'C-SUBSET-40');
+  has(PHRASE,
+      '# size varies with the nightly seed; the structural claim is the right plane answered\n    assert 0 < got["total"] < pages["everything"], (got, pages["everything"])',
+      'the deep-night window pins the same-plane invariant', 'C-WINDOW-100');
   absent(PHRASE, '== 44', 'no stale 44 restaurant subset remains', 'C-NO-44');
   absent(PHRASE, '== 104', 'no stale 104 deep-night window remains', 'C-NO-104');
   has(PREF, 'f"scope, conversation_id)\\n"', 'D604 shadow table carries scope + conversation_id', 'C-SHADOW');
@@ -247,8 +254,12 @@ if (SELF_TEST) {
         'assert plane["membership"][text] == len(ids)', 'assert plane["membership"][text] >= 0'), 'B-LEAF-MEMBER-ASSERT'],
     ['suffix uniformity witness reverted', mutate(real, SUFFIX,
         'assert len(set(rel)) == 1,', 'assert all(r == 0.0 for r in rel),'), 'B-SUFFIX-UNIFORM'],
-    ['deep-night window reverted to 104', mutate(real, PHRASE, '["total"] == 100', '["total"] == 104'), 'C-NO-104'],
-    ['restaurant subset reverted to 44', mutate(real, PHRASE, '["total"] == 40', '["total"] == 44'), 'C-NO-44'],
+    ['deep-night window assertion weakened', mutate(real, PHRASE,
+        '# size varies with the nightly seed; the structural claim is the right plane answered\n    assert 0 < got["total"] < pages["everything"], (got, pages["everything"])',
+        '# size varies with the nightly seed; the structural claim is the right plane answered\n    assert got["total"] >= 0'), 'C-WINDOW-100'],
+    ['night-meal window assertion weakened', mutate(real, PHRASE,
+        '# the open-restaurant window is date-sensitive; pin the structural assertion only\n    assert 0 < got["total"] < pages["everything"], (got, pages["everything"])',
+        '# the open-restaurant window is date-sensitive; pin the structural assertion only\n    assert got["total"] >= 0'), 'C-SUBSET-40'],
     ['D604 shadow columns dropped', mutate(real, PREF,
         'f"scope, conversation_id)\\n"', 'f")\\n"'), 'C-SHADOW'],
     ['D780 tag cap removed (one leg)', mutate(real, SQL,

@@ -42493,3 +42493,12 @@ so a chain-critical script change did not re-trigger the job that must falsify i
 **This does NOT claim** that CI's cloud job will return green for this push (the chain is gated, D997 etc. still in flight), that the dispatcher serves any real hook (empty hook list — same as D973), or that the admin's granularity covers dispatcher detail — it now just sees the name + UP, like every other member.
 
 - readers: `scripts/check_dispatcher_eureka_admin.mjs`, this ledger entry, `scripts/cloud_smoke.sh`.
+## 1005. D1005 — the d981 fold reader's two corruption arms referenced text deleted by D1003, and the CI self-test chain went false-red on a legitimate pass
+
+**The red.** CI run 43316189467 (D1004's push) died at the line-171 self-test step: `check_d981_contract_and_d705_followup.mjs --self-test` printed `SKIP (plant token ... absent)` for both arms tied to `["total"] == 100` / `["total"] == 40`, and the reader treats any SKIP as `all arms redden: false`. D1003's same-plane re-pin had deleted those lines.
+
+**The fix.** Judge needles for the night-meal (C-SUBSET-40) and deep-night (C-WINDOW-100) arms are now the unique multi-line comment+assert blocks the D1003 rewrite introduced; the two arms mutate those two assertion lines to `>= 0` so the matching needle disappears; expect tags re-pointed to the judge's own C-SUBSET-40 / C-WINDOW-100 (the self-test requires the emitted offender to carry the tag verbatim). The judge no longer treats the bare single-assert substring — which now appears three times and is seed-independent — as an armed region. A stale test doc comment ('the 100 open in it - the number D701 and D703 both pin') was replaced with the nightly-seed truth.
+
+**Verified.** --self-test: all 29 corruption arms redden for cause and both GREEN controls stay green; real plane exits PASS; verify_all remains 59 PASS / 0 FAIL.
+
+- readers: scripts/check_d981_contract_and_d705_followup.mjs; this ledger entry; apps/ai/tests/test_the_phrase_for_eating_is_safe_where_the_verb_is_not.py (doc comment only).
