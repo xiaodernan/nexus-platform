@@ -26,16 +26,27 @@ export function EmptyState({
   return (
     <div
       className={cx(
-        'flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line-strong bg-surface-muted/40 px-6 py-12 text-center',
+        'relative flex flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-line-strong bg-surface-muted/40 px-6 py-14 text-center',
         className,
       )}
     >
-      <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-surface text-ink-faint shadow-xs">
-        <Icon name={icon} size={19} />
+      {/* decorative halo: two soft rings, partially off-canvas, never interactive */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-28 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full border border-accent-line/50 bg-accent-soft/45 blur-[1px]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-16 -right-8 h-48 w-48 rounded-full border border-line bg-surface-sunken blur-[1px]"
+      />
+      <span className="relative z-10 mb-1 flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-surface shadow-md">
+        <Icon name={icon} size={24} className="text-accent" />
       </span>
-      <p className="text-base font-semibold text-ink-strong">{title}</p>
-      {description ? <p className="max-w-sm text-sm leading-relaxed text-ink-muted">{description}</p> : null}
-      {action ? <div className="mt-3 flex flex-wrap items-center justify-center gap-2">{action}</div> : null}
+      <p className="relative z-10 text-base font-semibold tracking-tight text-ink-strong">{title}</p>
+      {description ? <p className="relative z-10 max-w-sm text-sm leading-relaxed text-ink-muted">{description}</p> : null}
+      {action ? (
+        <div className="relative z-10 mt-4 flex flex-wrap items-center justify-center gap-2 border-t border-line pt-4">{action}</div>
+      ) : null}
     </div>
   );
 }
