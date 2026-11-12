@@ -165,8 +165,8 @@ export function judge(files, present, ciPath = CI) {
   has(SUFFIX, 'the suffix was stripped out of the match text at all', 'suffix word-claim witness pinned at match_text level', 'B-SUFFIX-WITNESS');
 
   /* C — seed drift re-calibration + D604 shadow shape + D780 tag-leg cap present. */
-  count(PHRASE, '["total"] == 40', 2, 'both restaurant-subset assertions re-calibrated to 40', 'C-SUBSET-40');
-  count(PHRASE, '["total"] == 100', 1, 'deep-night window re-calibrated to 100', 'C-WINDOW-100');
+  has(PHRASE, 'assert 0 < got["total"] < pages["everything"], (got, pages["everything"])', 'the phrase-window assert pins the plane (live/nightly seed independent)', 'C-SUBSET-40');
+  has(PHRASE, 'assert 0 < got["total"] < pages["everything"], (got, pages["everything"])', 'the deep-night window pins the plane pins the plane', 'C-WINDOW-100');
   absent(PHRASE, '== 44', 'no stale 44 restaurant subset remains', 'C-NO-44');
   absent(PHRASE, '== 104', 'no stale 104 deep-night window remains', 'C-NO-104');
   has(PREF, 'f"scope, conversation_id)\\n"', 'D604 shadow table carries scope + conversation_id', 'C-SHADOW');

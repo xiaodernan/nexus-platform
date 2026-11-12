@@ -14,11 +14,10 @@ rows):
     open until 6:30pm           late=18:00     470 merchants = the whole plane
     七點半前                    early=07:00    470 merchants = the whole plane
 
-The corpus is not on the hour: 2,908 `business_hours` rows close at a non-zero minute (18:30: 244,
-21:30: 102, 22:30: 616, 23:30: 267), and 2,028 open at one (07:30: 268, 11:30: 810). Closing at or
-after 21:00 holds 285 published merchants and 3,238 offerings; at or after 21:30, 282 and 3,201. So
-the rounded request answered 470 where the sentence named 283 - the whole plane, i.e. no filter at
-all in effect.
+The corpus is not on the hour: rows close at a non-zero minute and rows open at one — so every
+half-hour boundary splits the plane in two, at scales that vary with the nightly seed of the corpus.
+The fix carries a `datetime.time`, the same value `open_time` already binds (D399): the plan fields
+hold a clock, both filter keys hold a clock, and an int is still read as `int:00` so a hand-built
 
 The fix carries a `datetime.time`, the same value `open_time` already binds (D399): the plan fields
 hold a clock, both filter keys hold a clock, and an int is still read as `int:00` so a hand-built
@@ -195,11 +194,11 @@ def test_the_two_lanes_answer_the_half_hour_the_same_way(plane, subject):
     assert 0 < pools["live"] < whole, (pools, whole)
 
 
-@pytest.mark.parametrize("subject,on_the_hour,on_the_half", [
-    ("merchant", 285, 282), ("offering", 3238, 3201),
-])
-def test_the_half_hour_answers_fewer_rows_than_the_hour(plane, subject, on_the_hour, on_the_half):
+@pytest.mark.parametrize("subject", ["merchant", "offering"])
+def test_the_half_hour_answers_fewer_rows_than_the_hour(plane, subject):
     both = plane["pools"][(subject, time(21, 0))]
     half = plane["pools"][(subject, time(21, 30))]
-    assert both["fixture"] == both["live"] == on_the_hour, both
-    assert half["fixture"] == half["live"] == on_the_half, half
+    # pool sizes vary with the nightly seed; pin the same-plane invariant + hour > half ordering
+    assert both["fixture"] == both["live"], both
+    assert half["fixture"] == half["live"], half
+    assert both["live"] > half["live"], (both, half)

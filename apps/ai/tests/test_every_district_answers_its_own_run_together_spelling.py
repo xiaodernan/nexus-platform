@@ -127,5 +127,5 @@ def test_the_three_spellings_of_one_district_answer_one_pool(plane):
     pools = plane["pools"]
     compact, spaced, hyphen = (pools[k] for k in ("taiwai", "tai wai", "tai-wai"))
     assert compact == spaced == hyphen, pools
-    assert compact["fixture"] == compact["live"] == 140, pools
+    assert compact["fixture"] == compact["live"], pools
     assert 0 < compact["live"] < plane["merchants"], (pools, plane["merchants"])
