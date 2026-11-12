@@ -64,6 +64,10 @@ def create_app(settings: Any | None = None) -> FastAPI:
         # uninitialised factory is a no-op, so the offline first-class boot never fails on it.
         from nexus_ai.adapters.platform import aclose_platform_client
         await aclose_platform_client()
+        # D974 — release the shared embedding HTTP client (never built on the hashing default,
+        # so this is a no-op offline); the bounded LRU cache needs no teardown.
+        from nexus_ai.models.embeddings import aclose_embedding_client
+        await aclose_embedding_client()
         await stop_eureka(eureka_registration)
         try:
             await db_pool.dispose()

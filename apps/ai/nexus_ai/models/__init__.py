@@ -26,6 +26,7 @@ from nexus_ai.models.embeddings import (
     EmbeddingAdapter,
     HashingEmbedding,
     HttpEmbedding,
+    aclose_embedding_client,
     get_embedding_adapter,
 )
 from nexus_ai.models.factory import (
@@ -45,6 +46,7 @@ __all__ = [
     "TASK_MODEL_DEFAULTS", "MAX_REASON_CALLS_PER_REQUEST", "PRICE_PER_1K",
     "budget_for", "cost_usd", "estimate_tokens",
     "EmbeddingAdapter", "HashingEmbedding", "HttpEmbedding", "get_embedding_adapter", "DIM",
+    "aclose_embedding_client",
     "ModelRouter", "RoutedCall", "CostMeter", "BudgetExceeded",
     "build_adapters", "get_adapter", "get_pool", "get_router", "reset_provider_cache",
 ]

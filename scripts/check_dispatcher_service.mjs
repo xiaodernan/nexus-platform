@@ -172,12 +172,12 @@ if (!SELF_TEST) {
 const live = ran;
 const t = (p) => live.files.get(p) ?? '';
 const cases = [
-  ['SHA-1 HMAC escape', (p) => p.set(SIGN, t(SIGN).replace('HmacSHA256', 'HmacSHA1')), 'HMAC-SHA256'],
+  ['SHA-1 HMAC escape', (p) => p.set(SIGN, t(SIGN).replace('HmacSHA256', 'HmacSHA1')), 'no SHA-1 HMAC escape'],
   ['hash jitter truncated to int', (p) => p.set(WORKER, t(WORKER).replace('Long.remainderUnsigned', '((int) ')), 'deterministic jitter'],
   ['hooks default filled with a rogue URI', (p) => p.set(HOOKS, t(HOOKS).replaceAll('new LinkedHashMap<>()', 'new java.util.HashMap<>()')), 'empty map default'],
   ['dispatcher sibling group copied from events-service', (p) => p.set(READER, t(READER).replace(
     'nexus-dispatchers', 'nexus-events-readers'
-  )), 'own group name'],
+  )), 'events-service group is NOT the dispatcher'],
   ['wall-clock immutability', (p) => p.set(BREAKER, t(BREAKER).replaceAll('System.nanoTime()', 'System.currentTimeMillis()')), 'monotonic clock'],
   ['eureka opt-IN default', (p) => p.set(YAML, t(YAML).replace(
     'NEXUS_DISPATCHER_EUREKA_ENABLED:false', 'NEXUS_DISPATCHER_EUREKA_ENABLED:true'
@@ -186,7 +186,7 @@ const cases = [
     'new TreeMap<>(body)', 'new LinkedHashMap<>(body)'
   )), 'canonical sorted key serialisation'],
   ['CI self-test wiring cut', (p) => p.set(CI, t(CI).replace('check_dispatcher_service.mjs --self-test', '')), 'cloud job self-test wiring'],
-  ['ATLAS row erased', (p) => p.set(ATLAS, t(ATLAS).replace('scripts/check_dispatcher_service.mjs', '')), 'ATLAS row'],
+  ['ATLAS row erased', (p) => p.set(ATLAS, t(ATLAS).replaceAll('scripts/check_dispatcher_service.mjs', '')), 'ATLAS row'],
   ['the ledger claim removed', (p) => p.set(STATUS, t(STATUS).replace('## 973. D973', '## 972. D972')), 'ledger heading'],
   ['graph paper door cut', (p) => p.set(PARENT_POM, t(PARENT_POM).replace('<module>dispatcher-service</module>\n', '')), 'dispatcher module on the reactor'],
   ['fnv1a64 saturation removed', (p) => p.set(WORKER, t(WORKER).replaceAll('fnv1a64', 'fnv1')), 'fnv1a64 saturation'],
@@ -197,10 +197,17 @@ let allReddened = true;
 for (const [label, plant, expectNeedle] of cases) {
   const p = new Map(live.files);
   if (typeof plant === 'function') plant(p);
+  // D954 no-op guard: a corruption that changes no byte is a defect, not a pass.
+  let changed = false;
+  for (const [path, text] of p) if (text !== live.files.get(path)) { changed = true; break; }
   const out = judgeLocal(p, live.present);
-  const redOk = out.offenders.length > 0 || out.unchecked;
-  console.log(`  self-test  ${label.padEnd(48)} red offenders=${out.offenders.length} expect="${expectNeedle}"`);
-  if (!redOk) allReddened = false;
+  const joined = out.offenders.join(' | ');
+  const redOk = (out.offenders.length > 0 || out.unchecked);
+  const rightReason = joined.includes(expectNeedle);
+  const pass = changed && redOk && rightReason;
+  console.log(`  self-test  ${label.padEnd(48)} ${pass ? 'red' : 'GREEN/WRONG (defect!)'} offenders=${out.offenders.length} expect="${expectNeedle}"${changed ? '' : ' NO-OP'}`);
+  if (!pass) allReddened = false;
+  if (redOk && !rightReason) for (const o of out.offenders.slice(0, 2)) console.log('      got: ' + o);
 }
 // Guard: the real plane still holds.
 {

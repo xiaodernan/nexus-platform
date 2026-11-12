@@ -8,11 +8,63 @@ from __future__ import annotations
 import hashlib
 import math
 import re
-from typing import Protocol, Sequence, runtime_checkable
+from collections import OrderedDict
+from typing import Any, Protocol, Sequence, runtime_checkable
 
 DIM = 1024
 
-_CACHE: dict[tuple[str, str], tuple[float, ...]] = {}
+# D974: the cache key embeds the RAW query / chunk text, which is external input (a RAG
+# query from routes_rag.py, a document chunk from rag/embed.py). Each value is a 1024-d
+# float tuple (~32 KB). An unbounded dict therefore grows with every distinct text ever
+# seen and is directly attacker-/traffic-driven memory exhaustion — measured 2000 distinct
+# queries -> 2000 entries -> ~62 MiB with the DEV-DEFAULT HashingEmbedding (no infra needed).
+# D903/D972 bounded the tool-result cache; this is the SAME class of hole on a different,
+# never-touched module. Keep it an LRU so hot queries still hit: O(1) get+move_to_end, and
+# popitem(last=False) evicts the coldest entry once the cap is crossed. 4096 x ~32 KB is a
+# ~128 MiB ceiling — generous for a hot set, bounded for a long-running worker.
+_CACHE_MAX = 4096
+_CACHE: OrderedDict[tuple[str, str], tuple[float, ...]] = OrderedDict()
+
+
+def _cache_get(key: tuple[str, str]) -> tuple[float, ...] | None:
+    """D974: LRU read — a hit is promoted so it survives the next eviction."""
+    hit = _CACHE.get(key)
+    if hit is not None:
+        _CACHE.move_to_end(key)
+    return hit
+
+
+def _cache_put(key: tuple[str, str], vec: tuple[float, ...]) -> None:
+    """D974: LRU write — cap the cache by entry count, never by write count (D972's lesson)."""
+    _CACHE[key] = vec
+    _CACHE.move_to_end(key)
+    while len(_CACHE) > _CACHE_MAX:
+        _CACHE.popitem(last=False)
+
+
+# D974: one pooled httpx client for ALL HttpEmbedding instances in this process, mirroring
+# D969's aclose_platform_client. The factory still returns a FRESH adapter per call (that
+# contract is unchanged); only the expensive TCP(+TLS) connection is shared. Lazily built so
+# importing this module touches no network; injected clients (tests) bypass it entirely.
+_HTTP_CLIENT: Any = None
+
+
+def _shared_client(timeout_s: float):
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is None:
+        import httpx
+        _HTTP_CLIENT = httpx.AsyncClient(timeout=timeout_s)
+    return _HTTP_CLIENT
+
+
+async def aclose_embedding_client() -> None:
+    """D974: release the pooled client on app shutdown; a no-op when never built (offline)."""
+    global _HTTP_CLIENT
+    if _HTTP_CLIENT is not None:
+        aclose = getattr(_HTTP_CLIENT, "aclose", None)
+        if aclose is not None:
+            await aclose()
+        _HTTP_CLIENT = None
 
 
 @runtime_checkable
@@ -60,7 +112,7 @@ class HashingEmbedding:
                 "note": "dev-only lexical hashing, not a semantic model"}
 
     def embed_one(self, text: str) -> list[float]:
-        cached = _CACHE.get((self.name, text))
+        cached = _cache_get((self.name, text))  # D974: LRU read
         if cached is not None:
             return list(cached)
         vec = [0.0] * self.dim
@@ -75,7 +127,7 @@ class HashingEmbedding:
                 vec[i] = math.copysign(1.0 + math.log1p(abs(vec[i])), vec[i])
         norm = math.sqrt(sum(v * v for v in vec)) or 1.0
         out = [v / norm for v in vec]
-        _CACHE[(self.name, text)] = tuple(out)
+        _cache_put((self.name, text), tuple(out))  # D974: LRU write (bounded)
         return out
 
     async def embed(self, texts: Sequence[str]) -> list[list[float]]:
@@ -118,49 +170,48 @@ class HttpEmbedding:
         never arrived is a provider failure, not a zero to store - `chunks.embedding` is read
         by cosine, so a zero vector makes that row permanently unretrievable.
         """
-        import httpx
-
         out: list[list[float] | None] = [None] * len(texts)
         # cached by content hash (AGENT_CONTRACT §9): a re-embedded chunk costs no call
         todo: list[tuple[int, str]] = []
         for i, t in enumerate(texts):
-            hit = _CACHE.get((self.model, t or ""))
+            hit = _cache_get((self.model, t or ""))  # D974: LRU read
             if hit is not None:
                 out[i] = list(hit)
             else:
                 todo.append((i, t or ""))
         if todo:
-            client = self._client or httpx.AsyncClient(timeout=self.timeout_s)
-            try:
-                resp = await client.post(
-                    f"{self.base_url}/embeddings",
-                    headers={"authorization": f"Bearer {self.api_key}"},
-                    json={"model": self.model, "dimensions": self.dim,
-                          "input": [t for _, t in todo]},
-                )
-                resp.raise_for_status()
-                data = resp.json()["data"]
-                if len(data) != len(todo):
+            # D974: reuse the process-pooled client instead of one TCP(+TLS) handshake per
+            # embed call. An injected client is still used verbatim and NEVER closed by the
+            # call (the caller owns it); the shared client is closed by the lifespan hook.
+            client = self._client or _shared_client(self.timeout_s)
+            # D974: no per-call close — the pooled client outlives this request and is released
+            # by aclose_embedding_client() at shutdown; an injected client is the caller's to own.
+            resp = await client.post(
+                f"{self.base_url}/embeddings",
+                headers={"authorization": f"Bearer {self.api_key}"},
+                json={"model": self.model, "dimensions": self.dim,
+                      "input": [t for _, t in todo]},
+            )
+            resp.raise_for_status()
+            data = resp.json()["data"]
+            if len(data) != len(todo):
+                raise RuntimeError(
+                    f"embedding endpoint answered {len(data)} row(s) for "
+                    f"{len(todo)} input(s) - a short answer would leave rows unset")
+            for item in data:
+                index = item["index"]
+                if not isinstance(index, int) or not 0 <= index < len(todo):
                     raise RuntimeError(
-                        f"embedding endpoint answered {len(data)} row(s) for "
-                        f"{len(todo)} input(s) - a short answer would leave rows unset")
-                for item in data:
-                    index = item["index"]
-                    if not isinstance(index, int) or not 0 <= index < len(todo):
-                        raise RuntimeError(
-                            f"embedding endpoint returned index {index!r}, outside the "
-                            f"{len(todo)} input(s) it was sent")
-                    i, text = todo[index]
-                    vec = [float(v) for v in item["embedding"]]
-                    if len(vec) != self.dim:
-                        raise RuntimeError(
-                            f"embedding endpoint returned dim {len(vec)}, contract requires "
-                            f"{self.dim} (DECISIONS D3) — refusing to store a mismatched vector")
-                    out[i] = vec
-                    _CACHE[(self.model, text)] = tuple(vec)
-            finally:
-                if self._client is None:
-                    await client.aclose()
+                        f"embedding endpoint returned index {index!r}, outside the "
+                        f"{len(todo)} input(s) it was sent")
+                i, text = todo[index]
+                vec = [float(v) for v in item["embedding"]]
+                if len(vec) != self.dim:
+                    raise RuntimeError(
+                        f"embedding endpoint returned dim {len(vec)}, contract requires "
+                        f"{self.dim} (DECISIONS D3) — refusing to store a mismatched vector")
+                out[i] = vec
+                _cache_put((self.model, text), tuple(vec))  # D974: LRU write (bounded)
         unfilled = [i for i, v in enumerate(out) if v is None]
         if unfilled:
             raise RuntimeError(
