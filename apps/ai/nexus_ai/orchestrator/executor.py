@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from nexus_ai.orchestrator.planner import Plan
+from nexus_ai.orchestrator.planner import Plan, resolve_max_steps
 from nexus_ai.tools.registry import ToolError
 
 
@@ -58,12 +58,17 @@ class ExecutionReport:
 
 async def execute_plan(plan: Plan, registry: Any, *, subject: str,
                        idempotency_key: str | None = None,
-                       clock: Any = time.monotonic) -> ExecutionReport:
+                       clock: Any = time.monotonic,
+                       max_steps: int | None = None) -> ExecutionReport:
     if plan.refused is not None:
         return ExecutionReport(steps=(), refused=plan.refused)
 
+    # D1002: §10 rule 2 is enforced again at the door — with the SAME operator budget the planner
+    # used (the two gates must not drift). `resolve_max_steps(None)` is the 6-step default, so
+    # direct callers and existing tests keep their behaviour; the route passes settings-derived cap.
+    cap = max_steps if max_steps is not None else resolve_max_steps(None)
     outcomes: list[StepOutcome] = []
-    for step in plan.steps[:6]:  # §10 rule 2, enforced again at the door
+    for step in plan.steps[:cap]:
         started = clock()
         if step.missing:
             outcomes.append(StepOutcome(

@@ -24,8 +24,30 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
-#: §10 rule 2 — max 6 tool calls per user-facing request.
+#: §10 rule 2 — default max 6 tool calls per user-facing request. This is the FLOOR/DEFAULT
+#: only; the operator's `Settings.max_tool_calls` (env NEXUS_MAX_TOOL_CALLS) is the live cap,
+#: threaded in by the API route through `resolve_max_steps`. D1002: before this wiring the knob
+#: was parsed from env and then dropped — `MAX_STEPS` won on every request regardless of env.
 MAX_STEPS = 6
+#: Guard against a nonsensical env value: the cap must stay a positive step budget, never 0/negative
+#: (which would silently plan nothing) and never above the registry's declared tool inventory.
+MAX_STEPS_CEILING = 64
+
+
+def resolve_max_steps(settings: Any = None) -> int:
+    """D1002 — the ONE reader of the operator's step budget.
+
+    `getattr` keeps the §105 bare-dummy-settings ladders (and direct calls with no settings) working:
+    an absent `max_tool_calls` falls back to the §10 rule-2 default (6). A present value is clamped
+    to [1, MAX_STEPS_CEILING] so a typo'd env cannot disable planning or explode the step budget.
+    """
+    raw = getattr(settings, "max_tool_calls", MAX_STEPS) if settings is not None else MAX_STEPS
+    try:
+        cap = int(raw)
+    except (TypeError, ValueError):
+        cap = MAX_STEPS
+    return max(1, min(cap, MAX_STEPS_CEILING))
+
 
 _CLAUSE_SPLIT = re.compile(r"[？?！!，,;；:：\n]+")
 
@@ -148,7 +170,12 @@ def _steps_for_clause(clause: str, ctx: Mapping[str, Any]) -> list[PlannedStep]:
     return steps
 
 
-def plan_tools(text: str, *, context: Mapping[str, Any] | None = None) -> Plan:
+def plan_tools(text: str, *, context: Mapping[str, Any] | None = None,
+               max_steps: int | None = None) -> Plan:
+    # D1002: the cap is the operator's live budget when supplied by the route (via
+    # resolve_max_steps(settings)), else the §10 rule-2 default. Direct callers and existing tests
+    # that omit max_steps keep the exact 6-step behaviour — no silent change to the default plane.
+    cap = max_steps if max_steps is not None else MAX_STEPS
     lowered = str(text or "").lower()
     ctx = dict(context or {})
     clauses = [c.strip() for c in _CLAUSE_SPLIT.split(lowered) if c and c.strip()]
@@ -158,7 +185,7 @@ def plan_tools(text: str, *, context: Mapping[str, Any] | None = None) -> Plan:
     steps: list[PlannedStep] = []
     for clause in clauses:
         steps.extend(_steps_for_clause(clause, ctx))
-        if len(steps) >= MAX_STEPS:
+        if len(steps) >= cap:
             break
 
     if not steps:
@@ -166,4 +193,4 @@ def plan_tools(text: str, *, context: Mapping[str, Any] | None = None) -> Plan:
                                       "nothing was planned — a greeting or an "
                                       "unrecognised request is answered without tools")
 
-    return Plan(steps=tuple(steps[:MAX_STEPS]), refused=None)
+    return Plan(steps=tuple(steps[:cap]), refused=None)

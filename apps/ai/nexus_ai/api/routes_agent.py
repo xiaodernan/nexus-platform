@@ -7,10 +7,11 @@ answer: the caller renders under `report.answerable` and no other condition, and
 refusal (`plan.refused`) is answered without tools.
 
 Read-only tools only — the planner never emits a side-effect tool, so no idempotency key
-is required of the caller. Budget: the planner caps the plan at six steps (§10 rule 2).
-The run is recorded to `agent_runs` either way (§10 rule 4) with the executor's real
-verdicts in `tool_calls`, or an empty list when the plan was not executed — never a
-fabricated one.
+is required of the caller. Budget: §10 rule 2's cap defaults to six steps but is the live
+operator knob `max_tool_calls` (env NEXUS_MAX_TOOL_CALLS, D1002) — resolved once from
+`deps.settings` and threaded through BOTH the planner and the executor door. The run is
+recorded to `agent_runs` either way (§10 rule 4) with the executor's real verdicts in
+`tool_calls`, or an empty list when the plan was not executed — never a fabricated one.
 
 Service-to-service surface (§7.0): never called by a browser; the web BFF proxies the
 conversation surfaces, not this one.
@@ -29,6 +30,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.contract import AgentPlanRequest
 from nexus_ai.orchestrator import execute_plan, plan_tools
+from nexus_ai.orchestrator.planner import resolve_max_steps
 
 log = logging.getLogger("nexus_ai.api.agent")
 
@@ -42,13 +44,17 @@ async def agent_plan(request: Request, body: AgentPlanRequest):
     run_id = runs.new_id()
 
     context = body.context.model_dump(exclude_none=True) if body.context else {}
-    plan = plan_tools(body.query, context=context)
+    # D1002: deps.settings is already in scope — the operator's NEXUS_MAX_TOOL_CALLS was parsed but
+    # never reached the planner or executor (both hard-coded 6). Resolve it ONCE here and thread the
+    # same cap through both gates, so the plan and its execution share one budget (no drift).
+    max_steps = resolve_max_steps(deps.settings)
+    plan = plan_tools(body.query, context=context, max_steps=max_steps)
 
     report = None
     tool_calls: list[dict[str, Any]] = []
     if body.execute:
         report = await execute_plan(plan, deps.tool_registry(),
-                                    subject=body.subject or "anonymous")
+                                    subject=body.subject or "anonymous", max_steps=max_steps)
         tool_calls = [
             {"tool": step.tool, "status": step.status, "ok": step.status == "ok",
              "reason": step.reason, "ms": round(step.ms, 2)}
