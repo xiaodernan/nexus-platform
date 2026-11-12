@@ -180,7 +180,7 @@ export function ProgressBar({ label }: { label: string }) {
       aria-valuemax={100}
       className="fixed inset-x-0 top-0 z-[80] h-0.5 overflow-hidden bg-transparent"
     >
-      <span className="absolute inset-y-0 left-0 w-1/3 bg-accent [animation:nexus-shimmer_1.15s_ease-in-out_infinite]" />
+      <span className="absolute inset-y-0 left-0 w-1/3 bg-accent [animation:nexus-shimmer_1.15s_ease-in-out_infinite] motion-reduce:animate-none" />
     </span>
   );
 }

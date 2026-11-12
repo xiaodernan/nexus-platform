@@ -47,7 +47,7 @@ export function Dialog({
         type="button"
         aria-label={closeLabel}
         onClick={() => onOpenChange(false)}
-        className="absolute inset-0 cursor-default bg-surface-overlay backdrop-blur-[2px] animate-[nexus-fade-up_180ms_ease-out]"
+        className="absolute inset-0 cursor-default bg-surface-overlay backdrop-blur-[2px] animate-[nexus-fade-up_180ms_ease-out] motion-reduce:animate-none"
       />
       <div
         ref={panelRef}
@@ -59,7 +59,7 @@ export function Dialog({
         className={cx(
           'relative m-0 flex max-h-[92vh] w-full flex-col gap-4 rounded-t-2xl border border-line bg-surface p-5 shadow-xl outline-none',
           'sm:m-4 sm:rounded-2xl sm:p-6',
-          'animate-[nexus-fade-up_260ms_var(--nexus-ease-out)]',
+          'animate-[nexus-fade-up_260ms_var(--nexus-ease-out)] motion-reduce:animate-none',
           size === 'sm' && 'sm:max-w-sm',
           size === 'md' && 'sm:max-w-lg',
           size === 'lg' && 'sm:max-w-3xl',
@@ -137,7 +137,7 @@ export function Sheet({
         tabIndex={-1}
         className={cx(
           'absolute flex flex-col gap-4 border-line bg-surface shadow-xl outline-none',
-          'animate-[nexus-fade-up_260ms_var(--nexus-ease-out)]',
+          'animate-[nexus-fade-up_260ms_var(--nexus-ease-out)] motion-reduce:animate-none',
           side === 'right' && 'inset-y-0 right-0 w-full max-w-[26rem] border-l p-5',
           side === 'bottom' && 'inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl border-t p-5',
         )}

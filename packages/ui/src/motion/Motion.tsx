@@ -103,7 +103,22 @@ export function Reveal({
   );
 }
 
-/** Staggered list wrapper: `<StaggerGroup>` + `<StaggerItem>` children. */
+/** D979: reduced-motion variant with no hidden offset — children are visible from the first frame. */
+const staggerItemVisible: Variants = {
+  hidden: { opacity: 1, y: 0 },
+  show: { opacity: 1, y: 0, transition: { duration: 0 } },
+};
+
+/**
+ * Staggered list wrapper: `<StaggerGroup>` + `<StaggerItem>` children.
+ *
+ * D979: the markup must NOT branch on `useReducedMotion()` (see Reveal's docblock above) — the
+ * server pass cannot know the OS preference, so returning a bare `<div>` on a reduced client first
+ * frame while the server emitted `<motion.div initial="hidden">` would hydrate a different element
+ * and strand the server's inline `opacity:0` in the DOM forever, hiding the content. We therefore
+ * always render the SAME `motion.div` tree and only collapse the timing: `staggerItemVisible` has
+ * no hidden offset, and the parent's stagger delays drop to 0.
+ */
 export function StaggerGroup({
   children,
   className,
@@ -116,11 +131,15 @@ export function StaggerGroup({
   amount?: number;
 }) {
   const reduced = useReducedMotion();
-  if (reduced) return <div className={className}>{children}</div>;
   return (
     <motion.div
       className={className}
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.055, delayChildren: delay } } }}
+      variants={{
+        hidden: {},
+        show: {
+          transition: { staggerChildren: reduced ? 0 : 0.055, delayChildren: reduced ? 0 : delay },
+        },
+      }}
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount }}
@@ -132,9 +151,8 @@ export function StaggerGroup({
 
 export function StaggerItem({ children, className }: { children: React.ReactNode; className?: string }) {
   const reduced = useReducedMotion();
-  if (reduced) return <div className={className}>{children}</div>;
   return (
-    <motion.div className={className} variants={staggerItem}>
+    <motion.div className={className} variants={reduced ? staggerItemVisible : staggerItem}>
       {children}
     </motion.div>
   );

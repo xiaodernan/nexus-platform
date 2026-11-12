@@ -247,7 +247,7 @@ export function Icon({ name, size = 20, label, spin, className, ...rest }: IconP
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      className={cx(name === 'spinner' && spin && 'animate-[nexus-spin_900ms_linear_infinite]', className)}
+      className={cx(name === 'spinner' && spin && 'animate-[nexus-spin_900ms_linear_infinite] motion-reduce:animate-none', className)}
       fill={filled ? 'currentColor' : 'none'}
       stroke={filled ? 'none' : 'currentColor'}
       strokeWidth={1.6}

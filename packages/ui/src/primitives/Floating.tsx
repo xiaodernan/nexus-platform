@@ -194,7 +194,7 @@ export function ToastProvider({
         {messages.map((message) => (
           <div
             key={message.id}
-            className="pointer-events-auto flex items-start gap-3 rounded-lg border border-line bg-surface-raised p-3.5 shadow-lg animate-[nexus-fade-up_220ms_var(--nexus-ease-out)]"
+            className="pointer-events-auto flex items-start gap-3 rounded-lg border border-line bg-surface-raised p-3.5 shadow-lg animate-[nexus-fade-up_220ms_var(--nexus-ease-out)] motion-reduce:animate-none"
           >
             <span
               className={cx(

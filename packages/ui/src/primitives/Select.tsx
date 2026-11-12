@@ -173,7 +173,7 @@ export function Select({
           aria-labelledby={label ? `${id}-label` : undefined}
           aria-activedescendant={`${id}-option-${activeIndex}`}
           onKeyDown={onListKeyDown}
-          className="absolute z-40 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-line bg-surface p-1 shadow-lg animate-[nexus-fade-up_140ms_var(--nexus-ease-out)]"
+          className="absolute z-40 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-line bg-surface p-1 shadow-lg animate-[nexus-fade-up_140ms_var(--nexus-ease-out)] motion-reduce:animate-none"
         >
           {options.map((option, index) => {
             const isSelected = option.value === value;
