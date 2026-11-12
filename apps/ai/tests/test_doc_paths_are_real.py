@@ -72,9 +72,6 @@ MODULE = re.compile(r"`([A-Za-z0-9_./-]*[A-Za-z0-9_]+\.py)`")
 DECLARED_PROMISES = {
     "ingest.py": "the platform's importer parses the merchant's documents (not in this repo)",
     "chunk.py": "the platform's importer chunks them (not in this repo)",
-    "orchestrator/planner.py": "the orchestrator is not built yet (AGENTS.md's promise)",
-    "apps/ai/nexus_ai/orchestrator/planner.py": (
-        "the orchestrator is not built yet (AGENTS.md's promise)"),
 }
 
 #: The names a document borrows from OUTSIDE this repository - a file that is real, just

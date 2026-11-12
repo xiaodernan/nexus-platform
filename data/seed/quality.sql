@@ -2798,12 +2798,12 @@ INSERT INTO read_answer VALUES
  -- and the leg SPLITS the decision, not joins it: a merchant weak on a refused word leaves the list, the matching
  -- boolean joins it, exactly one of the two is needed.
  ('merchants', 'attributes', 'weak_aspects', 'reachable',
-  'generate.py:1279 writes it; apps/ai/nexus_ai/search/sql.py:513,:843 reads it with ?|, :883 projects it',
+  'generate.py:1279 writes it; apps/ai/nexus_ai/search/sql.py:521,:853 reads it with ?|, :893 projects it',
   'the avoid lane wants the list of things a merchant is weak on; 118 of 470 published rows carry a '
   || 'non-empty list (noise, mtr_distance, seating, cleanliness and friends); the avoid clause fails '
   || 'the refused-word merchant against the OR leg and the merchant leaves the avoided set'),
  ('merchants', 'attributes', 'lively_ambience', 'reachable',
-  'generate.py:1220 writes it from aspect_mean["noise"] < 3.0; apps/ai/nexus_ai/search/sql.py:884 reads it',
+  'generate.py:1220 writes it from aspect_mean["noise"] < 3.0; apps/ai/nexus_ai/search/sql.py:894 reads it',
   'the second spelling of the noise fact: a merchant the seed scored quiet is loud-ambience-refused by the '
   || 'avoid lane the other way around; 12 merchants carry true; the avoid leg picks it up instead of an '
   || 'array membership test for the same signal'),

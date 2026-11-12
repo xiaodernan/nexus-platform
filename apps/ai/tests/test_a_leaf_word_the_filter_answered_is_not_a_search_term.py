@@ -15,7 +15,9 @@ corpus never says). `lexicon.leaf_surfaces()` returns the sentence's own spellin
 selected - and nothing for any other leaf - and `plan_from_intent` recomputes the match text once
 `_apply_category_leaf` has decided, because the leaf is only known then.
 
-Measured after (`tmp/d638_after.txt`): all four pages carry relevance 0.0 on every card, the two
+Measured after (`tmp/d638_after.txt`) and re-measured after D705 (2026-11-12): every card on a 
+leaf page carries the same relevance (1.0 with the request-weight cuisine witness for the 
+cuisine leaves, 0.0 for the rest), the two
 spellings of one leaf answer the same ten (「拉麵」/`ramen`, 「珍珠奶茶」/`bubble tea`), the leaf still
 steers the pool (each page opens on its own category), and a content word survives - 「平價拉麵」 reaches
 the lane as 平價, 「拉麵 4個人」 as nothing.
@@ -97,6 +99,8 @@ def plane():
             out = {"rows": len(await db.fetch("select id from public.merchants "
                                               "where status='published'"))}
             pages = {}
+            leaves = {"拉麵": "ramen", "ramen": "ramen", "點心": "dimsum", "壽司": "sushi",
+                      "珍珠奶茶": "bubble-tea", "bubble tea": "bubble-tea"}
             for q in queries:
                 pack = await run_search(Deps(st), validate_intent(extract_intent_dict(q)),
                                         query=q, limit=TOP_K)
@@ -104,6 +108,19 @@ def plane():
                                 rel=[round(s.candidate.relevance, 3) for s in pack.scored[:TOP_K]],
                                 cats=[s.candidate.category for s in pack.scored[:1]])
             out["pages"] = pages
+            membership = {}
+            for q, page in pages.items():
+                if not page["ids"] or q not in leaves:
+                    membership[q] = 0
+                    continue
+                membership[q] = len(await db.fetch(
+                    "select distinct mc.merchant_id from merchant_categories mc "
+                    "join categories c on c.id = mc.category_id "
+                    "left join categories pc on pc.id = c.parent_id "
+                    "where mc.merchant_id = ANY($1::uuid[]) "
+                    "and (c.slug = $2 or pc.slug = $2)",
+                    page["ids"], leaves[q]))
+            out["membership"] = membership
             return out
         finally:
             await db_pool.dispose()
@@ -115,8 +132,16 @@ def plane():
 @pytest.mark.parametrize("text", ["拉麵", "點心", "壽司", "珍珠奶茶"])
 def test_no_card_on_a_leaf_page_claims_a_word_match(plane, text):
     rel = plane["pages"][text]["rel"]
-    assert rel and all(r == 0.0 for r in rel), (
-        f"「{text}」 still scores {rel} - the leaf word is dividing a pool its own filter chose")
+    assert rel, (text, "the page answered nothing - the ranking never ran on this plane")
+    # D638 measured this as "every card 0.0". D705 (§684) landed after it: the page a typed
+    # cuisine leaf answers now carries the request-weight cuisine witness (1.0 uniformly), so
+    # fused relevance is no longer the witness for "the leaf word is not a search term". What
+    # the filter answering the word gives is a UNIFORM page: no row claims more than its
+    # neighbour - the leaf word cannot divide the pool. The word-claim itself is pinned in
+    # plan_from_intent's match_text above (the `match_text` column), not through the score.
+    assert len(set(rel)) == 1, (
+        f"「{text}」 divides the pool at {rel} - the leaf word the filter answered is still "
+        "acting on the ranking")
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
@@ -127,13 +152,17 @@ def test_the_two_spellings_of_one_leaf_answer_the_same_page(plane, cjk, latin):
 
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
-@pytest.mark.parametrize("text,category", [
-    ("拉麵", "Ramen & Noodles"),
-    ("點心", "Dim Sum"),
-    ("壽司", "Sushi & Sashimi"),
-    ("珍珠奶茶", "Bubble Tea"),
-])
-def test_the_leaf_still_steers_the_pool(plane, text, category):
-    """The strip is only safe while the FILTER is what answered the word."""
-    assert plane["pages"][text]["cats"] == [category], plane["pages"][text]["cats"]
-    assert 0 < len(plane["pages"][text]["ids"]) < plane["rows"] // 10, len(plane["pages"][text]["ids"])
+@pytest.mark.parametrize("text", ["拉麵", "點心", "壽司", "珍珠奶茶"])
+def test_the_leaf_still_steers_the_pool(plane, text):
+    """The strip is only safe while the FILTER is what answered the word.
+
+    The witness is leaf MEMBERSHIP in merchant_categories (the same EXISTS shape the SQL
+    filter uses), not the denormalized `category_primary`: the cross-categorized seed files
+    a teahouse under bubble-tea ('Clay Ridge 0399' prints 'Tea House' while answering 珍珠奶茶),
+    so a label comparison on the first card would go red on a correct plane.
+    """
+    ids = plane["pages"][text]["ids"]
+    assert plane["membership"][text] == len(ids), (
+        f"{plane['membership'][text]} of {len(ids)} rows on the {text} page carry the leaf - "
+        "the filter is not what answered the word")
+    assert 0 < len(ids) < plane["rows"] // 10, len(ids)

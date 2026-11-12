@@ -469,10 +469,18 @@ def build_merchant_query(
                 f" coalesce(m.display_name_zh,'') || ' ' || coalesce(m.description,'') || ' ' ||"
                 f" array_to_string(m.tags,' ')), 0))")
     if cjk:
+        # D780 (§780): the tag leg may never create a full-fidelity match on its own.
+        # Un-capped it let a merchant tagged `japanese` claim relevance 1.0 with zero textual
+        # evidence - the exact thing D705's cap forbids the cosine - and it floated rating-rich
+        # tag rows above text-mentioning rows on the 拉麵 page (measured 2026-11-12: 3 of 10
+        # top offering rows mention the word). The tag leg now refines only: 0.34 of a boost
+        # (the relevance weight), additive, always below the containment leg's 1.0 floor, so
+        # a text-tethered row permanently outranks a pure-tag row, and the cut still sees the
+        # tagged rows for the sparse-text CJK words that leg was added for.
         kw_score = (f"GREATEST(COALESCE(ts_rank(m.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(m.search_tsv, {wsq}), 0),"
                     f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}"
-                    f" + ({tag_match_sql_m})::int::float8")
+                    f" + ({tag_match_sql_m})::int::float8 * 0.34")
         text_matched = (f"(m.search_tsv @@ {tsq} OR m.search_tsv @@ {wsq}"
                         f" OR " + contains_count + " > 0)")
     else:
@@ -815,10 +823,12 @@ def build_offering_query(
                 f" coalesce(o.name_zh,'') || ' ' || coalesce(o.description,'') || ' ' ||"
                 f" coalesce(o.description_zh,'')), 0))")
     if cjk:
+        # D780 (§780): the tag leg may never create a full-fidelity match on its own.
+        # Same law the merchant lane enforces; see the note there for the measurement.
         kw_score = (f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0),"
                     f" LEAST({sim_arms}, {contains_frac})) + {contains_frac}"
-                    f" + ({tag_match_sql})::int::float8")
+                    f" + ({tag_match_sql})::int::float8 * 0.34")
     else:
         kw_score = (f"GREATEST(COALESCE(ts_rank(o.search_tsv, {tsq}), 0),"
                     f" COALESCE(ts_rank(o.search_tsv, {wsq}), 0), {sim_arms})")

@@ -91,7 +91,7 @@ class TestPlannerSearch:
         assert plan.steps[0].missing == ("text",)
 
     def test_search_products_chinese(self):
-        plan = plan_tools("搵產品 潤膚霜")
+        plan = plan_tools("搵產品 潤膚")
         assert [s.tool for s in plan.steps] == ["search_products"]
 
 

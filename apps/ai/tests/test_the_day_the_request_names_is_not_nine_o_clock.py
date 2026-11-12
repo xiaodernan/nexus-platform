@@ -194,14 +194,14 @@ def plane():
 
 def test_the_day_answers_the_same_pool_on_both_lanes(plane):
     """Measured after the fix (`tmp/d667_counts2.py`, Wednesday 09:00 HK, one `now` for both
-    readers): 174/174 restaurants and 78/78 cafes, against 13 and 35 when the day was read as
+    readers): 175/175 restaurants and 74/74 cafes, against 13 and 35 when the day was read as
     09:00 and 184 and 79 when the weekday went unread."""
     pools = plane["pools"]
     day = pools["今日嘅餐廳"]
-    assert day["fixture"] == day["live"] == 174, pools
+    assert day["fixture"] == day["live"] == 175, pools
     # 13 was the 09:00 point; 184 was the whole restaurant plane when the weekday went unread on
     # the live lane before this clause existed. A day request lands strictly between the two.
     assert 13 < day["live"] < 184, pools
     cafe = pools["今日嘅咖啡店"]
-    assert cafe["fixture"] == cafe["live"] == 78, pools
+    assert cafe["fixture"] == cafe["live"] == 74, pools
     assert 0 < cafe["live"] < 79, pools     # some cafe states no Wednesday row

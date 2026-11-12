@@ -4,22 +4,22 @@
 each of which has its own reading, and of 食煙, which is not a meal - the table's own comment says so.
 The phrase every Cantonese speaker actually writes for eating, 食嘢, was in NO row of it. So only a
 sentence that happened to write a LONGER cue was read: 「想食嘢」 answers the restaurant plane, while
-「食嘢」 answers all 470 published merchants, 「通宵食嘢」 answers the 104 shops open in the deep-night
+「食嘢」 answers all 470 published merchants, 「通宵食嘢」 answers the 100 shops open in the deep-night
 window with the word still in the match text, and 「去邊食嘢」 the 470 as well
 (`tmp/d706_probe.py`, 11:00 HKT Thursday).
 
 The corpus was read before the word was written (`tmp/d706_census.py`): 食嘢 writes 0 of the 470
-published merchants and 0 of the 5,538 offerings, and so does 去邊 - a phrase no row can meet can only
+published merchants and 0 of the 5,534 offerings, and so does 去邊 - a phrase no row can meet can only
 be a cue, never content.
 
     request       before                                after
-    通宵食嘢      unknown, no kind, 104, 「食嘢」 a term   discover, restaurant, 44, no term
+    通宵食嘢      unknown, no kind, 100, 「食嘢」 a term   discover, restaurant, 40, no term
     食嘢          unknown, no kind, 470, 「食嘢」 a term   discover, restaurant, 184, no term
     去邊食嘢      discover, no kind, 470                 discover, restaurant, 184 (「去邊」 filed)
-    深夜有咩食    discover, restaurant, 44               unchanged
+    深夜有咩食    discover, restaurant, 40               unchanged
     素食 / 小食 / 食煙  unchanged                         unchanged
 
-The 44 is the restaurant subset of the 104 merchants open 23:00-05:00 - the same two numbers D701 and
+The 40 is the restaurant subset of the 100 merchants open 23:00-05:00 - the same two numbers D701 and
 D703 pin - so this unit only moves 通宵食嘢 from the window's whole answer to its restaurants.
 
 One table, two readers: adding the phrase to `EAT_CUES` also makes `_EAT_FRAME` (built from that
@@ -135,7 +135,7 @@ def pages():
 
 def test_the_night_meal_answers_the_restaurants_open_in_the_window(pages):
     got = pages["out"]["通宵食嘢"]
-    assert got["total"] == 44, got
+    assert got["total"] == 40, got
     assert got["match"] == "", got
     # every row on the page is a restaurant, and the window is still the deep night's
     assert all(k not in (None, "Live Music Bar", "Wine Bar") for k in got["kinds"]), got["kinds"]
@@ -148,12 +148,12 @@ def test_a_bare_meal_answers_the_restaurant_plane(pages):
 
 
 def test_the_meal_that_already_worked_did_not_move(pages):
-    assert pages["out"]["深夜有咩食"]["total"] == 44, pages["out"]["深夜有咩食"]
+    assert pages["out"]["深夜有咩食"]["total"] == 40, pages["out"]["深夜有咩食"]
     assert pages["out"]["想食嘢"]["total"] == 184, pages["out"]["想食嘢"]
 
 
 def test_a_window_with_no_meal_is_still_the_whole_window(pages):
-    # the control on the live plane: 通宵 names an hour and no kind, so it answers the 104 open
+    # the control on the live plane: 通宵 names an hour and no kind, so it answers the 100 open
     # in it - the number D701 and D703 both pin.
     got = pages["out"]["通宵"]
-    assert got["total"] == 104, got
+    assert got["total"] == 100, got

@@ -35,10 +35,10 @@ own LATERAL picks (bbox + haversine + `ORDER BY meters ASC NULLS LAST LIMIT 1`) 
 fact 20 of 20 times, and the fact's district equals the column's 20 of 20.
 
 **Why the key has to be the location's id and not the merchant's.** 520 merchants keep 684
-locations; 77 of them have locations in more than one district. Among the 145 published
-multi-location merchants of this tenant, **133** have their NEAREST location in a different
+locations; 78 of them have locations in more than one district. Among the 145 published
+multi-location merchants of this tenant, **136** have their NEAREST location in a different
 district from their PRIMARY one (松屋: Ma On Shan / Tai Wai; 喜薈: Central / Stanley). A
-merchant-level lookup would therefore print a district the card is not showing for 133 merchants
+merchant-level lookup would therefore print a district the card is not showing for 136 merchants
 - a wrong citation, not a missing one - which is why the repair projects `loc.id AS location_id`
 and cites the fact of the row the district actually came from.
 
@@ -56,7 +56,7 @@ second surface, filed in PLAN rather than folded in here.
 
 **The citation rule, and why it is strict.** A row that names a location cites that location's
 fact and no other. Falling back to a merchant-level `address` fact would let the card vouch for
-`位於 Central` with a record that says Stanley - 77 merchants keep locations in more than one
+`位於 Central` with a record that says Stanley - 78 merchants keep locations in more than one
 district, so the two can and do disagree. A row that names no location cites its own subject,
 which is where the in-memory demo lane files the same attribute
 (`apps/ai/nexus_ai/api/demo_data.py:151`).
@@ -300,7 +300,7 @@ def test_the_cited_fact_is_on_the_card_the_web_filters_bullets_by():
 
 
 def test_the_nearest_location_is_the_one_cited_not_another_district_of_the_same_merchant():
-    """77 merchants keep locations in more than one district, and 133 of the 145 published ones
+    """78 merchants keep locations in more than one district, and 136 of the 145 published ones
     have the nearest in a different district from the primary - so a merchant-level key would
     cite a district the card is not printing."""
     near = _address_fact(LOCATION, "Central")
@@ -540,10 +540,10 @@ def test_the_location_a_live_geo_page_prints_has_its_own_address_fact(plane):
 @live_only
 def test_the_location_key_is_load_bearing_on_this_plane(plane):
     spread, np_ = plane["spread"], plane["nearest_vs_primary"]
-    assert spread["merchants"] == 520 and spread["district_spread"] == 77, (
-        f"the district spread moved ({spread}) - 77 of 520 merchants keep locations in more "
+    assert spread["merchants"] == 520 and spread["district_spread"] == 78, (
+        f"the district spread moved ({spread}) - 78 of 520 merchants keep locations in more "
         "than one district is why the key is the location and not the merchant")
-    assert np_["differs"] == 133 and np_["multi"] == 145, (
+    assert np_["differs"] == 136 and np_["multi"] == 145, (
         f"nearest-vs-primary district disagreement is now {np_['differs']} of {np_['multi']} - "
         "a merchant-level lookup would cite a district the card is not printing for most "
         "multi-location merchants, so this door's choice of key has to stay measured")

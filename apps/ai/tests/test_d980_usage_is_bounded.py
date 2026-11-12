@@ -28,8 +28,6 @@ NOT assert any invoice truth (PRICE_PER_1K stays a dev estimate) or that any bro
 
 from __future__ import annotations
 
-import pytest
-
 from nexus_ai.models.anthropic import AnthropicAdapter
 from nexus_ai.models.base import LLMRequest, cost_usd, estimate_tokens, sanitize_usage
 from nexus_ai.models.openai import OpenAIAdapter

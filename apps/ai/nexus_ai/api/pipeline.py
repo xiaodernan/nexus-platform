@@ -49,6 +49,47 @@ from nexus_ai.contract import MAX_QUERY_LENGTH  # noqa: E402,F401
 
 
 # --------------------------------------------------------------------------- intent
+#: §9's intent_extract, written down. The floor always answers, so the live path could not
+#: see failure — but it never produced an Intent either: the model was asked the question
+#: with no task instruction at all, answered as a helpful chatbot, and §7.1's validator
+#: (correctly) refused the answer every time. Any payload that passes here must name the
+#: object, not the task.
+INTENT_EXTRACT_SYSTEM = (
+    "You parse Hong Kong local-search and dining queries into a strict JSON object. "
+    "No commentary, no markdown — answer with the object only. The object is the "
+    "canonical Intent (API_CONTRACT §7.1):\n"
+    "{\"raw_query\": <the original query verbatim>, \"intent\": one of "
+    "\"discover_merchant\" | \"discover_offering\" | \"reserve\" | \"purchase\" | "
+    "\"ask_merchant\" | \"compare\" | \"plan_experience\" | \"unknown\","
+    "\"category\": <a category slug such as \"ramen\", \"dimsum\", \"cafe\", "
+    "\"bubble-tea\", \"sushi\" — or null>,"
+    "\"location\": {\"type\": \"district\" | \"landmark\" | \"nearby\" | \"address\" | "
+    "\"area\" | \"city\", \"value\": <the place the user named>, \"resolved\": null, "
+    "\"radius_m\": null} | null,"
+    "\"time\": null | {\"type\": \"explicit\" | \"relative\" | \"range\" | \"open_now\" | "
+    "\"unspecified\", \"starts_at\": <ISO 8601 datetime> | null, \"ends_at\": <ISO 8601 "
+    "datetime> | null, \"raw\": <the original time phrase> | null, \"quality\": <e.g. "
+    "\"open_late\"> | null},"
+    "\"budget\": null | {\"min\": <number|null>, \"max\": <number|null>, "
+    "\"currency\": \"HKD\", \"per\": \"party\" | \"person\" | \"item\" | null},"
+    "\"party_size\": <integer|null>,"
+    "\"preferences\": [{\"key\": \"cuisine\" | \"atmosphere\" | \"ambience\" | \"budget\" "
+    "| \"price\" | \"proximity\" | \"vibes\", \"value\": <short phrase>, \"polarity\": "
+    "1 for likes, -1 for dislikes}],"
+    "\"constraints\": [{\"key\": \"quiet\" | \"outdoor\" | \"spicy\" | \"halal\" | "
+    "\"vegetarian\" | \"no_pork\" | \"open_now\", \"value\": \"true\" | \"false\"}],"
+    "\"sort_preference\": one of \"relevance\" | \"distance\" | \"price_low\" | \"rating\" "
+    "| \"trending\","
+    "\"urgency\": \"now\" | \"normal\" | \"flexible\","
+    "\"language\": <\"zh-HK\" | \"zh-CN\" | \"en\">,"
+    "\"confidence\": <{lane: 0..1}>,"
+    "\"unknowns\": [<every field you had to leave unanswered>],"
+    "\"mentioned_entities\": [], \"excluded_ids\": []}. "
+    "Never invent: a field the query did not state is null and is named in `unknowns`. "
+    "Answer with JSON only."
+)
+
+
 @dataclass
 class IntentResult:
     intent: Intent
@@ -124,7 +165,8 @@ async def understand(query: str, *, deps: Deps, context: dict[str, Any] | None =
         meter = CostMeter()
         call = await router.run(LLMRequest(
             task_class="intent_extract",
-            payload={"query": query, "context": context}), meter=meter)
+            payload={"query": query, "context": context},
+            system=INTENT_EXTRACT_SYSTEM, json_hint="json_object"), meter=meter)
         # D437: the cost ledger is one row per model call (§160) - the row the router
         # builds. The run row has to exist first (`llm_calls.agent_run_id` refers to it),
         # so the recorder that owns the run writes both, in that order.

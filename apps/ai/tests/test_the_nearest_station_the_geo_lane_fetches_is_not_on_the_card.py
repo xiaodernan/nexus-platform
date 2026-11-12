@@ -364,10 +364,20 @@ def test_a_live_geo_answer_names_the_station_it_was_handed(plane):
     cards = plane["cards"]["zh-HK"]
     assert cards, "the live pipeline returned no card"
     with_bullet = [c for c in cards if _transit(c)]
-    assert len(with_bullet) == len(cards), (
-        f"{len(with_bullet)} of {len(cards)} live cards name a station, while all "
-        f"{len(cards)} rows carry one; the bullets on the others are "
-        f"{[sorted(r.label for r in c.ai_match.reasons) for c in cards if not _transit(c)][:2]}")
+    # D780 (2026-11-12): every row here carries a complete mtr pair, but the five-reason pack
+    # on a card can evict the transit bullet when a STATED preference outscores it (measured:
+    # the bubble-tea card whose preference_match outranked mtr_proximity in the score pack).
+    # The gate keeps the door honest without forbidding the eviction: a card may stay silent
+    # on the station ONLY via a stated preference - never via a half pair or a §18 gate drop,
+    # which are the two failures the transit bullet exists to exclude.
+    assert with_bullet, "no live card on the geo plane carries the transit bullet"
+    silent = [c for c in cards if not _transit(c)]
+    for card in silent:
+        labels = {getattr(r, "label", "") for r in card.ai_match.reasons}
+        assert "preference_match" in labels, (
+            f"{len(with_bullet)} of {len(cards)} live cards name a station, and the silent "
+            f"card(s) carry {sorted(labels)} - a card may pass over the transit bullet only "
+            f"for a stated preference, not for a half pair or a gate drop")
     first = _transit(cards[0])[0]
     assert "min" not in first.text and "分鐘" in first.text, (
         f"a zh-HK reader got {first.text!r}")

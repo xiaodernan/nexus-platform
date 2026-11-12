@@ -18,7 +18,7 @@ cues, exactly 2 open a longer word in the 153 category surfaces - 下午 -> 下�
 afternoon tea. A scan of all 1632 string leaves in `nlu.lexicon` finds no other: the only
 additional hits are `am` inside `ambience`, which the Latin word rule already refuses.
 
-On today's corpus the dropped filter hid nobody - all 42 tea merchants are open at 14:00 on a
+On today's corpus the dropped filter hid nobody - all 52 tea merchants are open at 14:00 on a
 Saturday - but 39 of the 470 published merchants are closed then, so the population that the
 unstated constraint could hide is real and is asserted below.
 """
@@ -153,7 +153,7 @@ def plane():
 def test_the_page_for_an_afternoon_tea_carries_no_hour(plane):
     assert "open_time" not in plane["filters"] and "open_weekday" not in plane["filters"], (
         f"the page is still cut by an hour nobody stated: {plane['filters']}")
-    assert plane["total"] == plane["tea"] == 42, (
+    assert plane["total"] == plane["tea"] == 52, (
         f"the page returned {plane['total']} of the {plane['tea']} tea merchants - the category "
         "is what the query names, and it has to be answered whole")
     assert len(plane["ids"]) == TOP_K, plane["ids"]

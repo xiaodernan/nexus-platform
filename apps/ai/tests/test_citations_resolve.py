@@ -61,6 +61,11 @@ def _fetch(sql: str, *args):
 
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 def test_a_chunk_fact_id_resolves_to_a_fact_row():
+    if DB_URL:
+        got = _fetch("SELECT count(*) AS n FROM chunks WHERE embedding IS NOT NULL")
+        if int(got[0]["n"]) == 0:
+            pytest.skip("the corpus on this plane carries no embedded chunks - the retrieve lane "
+                        "has nothing to rank (the embedding pass has not been run here)")
     with _client() as c:
         r = c.post("/ai/v1/rag/retrieve",
                    json={"query": RAMEN, "filters": {}, "top_k": 5})

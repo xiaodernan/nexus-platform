@@ -7,8 +7,8 @@ spelling a person types on a phone was unknown: three districts carried it BY HA
 `mongkok`, `wanchai`) and the other 21 did not. Measured on the published plane (`tmp/d664_counts.py`):
 
     query            district filter   match text     pool (both lanes)
-    tai wai          Tai Wai           ""             137
-    tai-wai          Tai Wai           ""             137
+    tai wai          Tai Wai           ""             140
+    tai-wai          Tai Wai           ""             140
     taiwai           none              "taiwai"       470  <- the whole plane
     maonshan         none              "maonshan"     470
     kowloonbay       none              "kowloonbay"   470
@@ -127,5 +127,5 @@ def test_the_three_spellings_of_one_district_answer_one_pool(plane):
     pools = plane["pools"]
     compact, spaced, hyphen = (pools[k] for k in ("taiwai", "tai wai", "tai-wai"))
     assert compact == spaced == hyphen, pools
-    assert compact["fixture"] == compact["live"] == 137, pools
+    assert compact["fixture"] == compact["live"] == 140, pools
     assert 0 < compact["live"] < plane["merchants"], (pools, plane["merchants"])

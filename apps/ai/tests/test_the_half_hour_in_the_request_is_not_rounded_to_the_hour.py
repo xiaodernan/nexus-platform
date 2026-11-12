@@ -16,7 +16,7 @@ rows):
 
 The corpus is not on the hour: 2,908 `business_hours` rows close at a non-zero minute (18:30: 244,
 21:30: 102, 22:30: 616, 23:30: 267), and 2,028 open at one (07:30: 268, 11:30: 810). Closing at or
-after 21:00 holds 285 published merchants and 3,238 offerings; at or after 21:30, 283 and 3,217. So
+after 21:00 holds 285 published merchants and 3,238 offerings; at or after 21:30, 282 and 3,201. So
 the rounded request answered 470 where the sentence named 283 - the whole plane, i.e. no filter at
 all in effect.
 
@@ -196,7 +196,7 @@ def test_the_two_lanes_answer_the_half_hour_the_same_way(plane, subject):
 
 
 @pytest.mark.parametrize("subject,on_the_hour,on_the_half", [
-    ("merchant", 285, 283), ("offering", 3238, 3217),
+    ("merchant", 285, 282), ("offering", 3238, 3201),
 ])
 def test_the_half_hour_answers_fewer_rows_than_the_hour(plane, subject, on_the_hour, on_the_half):
     both = plane["pools"][(subject, time(21, 0))]

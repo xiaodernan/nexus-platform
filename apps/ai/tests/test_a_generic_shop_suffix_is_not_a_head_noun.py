@@ -149,7 +149,15 @@ def test_a_compound_answers_the_page_its_leaf_answers(plane, plain, compound):
 @pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set")
 def test_no_card_on_a_compound_page_carries_the_suffix_as_a_term(plane):
     """The suffix is a term 246 of the 470 rows carry, so a page that still matched it would show a
-    split - relevance 1.0 on the names that say 店 and less on the rest."""
+    split - relevance 1.0 on the names that say 店 and less on the rest.
+
+    D705 (§684) made the cuisine leaf's witness request-weight, so the fused relevance on the
+    cuisine pages is uniformly 1.0, not 0.0. The witness for "the suffix word is not a term on
+    this page" is therefore UNIFORMITY: the page cannot be divided by 店. The boundary itself -
+    that the suffix was stripped out of the match text at all - is pinned in the unit legs above
+    (`plan.match_text == ""`), not through the fused score.
+    """
     for q in ("點心店", "壽司店", "拉麵店", "火鍋店"):
         rel = plane["pages"][q]["rel"]
-        assert rel and all(r == 0.0 for r in rel), (q, rel, plane["carrying"], plane["rows"])
+        assert rel, (q, "the page answered nothing - the ranking never ran on this plane")
+        assert len(set(rel)) == 1, (q, rel, plane["carrying"], plane["rows"])

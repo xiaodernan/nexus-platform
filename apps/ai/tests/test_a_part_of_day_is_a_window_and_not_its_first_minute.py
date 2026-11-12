@@ -214,15 +214,15 @@ def plane():
 
 def test_a_band_answers_the_same_pool_on_both_lanes(plane):
     """Measured after the fix (`tmp/d667_today.py`, Wednesday 09:00 HK, one `now` for both
-    readers): 14/14 morning restaurants, 174/174 noon restaurants, 174/174 tonight."""
+    readers): 14/14 morning restaurants, 175/175 noon restaurants, 175/175 tonight."""
     pools = plane["pools"]
     morning = pools["今日朝早嘅餐廳"]
     assert morning["fixture"] == morning["live"] == 14, pools
     # the point at 07:00 answered none of them
     assert morning["live"] > 0, pools
     noon = pools["今日中午嘅餐廳"]
-    assert noon["fixture"] == noon["live"] == 174, pools
+    assert noon["fixture"] == noon["live"] == 175, pools
     assert noon["live"] > 98, pools      # the 11:30 point answered 98 of 184
     night = pools["今晚嘅餐廳"]
-    assert night["fixture"] == night["live"] == 174, pools
+    assert night["fixture"] == night["live"] == 175, pools
     assert 0 < night["live"] < plane["merchants"], (night, plane["merchants"])

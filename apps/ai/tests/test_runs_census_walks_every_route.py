@@ -54,6 +54,7 @@ PROBE_BODIES: dict[str, dict[str, Any]] = {
     "/ai/v1/merchant-agent/chat": {"merchant_id": str(uuid.UUID(int=7)),
                                    "message": "coffee",
                                    "conversation_id": str(uuid.UUID(int=8))},
+    "/ai/v1/agent/plan": {"query": "coffee", "execute": False},
 }
 
 

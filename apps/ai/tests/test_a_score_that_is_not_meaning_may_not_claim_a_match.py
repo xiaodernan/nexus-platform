@@ -344,8 +344,51 @@ def test_a_cuisine_the_user_typed_orders_the_page_and_the_cosine_does_not(plane)
     assert got["asked"] == got["off"], (got["asked"], got["off"])
 
 
-def test_the_old_fusion_is_what_moved_these_pages(plane):
-    # falsification in the file itself: with the verdict ignored, the pages differ. A leg
-    # that cannot fail on the old code would not be a gate.
-    moved = [s for s in plane if plane[s]["asked"] != plane[s]["old"]]
-    assert moved, {s: (plane[s]["asked"][:3], plane[s]["old"][:3]) for s in plane}
+class _VecFixture(S.StaticBackend):
+    """Rows with kw=0 and a hand-set vec, wearing the vector lane's name."""
+
+    VEC: dict = {}
+
+    async def merchant_candidates(self, **kwargs):
+        out = await super().merchant_candidates(**kwargs)
+        return [dict(r, vec_score=self.VEC.get(r["subject_id"], 0.0)) for r in out]
+
+
+def test_the_old_fusion_is_what_moved_these_pages():
+    """Falsification with a witness that cannot tie.
+
+    Measured before the fix (`tmp/d780_fusion.py`, 2026-11-12): on every measured sentence the
+    live (HashingEmbedding) lane produced 0.0 cosine for every row, so the capped and the
+    ignoring lanes ordered the page identically and this leg could never fail - the exact law
+    this file exists for. On a fixture where cosine is real and keyword is absent, the same
+    query MUST order differently between "the verdict is carried" (non-semantic cosine capped
+    by kw=0) and "the verdict is ignored" (semantic cosine stands alone and orders on noise).
+    """
+    import asyncio
+
+    rows = [
+        {"subject_id": rid, "merchant_id": rid, "display_name": rid, "display_name_zh": rid,
+         "category_primary": "cafe", "avg_price_hkd": 50.0, "rating_agg": rating,
+         "review_count": 5, "tags": [], "attributes": {}, "data_origin": "demo"}
+        for rid, rating in (("r-a", 4.0), ("r-b", 4.4), ("r-c", 4.8))
+    ]
+    # Cosine strictly ANTI-correlated with rating in ascending order of marker id: with the
+    # verdict carried, relevance is 0.0 everywhere and the page orders by rating (r-c, r-b, r-a);
+    # with it ignored, relevance orders by the cosine (r-a, r-b, r-c) and the pages must differ.
+    backend = _VecFixture(merchants=rows)
+    backend.VEC = {"r-a": 0.14, "r-b": 0.09, "r-c": 0.06}
+
+    def _page(vector_semantic):
+        plan = S.SearchPlan(query_text="zzqxy", filters={}, limit=10,
+                            subject_types=("merchant",))
+        _cards, _resp, _b, scored = asyncio.run(S.search(
+            backend=backend, plan=plan, vector_lane=True,
+            vector_semantic=vector_semantic, locale="zh-HK"))
+        return [s.candidate.subject_id for s in scored]
+
+    ignored = _page(True)
+    carried = _page(False)
+    assert ignored == ["r-a", "r-b", "r-c"], (
+        f"with the verdict ignored the cosine orders the page: {ignored}")
+    assert carried == ["r-c", "r-b", "r-a"], (
+        f"with the verdict carried no cosine may stand on its own: {carried}")

@@ -665,3 +665,19 @@ class ErrorBody(BaseModel):
 class ErrorEnvelope(BaseModel):
     model_config = ConfigDict(extra="ignore")
     error: ErrorBody
+
+class AgentPlanContext(_Strict):
+    """Optional context for the agent-plan surface (API_CONTRACT §10)."""
+
+    merchant_id: Optional[str] = None
+    subject_id: Optional[str] = None
+    subject_type: Optional[str] = None
+
+
+class AgentPlanRequest(_Strict):
+    """POST /ai/v1/agent/plan's body (§10: the minimum-step deterministic plan)."""
+
+    query: str = Field(min_length=1, max_length=4000)
+    context: Optional[AgentPlanContext] = None
+    execute: bool = True
+    subject: Optional[str] = Field(default=None, max_length=128)

@@ -24,32 +24,15 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel, ConfigDict, Field
 
 from nexus_ai.api import runs
 from nexus_ai.api.degraded import degraded_json
+from nexus_ai.contract import AgentPlanRequest
 from nexus_ai.orchestrator import execute_plan, plan_tools
 
 log = logging.getLogger("nexus_ai.api.agent")
 
 router = APIRouter()
-
-
-class AgentPlanContext(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    merchant_id: str | None = Field(default=None)
-    subject_id: str | None = Field(default=None)
-    subject_type: str | None = Field(default=None)
-
-
-class AgentPlanRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    query: str = Field(min_length=1, max_length=4000)
-    context: AgentPlanContext | None = Field(default=None)
-    execute: bool = Field(default=True)
-    subject: str | None = Field(default=None, max_length=128)
 
 
 @router.post("/ai/v1/agent/plan")

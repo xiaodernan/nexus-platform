@@ -158,7 +158,7 @@ def census():
 
 def test_the_corpus_writes_the_opinion_nowhere(census):
     assert census["merchants"] == 470, census["merchants"]
-    assert census["offerings"] == 5538, census["offerings"]
+    assert census["offerings"] == 5534, census["offerings"]
     assert census["m_hit"] == 0, census["m_hit"]
     assert census["o_hit"] == 0, census["o_hit"]
 

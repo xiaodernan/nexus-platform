@@ -83,9 +83,13 @@ def _read_rows(live_settings, memory, *, kinds=None) -> list[dict]:
     sql_text, params = SQL.user_preferences_for(_USER, kinds)
     tuples = ",\n              ".join(
         f"('{_USER}'::uuid, {kind!r}, {key!r}, {_VALUE!r}::jsonb, 0.9::numeric, "
-        f"{source!r}, ({expiry})::timestamptz)"
+        f"{source!r}, ({expiry})::timestamptz, 'long_term'::text, null::uuid)"
         for kind, key, source, expiry, _live, _why in memory)
-    query = (f"WITH user_preferences (user_id, kind, key, value, weight, source, expires_at)\n"
+    # D604 (§604): the read names `scope` (default 'long_term') and `conversation_id`. The
+    # shadow table has to carry both or the shipped WHERE does not resolve - the value is what
+    # the shipped caller asks for, so 'long_term' here IS the plane, not a relaxation.
+    query = (f"WITH user_preferences (user_id, kind, key, value, weight, source, expires_at, "
+             f"scope, conversation_id)\n"
              f"              AS (values\n              {tuples}\n              )\n"
              f"{sql_text}")
 
