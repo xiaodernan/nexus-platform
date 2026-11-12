@@ -21771,7 +21771,7 @@ Two defects in one seam, and each one hid the other.
 
 **The lane was shut from the other side.** `apps/ai/nexus_ai/api/pipeline.py` was created by `954decb` (D383, 2026-10-20) and has gated the query-vector call on `deps.settings.embedding_provider == "hashing"` for the whole of its life: the offline adapter was asked for a vector on every query and the semantic provider — the one AGENT_CONTRACT §6 names for paraphrase recall — never was. The vector lane it feeds is real and downstream code is ready for it (`search/sql.py` scores `1 - (c.embedding <=> $n::vector)` and floors it at `VECTOR_FLOOR`); only the supplier was refusing. The RAG route (`apps/ai/nexus_ai/api/routes_rag.py:47`) never carried that guard, so the product had two call sites asking the same question differently — and the broken method was reachable from the one that asked correctly, where its `except Exception` swallowed the `NameError` into a keyword-only retrieval logged at `info`.
 
-**The repairs.** One `/embeddings` request per call, and every response row placed by the `index` the endpoint itself reports (apps/ai/nexus_ai/models/embeddings.py:99-154), with a refusal wherever placement could not be trusted: an answer shorter than the inputs sent, an index outside them, the same index arriving twice, a vector of the wrong length, any row left unset. The zero fallback is gone and that is the part that mattered most: `chunks.embedding` is read by cosine, so a stored zero is not a missing score but a row that can never be retrieved again — a silent `[0.0] * dim` was permanent data damage, not a degrade. The pipeline now asks every provider (apps/ai/nexus_ai/api/pipeline.py:181-188) and a provider failure still floors to the keyword lane; the `# pragma: no cover` on that `except` is dropped because a witness runs it now.
+**The repairs.** One `/embeddings` request per call, and every response row placed by the `index` the endpoint itself reports (apps/ai/nexus_ai/models/embeddings.py:151-206), with a refusal wherever placement could not be trusted: an answer shorter than the inputs sent, an index outside them, the same index arriving twice, a vector of the wrong length, any row left unset. The zero fallback is gone and that is the part that mattered most: `chunks.embedding` is read by cosine, so a stored zero is not a missing score but a row that can never be retrieved again — a silent `[0.0] * dim` was permanent data damage, not a degrade. The pipeline now asks every provider (apps/ai/nexus_ai/api/pipeline.py:181-188) and a provider failure still floors to the keyword lane; the `# pragma: no cover` on that `except` is dropped because a witness runs it now.
 
 **Witnessing.** 25 cases in apps/ai/tests/test_embeddings.py, 8 of them new, driving the method through the production `client=` seam with a stub client: request body, URL and auth header; rows landing on the inputs their `index` names when the endpoint answers in reverse; a cached text costing no second request; each of the four refusals; and an injected client not being closed by the caller. 6 more in apps/ai/tests/test_the_semantic_lane_reaches_its_provider.py reach the same seam through `run_search`: the http provider is asked for the query, its vector arrives in the search call with `vector_lane=True`, the REAL `HttpEmbedding` asks over a stubbed wire, the offline hashing provider still feeds the lane (the repair must not trade the adapter that already worked), a provider outage keeps the SAME cards, and an empty query pays for no call. `tests/conftest.py:35,39` now clears `embeddings._CACHE` around every test, which is what that fixture's docstring had already promised ("every provider/embedding cache is reset") and did not do — a leaked cache row would answer a call-counting assertion from cache and hide the call it is measuring; the two per-class cache fixtures this row first wrote are deleted as duplicates of it.
 
@@ -21785,7 +21785,7 @@ Two defects in one seam, and each one hid the other.
 
 **§352 corrected by supersession, not by editing.** That row wrote this file's network path as `pragma: no cover` and never exercised, and counted 16 cases in it; all three are false from this row on. It stands as written, because editing an earlier section shifts the line numbers of every section after it — the exact drift that gate step 16 reads.
 
-**Reported, not fixed here.** `/ai/v1/health` answers with `settings.embedding_provider` (apps/ai/nexus_ai/api/routes_system.py:85), not with the adapter the factory built. `embedding_provider=http` with no credentials builds `HashingEmbedding` (apps/ai/nexus_ai/models/embeddings.py:194,180) and health still reports `http`, with `dim` and `model` from the same config — so the surface that exists to say which provider is serving answers a different question than the one the factory decided. The degrade itself is pinned by a test; the disclosure changes a served contract shape and needs its own witness.
+**Reported, not fixed here.** `/ai/v1/health` answers with `settings.embedding_provider` (apps/ai/nexus_ai/api/routes_system.py:85), not with the adapter the factory built. `embedding_provider=http` with no credentials builds `HashingEmbedding` (apps/ai/nexus_ai/models/embeddings.py:245,231) and health still reports `http`, with `dim` and `model` from the same config — so the surface that exists to say which provider is serving answers a different question than the one the factory decided. The degrade itself is pinned by a test; the disclosure changes a served contract shape and needs its own witness.
 
 **Discipline note.** The general form: **a test file's docstring that forbids a path from being exercised is a claim about the code, and the code has to be asked whether it can run at all** — a method that raises on its first line survives every suite-wide green count, and the pragma is what makes it look deliberate. And the second form: **"is the provider X" is not the question "is a vector available"**; gating a capability on a configuration label makes the lane depend on which adapter was named, when the two conditions that actually decide it (a vector exists, and a backend that can use one) were already combined on the line below the guard.
 
@@ -33487,7 +33487,7 @@ answers through `price_fit`, but the cuisine now dominates the sort.
 
 - readers: `search/service.py:1314` (`_relevance`), `:1214` (the cap), `:1253` (the typed cuisine),
   `:1468` (the cuisines the cut is told), `search/sql.py:541` (the cut's cuisine leg), `:497` (the cut's
-  cosine), `models/embeddings.py:28`/`:51`/`:92` (the verdict and the two adapters),
+  cosine), `models/embeddings.py:80`/`:51`/`:92` (the verdict and the two adapters),
   `api/pipeline.py:205`, this unit's gate, the re-aimed D652 guard, and `tmp/d705_measure.py`,
   `tmp/d705_diff.py`, `tmp/d705_cost.py`, `tmp/d705_d652.py`, `tmp/d705_dbg.py`, `tmp/d705_prefonly.py`,
   `tmp/d705_table.py`.
@@ -34120,7 +34120,7 @@ side effect.
 
 ## 724. D724 · stub cart no longer ships stale_copy string; client renders from stale boolean
 
-**The gap.** `adapters/platform.py:287` hardcoded `"stale_copy": "價格可能已更新"` in cart items with no locale support (D605's second producer). The module had no locale concept, and the test asserted the exact literal.
+**The gap.** `adapters/platform.py:313` hardcoded `"stale_copy": "價格可能已更新"` in cart items with no locale support (D605's second producer). The module had no locale concept, and the test asserted the exact literal.
 
 **The fix.** Removed `stale_copy` from `StubPlatformClient.add_cart_item()` - the item carries the `stale` boolean and the client renders the notice using `freshness.stale_copy(locale)` (§5/§20). Updated `test_stub_platform.py` to assert `stale_copy` is absent and `stale` is present.
 
@@ -36718,7 +36718,7 @@ closed port 9 - the unit proves the wiring, not a proxied request, and it needs 
   unchanged - the smoke was rerun after the rename and passed again.
 
 **Compose is the deployment path, not the test path.** The opt-in `cloud` profile
-(`infra/docker-compose.yml:162-222`) builds one image per module from one Dockerfile (Java 21 build,
+(`infra/docker-compose.yml:168-228`) builds one image per module from one Dockerfile (Java 21 build,
 Java 25 runtime, `MODULE` build arg) and points the gateway at `host.docker.internal` on the full
 profile's published ports. `docker compose --profile cloud config --quiet` exits 0.
 
@@ -36740,7 +36740,7 @@ would add a Maven build to every gate run.
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayApplication.java:13-15`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRequestIdFilter.java:22-36`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:39-40`,
-  `scripts/cloud_smoke.sh:134-170`, `infra/docker-compose.yml:162-222`.
+  `scripts/cloud_smoke.sh:134-170`, `infra/docker-compose.yml:168-228`.
 ## 846. D846 · the consumer's question gets a thread: the agent door relays a user turn, the chat writes both sides, and the merchant page asks (`services/platform/src/main/java/com/nexus/conversation/ConversationService.java`, `apps/ai/nexus_ai/api/routes_stream.py`, `apps/web/src/components/ask-merchant.tsx`)
 
 **The gap, in three places.** The §142 loop was open at every joint: the platform's internal agent door accepted only `ai_agent|system`, so a consumer's own turn had no write path; the AI stream wrote `agent_runs` and nothing else, so the merchant inbox could not see what was asked; and the merchant page had no question box, so the loop had no entering edge. Each joint is closed here, and the joins are proven by three suites rather than by prose.
@@ -36820,8 +36820,8 @@ authentication: a squatter answering our exact JSON would read as ours.
   `services/cloud/eureka-server/src/main/resources/application.yaml:2-7`,
   `services/cloud/config-server/src/main/resources/application.yaml:2-5`,
   `services/cloud/gateway/src/main/resources/application.yaml:13`,
-  `services/cloud/gateway/src/main/resources/application.yaml:118`, `infra/docker-compose.yml:180`,
-  `infra/docker-compose.yml:195`, `infra/docker-compose.yml:222`.
+  `services/cloud/gateway/src/main/resources/application.yaml:118`, `infra/docker-compose.yml:186`,
+  `infra/docker-compose.yml:201`, `infra/docker-compose.yml:228`.
 
 ## 848. D848 — the merchant console's live identity: the caller's own merchant, not the mock fixture (D843 follow-through)
 
@@ -37430,13 +37430,13 @@ results for the `setup-uv` addition and the R6 checks are not observable this se
 (e) `/actuator/gateway/routes` remains publicly introspectable on this dev edge (pre-existing, D850's
 documented posture) — exempting it from the limiter is deliberate, not an endorsement of public exposure.
 
-- readers: `apps/ai/nexus_ai/discovery.py:41-58`, `:72-101`,
+- readers: `apps/ai/nexus_ai/discovery.py:46-63`, `:72-101`,
   `apps/ai/nexus_ai/api/app.py` (the lifespan registration),
   `apps/ai/pyproject.toml:9`, `apps/ai/uv.lock`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRateLimitFilter.java:81`,
   `services/cloud/gateway/src/main/resources/application.yaml` (ai route + cloud document),
   `scripts/check_cloud_discovery.mjs:26`, `:192-228`,
-  `scripts/cloud_lb_smoke.sh:201-234`, `:135-139`,
+  `scripts/cloud_lb_smoke.sh:212-245`, `:135-139`,
   `.github/workflows/ci.yml:154`.
 
 ## 857. D857 — the edge picks up a config-repo edit without a restart (Spring Cloud refresh)
@@ -41391,7 +41391,7 @@ TRACEPARENT_HEADER (api/tracing.py); TRACE_ID_HEADER (api/tracing.py)
 
 The three names existed as "W3C wire names" — exactly the kind of import-time surface that's correct in a library boundary that someone might want to cite. But no read site exists in this repo, so the trace module was exporting three constants that nothing consumed.
 
-**Fix.** Deleted the three module-level constants from `apps/ai/nexus_ai/api/tracing.py`. The W3C `traceparent` parsing grammar (`_W3C` regex, `parse_traceparent`, the `_ZERO_TRACE` / `_ZERO_PARENT` sentinels) is untouched. Every read of the literal `"traceparent"` in the product codebase remains a literal (e.g., `apps/ai/nexus_ai/api/app.py:92`). The Java side projects trace ids under `X-Trace-Id`; the Python side never had a corresponding accessor.
+**Fix.** Deleted the three module-level constants from `apps/ai/nexus_ai/api/tracing.py`. The W3C `traceparent` parsing grammar (`_W3C` regex, `parse_traceparent`, the `_ZERO_TRACE` / `_ZERO_PARENT` sentinels) is untouched. Every read of the literal `"traceparent"` in the product codebase remains a literal (e.g., `apps/ai/nexus_ai/api/app.py:100`). The Java side projects trace ids under `X-Trace-Id`; the Python side never had a corresponding accessor.
 
 **Verification.** `uv run pytest tests/test_no_dead_constants.py` — **3 passed**, including the failing test.
 `uv run ruff check .` — All checks passed. `uv run mypy nexus_ai` — Success: no issues found in 72 source files.
@@ -42036,3 +42036,11 @@ This is the same class of defect D972 fixed in the AI tool-result cache and D974
 **Blast radius / what is NOT claimed.** The judge and its claims are untouched; only the self-test's corruption got stronger. No product code, no events-service behaviour, no ledger gates, no CI structure. The cloud job failed on the self-test harness, not on any product wiring: D931's seam was genuinely intact on master (the failing arm is the one that simulates the seam being broken).
 
 - readers: `scripts/check_events_group.mjs`, this ledger entry.
+
+## 977. D977 — the line-cite backlog shrunk by every MOVED site: twelve citations re-pointed at the text they always named
+
+The drift reader's REPORT printed 12 MOVED citations — every one still resolvable by path+content, only the line number stale (D974's `.to_thread` and LRU insertion shifted `embeddings.py` by +51/+52; the cloud compose grew services by +6; `discovery.py`/`cloud_lb_smoke.sh`/`api/app.py` drifted by smaller deltas). All twelve were re-aimed with `scripts/apply_line_cite_reaim.mjs --rows=<the reader's own --reaim rows> --apply`; ranges moved both endpoints (`embeddings.py:99-154 → :151-206`, `infra/docker-compose.yml:162-222 → :168-228`, `adapters/platform.py:287 → :313`, `models/embeddings.py:28 → :80`, `cloud_lb_smoke.sh:201 → :212`, `discovery.py:41-58 → :46-63`, `api/app.py:92 → :100`). Dry-run produced zero refusals first; exact copy endpoints for the both-on-one-line case (`ci.yml:154` style doubles in one line) were confirmed by the diff before commit.
+
+The re-aim tool is blame-evidence-driven: the reader had already located the cited text at HEAD via content comparison, so each row names its own new line; nothing here re-derives intent. NOT-UNIQUE 12 / GONE 22 / NO-BASE 1 / UNPATHED 566 / NOT-AT-HEAD 1 are UNTOUCHED — those need per-case judgment, not a global shift, and stay on the backlog deliberately.
+
+- readers: `scripts/check_line_cite_drift.mjs` (REPORT mode, unchanged), `scripts/apply_line_cite_reaim.mjs` (tool, unchanged), `docs/STATUS.md` (12 site lines), this ledger entry.
