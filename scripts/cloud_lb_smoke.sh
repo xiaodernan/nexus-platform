@@ -60,6 +60,15 @@ trap cleanup EXIT
 fail() {
     echo "FAIL: $*" >&2
     echo "logs: $LOG_DIR" >&2
+    # Every child logged its own output to $LOG_DIR/*.log; print the last 60 lines each so the
+    # failure shows up in CI, not just the waits that expired. Bounded, one file at a time.
+    if [ -d "$LOG_DIR" ]; then
+        for f in "$LOG_DIR"/*.log; do
+            [ -f "$f" ] || continue
+            echo "----- $f"
+            tail -n 60 "$f" || true
+        done
+    fi
     exit 1
 }
 
@@ -90,6 +99,11 @@ else
     # a disposable postgres on :5433 with password ci_secret, and the integration-test JWT secret.
     export NEXUS_PLATFORM_DB_URL="${NEXUS_PLATFORM_DB_URL:-${NEXUS_DB_URL:-jdbc:postgresql://127.0.0.1:5433/nexus}}"
     export NEXUS_PLATFORM_DB_USERNAME="${NEXUS_PLATFORM_DB_USERNAME:-${NEXUS_DB_USER:-postgres}}"
+    # D992: derive the runtime datasource password from whatever CI/this job supplied. We deliberately
+    # do NOT export NEXUS_MIGRATION_DB_PASSWORD here — Flyway's superuser password cascades to this same
+    # value in application-dev.yml (migration > root > platform-db > db), so setting it here would hide a
+    # future regression of that chain and split the two connections' credentials. The platform boots as
+    # the same `postgres` user with one secret under both the dev and cloud profiles.
     export NEXUS_PLATFORM_DB_PASSWORD="${NEXUS_PLATFORM_DB_PASSWORD:-${NEXUS_DB_PASSWORD:-ci_secret}}"
     export NEXUS_JWT_SECRET="${NEXUS_JWT_SECRET:-ci_only_not_a_real_secret_0123456789abcdef}"
     export NEXUS_REDIS_URL="${NEXUS_REDIS_URL:-redis://127.0.0.1:6380/0}"

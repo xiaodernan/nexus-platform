@@ -42226,3 +42226,44 @@ The 30 MOVED sites judged by the drift reader at HEAD (12 pre-existing D944-clas
 Re-aim counts by file: `api/pipeline.py` (15 sites, +42/+34/+40/+43 shifts), `api/pipeline.py` consumer line-cites via `search/sql.py` (6 sites), `States.tsx` (1, the EmptyState insertion), `tests` (2), `cloud_lb_smoke.sh` (1, the retry-after fix).
 
 - readers: `scripts/check_line_cite_drift.mjs` (REPORT/judge), `scripts/apply_line_cite_reaim.mjs`, this ledger entry.
+
+
+## 992. D992 — the cloud required-gate was red because Flyway's superuser password was an empty string on a fresh CI checkout, and no amount of boot-budget widening could fix a context that dies in 7 seconds
+
+**Where the red came from.** CI run `43230067799` (head `0823d69`, the D989-follow cloud push): `cloud :: failure`, `required :: failure`. The only failing line was `FAIL: platform never answered "status":"ok" at http://127.0.0.1:8091/api/v1/health (see /tmp/nexus-cloud-lb-smoke/platform.log)` after a 240-second `wait_for` budget. D989 had raised that budget 150→240s; D989-follow had fixed a `grep` filename-prefix bug. Both were aimed at a *slow* boot. The platform was not slow — it was **dead**.
+
+**The real root cause (reproduced, not inferred).** The smoke starts the monolith with `--spring.profiles.active=dev,cloud`; under `dev`, Flyway runs as the `postgres` SUPERUSER against the `pgvector/pgvector:pg16` CI service container (scram-sha-256). `services/platform/src/main/resources/application-dev.yml`'s Flyway password was the two-term chain `${NEXUS_MIGRATION_DB_PASSWORD:${NEXUS_DB_ROOT_PASSWORD:}}`. The `cloud` CI job sets **neither** variable — it sets `NEXUS_DB_PASSWORD=ci_secret` for the runtime `DataSource` only. So the chain resolved to the **empty string** and Flyway died at context init:
+
+```
+The server requested SCRAM-based authentication, but the password is an empty string.
+  at flywayInitializer -> Flyway.migrate -> FlywaySqlException -> PSQLException
+```
+
+Tomcat never bound `:8091`; `wait_for platform` polled a dead port for the full 240s. **Why local DEBUG stayed green (D989's false signal):** the developer's untracked root `.env` defines `NEXUS_DB_ROOT_PASSWORD`, which quietly fed the second term. A fresh CI `actions/checkout` has no `.env`. That env-plane asymmetry hid the defect until the first real cloud push after the D981–D990 batch; widening the budget cannot help a process that exits in 7 seconds.
+
+**Falsifiable one-variable proof on an isolated scram pg16 container** (my own `nexus-d991-scram`, port 55434, CI's `POSTGRES_PASSWORD=ci_secret`; CI's `Apply migrations` step reproduced with psql → 59 tables, NO `flyway_schema_history` — i.e. the exact schema shape Flyway meets on CI; never touched another lane's container):
+
+| arm | env (all CI-exact, `dev,cloud`) | result | Flyway |
+|---|---|---|---|
+| RED — old 2-term config | `NEXUS_DB_PASSWORD=ci_secret` (CI's actual env) | **PROCESS-EXITED in 7s**, no health | `The server requested SCRAM-based authentication, but the password is an empty string` |
+| auth control (scram bridge path) | empty password | `fe_sendauth: no password supplied` | confirms the chain value is the killer |
+| GREEN-1 — D992 config | **only** `NEXUS_DB_PASSWORD=ci_secret` | **HEALTH-OK in 30s** | baselined v2 + applied 10 migrations to v12, no SCRAM |
+| GREEN-2 — D992 config | **only** `NEXUS_PLATFORM_DB_PASSWORD=ci_secret` | **HEALTH-OK in 21s** | baselined v2 + applied 10 migrations to v12, no SCRAM |
+
+Only ONE variable differs between RED and GREEN (the config chain), and both datasource-password names the two callers use land on the same secret. Note GREEN-1 is the *actual CI env* — no migration secret, no root secret — so the fix is proven under the very conditions that produced the red.
+
+**The fix (one product-config line, `application-dev.yml`).** Flyway's password now cascades to the runtime datasource password's own chain as last resort:
+
+```
+password: ${NEXUS_MIGRATION_DB_PASSWORD:${NEXUS_DB_ROOT_PASSWORD:${NEXUS_PLATFORM_DB_PASSWORD:${NEXUS_DB_PASSWORD:}}}}
+```
+
+Priority: explicit migration superuser secret (split-role production) > infra root secret (developer `.env`) > whichever name the caller used for the runtime `DataSource` secret (`NEXUS_PLATFORM_DB_PASSWORD` from the launcher, `NEXUS_DB_PASSWORD` from CI's service-container job). The last two terms are **byte-for-byte** the datasource password chain (`application.yml:31`, `application-dev.yml:14`), so Flyway and the `DataSource` can never drift. Nothing else moves: migration user stays `postgres`, `baseline-on-migrate: true` / `locations: classpath:db/migration` / `clean-disabled: true` untouched, no secret printed, **no CI env added**, fail-fast preserved (a genuinely absent secret still stops the boot — this is not a mask).
+
+**Why config-layer and not a CI env patch.** Adding `NEXUS_MIGRATION_DB_PASSWORD: ci_secret` to the cloud job would fix one step and leave local fresh-clone boots and the two sibling platform-booting smokes (`cloud_refresh.sh`, `cloud_monolith_refresh.sh`) still depending on an invisible `.env`. The config cascade is the single source of truth: any caller who can boot the `DataSource` can boot Flyway. The smoke (`cloud_lb_smoke.sh`) deliberately derives only the datasource password and does **not** export a migration password — baking one in would split the two connections' credentials and mask a future cascade regression.
+
+**Gate.** `scripts/check_flyway_password_cascade.mjs` — SOURCE gate (no container, no live handshake): pins the exact 4-term cascade and its byte-identity with the datasource chain, forbids the empty 2-term chain and a hard-coded literal, holds the migration user / baseline / locations / clean-disabled, holds both datasource chains unchanged, holds the smoke's datasource derivation and the absence of a smoke-side migration secret, holds CI's premise (lb-smoke step supplies `NEXUS_DB_PASSWORD`, injects no migration secret), plus CI/ATLAS/ledger wiring. `--self-test`: 21 corruption arms + D954 no-op guard + D959 line-anchored `## 992.` heading + a GREEN control (legitimate comment rewording) + real-plane control. CI line 171 chain extended inline (still 535 lines), ATLAS reader row + `application-dev.yml` path (212 cited paths), this §992 ledger.
+
+**Concurrency / fold.** While this unit was being diagnosed, a concurrent lane left two uncommitted, related edits in the shared tree: `scripts/cloud_lb_smoke.sh` gained a bounded `fail()` dump of each child log's tail (so a future CI failure shows the real cause instead of only an expired wait), and `services/cloud/gateway/src/main/resources/application.yaml` gained `connect-timeout/response-timeout: 4000` for cold-start health hops. Both were already in the working tree (mtimes 22:00/22:08, ~8 min idle) when I judged the lane stopped; per the standing "pick up an idled merge and finish it" authorization I fold them into this unit — the log dump is exactly the observability this diagnosis needed, and the gateway timeout is an honest cold-start guard. Neither touches the root cause (a crashed context), which the config fix owns. No other lane file was rewritten; my pathspec is exact.
+
+**What this does NOT claim:** that the CI cloud job has been re-run green (it is the wire verifier of record; this unit ships the fix + a source gate + a local scram reproduction, not a fresh CI result); that any live SCRAM handshake or migration runs inside CI from this reader (it does not — the real proof is the opt-in git-ignored probe above); that `gpt-6-sol` or any key/secret value appears anywhere in the repo (the fix passes one env var through to Flyway and prints nothing); that the migration policy / role split / V1–V12 content changed (none did); or that the sibling refresh smokes were independently boot-proven (they inherit the same config cascade by construction). D988–D990 remain this HEAD's ledger; D991 was left unused to avoid colliding with the concurrent lane's numbering; this unit takes D992.

@@ -19,7 +19,22 @@ spring:
     # db_apply_migrations.sh transfers *view* ownership to the app role.) Same split as compose below.
     url: ${NEXUS_MIGRATION_DB_URL:${NEXUS_PLATFORM_DB_URL:${NEXUS_DB_URL:jdbc:postgresql://127.0.0.1:5433/nexus}}}
     user: ${NEXUS_MIGRATION_DB_USER:postgres}
-    password: ${NEXUS_MIGRATION_DB_PASSWORD:${NEXUS_DB_ROOT_PASSWORD:}}
+    # D992 — a fresh CI checkout has NO root `.env`, so neither NEXUS_MIGRATION_DB_PASSWORD nor
+    # NEXUS_DB_ROOT_PASSWORD is set; the old chain therefore yielded an EMPTY password. Flyway runs
+    # as the `postgres` superuser (above) against the scram-sha-256 service container, so an empty
+    # password is fatal — "The server requested SCRAM-based authentication, but the password is an
+    # empty string" kills flywayInitializer, Tomcat never binds :8091, and the lb smoke waits in
+    # vain (D989 kept widening the boot budget; a crashed context never answers health however long
+    # you wait). Fall through to the runtime datasource password LAST: on dev/CI both roles are the
+    # SAME `postgres` user (NEXUS_DB_USER=postgres, NEXUS_DB_PASSWORD=ci_secret), so the one secret
+    # the caller already supplied is correct for both. The last two terms MIRROR the runtime
+    # datasource password's own chain (application.yml:31): whichever name the caller set —
+    # NEXUS_PLATFORM_DB_PASSWORD (the launcher) or NEXUS_DB_PASSWORD (CI's service-container job) —
+    # Flyway lands on the same value the app's DataSource does, so they can never drift apart.
+    # A split-role production deployment still sets NEXUS_MIGRATION_DB_PASSWORD explicitly and none
+    # of these fallbacks are consulted. The value is never printed here; it travels only through the
+    # environment into Flyway's own JDBC connection.
+    password: ${NEXUS_MIGRATION_DB_PASSWORD:${NEXUS_DB_ROOT_PASSWORD:${NEXUS_PLATFORM_DB_PASSWORD:${NEXUS_DB_PASSWORD:}}}}
 
 nexus:
   redis:

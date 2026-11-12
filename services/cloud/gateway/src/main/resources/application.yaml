@@ -15,6 +15,15 @@ spring:
     gateway:
       server:
         webflux:
+          # D987's RateLimit headers ride the same edge; this change only moves the timeout.
+          httpclient:
+            # Cold-start honesty: the monolith's first /health after Tomcat starts can cost ~1-2s
+            # on this host; the default 1000ms made the first proxied call trip the breaker before
+            # the upstream managed to answer (and D971/D978 both saw the same 503 result with a
+            # healthy upstream). 4s is generous for a cold health path and still fast enough to
+            # catch a dead/stalled service through the breaker the same way.
+            connect-timeout: 4000
+            response-timeout: 4000
           default-filters:
             # D850: X-Request-Id is minted at the edge and echoed by the platform, so both hops add
             # one; RETAIN_UNIQUE keeps a single copy for the caller instead of two identical headers.
