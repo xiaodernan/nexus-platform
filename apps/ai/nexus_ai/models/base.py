@@ -95,6 +95,9 @@ class LLMResponse:
     degraded: bool = True
     cache_hit: bool = False
     finish_reason: str = "stop"
+    #: D980: True when the provider's `usage` was physically implausible and had to be
+    #: bounded locally. Keeps the untrusted value from silently polluting the cost ledger.
+    usage_flagged: bool = False
 
     @property
     def total_tokens(self) -> int:
@@ -125,6 +128,46 @@ def cost_usd(tier: str, prompt_tokens: int, completion_tokens: int) -> float:
     pin, pout = PRICE_PER_1K.get(tier, PRICE_PER_1K["mid"])
     return float(Decimal(str(prompt_tokens / 1000 * pin + completion_tokens / 1000 * pout))
                  .quantize(Decimal("0.000001")))
+
+
+def sanitize_usage(raw_pt: Any, raw_ct: Any, text: str, max_tokens: int) -> tuple[int, int, bool]:
+    """D980 — bound untrusted provider `usage` before it reaches the cost ledger.
+
+    A live OpenAI-compatible proxy was measured (2026-11, `gpt-6-sol`) returning
+    `completion_tokens=533` for a request with `max_tokens=32` — 16x the ceiling the request
+    imposed, physically impossible. (Its `prompt_tokens` was also non-deterministic across calls,
+    but a prompt has no natural per-request ceiling to clamp against, so only physically-implausible
+    or missing/malformed values are bounded here.) Usage is EXTERNAL INPUT: left unbounded, one
+    implausible completion inflates `llm_calls.cost_usd` (AGENT_CONTRACT §9) by an arbitrary factor
+    and corrupts the budget/observability plane.
+
+    Returns `(prompt_tokens, completion_tokens, flagged)`:
+      * completion is clamped to `[0, max_tokens]` — a provider cannot emit more completion
+        tokens than the request allowed;
+      * prompt is clamped to `>= 0`;
+      * if EITHER raw value was negative, non-numeric, over the completion cap, or missing while
+        `text` is non-empty, both fall back to local `estimate_tokens` and `flagged=True`, so the
+        ledger can tell a bounded estimate from a trusted meter. Honest in-range values pass
+        through byte-for-byte (`flagged=False`).
+    """
+    flagged = False
+    try:
+        pt = int(raw_pt or 0)
+        ct = int(raw_ct or 0)
+    except (TypeError, ValueError):
+        pt, ct = 0, 0
+        flagged = True
+    if pt < 0 or ct < 0:
+        flagged = True
+    cap = max(1, int(max_tokens))
+    over_cap = ct > cap
+    missing = (not raw_pt and not raw_ct) and bool(text)
+    if over_cap or missing:
+        flagged = True
+    if flagged:
+        # One consistent, physically-bounded estimate for BOTH meters.
+        return estimate_tokens(text), min(estimate_tokens(text), cap), True
+    return pt, ct, False
 
 
 @runtime_checkable

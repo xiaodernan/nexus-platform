@@ -13,6 +13,7 @@ from nexus_ai.models.base import (
     TASK_MODEL_DEFAULTS,
     cost_usd,
     maybe_json,
+    sanitize_usage,
 )
 
 
@@ -59,8 +60,8 @@ class AnthropicAdapter(HttpLLMAdapter):
         text = "".join(b.get("text", "") for b in raw.get("content", [])
                        if b.get("type") == "text")
         usage = raw.get("usage") or {}
-        pt = int(usage.get("input_tokens") or 0)
-        ct = int(usage.get("output_tokens") or 0)
+        pt, ct, flagged = sanitize_usage(
+            usage.get("input_tokens"), usage.get("output_tokens"), text, req.max_tokens)
         return LLMResponse(
             text=text, data=maybe_json(text), provider=self.name,
             model=raw.get("model") or body["model"], task_class=req.task_class,
@@ -68,6 +69,7 @@ class AnthropicAdapter(HttpLLMAdapter):
             cost_usd=cost_usd(meta["tier"], pt, ct),
             latency_ms=int((time.perf_counter() - started) * 1000),
             degraded=False, finish_reason=raw.get("stop_reason") or "stop",
+            usage_flagged=flagged,
         )
 
 

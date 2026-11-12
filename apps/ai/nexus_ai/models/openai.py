@@ -16,6 +16,7 @@ from nexus_ai.models.base import (
     TASK_MODEL_DEFAULTS,
     cost_usd,
     maybe_json,
+    sanitize_usage,
 )
 
 
@@ -63,8 +64,8 @@ class OpenAIAdapter(HttpLLMAdapter):
         choice = choices[0] or {}
         text = (choice.get("message") or {}).get("content") or ""
         usage = raw.get("usage") or {}
-        pt = int(usage.get("prompt_tokens") or 0)
-        ct = int(usage.get("completion_tokens") or 0)
+        pt, ct, flagged = sanitize_usage(
+            usage.get("prompt_tokens"), usage.get("completion_tokens"), text, req.max_tokens)
         return LLMResponse(
             text=text, data=maybe_json(text), provider=self.name,
             model=raw.get("model") or body["model"], task_class=req.task_class,
@@ -72,4 +73,5 @@ class OpenAIAdapter(HttpLLMAdapter):
             cost_usd=cost_usd(meta["tier"], pt, ct),
             latency_ms=int((time.perf_counter() - started) * 1000),
             degraded=False, finish_reason=choice.get("finish_reason") or "stop",
+            usage_flagged=flagged,
         )
