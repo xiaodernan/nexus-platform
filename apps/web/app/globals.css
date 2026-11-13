@@ -20,3 +20,26 @@
   font-style: normal;
   font-display: swap;
 }
+/* ---------- reading-progress hairline (see src/components/scroll-progress.tsx) ----------
+ * Application-shell chrome, not a new token: the one place the AI-attribution gradient is
+ * allowed outside the model surfaces — it literally inks the page the reader is consuming. */
+
+.nexus-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60; /* above the sticky header (z-50) */
+  display: block;
+  width: 100%;
+  height: 2px;
+  transform-origin: 0 0;
+  pointer-events: none;
+  background: var(--nexus-ai-gradient);
+  opacity: 0.92;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-scroll-progress {
+    opacity: 0.7;
+  }
+}
