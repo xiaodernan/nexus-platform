@@ -298,6 +298,7 @@ grows.
 | `services/cloud/events-service/src/main/resources/application.yaml` | D1026: `nexus.events.bus.enabled` defaults false (`NEXUS_EVENTS_BUS_ENABLED`) |
 | `scripts/bus_plane_smoke.sh` | D1026: three-member live proof — throwaway Config Server serving refresh-v1 for dispatcher, insight AND events; all three boot with the bus armed; `target=all` flips all three to refresh-v2 (receivers >= 3, same pids); repo rewritten to v3; `target=events` flips events only — the other two stay refresh-v2 |
 | `scripts/check_d1026_events_joins_bus.mjs` | D1026: 13 corruption arms + GREEN control — shared channel literal, opt-in default off, 409/202/receivers pins, actuator engine, strict 1..64 grammar, three-member arm pinned, negative arm, CI/ATLAS/ledger; CI line-171 `--self-test` |
+| `apps/web/app/loading.tsx` | D1028: the home-route loading boundary — brand-anchored shimmer skeleton mirroring the hero (corner glows, brand gradient dot, dict eyebrow) plus a 6-card rail placeholder grid; `dict.states.loading` sr-only caption (zh/en); all decorative layers `aria-hidden`; motion-reduce collapses every shimmer to `animate-none`; copy discipline §155/D981 — no text rendered beyond the two existing dict entries |
 
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith

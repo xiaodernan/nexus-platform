@@ -42760,3 +42760,14 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** This is not a benchmark of model quality, not a rerun of the corpus, and not a merge gate. It is a contract probe: today's model still answers the production prompt with parseable contract JSON and the unambiguous fields land correctly. The eval's expected values are deliberately structural (parseable JSON; a named intent; a named budget); it does not assert fuzzy fields it has no ground truth for. Never enters CI; live keys never leave the shell.
 
 - readers: `apps/ai/eval_live_intent.py`, `apps/ai/tests/test_live_intent_contract_gate.py`, `apps/ai/tests/test_live_llm_provider_gate.py` (the D1017 sibling gate that shares the `live_llm` marker), `apps/ai/pyproject.toml` (marker registration), this ledger entry.
+## 1028. D1028 — the home route ships a brand-anchored loading skeleton instead of a blank server wait: first paint for every cold landing visit
+
+**Why.** `"/"` is server-rendered on demand (ƒ in the build manifest) and is generated only after `homeRails()` settles — five rails behind one `allSettled`. A cold visit paid a blank, colourless wait before the hero appeared. The route shipped no `loading.tsx`, unlike `/merchant`, `/collections`, `/guides` and `/admin`.
+
+**The unit.** `app/loading.tsx` (Next route segment boundary): the same corner-glow background and palette as the real hero; the brand gradient-dot + `dict.home.eyebrow` (real copy, not invented); shimmer bars standing in for the H1/subtitle/search box and the example-prompts dock; a card-grid skeleton (6 shaped placeholders, SVG shimmer clipped to each). Every decorative layer is `aria-hidden="true"`; one `sr-only` caption announces `dict.states.loading` (zh 加載中… / en Loading…); every shimmer bar collapses to `animate-none` under `prefers-reduced-motion`; no invented copy anywhere (the zh/en dictionaries already carried `states.loading`).
+
+**Verified.** `npx tsc --noEmit` clean; `next build` green; web suite 240/240 passed; copy discipline re-audited — the only text rendered is `dict.home.eyebrow` and `dict.states.loading` (existing entries); the shimmer keyframes reuse the shipped `.nexus-shimmer` track (`tokens.css`) at opacity values the theme already owns.
+
+**Honest boundary.** No claim about actual TTFB or LCP — the skeleton renders only while the route streams; the rails still arrive when the upstream round trip finishes (that is the point — the shape beats the flash). No benchmarking claims, no mock data seeded, no bypass of the allSettled contract. The loading shape is an approximation, not a teaser of results; a skeleton is not a card (§155 by construction: no facts rendered).
+
+- readers: `apps/web/app/loading.tsx`, this ledger entry.
