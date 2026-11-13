@@ -890,7 +890,11 @@ if (MUTATES) {
     try {
       writeFileSync(join(MDIR, 'check_ledger_citations.mjs'),
         src.replace(anchor, 'WORKTREE ? census(false, () => false) : ' + anchor), 'utf8');
-      for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+      // D158 added ./git_blobs.mjs to the reader's imports (the committed plane's blobs, read in
+      // batch) without widening this mutant arm's sibling set — the planted copy then died of
+      // ERR_MODULE_NOT_FOUND at exit 1 with empty stdout, and the arm was missed for a defect in
+      // this harness's own copy list, not in any predicate. Copy EVERY sibling the reader imports.
+      for (const sib of ['cli_args.mjs', 'source_index.mjs', 'git_blobs.mjs']) {
         writeFileSync(join(MDIR, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
       }
       // The timeout has to exceed this harness's own runtime, because the arm runs THIS FILE again. At
