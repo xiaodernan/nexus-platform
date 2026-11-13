@@ -303,9 +303,14 @@ async def compose_summary(deps: Deps, pack: SearchPack, *,
     try:
         router = deps.router()
         meter = CostMeter()
+        # D1043: full pack.items carry observed_at/expires_at/fact ULIDs and other
+        # per-call fields that change byte-for-byte every seed reload. Strip them so the
+        # slim prefix is byte-stable and the provider's prefix cache actually serves it.
+        from nexus_ai.api.prefix_slim import slim_records_for_model
+        slim_records = slim_records_for_model(pack.items)
         call = await router.run(LLMRequest(
             task_class="summary",
-            payload={"records": pack.items, "locale": locale}), meter=meter)
+            payload={"records": slim_records, "locale": locale}), meter=meter)
         # D437: the summary's model call is a row in the cost ledger too - written after
         # the run row, because the ledger row refers to it.
         raw = call.response.text or ""

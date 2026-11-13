@@ -46,6 +46,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `infra/db/migrations/V13__llm_calls_cached_tokens.sql` | D1042: additive column — `llm_calls.cached_tokens integer NOT NULL DEFAULT 0` — backs the §9 cost ledger with the provider-reported cache saving per call; applied by `scripts/db_apply_migrations.sh` to the throwaway and to the seeded plane without error; every prior row reads as 0 honestly |
 | `apps/ai/nexus_ai/api/runs.py` | D1042: `persist_llm_call` inserts `cached_tokens` as the eleventh parameter; the pre-existing ten are unchanged |
 | `apps/ai/nexus_ai/models/router.py` | D1042: `RoutedCall.as_llm_call_row` carries `cached_tokens`; `int(getattr(resp, …, 0))` guards the pre-D1036 response shape |
+| `apps/ai/nexus_ai/api/prefix_slim.py` | D1043: byte-stable whitelist slimmer for the summary prompt — ID/title/subtitle/tags/price/rating/distance_m/open_now/ai_match score only; fixes the provider-cache bust measured live (0% → 97% cached_tokens on identical payload) |
+| `apps/ai/tests/test_prefix_slim.py` | D1043: offline pin — byte-determinism, volatile-field absence, cap-after-filter, garbage tolerance |
 Infrastructure | `infra/docker-compose.yml`, `infra/db/migrations`, `infra/config` | compose profiles, Flyway DDL, ranking/market config |
 | Demo corpus | `data/seed` | labelled synthetic Hong Kong data (`data_origin='demo'`) |
 | Proof | `tests/e2e`, `docs/TESTING.md`, `docs/evidence` | Playwright suites, measured runbook, screenshots |
