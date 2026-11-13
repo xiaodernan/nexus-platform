@@ -34,6 +34,9 @@ export interface TrustLabels {
   availability: { available: string; limited: string; full: string; unknown: string; closed: string };
   matchScore: (score: number) => string;
   provenance: string;
+  /** EntityRail's scroll chrome: one string per direction, aria-label only — the rail itself needs no visible text. */
+  railPrev: string;
+  railNext: string;
 }
 
 /* ------------------------------------------------------------------ DemoBadge */

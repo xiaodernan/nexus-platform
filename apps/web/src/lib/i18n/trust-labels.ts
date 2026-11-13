@@ -76,6 +76,8 @@ const zhLabels: UiLabels = {
   availability: { available: '有位', limited: '位況緊張', full: '已滿', unknown: '未提供位況', closed: '休息中' },
   matchScore: (score) => `匹配度 ${Math.round(score * 100)}%`,
   provenance: '數據來源',
+  railPrev: '向左滾動',
+  railNext: '向右滾動',
 };
 
 const enLabels: UiLabels = {
@@ -127,6 +129,8 @@ const enLabels: UiLabels = {
   availability: { available: 'Available', limited: 'Limited', full: 'Full', unknown: 'No availability data', closed: 'Closed' },
   matchScore: (score) => `${Math.round(score * 100)}% match`,
   provenance: 'Data sources',
+  railPrev: 'Scroll left',
+  railNext: 'Scroll right',
 };
 
 /** Locale is re-exported so components import types from one place. */

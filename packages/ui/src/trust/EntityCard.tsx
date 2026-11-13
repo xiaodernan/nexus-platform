@@ -199,8 +199,67 @@ export function EntityRail({
   renderCard?: (card: EntityCardModel, index: number) => React.ReactNode;
   hrefFor?: (card: EntityCardModel) => string;
 }) {
-  if (cards.length === 0) return null;
+  const empty = cards.length === 0;
   const keys = cardKeys(cards);
+  const railRef = React.useRef<HTMLDivElement>(null);
+  const [metrics, setMetrics] = React.useState<{ scrollable: boolean; atStart: boolean; atEnd: boolean; thumb: number; offset: number }>(
+    { scrollable: false, atStart: true, atEnd: false, thumb: 100, offset: 0 });
+  const measure = React.useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const scrollable = max > 8;
+    const atStart = el.scrollLeft <= 2;
+    const atEnd = el.scrollLeft >= max - 2;
+    const thumb = scrollable ? Math.min(100, (el.clientWidth / el.scrollWidth) * 100) : 100;
+    const offset = scrollable ? (el.scrollLeft / max) * (100 - thumb) : 0;
+    setMetrics((prev) => (prev.scrollable === scrollable && prev.atStart === atStart && prev.atEnd === atEnd
+      && Math.abs(prev.thumb - thumb) < 0.5 && Math.abs(prev.offset - offset) < 0.5
+      ? prev : { scrollable, atStart, atEnd, thumb, offset }));
+  }, []);
+  React.useEffect(() => {
+    measure();
+    const el = railRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', measure, { passive: true });
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : undefined;
+    ro?.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      el.removeEventListener('scroll', measure);
+      ro?.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [measure, empty]);
+  const move = React.useCallback((direction: 1 | -1) => {
+    const el = railRef.current;
+    if (!el) return;
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollBy({ left: direction * Math.max(el.clientWidth * 0.75, 240), behavior: reduced ? 'auto' : 'smooth' });
+  }, []);
+  if (empty) return null;
+  const nav = metrics.scrollable ? (
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => move(-1)}
+        disabled={metrics.atStart}
+        aria-label={labels.railPrev}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-muted transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 motion-reduce:transition-none"
+      >
+        <Icon name="chevronLeft" size={16} />
+      </button>
+      <button
+        type="button"
+        onClick={() => move(1)}
+        disabled={metrics.atEnd}
+        aria-label={labels.railNext}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-ink-muted transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:pointer-events-none disabled:opacity-30 motion-reduce:transition-none"
+      >
+        <Icon name="chevronRight" size={16} />
+      </button>
+    </div>
+  ) : null;
   return (
     <section id={id} aria-labelledby={id ? `${id}-title` : undefined} className="py-7 sm:py-8">
       <header className="mb-4 flex flex-wrap items-end justify-between gap-2">
@@ -210,9 +269,12 @@ export function EntityRail({
           </h2>
           {description ? <p className="text-sm text-ink-muted">{description}</p> : null}
         </div>
-        <React.Fragment key="rail-action">{action}</React.Fragment>
+        <div className="flex items-center gap-3">
+          {nav}
+          <React.Fragment key="rail-action">{action}</React.Fragment>
+        </div>
       </header>
-      <div className="rail-scroll -mx-4 flex gap-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div ref={railRef} className="rail-scroll -mx-4 flex gap-4 overflow-x-auto px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         {cards.map((card, index) => (
           <React.Fragment key={keys[index]}>
             {renderCard
@@ -221,6 +283,14 @@ export function EntityRail({
           </React.Fragment>
         ))}
       </div>
+      {metrics.scrollable ? (
+        <div aria-hidden="true" className="relative mt-2 h-[3px] w-44 overflow-hidden rounded-full bg-line/70 sm:w-52">
+          <div
+            className="absolute inset-y-0 rounded-full bg-accent/80 motion-safe:transition-[left] motion-safe:duration-150 ease-out"
+            style={{ width: `${metrics.thumb}%`, left: `${metrics.offset}%` }}
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

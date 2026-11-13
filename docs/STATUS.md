@@ -42635,3 +42635,21 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Boundary, deliberately narrow.** The key and the endpoint are not committed anywhere; the test module skips when the env is absent — including on CI and on this host without export. This unit adds no production code path, no dependency, no CI change, no cost to a reader that chooses not to opt in. It does NOT claim the whole corpus runs against a live model; it proves one real request round-trips through the production assembly.
 
 - readers: `apps/ai/live_llm_smoke.py`, `apps/ai/tests/test_live_llm_provider_gate.py`, `apps/ai/pyproject.toml` (marker), this ledger entry.
+## 1018. D1018 — the EntityRail is no longer an unannotated horizontal scroller: the rail measures its own geometry, offers prev/next chrome only when it scrolls, and paints an honest thumb
+
+**Before.** `EntityRail` was a plain horizontal snap-scroll row: cards reachable by wheel/touch with arrow keys unavailable to keyboards, nothing to tell a sighted user the rail even scrolls beyond the fold, and no end-of-reach signal for the scroller. It is the home/search results' primary surface (§6/§35) — the one piece of UI every visitor sees.
+
+**The unit.** `@nexus/ui` `EntityRail` (packages/ui/src/trust/EntityCard.tsx) now:
+- measures scroll range with `ResizeObserver` + passive scroll listener (never a media query);
+- renders prev/next round ghost buttons with the `chevronLeft/Right` icons, `aria-label` from two new `TrustLabels` strings (`railPrev` / `railNext`, zh-HK 向左滾動/向右滾動, en Scroll left/right) — no visible copy added, no dict invented; buttons appear only when the rail actually scrolls, and are `disabled` at both ends;
+- paints a 3px track with an absolutely positioned thumb whose width is `clientWidth/scrollWidth * 100%` and whose `left` is the scroll fraction mapped into the leftover track — a true physical scroll indicator, never a decorative loop;
+- moves under reduced motion as an instant `scrollBy` (behavior:'auto') vs smooth otherwise;
+- renders the identical client element set on every pass (hook order stable, early return after hooks).
+
+`apps/web/src/lib/rail-nav-chrome.test.ts` pins the whole contract in a text-probe: geometry-over-media-query, the end-state disabled states, the two trust-label strings in both locales, thumb math, reduced-motion collapse, and the constant element set.
+
+**Verified.** `npx tsc --noEmit` clean; `next build` green; web suite 239 → 245 passed (this module's 6 new tests) — the one pre-existing failure seen during full-run (`demo-assets.test.ts`) re-ran green in isolation, and is unrelated to this change (it resolves `/demo/img` references from generated SQL; this unit touches no seed or asset).
+
+**What this does NOT claim.** No Scroll-Driven Animations API, no intersection-observer progress bars, no arrow keys on the container itself (buttons carry the tab stops). No claim the rail is keyboard-focusable at the container level. No claim about the web bundle size beyond next build's own report.
+
+- readers: `packages/ui/src/trust/EntityCard.tsx` (EntityRail), `packages/ui/src/trust/Renderers.tsx` (TrustLabels), `apps/web/src/lib/i18n/trust-labels.ts` (zh/en), `apps/web/src/lib/rail-nav-chrome.test.ts`, this ledger entry.
