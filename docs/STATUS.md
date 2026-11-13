@@ -42666,3 +42666,14 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundaries.** The bench dispatcher is not a renderer. It exists so a source walker can call a function without crashing on a hook; it does not run effects, does not simulate reconciliation, and does not observe layout. It does NOT certify that a card list behaves correctly in a browser — only that the tree the component returns does not put two members of one list under one key. No component refuses, ever, for "hooks not installed" again.
 
 - readers: `scripts/react_dispatcher.mjs` (new), `scripts/check_duplicate_keys.mjs` (patched), this ledger entry.
+## 1020. D1020 — the slot-key falsifier arm for `EntityRail`'s `action` prop was re-aimed at the <div> slot my D1018 chrome change actually renders
+
+**Background.** `scripts/falsify_slot_keys.mjs` verifies the slot-key census by planting one bare node-typed prop in the real source and requiring the census to redden on that exact slot. The arm for `EntityRail` expects `action` as a bare member of a `<header>` slot — the tree shape before D1018 gave the rail its chrome. D1018 moved `action` (and the new nav buttons) into an inner `<div>` inside `<header>`, so the bare-prop offender now prints on a `<div>` child of the `<header>` body and the arm's regex could never match — CI's lint-type job went red on `falsify_slot_keys.mjs` while master passed everything else.
+
+**The fix.** The arm's `must` regex now matches `<div>` instead of `<header>`: the same property — "renders `action` as a bare member of a 2-child slot" — still Reddeflagg on the current component shape, by the current honest naming the reader writes. No assertion weakened, no prop renamed, and the census still runs on the shipped tree before any plant (the control arm is unchanged).
+
+**Verified.** `node scripts/falsify_slot_keys.mjs` → 15 arms · 15 held · 0 missed; master CI is the verdict of record for the pushed commit.
+
+**Honest boundary.** This is arm RE-AIM on the plant, not a re-anchoring of the reader. The reader stays what it is; the harness's prediction moves with a deliberate UI change the team made and documented at D1018.
+
+- readers: `scripts/falsify_slot_keys.mjs`, this ledger entry.

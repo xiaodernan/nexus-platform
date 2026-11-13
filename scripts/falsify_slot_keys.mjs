@@ -191,7 +191,7 @@ const ARMS = [
     apply: plantBareAction,
     expect: 1,
     must: [/RESULT: FAIL/,
-      /packages\/ui\/src\/trust\/EntityCard\.tsx:\d+ — EntityRail renders `action` as a bare member of a 2-child <header> slot/],
+      /packages\/ui\/src\/trust\/EntityCard\.tsx:\d+ — EntityRail renders `action` as a bare member of a 2-child <div> slot/],
   },
   {
     name: 'the same shape in a CLIENT module',
