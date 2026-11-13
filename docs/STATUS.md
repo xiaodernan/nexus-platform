@@ -42587,3 +42587,14 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Verified.** The full falsifier passes on this tree (63/63 lines of match for this arm's children). The D191-specific arms — the ones the gate could not redden in its own planted plane — now hold too: `the committed-plane read put back to the blind spot reddens this harness` reddens to `MISSED (2 offers)`, which is what exit-1 was supposed to mean.
 
 - readers: `scripts/falsify_ledger_text.mjs` (arm D165), this ledger entry; `scripts/check_ledger_citations.mjs` (unchanged, the reader under test).
+## 1014. D1014 — CLOUD.md was three generations behind the plane it documents: the seventh member, the intake envelope and two claim families were absent; now every piece is named
+
+**The gap.** Running `check_cloud_plane.mjs` was green while CLOUD.md silently skipped: the dispatcher (`nexus-dispatcher`) — the seventh Eureka member (D973), the six Redis-Streams proofs (D929, D950, D952, D978, D981) and the REST/HTTP discovery smokes all existed in ATLAS and CI but never on the narrative page. A page claiming to describe "the cloud plane" without its event consumer is not describing the cloud plane.
+
+**The fix.** CLOUD.md is extended, not rewritten: (1) status paragraph gains the D1004 line (the dispatcher's registration, via `NEXUS_DISPATCHER_EUREKA_ENABLED=true`, and the Admin window lists it UP); (2) port map gains `:19561 nexus-dispatcher` row; (3) bring-up gains the opt-in invocation; (4) piece-proves gains the full dispatcher bullet (DLQ + retry/quantum isolation + the hot-reload via POST /actuator/refresh proven same-pid); (5) gates table gains `check_dispatcher_eureka_admin.mjs` row; (6) `check_cloud_plane.mjs` already holds green on these edits.
+
+**Scope discipline.** No new reader was written; no new claim about the dispatcher's own code moves (D973-D994 documented it; those entries stay). This unit is the wording, not the service.
+
+**This does NOT claim** that the cloud plane's entire history is rewritten or that any end-to-end proof ran on this page's account; it claims the doc and the plane now agree on what exists.
+
+- readers: this ledger entry; docs/CLOUD.md (extended); `scripts/check_cloud_plane.mjs` holds green.
