@@ -150,7 +150,7 @@ export default async function AdminAiPage(props: {
           <ReadFailure read={cache} locale={locale} title={dict.merchant.degradedTitle} />
         ) : (
           <>
-            <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <MetricCell
                 label={copy.cacheColumns.calls}
                 value={cache.data?.totals.calls === null || cache.data?.totals.calls === undefined ? '—' : formatNumber(cache.data.totals.calls, dict.locale)}
@@ -176,10 +176,25 @@ export default async function AdminAiPage(props: {
                 read={cache}
                 locale={locale}
               />
+              {/* D1052: the hit rate is only as meaningful as its coverage. A provider that
+                  answers the cache question on 5 of 8 calls used to read as a 36-point miss;
+                  showing "reported / calls" makes that visible instead of silent. */}
+              <MetricCell
+                label={copy.cacheColumns.reporting}
+                value={
+                  cache.data?.totals.calls === null || cache.data?.totals.calls === undefined ||
+                  cache.data?.totals.reporting_calls === null || cache.data?.totals.reporting_calls === undefined
+                    ? '—'
+                    : `${formatNumber(cache.data.totals.reporting_calls, dict.locale)} / ${formatNumber(cache.data.totals.calls, dict.locale)}`
+                }
+                note={<span className="text-2xs text-ink-faint">{copy.cacheCoverageLabel}</span>}
+                read={cache}
+                locale={locale}
+              />
             </div>
             <ConsoleTable
               caption={copy.cacheTitle}
-              head={[copy.cacheColumns.provider, copy.cacheColumns.model, copy.cacheColumns.calls, copy.cacheColumns.prompt, copy.cacheColumns.cached, copy.cacheColumns.hitRate, copy.cacheColumns.hits]}
+              head={[copy.cacheColumns.provider, copy.cacheColumns.model, copy.cacheColumns.calls, copy.cacheColumns.prompt, copy.cacheColumns.cached, copy.cacheColumns.hitRate, copy.cacheColumns.hits, copy.cacheColumns.reporting]}
               rows={(cache.data?.by_model ?? []).map((row) => [
                 <span key="p" className="font-mono text-2xs text-ink-strong">{row.provider}</span>,
                 <span key="m" className="font-mono text-2xs text-ink-muted">{row.model}</span>,
@@ -188,6 +203,7 @@ export default async function AdminAiPage(props: {
                 <span key="ca" className="font-mono text-2xs">{row.cached_tokens === null ? '—' : formatNumber(row.cached_tokens, dict.locale)}</span>,
                 <span key="h" className="font-mono text-2xs">{row.cache_hit_rate === null ? '—' : `${(row.cache_hit_rate * 100).toFixed(1)}%`}</span>,
                 <span key="hi" className="font-mono text-2xs">{row.cache_hit_calls ?? '—'}</span>,
+                <span key="re" className="font-mono text-2xs">{row.reporting_calls === null ? '—' : `${formatNumber(row.reporting_calls, dict.locale)} / ${row.calls === null ? '—' : formatNumber(row.calls, dict.locale)}`}</span>,
               ])}
               empty={<EmptyState icon="refresh" title={copy.cacheEmpty} className="py-6" />}
             />

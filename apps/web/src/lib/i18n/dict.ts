@@ -649,8 +649,9 @@ export interface Dict {
         cacheTitle: string;
         cacheIntro: string;
         cacheEmpty: string;
-        cacheColumns: { provider: string; model: string; calls: string; prompt: string; cached: string; hitRate: string; hits: string };
+        cacheColumns: { provider: string; model: string; calls: string; prompt: string; cached: string; hitRate: string; hits: string; reporting: string };
         cacheHitRateLabel: string;
+        cacheCoverageLabel: string;
         costUnavailable: string;
         noSpend: string;
         askTitle: string;
@@ -1398,10 +1399,11 @@ const zhHK: Dict = {
         groupBy: { agent: '按代理', model: '按模型', day: '按日' },
         costColumns: { key: '分組', runs: '運行數', tokens: '令牌', cost: '成本（USD）', share: '佔比', latency: '平均延遲' },
         cacheTitle: '快取記賬',
-        cacheIntro: 'provider 回傳的逐次快取記賬（V13：llm_calls.cached_tokens），經由 agent_runs 聯結限定本租戶範圍（§9/D1045）。沒有回傳快取記賬的調用誠實計 0；沒有發明金額。',
+        cacheIntro: 'provider 回傳的逐次快取記賬（V13/V14：llm_calls.cached_tokens + cache_reported），經由 agent_runs 聯結限定本租戶範圍（§9/D1045/D1052）。命中率只在 provider 真的回報了快取記賬的調用上計算：未回報 ≠ 未命中；覆蓋率一欄說明了有多少調用真的回答了這個問題。沒有發明金額。',
         cacheEmpty: '沒有快取記賬行。',
-        cacheColumns: { provider: 'Provider', model: '模型', calls: '調用', prompt: '輸入令牌', cached: '快取令牌', hitRate: '命中率', hits: '命中調用' },
-        cacheHitRateLabel: '命中率（快取令牌 ÷ 輸入令牌）',
+        cacheColumns: { provider: 'Provider', model: '模型', calls: '調用', prompt: '輸入令牌', cached: '快取令牌', hitRate: '命中率', hits: '命中調用', reporting: '已回報' },
+        cacheHitRateLabel: '命中率（快取令牌 ÷ 已回報輸入令牌）',
+        cacheCoverageLabel: '未回報 ≠ 未命中（D1052）',
         costUnavailable: '平台未提供該分組',
         noSpend: 'mock 提供方沒有真實花費，因此成本為空而不是 $0（D4）。',
         askTitle: '問數據（只讀）',
@@ -2146,10 +2148,11 @@ const en: Dict = {
         groupBy: { agent: 'By agent', model: 'By model', day: 'By day' },
         costColumns: { key: 'Group', runs: 'Runs', tokens: 'Tokens', cost: 'Cost (USD)', share: 'Share', latency: 'Avg latency' },
         cacheTitle: 'Cache accounting',
-        cacheIntro: "The provider's per-call cache figures (V13: llm_calls.cached_tokens), scoped to this tenant through the agent_runs join (§9/D1045). Calls whose provider reported nothing are honestly counted as 0 — no dollar saving is invented here.",
+        cacheIntro: "The provider's per-call cache figures (V13/V14: llm_calls.cached_tokens + cache_reported), scoped to this tenant through the agent_runs join (§9/D1045/D1052). The hit rate divides over the calls whose provider actually reported cache accounting — a silent response is not a miss, and the coverage cell states how many calls answered the question. No dollar saving is invented here.",
         cacheEmpty: 'No cache-ledger rows yet.',
-        cacheColumns: { provider: 'Provider', model: 'Model', calls: 'Calls', prompt: 'Prompt tokens', cached: 'Cached tokens', hitRate: 'Hit rate', hits: 'Hit calls' },
-        cacheHitRateLabel: 'Hit rate (cached ÷ prompt)',
+        cacheColumns: { provider: 'Provider', model: 'Model', calls: 'Calls', prompt: 'Prompt tokens', cached: 'Cached tokens', hitRate: 'Hit rate', hits: 'Hit calls', reporting: 'Reported' },
+        cacheHitRateLabel: 'Hit rate (cached ÷ reported prompt)',
+        cacheCoverageLabel: 'Silent is not a miss (D1052)',
         costUnavailable: 'group not provided by the platform',
         noSpend: 'The mock provider has no real spend, so cost is empty rather than $0 (D4).',
         askTitle: 'Ask (read-only)',

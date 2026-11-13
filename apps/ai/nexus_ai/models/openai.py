@@ -95,8 +95,12 @@ class OpenAIAdapter(HttpLLMAdapter):
         # did not answer". The latter is a reporting gap, not a miss, and the ledger must not
         # charge it as one.
         cached_raw = (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
-        cache_reported = isinstance(cached_raw, (int, float)) and not isinstance(cached_raw, bool)
-        cached = int(cached_raw) if cache_reported and cached_raw >= 0 else 0
+        if isinstance(cached_raw, (int, float)) and not isinstance(cached_raw, bool):
+            cache_reported = True
+            cached = max(0, int(cached_raw))
+        else:
+            cache_reported = False
+            cached = 0
         if cached > pt:
             cached = pt
         return LLMResponse(
