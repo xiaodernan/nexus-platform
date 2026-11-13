@@ -97,6 +97,14 @@ management:
       probes:
         enabled: true
 
+nexus:
+  insight:
+    # D1025: this member joins the Bus-lite lane (D1024). Opt-in via NEXUS_INSIGHT_BUS_ENABLED;
+    # default OFF — this observer never publishes or subscribes unless an operator arms it.
+    # The bus reads NEXUS_REDIS_URL (the plane's Redis coordinate), the same knob the smokes use.
+    bus:
+      enabled: ${NEXUS_INSIGHT_BUS_ENABLED:false}
+
 logging:
   level:
     com.nexus.cloud.insight: INFO

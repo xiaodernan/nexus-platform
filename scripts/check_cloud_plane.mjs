@@ -76,7 +76,7 @@ mustContain('config host coordinates', CFG, 'port: ${NEXUS_CONFIG_PORT:18888}');
 const GW = 'services/cloud/gateway/src/main/resources/application.yaml';
 mustContain('gateway app name', GW, 'name: nexus-gateway');
 mustContain('gateway host coordinates', GW, 'port: ${NEXUS_GATEWAY_PORT:18088}');
-mustContain('gateway refresh needs /actuator/refresh', GW, 'refresh');
+mustContain('gateway refresh needs /actuator/refresh', GW, 'include: health,info,gateway,refresh,metrics');
 // retry GETs (D875) / never POSTs; three breakers (D850)
 const gwText = read(GW);
 check('gateway registers exactly three breakers (platform/ai/web)', GW,

@@ -88,8 +88,11 @@ export function judge(files, present) {
   has(DISPATCHER_YAML, 'optional:configserver:', 'dispatcher declares the configserver import', 'D-YAML-IMPORT');
   has(EVENTS_YAML, 'optional:configserver:', 'events declares the configserver import', 'E-YAML-IMPORT');
 
-  /* 2 — actuator exposure gains refresh (the @RefreshScope rebind door). */
-  has(DISPATCHER_YAML, 'refresh', 'dispatcher exposes the refresh endpoint', 'D-YAML-REFRESH');
+  /* 2 — actuator exposure gains refresh (the @RefreshScope rebind door).
+     Pin the whole exposure line, not the bare word `refresh` — 2026-11-13 D1024's bus block
+     landed `…/bus/refresh` comments in the same file and the loose needle went green in the
+     red-plant arm (dead gate). */
+  has(DISPATCHER_YAML, 'include: health,info,metrics,refresh', 'dispatcher exposes the refresh endpoint', 'D-YAML-REFRESH');
 
   /* 3 — ONE autowiring candidate on the worker (probe seam intact). */
   has(WORKER, '@Autowired', '@Autowired marker present', 'WORKER-AUTOWIRED');
