@@ -1,15 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Suspense } from 'react';
 import { Container, Icon, Reveal } from '@nexus/ui';
 
-import { RAIL_ORDER } from '@/lib/rails-stream';
+import { homeRails, type RailKey } from '@/lib/data';
+import type { EntityCard } from '@/lib/types';
 import { resolveGeo } from '@/lib/geo';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { examplePrompts } from '@/lib/prompts';
-import { RailSection } from '@/components/rail-section';
-import RailSkeleton from '@/components/rail-skeleton';
+import { CardRail } from '@/components/cards';
 import { SearchBox } from '@/components/search-box';
 
 /**
@@ -35,7 +34,18 @@ export default async function HomePage(props: {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const geo = resolveGeo({ lat: params.lat, lng: params.lng, district: params.district });
+  const rails = await homeRails({ geo, locale, signedIn: false });
   const prompts = examplePrompts(locale);
+
+  const railSections = (
+    [
+      { key: 'popular_near_you' as RailKey, cards: rails.data.popular_near_you as EntityCard[] },
+      { key: 'for_you' as RailKey, cards: rails.data.for_you as EntityCard[] },
+      { key: 'trending' as RailKey, cards: rails.data.trending as EntityCard[] },
+      { key: 'recommended' as RailKey, cards: rails.data.recommended as EntityCard[] },
+      { key: 'recently_viewed' as RailKey, cards: rails.data.recently_viewed as EntityCard[] },
+    ] as Array<{ key: RailKey; cards: EntityCard[] }>
+  ).filter((section) => section.cards.length > 0);
 
   return (
     <>
@@ -89,10 +99,30 @@ export default async function HomePage(props: {
       </section>
 
       <Container size="shell" className="flex flex-col">
-        {RAIL_ORDER.map((key) => (
-          <Suspense key={key} fallback={<RailSkeleton />}>
-            <RailSection railKey={key} locale={locale} geo={geo} />
-          </Suspense>
+        {rails.degraded ? (
+          <p className="mt-6 flex items-center gap-2 rounded-md border border-warning/70 bg-warning-soft px-3 py-2 text-xs text-warning">
+            <Icon name="warning" size={14} className="shrink-0" />
+            {rails.degradedReason}
+          </p>
+        ) : null}
+
+        {railSections.map((section) => (
+          <CardRail
+            key={section.key}
+            id={section.key}
+            title={dict.home.rails[section.key].title}
+            description={dict.home.rails[section.key].description}
+            cards={section.cards}
+            locale={locale}
+            action={
+              section.key === 'popular_near_you' ? (
+                <Link href="/search" className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
+                  {dict.nav.search}
+                  <Icon name="navigation" size={13} />
+                </Link>
+              ) : undefined
+            }
+          />
         ))}
       </Container>
 

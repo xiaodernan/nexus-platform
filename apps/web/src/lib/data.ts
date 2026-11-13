@@ -93,7 +93,7 @@ function pageOf<T>(items: T[]): CursorPage<T> {
 
 /* ----------------------------------------------------------------- home (§6) */
 
-export type { RailsRequest } from './rails-stream';
+export type { RailsRequest, RailKey } from './rails-stream';
 import { RAIL_DEFS, loadRailCards, type RailsRequest } from './rails-stream';
 
 /**
