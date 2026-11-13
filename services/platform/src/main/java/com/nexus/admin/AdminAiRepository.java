@@ -123,7 +123,9 @@ public class AdminAiRepository {
                        coalesce(sum(l.prompt_tokens) filter (where l.cache_reported), 0)
                            as reporting_prompt_tokens,
                        coalesce(sum(l.cached_tokens) filter (where l.cache_reported), 0)
-                           as reporting_cached_tokens
+                           as reporting_cached_tokens,
+                       -- D1057: the deterministic replays (D1047) are also free; count them.
+                       count(*) filter (where l.cache_hit) as replay_calls
                 from llm_calls l
                 join agent_runs r on r.id = l.agent_run_id
                 where r.tenant_id = :tenant_id
@@ -142,7 +144,9 @@ public class AdminAiRepository {
                        coalesce(sum(l.prompt_tokens) filter (where l.cache_reported), 0)
                            as reporting_prompt_tokens,
                        coalesce(sum(l.cached_tokens) filter (where l.cache_reported), 0)
-                           as reporting_cached_tokens
+                           as reporting_cached_tokens,
+                       -- D1057: the deterministic replays (D1047) are also free; count them.
+                       count(*) filter (where l.cache_hit) as replay_calls
                 from llm_calls l
                 join agent_runs r on r.id = l.agent_run_id
                 where r.tenant_id = :tenant_id

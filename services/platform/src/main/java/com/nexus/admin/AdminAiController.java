@@ -203,6 +203,7 @@ public class AdminAiController {
             model.put("cache_hit_calls", Json.longOf(row, "cache_hit_calls"));
             // D1050: coverage of the cache question, so a model whose provider never reports
             // it is not silently averaged in as a permanent 0%.
+            model.put("replay_calls", Json.longOf(row, "replay_calls"));
             model.put("reporting_calls", Json.longOf(row, "reporting_calls"));
             model.put("reporting_prompt_tokens", Json.longOf(row, "reporting_prompt_tokens"));
             model.put("reporting_cached_tokens", Json.longOf(row, "reporting_cached_tokens"));
@@ -228,6 +229,8 @@ public class AdminAiController {
         totals.put("completion_tokens", Json.longOf(totalsRow, "completion_tokens"));
         totals.put("cached_tokens", cached);
         totals.put("cache_hit_calls", Json.longOf(totalsRow, "cache_hit_calls"));
+        // D1057: the deterministic replays (D1047), same honesty, second source.
+        totals.put("replay_calls", Json.longOf(totalsRow, "replay_calls"));
         totals.put("reporting_calls", reportingCalls == null ? 0 : reportingCalls);
         totals.put("reporting_prompt_tokens", reported);
         totals.put("reporting_cached_tokens", reportedCached);

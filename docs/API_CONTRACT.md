@@ -499,7 +499,7 @@ in `aggregate_restated`. Merchant staff have no route here — a shop approving 
 conflict §55 exists to avoid.
 `GET /api/v1/admin/moderation` + `POST /api/v1/admin/moderation/{case_id}/resolve {action,note}` ·
 `GET /api/v1/admin/ai/runs` · `GET /api/v1/admin/ai/costs?group_by=agent|model|day` ·
-`GET /api/v1/admin/ai/cache` (cache accounting from `llm_calls.cached_tokens` joined to `agent_runs` for the tenant scope; measured values only — no invented dollar saving; `cache_hit_rate = cached_tokens / prompt_tokens`, null until a call reports cache accounting) ·
+`GET /api/v1/admin/ai/cache` (cache accounting from `llm_calls.cached_tokens` joined to `agent_runs` for the tenant scope; measured values only — no invented dollar saving; `cache_hit_rate = reporting_cached_tokens / reporting_prompt_tokens`, null until a call reports cache accounting; `replay_calls` counts the gateway-free deterministic replays (D1047, `llm_calls.cache_hit`) alongside `cache_hit_calls` so both zero-provider-cost sources are visible) ·
 `GET /api/v1/admin/search/analytics` · `POST /api/v1/admin/merchants/{id}/suspend` ·
 `GET /api/v1/admin/system/health` · `POST /api/v1/admin/ai/ask {question}` (Admin Analytics Agent, read-only tools).
 All admin routes require `role IN (platform_admin, platform_ops)` and write `audit_logs`.

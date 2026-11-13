@@ -649,7 +649,8 @@ export interface Dict {
         cacheTitle: string;
         cacheIntro: string;
         cacheEmpty: string;
-        cacheColumns: { provider: string; model: string; calls: string; prompt: string; cached: string; hitRate: string; hits: string; reporting: string };
+        cacheColumns: { provider: string; model: string; calls: string; prompt: string; cached: string; hitRate: string; hits: string; reporting: string; replay: string };
+        cacheReplayLabel: string;
         cacheHitRateLabel: string;
         cacheCoverageLabel: string;
         costUnavailable: string;
@@ -1401,7 +1402,8 @@ const zhHK: Dict = {
         cacheTitle: '快取記賬',
         cacheIntro: 'provider 回傳的逐次快取記賬（V13/V14：llm_calls.cached_tokens + cache_reported），經由 agent_runs 聯結限定本租戶範圍（§9/D1045/D1052）。命中率只在 provider 真的回報了快取記賬的調用上計算：未回報 ≠ 未命中；覆蓋率一欄說明了有多少調用真的回答了這個問題。沒有發明金額。',
         cacheEmpty: '沒有快取記賬行。',
-        cacheColumns: { provider: 'Provider', model: '模型', calls: '調用', prompt: '輸入令牌', cached: '快取令牌', hitRate: '命中率', hits: '命中調用', reporting: '已回報' },
+        cacheColumns: { provider: 'Provider', model: '模型', calls: '調用', prompt: '輸入令牌', cached: '快取令牌', hitRate: '命中率', hits: '命中調用', reporting: '已回報', replay: '回放調用' },
+        cacheReplayLabel: '確定性回放（D1047）—— 零 token、零往返',
         cacheHitRateLabel: '命中率（快取令牌 ÷ 已回報輸入令牌）',
         cacheCoverageLabel: '未回報 ≠ 未命中（D1052）',
         costUnavailable: '平台未提供該分組',
@@ -2150,7 +2152,8 @@ const en: Dict = {
         cacheTitle: 'Cache accounting',
         cacheIntro: "The provider's per-call cache figures (V13/V14: llm_calls.cached_tokens + cache_reported), scoped to this tenant through the agent_runs join (§9/D1045/D1052). The hit rate divides over the calls whose provider actually reported cache accounting — a silent response is not a miss, and the coverage cell states how many calls answered the question. No dollar saving is invented here.",
         cacheEmpty: 'No cache-ledger rows yet.',
-        cacheColumns: { provider: 'Provider', model: 'Model', calls: 'Calls', prompt: 'Prompt tokens', cached: 'Cached tokens', hitRate: 'Hit rate', hits: 'Hit calls', reporting: 'Reported' },
+        cacheColumns: { provider: 'Provider', model: 'Model', calls: 'Calls', prompt: 'Prompt tokens', cached: 'Cached tokens', hitRate: 'Hit rate', hits: 'Hit calls', reporting: 'Reported', replay: 'Replay calls' },
+        cacheReplayLabel: 'Deterministic replays (D1047) — zero tokens, zero round trips',
         cacheHitRateLabel: 'Hit rate (cached ÷ reported prompt)',
         cacheCoverageLabel: 'Silent is not a miss (D1052)',
         costUnavailable: 'group not provided by the platform',

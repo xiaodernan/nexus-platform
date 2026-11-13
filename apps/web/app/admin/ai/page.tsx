@@ -176,6 +176,16 @@ export default async function AdminAiPage(props: {
                 read={cache}
                 locale={locale}
               />
+              {/* D1057: the deterministic replays (D1047) are free too — shown beside the
+                  provider-cache hit cell so the operator sees both sources of "did not hit
+                  the provider at all" without reading them together as a miss. */}
+              <MetricCell
+                label={copy.cacheColumns.replay}
+                value={cache.data?.totals.replay_calls === null || cache.data?.totals.replay_calls === undefined ? '—' : formatNumber(cache.data.totals.replay_calls, dict.locale)}
+                note={<span className="text-2xs text-ink-faint">{copy.cacheReplayLabel}</span>}
+                read={cache}
+                locale={locale}
+              />
               {/* D1052: the hit rate is only as meaningful as its coverage. A provider that
                   answers the cache question on 5 of 8 calls used to read as a 36-point miss;
                   showing "reported / calls" makes that visible instead of silent. */}
@@ -194,7 +204,7 @@ export default async function AdminAiPage(props: {
             </div>
             <ConsoleTable
               caption={copy.cacheTitle}
-              head={[copy.cacheColumns.provider, copy.cacheColumns.model, copy.cacheColumns.calls, copy.cacheColumns.prompt, copy.cacheColumns.cached, copy.cacheColumns.hitRate, copy.cacheColumns.hits, copy.cacheColumns.reporting]}
+              head={[copy.cacheColumns.provider, copy.cacheColumns.model, copy.cacheColumns.calls, copy.cacheColumns.prompt, copy.cacheColumns.cached, copy.cacheColumns.hitRate, copy.cacheColumns.hits, copy.cacheColumns.replay, copy.cacheColumns.reporting]}
               rows={(cache.data?.by_model ?? []).map((row) => [
                 <span key="p" className="font-mono text-2xs text-ink-strong">{row.provider}</span>,
                 <span key="m" className="font-mono text-2xs text-ink-muted">{row.model}</span>,
@@ -203,6 +213,7 @@ export default async function AdminAiPage(props: {
                 <span key="ca" className="font-mono text-2xs">{row.cached_tokens === null ? '—' : formatNumber(row.cached_tokens, dict.locale)}</span>,
                 <span key="h" className="font-mono text-2xs">{row.cache_hit_rate === null ? '—' : `${(row.cache_hit_rate * 100).toFixed(1)}%`}</span>,
                 <span key="hi" className="font-mono text-2xs">{row.cache_hit_calls ?? '—'}</span>,
+                <span key="rp" className="font-mono text-2xs">{row.replay_calls ?? '—'}</span>,
                 <span key="re" className="font-mono text-2xs">{row.reporting_calls === null ? '—' : `${formatNumber(row.reporting_calls, dict.locale)} / ${row.calls === null ? '—' : formatNumber(row.calls, dict.locale)}`}</span>,
               ])}
               empty={<EmptyState icon="refresh" title={copy.cacheEmpty} className="py-6" />}

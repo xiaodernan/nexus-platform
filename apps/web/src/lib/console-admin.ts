@@ -900,6 +900,8 @@ export interface AdminCacheModelRow {
   cached_tokens: number | null;
   /** Calls in this group whose cached_tokens > 0; null when not stated. */
   cache_hit_calls: number | null;
+  /** D1057: deterministic replays of byte-identical temperature-0 requests (D1047). */
+  replay_calls: number | null;
   /** D1050: calls in this group whose provider actually answered the cache question. */
   reporting_calls: number | null;
   /** D1050: prompt tokens over those reporting calls — the honest denominator. */
@@ -917,6 +919,7 @@ export interface AdminAiCache {
     completion_tokens: number | null;
     cached_tokens: number | null;
     cache_hit_calls: number | null;
+    replay_calls: number | null;
     reporting_calls: number | null;
     reporting_prompt_tokens: number | null;
     reporting_cached_tokens: number | null;
@@ -1016,6 +1019,7 @@ function mapCacheModelRow(row: Record<string, unknown>): AdminCacheModelRow | nu
     prompt_tokens: promptTokens,
     cached_tokens: cachedTokens,
     cache_hit_calls: pickNumber(row, ['cache_hit_calls', 'hits', 'cache_hits']),
+    replay_calls: pickNumber(row, ['replay_calls']),
     reporting_calls: pickNumber(row, ['reporting_calls']),
     reporting_prompt_tokens: intOf(row.reporting_prompt_tokens),
     reporting_cached_tokens: intOf(row.reporting_cached_tokens),
@@ -1111,6 +1115,7 @@ export async function adminAiCacheRead(): Promise<ConsoleRead<AdminAiCache>> {
         completion_tokens: intOf(totalsRow.completion_tokens),
         cached_tokens: cachedTokens,
         cache_hit_calls: pickNumber(totalsRow, ['cache_hit_calls', 'hits', 'cache_hits']),
+        replay_calls: pickNumber(totalsRow, ['replay_calls']),
         reporting_calls: pickNumber(totalsRow, ['reporting_calls']),
         reporting_prompt_tokens: intOf(totalsRow.reporting_prompt_tokens),
         reporting_cached_tokens: intOf(totalsRow.reporting_cached_tokens),
@@ -1430,6 +1435,7 @@ function demoAiCache(): AdminAiCache {
       completion_tokens: 8_841,
       cached_tokens: totalCached,
       cache_hit_calls: 31,
+      replay_calls: 7,
       reporting_calls: 37,
       reporting_prompt_tokens: 55_000,
       reporting_cached_tokens: 52_400,
@@ -1437,11 +1443,11 @@ function demoAiCache(): AdminAiCache {
     },
     by_model: [
       { provider: 'openai', model: 'gpt-6-sol', calls: 40, prompt_tokens: 59_000,
-        cached_tokens: 52_400, cache_hit_calls: 31, reporting_calls: 37,
+        cached_tokens: 52_400, cache_hit_calls: 31, replay_calls: 6, reporting_calls: 37,
         reporting_prompt_tokens: 55_000, reporting_cached_tokens: 52_400,
         cache_hit_rate: cacheHitRate(52_400, 55_000) },
       { provider: 'mock', model: 'mock-heuristic-1', calls: 2, prompt_tokens: 2_230,
-        cached_tokens: 80, cache_hit_calls: 0, reporting_calls: 0,
+        cached_tokens: 80, cache_hit_calls: 0, replay_calls: 1, reporting_calls: 0,
         reporting_prompt_tokens: 0, reporting_cached_tokens: 0,
         cache_hit_rate: null },
     ],
