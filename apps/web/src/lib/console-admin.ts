@@ -63,6 +63,7 @@ export const ADMIN_SOURCES = {
   aiAsk: 'POST /api/v1/admin/ai/ask',
   searchAnalytics: 'GET /api/v1/admin/search/analytics',
   systemHealth: 'GET /api/v1/admin/system/health',
+  events: 'GET /api/v1/admin/events',
 } as const;
 
 /** BFF paths the browser components post to — the proxy forwards these to the platform (§0.1). */
@@ -1206,6 +1207,36 @@ export async function adminSearchAnalyticsRead(): Promise<ConsoleRead<AdminSearc
 
 /* --------------------------------------------------- system health (§69, §70) */
 
+export interface AdminEventRow {
+  id: string;
+  template: string | null;
+  tenant_id: string | null;
+  type: string | null;
+}
+
+export interface AdminEventGroup {
+  name: string;
+  /** In-flight deliveries waiting for acknowledgement. */
+  pending: number | null;
+  consumers: number | null;
+  /** Per-consumer pending counts, for the UI roster. */
+  consumer_detail: Record<string, number> | null;
+  oldest_pending_id: string | null;
+  newest_pending_id: string | null;
+}
+
+export interface AdminEvents {
+  source: string;
+  enabled: boolean;
+  disabled: boolean;
+  degraded: boolean;
+  degraded_reason: string | null;
+  max_len: number | null;
+  xlen: number | null;
+  group: AdminEventGroup | null;
+  recent: AdminEventRow[] | null;
+}
+
 export interface AdminDependency {
   name: string;
   state: DependencyState;
@@ -1274,6 +1305,62 @@ export function parseSystemHealth(payload: unknown): AdminSystemHealth | null {
     profiles,
     dependencies,
   };
+}
+
+export async function adminEventsRead(): Promise<ConsoleRead<AdminEvents>> {
+  const path = ADMIN_SOURCES.events;
+  if (IS_MOCK) {
+    return okRead({ data: demoAdminEvents(), origin: 'mock', source: DEMO_SOURCE(path), asOf: null, demo: true });
+  }
+  try {
+    const payload = await nexusAuthedGet<unknown>('platform', '/api/v1/admin/events', { cache: 'no-store' });
+    const record = recordOf(payload);
+    if (!record) return failedRead({ source: path, errorCode: 'invalid_payload' });
+    const group = recordOf(record.group);
+    const recent: AdminEventRow[] = [];
+    for (const raw of listOf(record.recent)) {
+      const row = recordOf(raw);
+      if (!row) continue;
+      recent.push({
+        id: str(row.id) ?? '',
+        template: str(row.template),
+        tenant_id: str(row.tenant_id),
+        type: str(row.type),
+      });
+    }
+    const data: AdminEvents = {
+      source: pickString(record, ['source']) ?? path,
+      enabled: boolOf(record.enabled) ?? false,
+      disabled: boolOf(record.disabled) ?? false,
+      degraded: boolOf(record.degraded) ?? false,
+      degraded_reason: pickString(record, ['degraded_reason', 'reason']),
+      max_len: intOf(record.max_len),
+      xlen: intOf(record.xlen),
+      group: group
+        ? {
+            name: pickString(group, ['name']) ?? 'unknown',
+            pending: intOf(group.pending),
+            consumers: intOf(group.consumers),
+            consumer_detail: (function () {
+              const det = recordOf(group.consumer_detail);
+              if (!det) return null;
+              const out: Record<string, number> = {};
+              for (const [k, v] of Object.entries(det)) {
+                const n = typeof v === 'number' ? v : Number(v);
+                if (Number.isFinite(n)) out[k] = n;
+              }
+              return Object.keys(out).length ? out : null;
+            })(),
+            oldest_pending_id: pickString(group, ['oldest_pending_id', 'min']),
+            newest_pending_id: pickString(group, ['newest_pending_id', 'max']),
+          }
+        : null,
+      recent,
+    };
+    return okRead({ data, origin: 'live', source: path, asOf: asOfOf(record), demo: false });
+  } catch (cause) {
+    return failedRead({ source: path, errorCode: errorCodeOf(cause), requestId: requestIdOf(cause) });
+  }
 }
 
 export async function adminSystemHealthRead(): Promise<ConsoleRead<AdminSystemHealth>> {
@@ -1485,6 +1572,34 @@ function demoSearchAnalytics(): AdminSearchAnalytics {
     ],
     source: 'fixture:console-admin (a deterministic projection of the demo catalogue, not a measurement)',
     note: 'Demo counts. The platform read reports descriptive totals only; there is no search-quality score (§109).',
+  };
+}
+
+function demoAdminEvents(): AdminEvents {
+  return {
+    source: 'fixture:console-admin (mirrors GET /api/v1/admin/events)',
+    enabled: true,
+    disabled: false,
+    degraded: false,
+    degraded_reason: null,
+    max_len: 1000,
+    xlen: 12,
+    group: {
+      name: 'nexus-events-readers',
+      pending: 2,
+      consumers: 1,
+      consumer_detail: { 'worker-1': 2 },
+      oldest_pending_id: '1718173100000-0',
+      newest_pending_id: '1718173130000-0',
+    },
+    recent: [
+      { id: '1718173130000-0', template: 'reservation_confirmed',
+        tenant_id: 'hong-kong', type: 'ReservationConfirmed' },
+      { id: '1718173120000-0', template: 'search_completed',
+        tenant_id: 'hong-kong', type: 'SearchCompleted' },
+      { id: '1718173110000-0', template: 'merchant_suspended',
+        tenant_id: 'hong-kong', type: 'MerchantSuspended' },
+    ],
   };
 }
 

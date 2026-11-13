@@ -501,7 +501,8 @@ conflict §55 exists to avoid.
 `GET /api/v1/admin/ai/runs` · `GET /api/v1/admin/ai/costs?group_by=agent|model|day` ·
 `GET /api/v1/admin/ai/cache` (cache accounting from `llm_calls.cached_tokens` joined to `agent_runs` for the tenant scope; measured values only — no invented dollar saving; `cache_hit_rate = reporting_cached_tokens / reporting_prompt_tokens`, null until a call reports cache accounting; `replay_calls` counts the gateway-free deterministic replays (D1047, `llm_calls.cache_hit`) alongside `cache_hit_calls` so both zero-provider-cost sources are visible) ·
 `GET /api/v1/admin/search/analytics` · `POST /api/v1/admin/merchants/{id}/suspend` ·
-`GET /api/v1/admin/system/health` · `POST /api/v1/admin/ai/ask {question}` (Admin Analytics Agent, read-only tools).
+`GET /api/v1/admin/system/health` · `POST /api/v1/admin/ai/ask {question}` (Admin Analytics Agent, read-only tools) ·
+`GET /api/v1/admin/events` (the Redis Streams bridge read surface: `nexus:events` ring length, in-flight consumer-group state from `XINFO GROUPS`/`XPENDING`, newest 8 events; read-only; degrades cleanly when the bridge is off or Redis is down, never fabricates queue state) ·
 All admin routes require `role IN (platform_admin, platform_ops)` and write `audit_logs`.
 
 ## 10. External agent surfaces (§43-45)

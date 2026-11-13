@@ -3,7 +3,7 @@ import { Badge, Icon, EmptyState } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
-import { adminSystemHealthRead } from '@/lib/console-admin';
+import { adminSystemHealthRead, adminEventsRead } from '@/lib/console-admin';
 import { ConsoleSection, ReadFailure, SourceStamp } from '@/components/console/console-parts';
 import { ConsoleTable } from '@/components/console/console-table';
 import { AdminChrome, AdminDenied, adminSession } from '@/components/console/admin-shell';
@@ -27,8 +27,9 @@ export default async function AdminSystemPage() {
   const access = await adminSession();
   if (!access.granted) return <AdminDenied access={access} locale={locale} />;
 
-  const read = await adminSystemHealthRead();
+  const [read, eventsRead] = await Promise.all([adminSystemHealthRead(), adminEventsRead()]);
   const data = read.data;
+  const events = eventsRead.data;
 
   return (
     <AdminChrome
@@ -79,6 +80,52 @@ export default async function AdminSystemPage() {
               ])}
               empty={<EmptyState icon="grid" title={copy.dependenciesEmpty} className="py-6" />}
             />
+          </ConsoleSection>
+
+          <ConsoleSection id="events" title={copy.eventsTitle} icon="navigation">
+            {eventsRead.status === 'failed' ? (
+              <ReadFailure read={eventsRead} locale={locale} title={dict.merchant.degradedTitle} />
+            ) : events ? (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  {events.disabled ? (
+                    <Badge tone="outline" size="sm">{copy.eventsDisabled}</Badge>
+                  ) : events.degraded ? (
+                    <Badge tone="warning" size="sm" icon="warning">{copy.eventsDegraded(events.degraded_reason ?? '')}</Badge>
+                  ) : (
+                    <Badge tone="positive" size="sm">{copy.eventsColumns.stream}</Badge>
+                  )}
+                  {events.xlen !== null ? <Badge tone="neutral" size="sm">{copy.eventsColumns.length}: {events.xlen}</Badge> : null}
+                  {events.max_len !== null ? <Badge tone="outline" size="sm">{copy.eventsColumns.backlogNote}</Badge> : null}
+                  {events.group ? (
+                    <Badge tone={events.group.pending && events.group.pending > 0 ? 'warning' : 'positive'} size="sm">
+                      {copy.eventsColumns.inFlight}: {events.group.pending ?? 0}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-2xs text-ink-faint">
+                  {copy.eventsColumns.stream} · {events.source}
+                  {events.group ? ` · ${events.group.name} (${events.group.consumers ?? 0} consumers, ${events.group.pending ?? 0} pending)` : null}
+                </p>
+                {Array.isArray(events.recent) && events.recent.length > 0 ? (
+                  <ConsoleTable
+                    caption={copy.eventsTitle}
+                    className="mt-3"
+                    head={['ID', 'template', 'type', 'tenant']}
+                    rows={(events.recent ?? []).map((ev) => [
+                      <span key="i" className="font-mono text-2xs">{ev.id}</span>,
+                      <span key="t" className="font-mono text-2xs text-ink-strong">{ev.template ?? '—'}</span>,
+                      <span key="y" className="font-mono text-2xs text-ink-muted">{ev.type ?? '—'}</span>,
+                      <span key="n" className="font-mono text-2xs">{ev.tenant_id ?? '—'}</span>,
+                    ])}
+                    empty={<EmptyState icon="navigation" title={copy.eventsEmpty} className="py-6" />}
+                  />
+                ) : (
+                  <p className="mt-3 text-sm text-ink-muted">{copy.eventsEmpty}</p>
+                )}
+                <SourceStamp read={eventsRead} locale={locale} className="mt-2" />
+              </>
+            ) : null}
           </ConsoleSection>
         </>
       ) : null}

@@ -114,6 +114,7 @@ export interface Dict {
     reserve: string;
     directions: string;
     call: string;
+    stickyCtaLabel: string;
     weekday: string;
     today: string;
     openNow: string;
@@ -693,6 +694,11 @@ export interface Dict {
         profiles: string;
         notProbed: string;
         sourceNote: string;
+        eventsTitle: string;
+        eventsEmpty: string;
+        eventsDisabled: string;
+        eventsDegraded: (reason: string) => string;
+        eventsColumns: { stream: string; length: string; inFlight: string; backlogNote: string };
       };
     };
   };
@@ -824,6 +830,7 @@ const zhHK: Dict = {
     reserve: '預訂',
     directions: '路線',
     call: '電話',
+    stickyCtaLabel: '直接行動',
     weekday: '星期',
     today: '今天',
     openNow: '營業中',
@@ -1446,6 +1453,11 @@ const zhHK: Dict = {
         profiles: '激活配置',
         notProbed: 'AI 服務只報告是否已配置，刻意不做探測（§9）。',
         sourceNote: '每個依賴在本次調用中被真實探測；數據庫狀態來自一次真實的 select 1。',
+        eventsTitle: '事件流',
+        eventsEmpty: '自啟動以來沒有事件發佈到 Redis Stream（nexus:events）；零行不等於靜默丟棄——只表示沒有新的事件（§155）。',
+        eventsDisabled: '平台 `nexus.events.redis-stream-enabled=false`；事件橋接默認不掛載——設為 true 之後才會有事件。',
+        eventsDegraded: (reason: string) => `事件流不可用：${reason}`,
+        eventsColumns: { stream: 'Redis Stream', length: '隊列長度', inFlight: '在途消息 (pending)', backlogNote: '環形上限 = nexus.events.max-len（默認 1000）' },
       },
     },
   },
@@ -1574,6 +1586,7 @@ const en: Dict = {
     reserve: 'Reserve',
     directions: 'Directions',
     call: 'Call',
+    stickyCtaLabel: 'Quick actions',
     weekday: 'Day',
     today: 'Today',
     openNow: 'Open now',
@@ -2196,6 +2209,11 @@ const en: Dict = {
         profiles: 'Active profiles',
         notProbed: 'The AI service reports whether it is configured and is deliberately not probed (§9).',
         sourceNote: 'Each dependency is probed on this call; the database state comes from a real select 1.',
+        eventsTitle: 'Event stream',
+        eventsEmpty: 'No events since boot were published to the Redis stream (nexus:events). Zero rows is zero rows — it means no events, not a silent discard.',
+        eventsDisabled: 'platform `nexus.events.redis-stream-enabled=false`; the bridge never mounts until set to true (default).',
+        eventsDegraded: (reason: string) => `event stream unavailable: ${reason}`,
+        eventsColumns: { stream: 'Redis stream', length: 'Length', inFlight: 'In-flight (pending)', backlogNote: 'ring cap = nexus.events.max-len (default 1000)' },
       },
     },
   },
