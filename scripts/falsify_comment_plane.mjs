@@ -339,7 +339,7 @@ if (PLANTED === null) {
       writeFileSync(join(MDIR, 'check_ledger_citations.mjs'),
         src.replace(anchor, '  strict offenders renamed ${strict.offenders.length} count(s) on the plane this run judges'),
         'utf8');
-      for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+      for (const sib of ['cli_args.mjs', 'source_index.mjs', 'git_blobs.mjs']) {
         writeFileSync(join(MDIR, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
       }
       const child = spawnSync(process.execPath,
@@ -402,7 +402,7 @@ if (PLANTED === null) {
     } else {
       try {
         mkdirSync(join(dir, 'scripts'), { recursive: true });
-        for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+        for (const sib of ['cli_args.mjs', 'source_index.mjs', 'git_blobs.mjs']) {
           writeFileSync(join(dir, 'scripts', sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
         }
         const path = join(dir, 'scripts', 'check_comment_citations.mjs');
@@ -511,7 +511,7 @@ if (PLANTED === null) {
   const plant8 = (tag, extraLedger) => {
     const dir = join(ROOT_FIX, `d211-chk-${tag}`, 'scripts');
     mkdirSync(dir, { recursive: true });
-    for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+    for (const sib of ['cli_args.mjs', 'source_index.mjs', 'git_blobs.mjs']) {
       writeFileSync(join(dir, sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
     }
     const src8 = readFileSync(CHECKER, 'utf8').replace(/\r\n/g, '\n');
@@ -792,7 +792,7 @@ if (PLANTED === null) {
         mkdirSync(join(dir, 'scripts'), { recursive: true });
         // The copy is spawned as a reader, so it needs the two modules it imports beside it — the same lesson the
         // D206 driver learned: a copied script that dies on its own import prints 0 of everything and proves 0.
-        for (const sib of ['cli_args.mjs', 'source_index.mjs']) {
+        for (const sib of ['cli_args.mjs', 'source_index.mjs', 'git_blobs.mjs']) {
           writeFileSync(join(dir, 'scripts', sib), readFileSync(join(ROOT, 'scripts', sib), 'utf8'), 'utf8');
         }
         const path = join(dir, 'scripts', 'check_ledger_citations.mjs');

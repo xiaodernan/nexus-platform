@@ -42598,3 +42598,14 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **This does NOT claim** that the cloud plane's entire history is rewritten or that any end-to-end proof ran on this page's account; it claims the doc and the plane now agree on what exists.
 
 - readers: this ledger entry; docs/CLOUD.md (extended); `scripts/check_cloud_plane.mjs` holds green.
+## 1015. D1015 — the step-9 falsifier silently died of the same missing-sibling defect Class D1013 found in step 8's: every plant arm copied only cli_args.mjs + source_index.mjs while the reader imports ./git_blobs.mjs since D158
+
+**The red.** `scripts/db_gate_fresh.sh --skip-generate` (the D1013 gate rerun after fixing step 8) cleared steps 1-8 in roughly three minutes and then FAILED at step 9 with `57 arms · 43 held · 14 missed`. Every missed arm expected `RESULT: PASS` from a planted-copy reader and got `exit 2 printed — ./git_blobs.mjs not found`, the exact silent SIGTERM D1013 patched in the D165 arm.
+
+**Diagnosis.** The D158 commit that introduced `catFileBatch` (the batched git blob reader used by step 8's committed-plane read) changed `check_ledger_citations.mjs` to import `./git_blobs.mjs`. Step 8's harness (falsify_ledger_text.mjs, D1013) was missed; step 9's harness (falsify_comment_plane.mjs) was NOT patched — it copies only `cli_args.mjs` and `source_index.mjs` into its mutant directory, so every planted reader died with MODULE_NOT_FOUND and step 9 died, this time out loud as 14 missed arms instead of silently scoring wrong. Both falsifiers sit under the gate's same defect shape: the harness plants a mutated reader as its own proof, and the mutation fails at import resolution rather than at the predicate under test — the arms that expect exit 0 cannot print PASS, but they did print it on any run before D158, so the gate's claim of coverage was quietly false since then.
+
+**The fix.** `falsify_comment_plane.mjs`: copy `git_blobs.mjs` alongside the two siblings it was copying, in all four plant sites. Both falsifiers now pass (60/60 in D1013, 57/57 here, ~5 minutes each — NOT wired into the line-171 chain; the gate remains their verifier).
+
+**What this does NOT claim.** No other sibling-import is unaccounted for (they were audited); no claim the gate as a whole is now green end-to-end; no claim about step 10's falsifier (it does not plant a reader). The next gate step that plants a reader is the one to watch.
+
+- readers: `scripts/falsify_comment_plane.mjs` (arms D212–D214, D208/P3), this ledger entry.
