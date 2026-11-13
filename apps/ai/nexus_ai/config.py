@@ -138,8 +138,18 @@ def get_settings() -> Settings:
 
 
 def reset_settings_cache() -> None:
-    """Tests mutate os.environ then call this."""
+    """Tests mutate os.environ then call this - and so does anything that re-reads the env.
+
+    D1055: re-reading the environment is a claim that the values CHANGED, so every client
+    built from them has to be rebuilt too. The LLM response cache memoises its Redis client
+    behind a process-lifetime latch (`_CLIENT_TRIED`), so without the line below an operator
+    who flipped `NEXUS_LLM_RESPONSE_CACHE` kept writing to the old server - the flag changed
+    and the behaviour did not. The import is local: `config` is imported before `api`.
+    """
     clear = getattr(load_settings, "cache_clear", None)
     if clear is not None:  # load_settings is plain; only get_settings is memoised
         clear()
     get_settings.cache_clear()
+    from nexus_ai.api.llm_response_cache import reset_client
+
+    reset_client()

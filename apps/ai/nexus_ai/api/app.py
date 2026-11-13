@@ -57,6 +57,18 @@ def create_app(settings: Any | None = None) -> FastAPI:
             log.warning("database pool unavailable, serving offline demo: %s", exc)
         # D856: opt-in Eureka registration (NEXUS_AI_EUREKA_ENABLED=true). Default off —
         # the single-process boot registers nothing, like the monolith's default.
+        # D1055: one line, once per process, naming the frozen prefix this process will send.
+        # `prefix_contract.contract_stats()` was written "for tests, the probe and the admin
+        # view" and no admin view ever read it - but the FIRST question about a low hit rate
+        # is WHICH prefix produced these bytes, and the answer has to be in the log of the
+        # process that sent them. That is the consumer; the tests are the second reader.
+        from nexus_ai.models.prefix_contract import contract_stats
+        _contract = contract_stats()
+        log.info(
+            "nexus_ai.prefix_contract version=%s sha=%s chars=%s approx_tokens=%s enabled=%s",
+            _contract["version"], _contract["sha256"], _contract["chars"],
+            _contract["approx_tokens"], _contract["enabled"],
+        )
         from nexus_ai.discovery import maybe_register_eureka, stop_eureka
         eureka_registration = await maybe_register_eureka()
         yield

@@ -237,7 +237,12 @@ def contract_for(task_class: str, task_section: str = "") -> str:
 
 
 def contract_stats() -> dict[str, object]:
-    """Measured facts about the frozen prefix — for tests, the probe and the admin view."""
+    """Measured facts about the frozen prefix - read by the startup line and the tests.
+
+    D1055: it used to claim "and the admin view", which was never built. The consumer it does
+    have is `api/app.py`'s lifespan: one log line per process naming the version and digest,
+    because the first question about a low cache hit rate is which prefix was sent.
+    """
     chars = len(_SHARED_PREAMBLE)
     return {
         "version": PREFIX_CONTRACT_VERSION,

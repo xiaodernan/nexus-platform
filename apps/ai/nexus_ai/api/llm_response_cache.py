@@ -194,6 +194,15 @@ def llm_cache_set(req: "LLMRequest", chain: tuple[str, ...], resp: "LLMResponse"
         return False
 
 
-def reset_for_tests() -> None:
+def reset_client() -> None:
+    """Drop the memoised client so the next call re-reads the environment.
+
+    D1055: this was `reset_for_tests`, and nothing in the product called it - which is the
+    defect it was renamed for: `_CLIENT_TRIED` is a process-lifetime latch, so flipping
+    `NEXUS_LLM_RESPONSE_CACHE` or `NEXUS_REDIS_URL` and re-reading the settings left the OLD
+    client serving the NEW configuration. `config.reset_settings_cache()` is the moment the
+    environment is declared changed, so it calls this (`test_llm_response_cache.py` and the
+    conftest still call it directly between cases).
+    """
     global _CLIENT, _CLIENT_TRIED
     _CLIENT, _CLIENT_TRIED = None, False

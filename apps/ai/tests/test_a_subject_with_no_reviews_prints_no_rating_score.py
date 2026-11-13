@@ -57,6 +57,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -309,12 +310,38 @@ def test_the_two_published_readers_treat_a_null_score_as_an_absence():
 
 
 def test_the_builder_is_the_only_place_the_score_is_chosen():
-    """`git grep` the product: no other writer puts a `value` into a card's rating block."""
+    """`git grep` the product: no other writer puts a `value` into a card's rating block.
+
+    D1055: one READER of the block does assign the key - `api/prefix_slim.py` projects it into
+    the summary prefix - and the exemption is paid for rather than granted: the line may only
+    survive if its right-hand side is a CALL to `cards.rating_block`, the one writer. That
+    file used to re-derive the pair with its own `_num`/`or 0`, which is the second copy of a
+    rule (D503) and the copy that never asked the count question. A hand-rolled `{"value": ...}`
+    there is a writer again and this door fires.
+    """
     out = subprocess.run(
         ["git", "grep", "-nE", r"\[.rating.\]\s*=|rating\s*=\s*\{", "--", "apps/ai/nexus_ai"],
         cwd=str(REPO), capture_output=True, text=True, encoding="utf-8", errors="replace")
     lines = [ln for ln in (out.stdout or "").splitlines() if ln.strip()]
-    writers = [ln for ln in lines if "/search/cards.py" not in ln and "/api/demo_data.py" not in ln]
+    writers, projections = [], []
+    for ln in lines:
+        if "/search/cards.py" in ln or "/api/demo_data.py" in ln:
+            continue
+        if "/api/prefix_slim.py:" in ln and _calls_the_single_writer(ln):
+            projections.append(ln)
+        else:
+            writers.append(ln)
     assert not writers, (
         "a second writer of the rating block appeared and this door reads only `cards.py`: "
         + "; ".join(writers))
+    assert projections, (
+        "the projection exemption names a line that is no longer there - delete the exemption "
+        "from this door rather than leaving a permission nobody uses")
+
+
+#: the ONLY form a projection may take: the key assigned from the single writer.
+_PROJECTION = re.compile(r"/api/prefix_slim\.py:\d+:\s*entry\[.rating.\]\s*=\s*rating_block\(")
+
+
+def _calls_the_single_writer(line: str) -> bool:
+    return bool(_PROJECTION.search(line))

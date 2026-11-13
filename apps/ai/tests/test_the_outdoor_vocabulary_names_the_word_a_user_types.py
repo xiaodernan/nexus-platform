@@ -30,11 +30,33 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
+from pathlib import Path
 
 import pytest
 
 from nexus_ai.nlu.lexicon import PREFERENCE_RULES
 from nexus_ai.nlu.understand import extract_intent
+
+REPO = Path(__file__).resolve().parents[3]
+
+#: the platform's own answer to "what does an undeclared-strength DECLARED preference weigh?".
+#: Read from the Java repository rather than retyped, because the number is a contract between
+#: the plane that writes `user_preferences.weight` and the plane that ranks on it: this file
+#: measures the ranker, and measuring it at a number the writer never writes is measuring a
+#: configuration that does not exist (D1055).
+_IDENTITY_REPO = (REPO / "services" / "platform" / "src" / "main" / "java" / "com" / "nexus"
+                  / "identity" / "IdentityRepository.java")
+
+
+def declared_preference_weight() -> float:
+    text = _IDENTITY_REPO.read_text(encoding="utf-8")
+    match = re.search(r"DECLARED_PREFERENCE_WEIGHT\s*=\s*([0-9]*\.?[0-9]+)", text)
+    assert match, (
+        f"{_IDENTITY_REPO.name} no longer declares DECLARED_PREFERENCE_WEIGHT - the weight a "
+        "declared preference is stored at is now unknown to this test, and the scores below "
+        "would be measured at a number nothing writes")
+    return float(match.group(1))
 
 #: the row's own tokens, read from the table rather than retyped.
 OUTDOOR_TOKENS = next(tokens for key, value, tokens, _p in PREFERENCE_RULES
@@ -96,8 +118,14 @@ def _rows(live_settings) -> list[dict]:
     async def _go():
         db = await db_pool.connect(live_settings, force_new=True)
         try:
+            # D1055: `id` is not decoration. The personalization map is keyed
+            # `str(row["subject_id"] or row["id"])`, so a row without either collapses every
+            # merchant onto the key `"None"` - the dict keeps ONE entry, the last row wins,
+            # and the two arms below then compare a single merchant each. Measured at HEAD
+            # without this column: 1 personalized score out of 470, which is why the local
+            # plane passed and CI (a different last row by slug) tied at 0.5 vs 0.5.
             return await db.readonly(
-                "select slug, attributes from merchants where status = 'published' "
+                "select id, slug, attributes from merchants where status = 'published' "
                 "and tenant_id = $1 order by slug", _TENANT())
         finally:
             await db_pool.dispose()
@@ -119,11 +147,22 @@ def _carries(attrs: dict) -> bool:
 
 
 def _scores(live_settings, rows, liked: bool) -> list[float]:
-    """The personalization scores the row's own matcher gives these merchants."""
+    """The personalization scores the row's own matcher gives these merchants.
+
+    D1055: the weight is the one the platform STORES for a declared preference, read from
+    `IdentityRepository.DECLARED_PREFERENCE_WEIGHT`. It used to be a hardcoded 0.5, and 0.5 is
+    the neutral point of `_sided` - `0.5 + |w - 0.5|` and `0.5 - |w - 0.5|` land on the same
+    number there, so an outdoor merchant and an indoor one both scored 0.5 and this file's
+    "rewards the right half" arm could only ever tie. CI measured exactly that (`0.5` vs
+    `0.5`); the arithmetic is D527's design, not a bug - a preference that carries no strength
+    ranks nothing - and the mistake was this fixture declaring one.
+    """
     import json
 
     import nexus_ai.search.service as S
     from nexus_ai.db import pool as db_pool
+
+    weight = declared_preference_weight()
 
     class Fixed(S.StaticBackend):
         async def merchant_candidates(self, *, text=None, filters=None, **_kw):
@@ -131,7 +170,7 @@ def _scores(live_settings, rows, liked: bool) -> list[float]:
 
         async def user_preferences(self, user_id, kinds=None, conversation_id=None):
             return [{"user_id": "u1", "kind": "style", "key": "outdoor",
-                     "value": json.dumps({"value": liked}), "weight": 0.5,
+                     "value": json.dumps({"value": liked}), "weight": weight,
                      "source": "declared", "scope": "long_term"}]
 
     async def _go():
@@ -146,6 +185,30 @@ def _scores(live_settings, rows, liked: bool) -> list[float]:
             await db_pool.dispose()
 
     return asyncio.run(_go())
+
+
+def test_the_weight_this_file_measures_at_can_tell_the_two_sides_apart():
+    """D1055: the arm below is vacuous at the neutral weight, and here is the arithmetic.
+
+    `_sided(w, liked)` answers `0.5 + |w - 0.5|` for the side the user is on and
+    `0.5 - |w - 0.5|` for the other one. At `w = 0.5` both are 0.5, so a merchant the corpus
+    calls outdoor and one it does not are served the same number - which is what this file
+    measured in CI before the fixture stopped hardcoding the neutral point. The pin is the
+    reason the fixture reads the platform's own weight instead: a measurement taken at 0.5
+    cannot fail, and a check that cannot fail is not a check.
+    """
+    from nexus_ai.search.service import _sided
+
+    weight = declared_preference_weight()
+    assert _sided(0.5, liked=True) == _sided(0.5, liked=False) == 0.5, (
+        "the neutral weight no longer collapses the two sides - if that changed, the note "
+        "above is wrong and this file's fixture should be revisited")
+    assert weight > 0.5, (
+        f"a declared preference is stored at {weight}, at or below the neutral point, so the "
+        "ranker's two sides meet and the arms below measure nothing")
+    assert _sided(weight, liked=True) > _sided(weight, liked=False), (
+        f"at the stored weight {weight} the matcher does not score a liked fact above an "
+        "unliked one")
 
 
 @pytest.mark.integration
@@ -172,6 +235,10 @@ def test_the_outdoor_preference_scores_the_merchants_that_carry_it(live_settings
     assert carriers, "the corpus carries no outdoor fact - see the other check"
     yes = _scores(live_settings, carriers, True)
     rest = _scores(live_settings, others, True)
+    assert len(yes) == len(carriers), (
+        f"{len(carriers)} merchants carry the fact and {len(yes)} personalization scores came "
+        "back - the set below is a subset of the corpus, and the minimum of a subset is not "
+        "the measurement this row claims (D1055: a missing `id` collapsed them onto one key)")
     assert yes and min(yes) > 0, (
         f"the {len(carriers)} merchants the corpus calls outdoor scored {yes} - the "
         f"preference does not reward the fact it names")

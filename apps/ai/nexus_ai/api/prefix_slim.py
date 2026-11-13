@@ -6,13 +6,23 @@ fields (ULIDs, timestamps) that change on every seed reload. Two consecutive
 calls on the same merchant set therefore produce the SAME bytes, letting the
 upstream's prefix cache absorb nearly every token of the prompt.
 
-Deterministic by construction — keys are inserted in fixed order, every value
-is a `str` or `int` (no nested dicts), and the JSON is produced by
+Deterministic by construction — keys are inserted in fixed order, values are `str`, `int`
+or a block copied verbatim from the card builder, and the JSON is produced by
 `json.dumps(sort_keys=True, ensure_ascii=False, separators=(",", ":"))`.
+
+D1055: this module is a PROJECTION, not a second builder. It used to re-derive the rating
+block (`_num` here, `or 0` there) and so carried a second copy of a rule whose whole content
+is the count question - the copy that would have published `{"value": 4.2, "count": 0}` for a
+merchant with a stale average and no reviews. It now calls `search.cards.rating_block`, the
+one writer, which is also why `test_a_subject_with_no_reviews_prints_no_rating_score.py`
+permits this file to assign a `rating` key: the door it holds is that nobody *chooses* the
+number twice.
 """
 from __future__ import annotations
 
 from typing import Any
+
+from nexus_ai.search.cards import rating_block
 
 
 def _str(v: Any) -> str | None:
@@ -68,11 +78,12 @@ def slim_records_for_model(records: list[dict[str, Any]]) -> list[dict[str, Any]
         if price:
             entry["price"] = price
 
-        rating = _dict_pick(r.get("rating"), "value", "count")
-        if rating:
-            rv = _num(rating.get("value"))
-            if rv is not None:
-                entry["rating"] = {"value": rv, "count": int(_num(rating.get("count")) or 0)}
+        rating = r.get("rating")
+        # D1055: the block is the builder's answer, re-asked - not a second opinion on it.
+        # The guard is the null, because `rating_block` answers `None` for a merchant with no
+        # score and the projection carries no key at all rather than a null one.
+        if isinstance(rating, dict) and rating.get("value") is not None:
+            entry["rating"] = rating_block(rating.get("value"), rating.get("count"))
 
         dist_raw = r.get("distance")
         if isinstance(dist_raw, dict):

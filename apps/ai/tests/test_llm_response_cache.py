@@ -62,9 +62,9 @@ class _FakeRedis:
 def _clean_cache_state(monkeypatch):
     monkeypatch.delenv("NEXUS_LLM_RESPONSE_CACHE", raising=False)
     monkeypatch.delenv("NEXUS_LLM_RESPONSE_CACHE_TTL_S", raising=False)
-    cache.reset_for_tests()
+    cache.reset_client()
     yield
-    cache.reset_for_tests()
+    cache.reset_client()
 
 
 def _req(**kwargs) -> LLMRequest:
