@@ -27,6 +27,13 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-config</artifactId>
     </dependency>
+    <!-- D1034: the edge joins the Bus-lite lane (D1024-D1026) — the pub/sub transport.
+         Same coordinates as dispatcher/insight/events. Opt-in at runtime; no connection
+         opens until the bus is armed. -->
+    <dependency>
+      <groupId>io.lettuce</groupId>
+      <artifactId>lettuce-core</artifactId>
+    </dependency>
     <!-- D850: the CircuitBreaker gateway filter runs on resilience4j (the spring-cloud circuitbreaker
          implementation both rounds agree on for WebFlux). Without it the fallback URI is dead config. -->
     <dependency>

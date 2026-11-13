@@ -92,6 +92,12 @@ nexus:
   edge:
     rate-limit-burst: ${NEXUS_GATEWAY_RATE_BURST:10}
     rate-limit-replenish: ${NEXUS_GATEWAY_RATE_REPLENISH:5}
+  gateway:
+    # D1034: this edge joins the Bus-lite lane (D1024-D1026). Opt-in via
+    # NEXUS_GATEWAY_BUS_ENABLED; default OFF — the edge never subscribes unless an
+    # operator arms it for a plane-wide refresh notice. The bus reads NEXUS_REDIS_URL.
+    bus:
+      enabled: ${NEXUS_GATEWAY_BUS_ENABLED:false}
 
 resilience4j:
   circuitbreaker:
