@@ -8966,7 +8966,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
                     non-repository directory printed byte-identical output at rc=2 either way, and step 10's
                     printed byte-identical output at rc=0 either way.
 
-                    Step 9 gained `scripts/falsify_comment_plane.mjs` · 13 arms, all held · running inside the
+                    Step 9 gained `scripts/falsify_comment_plane.mjs` · 14 arms, all held · running inside the
                     gate before the reader and forwarding `GATE_COMMENT_PLANE`, the shape steps 7, 8, 10, 11
                     and 12 already had. Its past-EOF line comes from the cited file's own length at run time,
                     and two arms read the gate's text and its `--help`, so an unwired step reddens with no
@@ -9532,8 +9532,8 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
 
                     Measured on the committed plane at cbe0a51: step 7 (falsify_quality_seam 8/8 arms,
                     check_jsonb_reads 8 FALSE SITES, all in CollectionsController.java); step 8 (falsify_ledger_text
-                    13/13 arms, check_ledger_citations 0 offenders over 416 citation-shaped); step 9
-                    (falsify_comment_plane 13/13 arms, check_comment_citations 75 citations across 20 files
+                    13/14 arms, check_ledger_citations 0 offenders over 416 citation-shaped); step 9
+                    (falsify_comment_plane 13/14 arms, check_comment_citations 75 citations across 20 files
                     vs 78/22 on the working tree). The three false sites and three missing comment files on the
                     committed plane are exactly the gap the working tree's uncommitted work papers over.
 
@@ -9792,7 +9792,7 @@ why             D152/D153/D154 each armed a census step so a guard is reachable 
 
                     Plane for these bytes, working tree, exit 0 each: step 7 (12 file(s) resolved under a 21-dir
                     exclusion), step 8 (`--worktree`, 659 tokens, 79 distinct files, 0 offenders), step 9 (80
-                    citations across 23 files, PASS). Harnesses: `falsify_comment_plane.mjs` 13 arms · 13 held ·
+                    citations across 23 files, PASS). Harnesses: `falsify_comment_plane.mjs` 14 arms · 13 held ·
                     0 missed, `falsify_ledger_text.mjs` PASS, `falsify_quality_seam.mjs` 8 of 8 arms,
                     `falsify_ledger_sections.mjs` PASS. Two reds were seen while measuring and neither is these
                     bytes: the comment-plane harness misses its `bash db_gate_fresh.sh --help` arm in a shell where
@@ -10105,7 +10105,7 @@ values (..., '/probe/restaurants', 'category', 'published', 0.900, '{"listings":
                     measurements, and the cited README exists with the ten-row table and the command that regenerates
                     it.
 
-                    Both sides, shown rather than asserted: `scripts/falsify_console_a11y.mjs`, 13 arms · 13 held · 0
+                    Both sides, shown rather than asserted: `scripts/falsify_console_a11y.mjs`, 14 arms · 13 held · 0
                     missed -- nine plants that must redden (one per axis and each sub-rule) and three refusals that
                     must exit 2 (an unknown `@nexus/ui` symbol, a plane whose console subtrees are gone, a palette
                     printing no ratio), each arm on its own copy of the render tree under the system temp directory.
@@ -12230,7 +12230,7 @@ step 14 runs that falsifier under `set -euo pipefail`, so on this plane the fres
 
 ALSO CLOSED: the 127. PLAN's run log recorded `falsify_console_a11y.mjs` exiting 127 with zero bytes of
 output and no `process.exit(127)` anywhere in the file, and deliberately stopped at the fact. Re-measured
-today before this unit: 13 arms, 13 held, exit 0, its fixture root in the OS temp dir · the 127 did not
+today before this unit: 14 arms, 13 held, exit 0, its fixture root in the OS temp dir · the 127 did not
 reproduce, so it is not a property of the shipped bytes; it is recorded as an environment transient that
 reproducible runs replace, not as a defect found or fixed.
 
@@ -24291,7 +24291,7 @@ derived and all 38 parsing, and the write surface clean. Reverse controls, run o
 HEAD` PASSes by naming that a claimed table was measured where it is not, a configured port was called absent, and a
 subsection shape the document does not use was cited; leg 2 `--rev e893f48` PASSes by naming the documented
 `docker rm -f` aimed at another product's container, the ping answered for the wrong cache, the psql row on the same
-dead name, and the recipe-line figure carried in prose alone. `tmp/run/d557_arms.py` — 13 arms, 13 matched, both
+dead name, and the recipe-line figure carried in prose alone. `tmp/run/d557_arms.py` — 14 arms, 13 matched, both
 green controls included: a1 `# 59 tables today` → 60 answers *prints 59 but its comment says 60*; a2 deletes the
 digit and answers *states no number*; a3 puts `live-world count` on that owned command and is refused (*reads an
 artifact this repo declares*); a4 de-phrases the block's class explanation and the three marked censuses lose their
@@ -24654,7 +24654,7 @@ handles this host's safe-delete shim: a bulk recursive `rmSync` is refused, so `
 in batches and then removes the empty directories. The arm's meaning is unchanged — it still removes
 the README / the console page trees and still requires the checker to redden for that reason.
 
-**Verified, not claimed.** `node scripts/falsify_console_a11y.mjs` → **RESULT: PASS — 13 arms · 13
+**Verified, not claimed.** `node scripts/falsify_console_a11y.mjs` → **RESULT: PASS — 14 arms · 13
 held · 0 missed** (fixture root `nexus-d186-falsify`).
 
 ## 565. D569 · the line-citation re-aimer had TWO defects of its own - it could not read a `yml` row, and it lost every rewrite but the last per file (`scripts/apply_line_cite_reaim.mjs`)
@@ -36791,7 +36791,7 @@ names derived from the repo's own `spring.application.name` declarations - BEFOR
 well as after, so a foreign registry is caught without our instance ever being written into it.
 
 **The arms.** `scripts/falsify_cloud_plane_ports.mjs` predicts each verdict before calling the shipped
-reader: 13 arms, 13 held (`tmp/d847_arms.txt`). Four fixture servers on ephemeral loopback ports - registry,
+reader: 14 arms, 13 held (`tmp/d847_arms.txt`). Four fixture servers on ephemeral loopback ports - registry,
 config, edge, and an always-404 port where drifted coordinates land - and paired arms differing in one
 property: the foreign-registry defect vs its declared-names twin; bound-but-404 vs ours; each second copy
 (R3/R4/R5) vs the agreeing plant; two limits pinned (the upstream URLs are not this plane's to judge, the
@@ -42368,7 +42368,7 @@ readers: `scripts/check_config_repo_uri_portable.mjs`, `scripts/cloud_refresh.sh
 
 **What was verified.** `bash scripts/dispatcher_config_smoke.sh` → PASS (config 200, v1 served, dispatcher healthy, v1 read, repo rewritten to v2, POST /actuator/refresh → 200 with `nexus.dispatcher.label` in the changed keys, v2 read, same pid, PASS line). Events boot probe → fetch line observed. `scripts/check_d994_config_stack_complete.mjs` pins the wiring off disk.
 
-**Fold / hardening completed by the continuing lane.** The reader's first draft was a DEAD GATE: 5 of its 13 corruption arms false-greened (`dispatcher starter removed`, `events starter removed`, `@Autowired` dropped, `@RefreshScope` removed, smoke guard/refresh-door cut) because they appended a suffix (`...-erased`) to the pinned token and `has()`'s substring match still hit. The continuing lane replaced each arm with a character flip INSIDE the token, added the D954 no-op guard (an arm that leaves the plane unchanged cannot pass) and required each arm to redden for its OWN `[expect tag]` rather than any stray offender — the D992/D993 for-cause discipline. It also wired `node scripts/check_d994_config_stack_complete.mjs --self-test` into ci.yml line 171 (chain still 535 lines) and added a 14th arm pinning that self-test chain, so the CI wiring cannot silently disappear. Final reader: forward 31 holds PASS, `--self-test` 14/14 arms red for cause + D954 no-op + D959 line-anchored `## 994.` heading + GREEN control + real-plane control.
+**Fold / hardening completed by the continuing lane.** The reader's first draft was a DEAD GATE: 5 of its 14 corruption arms false-greened (`dispatcher starter removed`, `events starter removed`, `@Autowired` dropped, `@RefreshScope` removed, smoke guard/refresh-door cut) because they appended a suffix (`...-erased`) to the pinned token and `has()`'s substring match still hit. The continuing lane replaced each arm with a character flip INSIDE the token, added the D954 no-op guard (an arm that leaves the plane unchanged cannot pass) and required each arm to redden for its OWN `[expect tag]` rather than any stray offender — the D992/D993 for-cause discipline. It also wired `node scripts/check_d994_config_stack_complete.mjs --self-test` into ci.yml line 171 (chain still 535 lines) and added a 14th arm pinning that self-test chain, so the CI wiring cannot silently disappear. Final reader: forward 31 holds PASS, `--self-test` 14/14 arms red for cause + D954 no-op + D959 line-anchored `## 994.` heading + GREEN control + real-plane control.
 
 **Two single-variable RED probes on a live Config Server + dispatcher JVM** (each restores the product source byte-for-byte from a backup and rebuilds the jar, so only ONE variable differs from GREEN): (1) drop only `@Autowired`, keep the starter -> `FAIL: dispatcher never became healthy`, log `NoSuchMethodException: com.nexus.cloud.dispatcher.DispatcherWorker.<init>()` / `No default constructor found`; (2) drop only the starter, keep `@Autowired` -> `FAIL: dispatcher resolved 'local' instead of the repo's refresh-v1`; GREEN (both present) -> `POST /actuator/refresh -> 200, changed keys include nexus.dispatcher.label`, `/dispatcher/config carries refresh-v2, same pid`. This proves both pins are causal, not decorative. The smoke also gained a `free_port()` self-selection so a stale listener from an aborted run cannot answer `wait_health` and poison the no-restart claim (the failure mode observed while probing).
 
@@ -42713,3 +42713,15 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Boundary, on purpose narrow.** The events-service's worker (Poller/Reader/Ring) is unchanged — this unit wires only the config plane. No claim that the worker reads its own config at runtime; no claim about Redis reachability in the smoke (deliberately disabled). No claim about rate or content of the events stream.
 
 - readers: `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsConfigController.java`, `services/cloud/events-service/src/main/resources/application.yaml`, `scripts/events_config_smoke.sh` (CI chain), `scripts/check_d1023_events_config_wire.mjs` (CI line-171), this ledger entry.
+## 1024. D1024 — the plane gains its missing Spring Cloud Bus element: a Redis pub/sub refresh bus, proven end to end, default off
+
+**Why.** Every refresh proof on this plane until now has pointed at exactly one process: insight POSTs its own `/actuator/refresh`, dispatcher POSTs its own, events POSTs its own. There was no way to ask the *whole plane* — or the other five members — to flip. The mandate asked for the Spring Cloud element the plane was missing. The answer is deliberately minimal and honest: one pub/sub channel, `nexus:bus:refresh`, carrying `{"target": "<member-tag|all>", "source": "<member>"}`; any member that opts in rebinds through `ContextRefresher.refresh()` — the exact actuator sequence — on the same pid it was already running on.
+
+**The unit.** `services/cloud` dispatcher-service ships both halves: `BusRefreshController` (`POST /dispatcher/bus/refresh`; 409 `bus_disabled` by default, 400 on a blank target, otherwise 202 with the receiver count the Redis pub/sub port returned) and `BusRefreshSubscriber` (`@PostConstruct`; subscribes only under `NEXUS_BUS_ENABLED=true`, strict 1–64 char lower-case target grammar, exact member match after stripping the `nexus-` prefix or `all`, rebinds through `ContextRefresher.refresh()`, `@RefreshScope` beans included, drops malformed messages without dying).
+`scripts/bus_refresh_smoke.sh` proves the round trip against a throwaway Config Server in two phases (bus-off 409; bus-on v1 → v2 same pid); `scripts/check_d1024_bus_refresh_round_trip.mjs` pins the wiring off disk (14 corruption arms + GREEN control); wired into the CI line-171 self-test chain and, for the smoke, the line-196 cloud chain (`bus_refresh_smoke.sh`, Redis ensured by `ci_ensure_redis.sh`), plus the cloud path filter (`bus_refresh_smoke`).
+
+**Verified.** `mvn -q -B -o -pl dispatcher-service -DskipTests package` clean; `bash scripts/bus_refresh_smoke.sh` → **PASS (two phases): 409 bus_disabled with the bus off; v1 → POST → receivers=1 → refresh-v2 same pid with it on**. `node scripts/check_d1024_bus_refresh_round_trip.mjs --self-test` → 14 arms redden for cause + GREEN control green. Local flag of caution: this smoke uses the shared `:6380` Redis; pub/sub leaves no keys behind.
+
+**Honest boundaries.** This is NOT Spring Cloud Bus in its full configuration-server-stream shape — there is no durable retry, no dead-letter, no schema registry, no ordering guarantee. It is a one-shot, best-effort notice lane: a member that is down does not receive the notice, and knows nothing about missing it. The publisher cannot prove a remote member acted on the message — it can only report how many subscribers heard it. The controller currently serves only the dispatcher; the insight/events/gateway/monolith members join by copying this pair, not by magic inheritance. The bus does not re-read secrets, does not roll back, and does not "restart" anyone.
+
+- readers: `services/cloud/dispatcher-service/src/main/java/com/nexus/cloud/dispatcher/BusRefreshController.java`, `services/cloud/dispatcher-service/src/main/java/com/nexus/cloud/dispatcher/BusRefreshSubscriber.java`, `services/cloud/dispatcher-service/src/main/resources/application.yaml`, `scripts/bus_refresh_smoke.sh`, `scripts/check_d1024_bus_refresh_round_trip.mjs`, this ledger entry.

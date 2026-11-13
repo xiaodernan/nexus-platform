@@ -36,6 +36,14 @@ nexus:
     # D973: the webhook dispatcher plane is OFF until an operator arms ≥1 hook (empty by default).
     enabled: ${NEXUS_DISPATCHER_ENABLED:true}
     url: ${NEXUS_DISPATCHER_URL:redis://127.0.0.1:6380/0}
+    bus:
+      # D1024: Spring Cloud Bus-lite over Redis pub/sub — opt-in.
+      # NEXUS_BUS_ENABLED=true makes this member subscribe to the nexus:bus:refresh
+      # channel; a POST /dispatcher/bus/refresh publishes there, and every member that
+      # opted in rebinds its @RefreshScope beans on the SAME pid (no restart). Off by
+      # default everywhere; a plane that never publishes behaves exactly as before.
+      enabled: ${NEXUS_BUS_ENABLED:false}
+      target: ${NEXUS_BUS_TARGET:all}
     poll-ms: ${NEXUS_DISPATCHER_POLL_MS:1000}
     initial-poll-ms: ${NEXUS_DISPATCHER_INITIAL_POLL_MS:200}
     drain-ms: ${NEXUS_DISPATCHER_DRAIN_MS:50}
