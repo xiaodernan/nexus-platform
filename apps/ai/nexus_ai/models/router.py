@@ -42,6 +42,7 @@ class RoutedCall:
             "latency_ms": r.latency_ms,
             "status": "ok",
             "cache_hit": r.cache_hit,
+            "cached_tokens": int(getattr(r, "cached_tokens", 0)),
         }
 
 

@@ -62,7 +62,7 @@ def test_a_model_call_leaves_a_row_in_the_cost_ledger(client):
 
     rows = _fetch(
         "SELECT agent_run_id::text, provider, model, purpose, prompt_tokens, "
-        "completion_tokens, cost_usd, latency_ms, status "
+        "completion_tokens, cost_usd, latency_ms, status, cached_tokens "
         "FROM llm_calls WHERE agent_run_id::text = $1", str(run_id))
     assert rows, (
         "the model call left no row in the cost ledger - `llm_calls` is one row per "
@@ -74,6 +74,8 @@ def test_a_model_call_leaves_a_row_in_the_cost_ledger(client):
     assert row["prompt_tokens"] > 0, (
         "the ledger row reports no prompt tokens for a call that had some")
     assert row["latency_ms"] is not None
+    assert isinstance(row["cached_tokens"], int) and row["cached_tokens"] >= 0, (
+        "the ledger row reports no cached_tokens int (V13 column read is missing)")
 
 
 def test_the_run_carries_the_tokens_the_model_layer_measured(client):

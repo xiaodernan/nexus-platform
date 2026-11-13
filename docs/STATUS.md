@@ -42952,3 +42952,17 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundaries.** Live LLM probes are **not** run in CI (they spend tokens on every push); the test suite remains offline-mock on the CI runner. The rails render's Suspense path is preserved as code but is never the default. The bus is best-effort — it does not give you exactly-once delivery, it signals; receivers count *hearers* not *actors*. Every loading boundary must be smoke-verified by a human eye if it matters for the product.
 
 - readers: this milestone; ATLAS rows for the bus-lite members + the four `bus_*_smoke.sh` scripts; the ledger and memory chain.
+## 1042. D1042 — the cost ledger finally carries the provider's cache accounting: `llm_calls.cached_tokens` lands as a column, and the AI persistence chain propagates it
+
+**Why.** D1036 lifted `usage.prompt_tokens_details.cached_tokens` from the provider's wire response into `LLMResponse` — and stopped there. The cost ledger (`llm_calls`) knows `prompt_tokens`, `completion_tokens`, `cost_usd`, `latency_ms`, and the `cache_hit` boolean — but nothing tells an operator *how much* of the prefix the upstream served from cache *at no recompute cost*. A cache-hit boolean says "there was a hit"; the token count says "and it saved N tokens." Without the latter, the ledger can't even tell you how much of your prompt spend the cache rescued.
+
+**The unit.** Three files, one column, zero behavior change on the historical path:
+- `infra/db/migrations/V13__llm_calls_cached_tokens.sql` — additive; `ALTER TABLE llm_calls ADD COLUMN IF NOT EXISTS cached_tokens integer NOT NULL DEFAULT 0`. Old rows read as `0` (an honest floor: no claim about what the old code knew).
+- `apps/ai/nexus_ai/models/router.py` — `RoutedCall.as_llm_call_row` now emits `cached_tokens`; `int(getattr(resp, "cached_tokens", 0))` guards the pre-D1036 shape.
+- `apps/ai/nexus_ai/api/runs.py` — `persist_llm_call` inserts `cached_tokens` as the eleventh parameter (`$1::uuid … $11`). Test arms extended in `test_model_router.py` (row shape) and `test_live_cost_ledger.py` (the live ledger actually carries a `cached_tokens` integer).
+
+**Verified.** V13 applied via `scripts/db_apply_migrations.sh` to both a throwaway `nexus_v13_smoke` (12→13 migrations, all `IF NOT EXISTS`, `events`→`metrics`→`delete_requests` compatible) and the seeded `nexus_gate_ai`. `\d+ llm_calls` shows `cached_tokens | integer | not null | 0`. Live cost-ledger test on the seeded plane: **4 passed** (the row now carries `cached_tokens`). Offline `test_model_router.py`: 11 passed. ruff/mypy clean. Nothing else touched — `_check_table`, the foreign-key story, the §9 contract and `cost_usd` accounting are all unchanged.
+
+**Honest boundaries.** The bridge to the web `/admin/ai` page is NOT in this unit — the platform service (`services/platform`) reads `agent_runs` roll-ups, not `llm_calls` directly; wiring `sum(cached_tokens)` through that door is a follow-up and crosses the Java/Python split. The cache savings column is READ-ONLY data written by the adapter; if the upstream does not report it, the column honestly stays `0`. This unit does NOT re-cost any historical row and does NOT change the §1 error contract or any API surface.
+
+- readers: `infra/db/migrations/V13__llm_calls_cached_tokens.sql`, `apps/ai/nexus_ai/models/router.py`, `apps/ai/nexus_ai/api/runs.py`, `apps/ai/tests/test_model_router.py`, `apps/ai/tests/test_live_cost_ledger.py`, this ledger entry.

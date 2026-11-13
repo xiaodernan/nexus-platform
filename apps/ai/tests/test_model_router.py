@@ -150,6 +150,7 @@ def test_routed_call_as_llm_call_row_shape():
     assert row["latency_ms"] == 8
     assert row["status"] == "ok"
     assert row["cache_hit"] is False
+    assert row["cached_tokens"] == 0
 
 
 def test_router_requires_at_least_one_adapter():
