@@ -19,6 +19,15 @@ Every assertion was confirmed against the running adapters (empirical probe), ne
 from __future__ import annotations
 
 import httpx
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _direct_envelope(monkeypatch):
+    # D1044: the OpenAI adapter deliberately defaults to the SSE envelope.
+    # The tests below pin the direct JSON wire, so they opt out explicitly.
+    monkeypatch.setenv("NEXUS_LLM_STREAM", "false")
+
 
 from nexus_ai.models.anthropic import AnthropicAdapter
 from nexus_ai.models.base import LLMError, LLMRequest, cost_usd

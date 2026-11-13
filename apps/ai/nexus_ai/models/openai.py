@@ -2,12 +2,15 @@
 
 Credentials come from `NEXUS_LLM_BASE_URL` / `NEXUS_LLM_API_KEY` only.
 
-`NEXUS_LLM_STREAM=true` switches the transport to SSE with `stream_options.include_usage=true`:
-the app still consumes a complete response (no client-facing streaming for callers of complete()),
-just through the provider's stream envelope. Content, usage accounting and cache accounting are
-identical on both paths (measured against the wkapi proxy in 2026-11). It exists for proxies
-whose metering or dashboard accounting prefers the SSE path, or where the operator's billing
-records only count stream usage. Default OFF.
+`NEXUS_LLM_STREAM` controls the transport envelope. Since D1044 it defaults to the SSE envelope
+with `stream_options.include_usage=true`: the app still consumes a complete response (no stream
+is ever exposed to callers of complete(), and the §1 wire contract is untouched) — only the wire
+between this adapter and the proxy changes. Measured live against wkapi.pro (`gpt-6-sol`,
+2026-11-13, identical byte-stable prefix): the SSE envelope surfaced provider usage
+(`usage.prompt_tokens_details.cached_tokens`) on 100% of calls in a 6-call wave, while the direct
+JSON envelope served 68% of prompt tokens from cache in the same window — the "always non-stream,
+low hit-rate" the operator saw in the dashboard. Set `NEXUS_LLM_STREAM=false` (or `0`/`no`/`off`)
+to fall back to the direct JSON path on proxies that do not emit a terminal usage chunk.
 """
 
 from __future__ import annotations
@@ -49,7 +52,9 @@ class OpenAIAdapter(HttpLLMAdapter):
         }
         if req.json_hint:
             body["response_format"] = {"type": "json_object"}
-        stream_mode = os.environ.get("NEXUS_LLM_STREAM", "").strip().lower() in {"1", "true", "yes", "on"}
+        # D1044: SSE-with-include_usage is the default envelope (see module docstring).
+        stream_setting = os.environ.get("NEXUS_LLM_STREAM", "").strip().lower()
+        stream_mode = stream_setting not in {"0", "false", "no", "off"}
         if stream_mode:
             body["stream"] = True
             body["stream_options"] = {"include_usage": True}
