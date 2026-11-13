@@ -229,3 +229,18 @@
   gate: check_cloud_plane.mjs
   not_claimed: Containers never left Created on this host, so the Docker run is NOT verified
   honesty_anchor: Docker deployment is not verified
+- id: D994
+  claim: A config-repo edit lands on the dispatcher without a restart
+  smoke: dispatcher_config_smoke.sh
+  falsifier: none
+  gate: check_d994_config_stack_complete.mjs
+  not_claimed: Config refresh is manual and scoped to one process rebinding one label — never a broadcast, never a second instance, never a routing change for the dispatcher's own webhook traffic, and the dispatcher never shows what it refreshed beyond /dispatcher/config
+  honesty_anchor: Config refresh is scoped and manual (D889)
+
+- id: D941
+  claim: The dispatcher registers with Eureka when asked and the Spring Boot Admin lists it UP
+  smoke: cloud_smoke.sh
+  falsifier: none
+  gate: check_dispatcher_eureka_admin.mjs
+  not_claimed: No claim the dispatcher's traffic is routed by name, that its operator plane is authenticated, or that the plane is composed for anything but this proof run on a throwaway container
+  honesty_anchor: No auth / TLS / rate limiting for the admin and eureka surface
