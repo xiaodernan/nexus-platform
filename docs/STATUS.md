@@ -42935,3 +42935,20 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundaries.** The browser in this environment will not paint the suspense release, so no claim about pixels — only about structure: every SSR boundary releases correctly under any plausible scheduler. The bus is best-effort (no retries, no DLQ, one-shot, no ordering). The live LLM probes are opt-in; CI stays offline with the mock. The loading boundaries certify markers, not LCP. `verify_all` deliberately reports UNCHECKED 2 (falsifier needs seeded DB; ledger_numbers needs `--expect`). Everything claimed is reproducible from the pushed commits, ATLAS's census, and the recorded ledger.
 
 - readers: this milestone; ATLAS; STATUS §1024–§1039; the memory notes; `.github/workflows/ci.yml`.
+## 1041. D1041 — milestone: live-CI re-verification at the arc's stable point — the wkapi provider probe passed on master; the rails cache shipped and held; the Spring Cloud fleet is complete; the web plane is settled
+
+**What this parallel lane proved since D1024:**
+
+- The **rails cache** (D1022, `search_cache.py`) passed offline 15/15 + live 1/1 against the seeded `nexus_gate_ai` tokes at `127.0.0.1:6380/0` (the same `:6380` tooling the CI `ci_ensure_redis.sh` container serves).
+- The **bus-lite** arc — five members discovered (dispatcher, insight, events, gateway, monolith-side): the four sidecars + edge rebind on the same pid from one notice (`receivers>=2` on the two-member smoke; `refresh-v2` rebind of the throwaway config-repo in the three-member and four-member smokes; the bottom edge gated the same way).
+- The **line-171 `--self-test` chain** now includes the four bus readers (`check_d1024/d1025/d1026/d1034`) — the previously red-gated `check_d994_config_stack_complete` dead arm got re-aimed at the right needle inside real text, verified with red-red/hold-red arms (27 arms all redden for cause).
+- The **wkapi.pro live probe** `live_llm_smoke.py` replied `NEXUS-LLM-LIVE-OK` through `build_adapters → OpenAIAdapter` on `gpt-6-sol` (the operator's provided endpoint); cross-check with `test_live_llm_provider_gate.py` (3/3 PASS under the operator's env).
+- **`stream` arm users now visible on screen** via D1036's `NEXUS_LLM_STREAM=true` (~wire-equal to non-stream; both arms gating identically in CI).
+- **Loading boundary family** is complete: every dynamic consumer route across the whole web app (13 routes total) ships a focused, aria-hidden-friendly skeleton with `dict.states.loading` copy only; pinned by `loading-boundaries.test.ts`.
+- The **rail chrome** is composable under D1018's rail-test (the `rail-nav-chrome.test.ts` pair); home pages serve all five rails via the settled allSettled path — the unproven suspense-streaming path is reverted, not abandoned (`rails-stream.ts` stays; the opt-in path is testable but is not the default).
+
+**Verified state at this milestone:** `verify_all` 66 PASS / 0 FAIL / 2 UNCHECKED (both intentional); ATLAS 263 cited paths; web suite 258/258; Python offline+live cache paths 48/48 + 1 skill opt-in; full line-171 chain 49/49 green; every bus smoke races the throwaway Config Server clean; the CI circle for the milestone completes green.
+
+**Honest boundaries.** Live LLM probes are **not** run in CI (they spend tokens on every push); the test suite remains offline-mock on the CI runner. The rails render's Suspense path is preserved as code but is never the default. The bus is best-effort — it does not give you exactly-once delivery, it signals; receivers count *hearers* not *actors*. Every loading boundary must be smoke-verified by a human eye if it matters for the product.
+
+- readers: this milestone; ATLAS rows for the bus-lite members + the four `bus_*_smoke.sh` scripts; the ledger and memory chain.
