@@ -68,6 +68,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `docs/probes/wkapi-cache-diagnosis-2026-11-13/diagnostic_3_prefix_role.py` | D1054: reconstructed — the user-role prefix experiment (cached=20042/20045 on repeats) |
 | `docs/probes/wkapi-cache-diagnosis-2026-11-13/diagnostic_4_stability.py` | D1054: reconstructed — usage-accounting stability on identical calls |
 | `apps/ai/.env.example` | D1051: one committed file documenting every operator knob — provider pool, D1044 `NEXUS_LLM_STREAM=true` default, D1037 `NEXUS_CACHE_COST_FACTOR`, D1047 replay cache and D1022 rails cache (both opt-in, off by default), Redis URL/TTLs, live-DB suite URL; names only, no secrets |
+| `tests/e2e/specs/consumer/command-palette.spec.ts` | D1058: e2e arms for the D1056 palette — Ctrl+K open / Esc close / Enter-to-`/search` focus discipline; typing-lane guard pinned where the keyboard actually lands |
 | `apps/web/src/components/command-palette.tsx` | D1056: the global Cmd/Ctrl+K palette — client island, labelled modal, scrim-close/Esc-close/Enter-to-/search, body overflow pinned and restored, focus return on close, AI gradient only on the 2px top hairline |
 | `apps/web/src/lib/palette.ts` | D1056: pure kernel — open-shortcut truth table (exactly one modifier), typing-lane guard, Esc/Enter semantics, bounded `/search?q=` path |
 | `apps/web/src/lib/palette.test.ts` | D1056: 7 pure-logic pins for the kernel |
