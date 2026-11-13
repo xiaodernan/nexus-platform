@@ -42884,3 +42884,20 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** `cost_usd` remains an ESTIMATE, never an invoice; `NEXUS_CACHE_COST_FACTOR` injects the operator's claimed ratio, not a claim about what the provider actually bills; the witnessed cost in the live round trip still totals what the provider serves per call — the factor shifts the books, not the provider. Cache lifetime on the wkapi edge is short and provider-side; one of six identical calls still misses with the factor on (identical economics per call; only the settlement differs).
 
 - readers: `apps/ai/nexus_ai/models/base.py` (cost_usd), `apps/ai/nexus_ai/config.py` (knob), `apps/ai/nexus_ai/models/factory.py` (plumbing), `apps/ai/nexus_ai/models/openai.py`, `apps/ai/tests/test_models_base.py`, this ledger entry.
+## 1038. D1038 — milestone: the spring-bus fleet + cache-aware LLM accounting arc, closed
+
+**The arc** (D1034 → D1037, master full-green at every exit except the pre-figure noted below; all pushed to origin/master):
+
+- `f45613d` — D1034: the edge (`nexus-gateway`) joins the Bus-lite fleet — WebFlux reactor unaffected (Lettuce event loop), `/gateway/bus/refresh` + `@RefreshScope` `/gateway/config`, smoke proven (409 off, v1→v2 same pid on). Reader ships 13 corruption arms; wired into line-171/196; path filter stays `bus_`.
+- `56028cb` — D1035: the FOUR-member fleet flips from one notice — `target=all` from the gateway door rebinds gateway+dispatcher+insight+events on the same pid (receivers>=4); `target=gateway` rebinds only the edge. Reader: 13 arms + GREEN control.
+- `6ea043a` — D1036: the LLM adapter finally surfaces the provider's cache accounting AND can hit the provider's prefix cache — `cached_tokens` is lifted verbatim from `usage.prompt_tokens_details.cached_tokens` (never invented, clamped to pt when provider misreports); payload serialization canonicalised (sort_keys + fixed separators); `cache_hit` now carries provider-verbatim truth. An `NEXUS_LLM_STREAM=true` SSE transport arm with `usage.include_usage=true` exists for panels/proxies that prefer counting stream; both transport arms measured identical cache accounting against the wkapi proxy.
+- `9a98f56` — D1037: opt-in `NEXUS_CACHE_COST_FACTOR` (default 1.0 = the historical path) prices the cache-hit fraction of prompt tokens into `cost_usd`; `HttpLLMAdapter` gains the constructor knob; 5 offline arms pin the arithmetic; a live reviewer probe found this exact gap in the adapter.
+- `4ccf280` — the D1037 follow-through: the ai CI job went red on an unused import; fixed; ai green at push `4ccf280`.
+
+**Live measurement on the operator endpoint** (2026-11-13): the production `INTENT_EXTRACT_SYSTEM` path (not a synthesized fixture) hits **100% cache** for repeated queries and **75-100%** on sibling queries sharing the stem — proof the adapter hits the provider's prefix cache for real.
+
+**Verified state at this milestone:** `ai=required=success` at `4ccf280`; `contract-drift=success`; `e2e=success` for the D1032 milestone; ATLAS ~263 cited paths PASS; `verify_all` 66/66 PASS; 0 FAIL; 2 UNCHECKED by design.
+
+**Honest boundaries.** The LLM cache work is an opt-in seam (env vars); the default planes never call the live model; the wkapi.pro cache lifetime is provider-side and short (cold calls still miss); the byte-ordering re-sequencing is a contract-level change to the JSON the adapter sends (semantics preserved); no cache win for totally-disjoint queries (that's physics, not code).
+
+- readers: this milestone; the unit entries above; `.github/workflows/ci.yml`; ATLAS/STATUS/memory — all in sync.
