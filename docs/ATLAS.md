@@ -56,6 +56,9 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/i18n/dict.ts` | D1045: zh + en copy for the cache section (`cacheTitle/cacheIntro/cacheEmpty/cacheColumns/cacheHitRateLabel`) |
 | `apps/web/src/lib/console-admin.test.ts` | D1045: `cacheHitRate` pins — null-never-NaN, [0,1] clamp, exact ratio |
 | `docs/API_CONTRACT.md` | D1045: §9 gains the `GET /api/v1/admin/ai/cache` route with its documented semantics |
+| `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |
+| `apps/ai/tests/test_llm_response_cache.py` | D1047: 8 offline arms pin gates (env/temperature/reason/chain/failure degradation) + router replay round trip |
+| `apps/ai/nexus_ai/models/router.py` | D1047: `ModelRouter.run` consults the replay before the adapter chain; replay consumes a budget slot at zero tokens; store is best-effort |
 Infrastructure | `infra/docker-compose.yml`, `infra/db/migrations`, `infra/config` | compose profiles, Flyway DDL, ranking/market config |
 | Demo corpus | `data/seed` | labelled synthetic Hong Kong data (`data_origin='demo'`) |
 | Proof | `tests/e2e`, `docs/TESTING.md`, `docs/evidence` | Playwright suites, measured runbook, screenshots |

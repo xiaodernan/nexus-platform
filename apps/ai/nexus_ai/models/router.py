@@ -99,6 +99,10 @@ class BudgetExceeded(RuntimeError):
 class ModelRouter:
     """Cheapest-capable-model routing with a fallback chain (§9, §105)."""
 
+    # Byte-identical temperature-0 requests may be served from the opt-in response
+    # replay cache — the provider-side prefix cache saves recompute, this saves the
+    # round trip entirely. Any failure degrades to the normal chain (§105).
+
     def __init__(self, adapters: list[LLMAdapter], *, max_llm_calls: int = 3,
                  tier_override: dict[str, str] | None = None):
         if not adapters:
@@ -126,6 +130,21 @@ class ModelRouter:
         if req.task_class == "reason" and meter.reason_calls >= MAX_REASON_CALLS_PER_REQUEST:
             raise BudgetExceeded("reason", MAX_REASON_CALLS_PER_REQUEST)
 
+        chain = tuple(a.name for a in self.adapters)
+        try:
+            from nexus_ai.api.llm_response_cache import llm_cache_get
+
+            replayed = llm_cache_get(req, chain)
+        except Exception:  # the replay cache must never break the model path
+            replayed = None
+        if replayed is not None:
+            # a replay consumes the budget slot honestly, buys zero tokens
+            meter.add(replayed)
+            routed = RoutedCall(response=replayed, task_class=req.task_class,
+                                fallback_from=None)
+            meter.records.append(routed)
+            return routed
+
         last_err: LLMError | None = None
         for idx, adapter in enumerate(self.adapters):
             try:
@@ -137,6 +156,12 @@ class ModelRouter:
                 last_err = LLMError(f"{adapter.name} crashed: {exc}", provider=adapter.name,
                                     retryable=True)
                 continue
+            try:
+                from nexus_ai.api.llm_response_cache import llm_cache_set
+
+                llm_cache_set(req, chain, resp)
+            except Exception:
+                pass  # replay storage is best-effort
             if meter is not None:
                 meter.add(resp)
             routed = RoutedCall(response=resp, task_class=req.task_class,
