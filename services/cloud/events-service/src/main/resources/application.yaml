@@ -57,6 +57,11 @@ nexus:
     claim-min-idle-ms: ${NEXUS_EVENTS_CLAIM_MIN_IDLE_MS:60000}
     claim-batch-size: ${NEXUS_EVENTS_CLAIM_BATCH_SIZE:50}
     claim-max-batches: ${NEXUS_EVENTS_CLAIM_MAX_BATCHES:8}
+    # D1026: this member joins the Bus-lite lane (D1024 dispatcher, D1025 insight). Opt-in via
+    # NEXUS_EVENTS_BUS_ENABLED; default OFF — the Redis Streams carrier does not subscribe to
+    # the refresh channel unless an operator arms it. The bus reads NEXUS_REDIS_URL.
+    bus:
+      enabled: ${NEXUS_EVENTS_BUS_ENABLED:false}
 
 logging:
   level:
