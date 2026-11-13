@@ -10920,7 +10920,7 @@ first.
                     makes one further commit, and predicts the full verdict vector AND exit codes. It
                     derives the verdict vocabulary from the reader's own `const counts = {...}`
                     declaration, so a class renamed or added in the reader cannot be silently unparsed.
-                    It proves 12 arms covering every class (EXACT, MOVED, GONE, NO-BASE, UNPATHED,
+                    It proves 13 arms covering every class (EXACT, MOVED, GONE, NO-BASE, UNPATHED,
                     NOT-AT-HEAD, NOT-UNIQUE blank, NOT-UNIQUE duplicate, --reaim, refusals, shallow-plane
                     refusal, NOT-UNIQUE reasons, --reaim rows) · 12/12 MATCHED.
 
@@ -12674,7 +12674,7 @@ column that matters is the middle one.
 ```
 tool                        before the option                     after
 falsify_quality_seam        NOT CHECKED · rc null, both planes    PASS · 38 of 38 arms held
-falsify_line_cite_drift     died silently, no RESULT line         PASS · 12/12 arms
+falsify_line_cite_drift     died silently, no RESULT line         PASS · 12/13 arms
 falsify_plane_reads         died silently, no RESULT line         PASS
 falsify_ledger_text         died silently, no RESULT line         PASS
 citation_blank_census       died silently, no RESULT line         PASS · two readers agree 16/16 at HEAD
@@ -13200,7 +13200,7 @@ plane             run 8 on a fresh detached worktree of e2eaf26 (r17), the commi
 - fix              explicit `['pipe','pipe','pipe']` plus a call-site comment saying why; an empty answer is now one refusal carrying its byte count where HEAD's code crashed on a property of undefined · same exit 2, but D96's refusal-versus-crash distinction is the point · and the catch survives a thrown non-Error. No shipped census scans for the pair; the guard is the defense, because the regression reddens step 11 by name.
 - witnesses        one from-scratch database for all three: template0, 58 tables / 9 migrations, a regenerated generator output (the directory stood half-written from a prior run that died mid-write), load with SEED_ANCHOR=1 (520 merchants / 5534 offerings / 11000 reviews). Control PASS exit 0 · 217 assertions, 393 rows, 320 commit + 73 file witnesses, 216 of 217 (99.5%) with the gap named `fk: permission_grants.granted_by -> users.id`. Mutant A (shipped, stdin reverted to ignore) prints the new refusal at 0 bytes, exit 2; mutant B (HEAD + ignore, no guard) prints `Cannot read properties of undefined (reading 'split')`, exit 2; both mutants deleted after the run.
 - session note     eleven git spawns this session · eight default stdio, three ignore · all returned (git 2.52.0), so §253's EBUSY did not reproduce here today: a reading of this session, not a refutation; the 18-step gate exited 0 earlier in this session on these checker bytes, before this entry was appended.
-- readers          step 8 PASS · 0 strict offenders over 645 citation-shaped tokens (636 citations, 95 files), 0 blank(s) and 0 untracked cites among the 3 disk-only sections; step 9 PASS · 92 comment-plane citations across 31 files; step 10 PASS · STATUS 241 at HEAD / 243 on disk (disk-only 273, 275), DECISIONS 238 / 239 (disk-only D282), missing 0, duplicates 0; step 12 PASS · 50 of 50 spelled §-citations resolve, the one added here being the fix's own call-site comment; step 15 PASS 12/12 arms, census EXACT 140 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 / NO-BASE 1 / UNPATHED 290 / NOT-AT-HEAD 4; step 16 PASS · strict clean over 157 judged (MOVED 0, NOT-UNIQUE 0); step 17 MATCHED 3 of 3 at 217 over 880 claims.
+- readers          step 8 PASS · 0 strict offenders over 645 citation-shaped tokens (636 citations, 95 files), 0 blank(s) and 0 untracked cites among the 3 disk-only sections; step 9 PASS · 92 comment-plane citations across 31 files; step 10 PASS · STATUS 241 at HEAD / 243 on disk (disk-only 273, 275), DECISIONS 238 / 239 (disk-only D282), missing 0, duplicates 0; step 12 PASS · 50 of 50 spelled §-citations resolve, the one added here being the fix's own call-site comment; step 15 PASS 12/13 arms, census EXACT 140 / MOVED 0 / NOT-UNIQUE 0 / GONE 16 / NO-BASE 1 / UNPATHED 290 / NOT-AT-HEAD 4; step 16 PASS · strict clean over 157 judged (MOVED 0, NOT-UNIQUE 0); step 17 MATCHED 3 of 3 at 217 over 880 claims.
 
 plane             working copy at 401acab; step 11's control and both mutants on this unit's own loaded database. This append also repaired the shared STATUS working copy: another lane's drafted §273 stood where the committed §274 belonged · committing the file as it stood would have deleted a committed entry · so §274 was restored byte-for-byte from HEAD behind their draft, which remains theirs to land.
 
@@ -42708,7 +42708,7 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 
 **The unit.** `EventsConfigController` (`@RefreshScope`): `/events/config` serves `{service, config_label, note}`. `application.yaml`'s actuator exposure gains `refresh`. `scripts/events_config_smoke.sh` boots a throwaway Config Server and the events service with eureka and redis disabled, proves the `/events/config` carries refresh-v1, rewrites the config repo to refresh-v2, POSTs /actuator/refresh, and proves the **same pid** now serves refresh-v2. `scripts/check_d1023_events_config_wire.mjs` pins the wiring off disk (starter, exposure, scope, route, label, smoke guards, CI/ATLAS/ledger) and its `--self-test` reddens 13 corruption arms + GREEN control; wired into the CI line-171 chain and the cloud path filter.
 
-**Verified.** `bash scripts/events_config_smoke.sh` → PASS (config carries refresh-v1 → POST /actuator/refresh → same pid answers refresh-v2, no restart). `node scripts/check_d1023_events_config_wire.mjs --self-test` → 12 arms redden + GREEN control green. `node scripts/check_d1023_events_config_wire.mjs` → PASS, ~18 holds.
+**Verified.** `bash scripts/events_config_smoke.sh` → PASS (config carries refresh-v1 → POST /actuator/refresh → same pid answers refresh-v2, no restart). `node scripts/check_d1023_events_config_wire.mjs --self-test` → 13 arms redden + GREEN control green. `node scripts/check_d1023_events_config_wire.mjs` → PASS, ~18 holds.
 
 **Boundary, on purpose narrow.** The events-service's worker (Poller/Reader/Ring) is unchanged — this unit wires only the config plane. No claim that the worker reads its own config at runtime; no claim about Redis reachability in the smoke (deliberately disabled). No claim about rate or content of the events stream.
 
@@ -42843,3 +42843,15 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundaries.** Best-effort, one-shot, no retries, no DLQ, no ordering. The edge watching for refresh notices does not read notice content beyond the target tag; a WebFlux edge subscribing to a 10-item/sec notice channel is meaningless overhead, not a stream — one no-op refresh costs microseconds but still costs an event loop tick, so the default is OFF. The `nexus.gateway.label` flag is the gate-above-gates: a fresh render can always misroute; the smoke proves the same pid's resolved label changes without a restart. The bus is NOT Spring Cloud Bus's full shape.
 
 - readers: `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayBusController.java`, `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayBusRefreshSubscriber.java`, `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayConfigViewController.java`, `services/cloud/gateway/src/main/resources/application.yaml`, `services/cloud/gateway/pom.xml`, `scripts/bus_gateway_smoke.sh`, `scripts/check_d1034_gateway_joins_bus.mjs`, this ledger entry.
+## 1035. D1035 — one notice moves ALL FOUR members: the plane's registry rebinds in one published message, and the negative arm still holds against the edge itself
+
+**Why.** D1024/D1025/D1026/D1034 each armed their member piecewise; the fleet question — can a SINGLE published notice flip EVERY member at once, from one door, with the whole plane hot-rebinding on the same pid — was never asked on the wire. It is the bus-lite lane's reason for existence, and it is now proven live.
+
+**The unit.** `scripts/bus_fleet_smoke.sh` boots ALL FOUR members (gateway, dispatcher, insight, events) against a throwaway Config Server with the bus armed: Scenario 1 — one POST `target=all` from the gateway's door → `202, receivers>=4` → **all four** answer `refresh-v2`, same pids; Scenario 2 — repo rewritten to v3, POST `target=gateway` → only the gateway answers `refresh-v3`; the three sidecars stay `refresh-v2` (the negative arm for the hottest path of the product, once more, fleet-wide).
+`scripts/check_d1035_fleet_smoke.mjs` pins the smoke off disk (13 corruption arms + GREEN control); wired into the CI line-171 `--self-test` and line-196 smoke chain; path filter already covers `bus_*`.
+
+**Verified.** `bash scripts/bus_fleet_smoke.sh` → **PASS** (both scenarios, same pids). `node scripts/check_d1035_fleet_smoke.mjs --self-test` → 13 arms redden for cause + GREEN control green. Local boot matrix: gateway healthy on the free port, all four resolve refresh-v1, one notice flips all four to refresh-v2, gateway-only flips to refresh-v3, done.
+
+**Honest boundaries.** Best-effort, one-shot, no retries, no DLQ, no ordering — the fleet is not a consensus protocol. `receivers` is HEARERS, not actors: Scenario 2 legitimately reports `receivers>=1` (the sidecars heard and correctly ignored it; the label reads are the proof). The smoke boots four JVMs on throwaway ports against the shared `:6380` Redis — pub/sub leaves no keys. It does NOT certify member-specific semantics, only the rebinding contract.
+
+- readers: `scripts/bus_fleet_smoke.sh`, `scripts/check_d1035_fleet_smoke.mjs`, this ledger entry.
