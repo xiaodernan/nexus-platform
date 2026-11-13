@@ -42,22 +42,24 @@ public class AdminEventsController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminEventsController.class);
     private static final String STREAM_KEY = "nexus:events";
-    private static final String DEFAULT_GROUP = "nexus-events-readers";
     private static final int RECENT_WINDOW = 8;
 
     private final String redisUrl;
     private final boolean streamEnabled;
     private final long maxLen;
+    private final String groupName;
 
     private volatile RedisClient client;
     private volatile StatefulRedisConnection<String, String> conn;
 
     public AdminEventsController(@Value("${nexus.redis.url:redis://127.0.0.1:6380/0}") String redisUrl,
                                  @Value("${nexus.events.redis-stream-enabled:false}") boolean streamEnabled,
-                                 @Value("${nexus.events.max-len:1000}") long maxLen) {
+                                 @Value("${nexus.events.max-len:1000}") long maxLen,
+                                 @Value("${nexus.events.group-name:nexus-events-readers}") String groupName) {
         this.redisUrl = redisUrl;
         this.streamEnabled = streamEnabled;
         this.maxLen = maxLen;
+        this.groupName = groupName;
     }
 
     @GetMapping
@@ -143,9 +145,9 @@ public class AdminEventsController {
 
     private Map<String, Object> groupState(RedisCommands<String, String> sync) {
         try {
-            PendingMessages pending = sync.xpending(STREAM_KEY, DEFAULT_GROUP);
+            PendingMessages pending = sync.xpending(STREAM_KEY, groupName);
             Map<String, Object> group = new LinkedHashMap<>();
-            group.put("name", DEFAULT_GROUP);
+            group.put("name", groupName);
             group.put("pending", pending.getCount());
             group.put("consumers", pending.getConsumerMessageCount().size());
             group.put("consumer_detail", pending.getConsumerMessageCount());
@@ -154,7 +156,7 @@ public class AdminEventsController {
             return group;
         } catch (Exception e) {
             // The group only exists once the events-service has created it (or in dev: never).
-            log.debug("admin events read — group {} unavailable: {}", DEFAULT_GROUP, e.getMessage());
+            log.debug("admin events read — group {} unavailable: {}", groupName, e.getMessage());
             return null;
         }
     }
