@@ -43,3 +43,25 @@
     opacity: 0.7;
   }
 }
+/* ---------- global command palette (Cmd/Ctrl+K, see src/components/command-palette.tsx) ---------- */
+.nexus-palette-scrim {
+  background: var(--nexus-surface-overlay);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes nexus-palette-in {
+  from {
+    transform: translateY(-10px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-palette [role="dialog"] {
+    animation: none !important;
+  }
+}

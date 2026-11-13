@@ -9,6 +9,7 @@ import { currentLocale } from '@/lib/i18n/server';
 import { THEME_BOOTSTRAP_SCRIPT } from '@/lib/theme';
 import { DataModeNotice, SiteFooter, SiteHeader } from '@/components/site-chrome';
 import { ScrollProgress } from '@/components/scroll-progress';
+import { CommandPalette } from '@/components/command-palette';
 
 /**
  * The single document shell. Everything user-visible about the *app* — locale, the demo-data
@@ -64,6 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {dict.nav.skipToContent}
         </a>
         <ScrollProgress />
+        <CommandPalette locale={locale} labels={{ searchLabel: dict.nav.search, placeholder: dict.home.searchPlaceholder }} />
         <SiteHeader locale={locale} />
         <DataModeNotice locale={locale} />
         <main id="nexus-main">{children}</main>
