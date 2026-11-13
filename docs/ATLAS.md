@@ -299,6 +299,10 @@ grows.
 | `scripts/bus_plane_smoke.sh` | D1026: three-member live proof — throwaway Config Server serving refresh-v1 for dispatcher, insight AND events; all three boot with the bus armed; `target=all` flips all three to refresh-v2 (receivers >= 3, same pids); repo rewritten to v3; `target=events` flips events only — the other two stay refresh-v2 |
 | `scripts/check_d1026_events_joins_bus.mjs` | D1026: 13 corruption arms + GREEN control — shared channel literal, opt-in default off, 409/202/receivers pins, actuator engine, strict 1..64 grammar, three-member arm pinned, negative arm, CI/ATLAS/ledger; CI line-171 `--self-test` |
 | `apps/web/app/loading.tsx` | D1028: the home-route loading boundary — brand-anchored shimmer skeleton mirroring the hero (corner glows, brand gradient dot, dict eyebrow) plus a 6-card rail placeholder grid; `dict.states.loading` sr-only caption (zh/en); all decorative layers `aria-hidden`; motion-reduce collapses every shimmer to `animate-none`; copy discipline §155/D981 — no text rendered beyond the two existing dict entries |
+| `apps/web/app/search/loading.tsx` | D1029: the /search loading boundary — answer bar + filter-chip shimmers + 6-card results grid placeholder; `dict.states.loading` sr-only caption; aria-hidden decorative layers; motion-reduce collapse |
+| `apps/web/app/m/[slug]/loading.tsx` | D1029: the merchant detail loading boundary — hero block (brand tile, name/address shimmers, fact-strip chips) + two panel placeholders (facts-like rows); same §155/D981 copy discipline |
+| `apps/web/app/o/[slug]/loading.tsx` | D1029: the offering detail loading boundary — prose column shape: title bars + price chip + meta rows; shimmer-only, no facts |
+| `apps/web/app/[city]/loading.tsx` | D1029: the SEO catalog loading boundary — breadcrumb bar + H1 + category chip row + 6-card grid; shimmer-only |
 
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith

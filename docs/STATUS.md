@@ -42771,3 +42771,14 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** No claim about actual TTFB or LCP — the skeleton renders only while the route streams; the rails still arrive when the upstream round trip finishes (that is the point — the shape beats the flash). No benchmarking claims, no mock data seeded, no bypass of the allSettled contract. The loading shape is an approximation, not a teaser of results; a skeleton is not a card (§155 by construction: no facts rendered).
 
 - readers: `apps/web/app/loading.tsx`, this ledger entry.
+## 1029. D1029 — every remaining dynamic consumer route ships a brand-anchored loading boundary: /search, /m/[slug], /o/[slug], /[city]
+
+**Why.** D1028 gave the first paint of `/` something honest to show while the rails settle. The same blank-canvas hole existed on the remaining on-demand consumer routes, each of them heavier in their read than the home page is: `/search` (the §105 stream fallback blocks on a full retrieval round trip), `/m/[slug]` (the merchant detail read: facts, hours, offerings, reviews), `/o/[slug]` (one publication read per offering), and `/[city]` (the SEO catalog — category × district × price bucketing over the whole published corpus). All four landed blank white on cold navigation while `/merchant`, `/collections`, `/guides` and `/admin` had already shipped their boundaries.
+
+**The unit.** Four new route-segment boundaries, mirroring each route's own page shape, same discipline as D1028: decorative layers `aria-hidden="true"`; `dict.states.loading` (zh 加載中… / en Loading…) as the only copy in an sr-only caption; every shimmer bar collapses to `animate-none` under `prefers-reduced-motion`; every shimmer clips the shipped `.nexus-shimmer` track — Copy is the dictionary's, always. Each boundary renders *shapes and nothing else* — never a fact, never an interpolated claim (the skeleton is not a card, §155 by construction).
+
+**Verified.** `npx tsc --noEmit` clean; `next build` green; web suite 240/240 passed (no test regressed; no new logic to pin in a probe — the boundary contract is the same one pinned by the reduced-motion whitelist family).
+
+**Honest boundary.** No claim about TTFB, LCP or Lighthouse deltas from the skeletons themselves; no route changed its data contract; no mock or bypass introduced; the skeletons' card shapes are intentionally identical to the rails', because anything more specific would assert facts the data plane has not delivered yet.
+
+- readers: `apps/web/app/search/loading.tsx`, `apps/web/app/m/[slug]/loading.tsx`, `apps/web/app/o/[slug]/loading.tsx`, `apps/web/app/[city]/loading.tsx`, this ledger entry.
