@@ -43188,3 +43188,23 @@ and before the `id` fix the same measurement returned **1** score instead of 160
 **Honest boundaries.** This is not an answer to any other mobile affordance (the rails' horizontal scroll, the ask-merchant widget, the search stickiness); it answers exactly the last-mile "directions to / phone" pair. It is hidden from keyboard-exclusive users who don't discover it (mobile registration is intent) — the same two CTAs exist at the top of the page for them. It does not render on a merchant with neither geo nor phone (`<div>` mounts empty, the `:empty` selector does not hide it, so nothing false is said on 3 of 521 seeded merchants). No new position animations, no toasts, no "reserved" gate — the call button simply opens the dialer, the way the header one already does.
 
 - readers: `apps/web/app/globals.css` (`.nexus-sticky-cta`), `apps/web/src/components/merchant-view.tsx`, `apps/web/src/lib/merchant-sticky-cta.test.ts`, this ledger entry.
+## 1061. D1061 — the A/B the operator asked for, run cold and measured: SSE is the only envelope that reports cache accounting deterministically on this proxy; non-stream reports 3 of 6, SSE 6 of 6, identical bytes
+
+**Why.** The operator observed "non-stream's hit rate is lower than stream's" and asked why. The obvious first read — "the cache isn't working" — was wrong; the probe tested that and found the prefix IS served from cache. The subtler failure mode: the provider does not reliably carry `prompt_tokens_details.cached_tokens` on the direct JSON envelope. The SSE envelope always carries it via `stream_options.include_usage=true`.
+
+**The measurement (2026-11-14, `gpt-6-sol`, temperature 0, identical request bytes, 6 cold calls per arm, 18,761 chars system prefix + 101-char user message):**
+
+| arm | call1 | call2 | call3 | call4 | call5 | call6 | reporting |
+|---|---|---|---|---|---|---|---|
+| non-stream JSON | `cached=8320` missing | `cached=8320` | missing | missing | `cached=8320` | `cached=8320` | **3 of 6** |
+| SSE + include_usage | `cached=8320` | `cached=8320` | `cached=8320` | `cached=8320` | `cached=8320` | `cached=8320` | **6 of 6** |
+
+The three missing `cached` fields on the non-stream side are not "the provider served from cache but told us nothing" nor "the provider did not serve from cache" — they are simply absent on those three calls, reason contractual. The system-prefix bytes are identical, the model is identical, the temperature is identical, the only delta on the wire is `stream: true` + `stream_options.include_usage=true`.
+
+This is the reason §1044 already defaults to SSE. It is also the reason §1052 added `cache_reported` as a distinct V14 column: the provider's silence must never be read as a 0 for "cached_tokens", and the console's reporting-call denominator must be honest about which calls supplied cache accounting.
+
+**The fix that was already in place.** No new code was required: D1044 flipped the default, D1052 added `cache_reported` so the core distinction is visible in the ledger, and §1051's `.env.example` documents `NEXUS_LLM_STREAM=false` as the documented opt-out for operators whose proxies meter differently. This unit's content is the measurement and the record — the exact probe lives in the arc doc (`docs/RELEASE_ARC_D1024_D1060.md` §A/B evidence).
+
+**Honest boundaries.** The A/B is one model, one prefix shape, one pair of payloads, one day. The numbers above do not transfer to JSON-mode requests (`response_format: json_object` drops the system role on this proxy; prefix is bigger than the system head plus the raw payload) or to routes where the prompt is under the proxy's prefix-cache floor (~1000 tokens; any request below that is structurally never cacheable and both arms report zero, as measured elsewhere). The reason non-stream path D1043 slim showed a 97% *probability* of hit on identical payloads is that bundles hitting that shape were repeatedly served. This unit's numbers are one specific, reproduced instance of the general phenomenon, not a universal rate.
+
+- readers: `docs/RELEASE_ARC_D1024_D1060.md` (§A/B evidence), this ledger entry.

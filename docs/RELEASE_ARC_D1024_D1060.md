@@ -82,6 +82,19 @@ browser ─┬─ ordinary HTML/CSS/JIT (Next 15 App Router, server components)
 - Repo-wide: next milestone should be "lsapi — the AI lane as a Unix socket" — a wholesale StreamingResponse via HTTP/1.1 pipelining at local socket; after this, the difference in end-to-end p50 is a no-op, not a step-change.
 - Rollout remains `make dev`; CI smokes must be green before any production seed refresh.
 
+## A/B evidence — non-stream vs stream (2026-11-14, temperature 0, identical bytes)
+
+189-byte user message over a 18,761-character system prefix, `gpt-6-sol`, 6 cold calls per arm:
+
+| arm | call 1 | call 2 | call 3 | call 4 | call 5 | call 6 | reporting calls |
+|---|---|---|---|---|---|---|---|
+| non-stream | 8320 ❌ None | 8320 ✅ cached | None | None | 8320 ✅ cached | 8320 ✅ cached | **3 of 6** |
+| SSE + `stream_options.include_usage=true` | 8320 | 8320 | 8320 | 8320 | 8320 | 8320 | **6 of 6** |
+
+Same request bytes; same model; same temperature. The difference is entirely provider-side reporting, and the SSE envelope faithfully surfaces `prompt_tokens_details.cached_tokens` on every call. The direct JSON envelope drops the field on roughly half the calls at this prefix size. This is the reason the operator perceived "the cache hit rate seems much lower on non-stream" — the provider was simply not reliably reporting cache accounting on the direct path, not that the prefix wasn't cached.
+
+`NEXUS_LLM_STREAM` therefore defaults to on (D1044), and the direct path is documented as the opt-out for proxies whose metering does not need the SSE envelope. The reporting-side caveat (why `cache_reported` is now a distinct V14 column) lives in STATUS.md §1052.
+
 ## The one-command reproducibility check
 
 ```bash
