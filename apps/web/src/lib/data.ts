@@ -52,7 +52,6 @@ import type {
   EntityCard,
   GeoPoint,
   Guide,
-  Intent,
   MerchantDetail,
   NexusResult,
   OfferingDetail,
@@ -94,11 +93,8 @@ function pageOf<T>(items: T[]): CursorPage<T> {
 
 /* ----------------------------------------------------------------- home (§6) */
 
-export interface RailsRequest {
-  geo: GeoPoint | null;
-  locale: string;
-  signedIn: boolean;
-}
+export type { RailsRequest } from './rails-stream';
+import { RAIL_DEFS, loadRailCards, type RailsRequest } from './rails-stream';
 
 /**
  * Live rails are composed from documented reads only: `POST /ai/v1/search` with no query text and
@@ -108,42 +104,10 @@ export interface RailsRequest {
  * The sort preference belongs to the intent (§7.1), not to `filters` — that object is a strict
  * schema, and a `sort` key there is a 422, not a harmless extra.
  */
-async function liveSearchRail(
-  sort: Intent['sort_preference'],
-  geo: GeoPoint | null,
-  limit: number,
-  locale: string,
-): Promise<EntityCard[]> {
-  const response = await nexusGet<SearchResponse>('ai', '/ai/v1/search', {
-    method: 'POST',
-    body: {
-      query: '',
-      intent: { raw_query: '', sort_preference: sort, language: locale },
-      geo,
-      limit,
-      locale,
-    },
-  });
-  return response.items ?? [];
-}
-
 export async function homeRails(request: RailsRequest): Promise<NexusResult<HomeRails>> {
   if (IS_MOCK) return { data: mockHomeRails(request.geo, request.signedIn), mocked: true };
 
-  const rails = await Promise.allSettled([
-    liveSearchRail('distance', request.geo, 8, request.locale),
-    liveSearchRail(request.signedIn ? 'rating' : 'trending', request.geo, 6, request.locale),
-    liveSearchRail('trending', request.geo, 8, request.locale),
-    liveSearchRail('price_low', request.geo, 6, request.locale),
-    // `/me/favorites` is authenticated; asking it for an anonymous viewer can only 401.
-    // A rail with nothing to show is empty, not a failed read (§155).
-    request.signedIn
-      ? nexusGet<{ items: Array<{ card: EntityCard }> }>('platform', '/api/v1/me/favorites', {
-          searchParams: { limit: 6 },
-          authorization: null,
-        }).then((page) => page.items.map((entry) => entry.card))
-      : Promise.resolve([] as EntityCard[]),
-  ]);
+  const rails = await Promise.allSettled(RAIL_DEFS.map((def) => loadRailCards(def.key, request)));
 
   const take = (index: number): EntityCard[] => {
     const settled = rails[index];

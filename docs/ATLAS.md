@@ -306,6 +306,11 @@ grows.
 | `apps/web/app/[city]/[category]/loading.tsx` | D1030: the category-listing loading boundary — same landing shape as /[city], one level deeper (breadcrumb + H1 + category chips + 6-card shimmer grid); §155/D981 discipline identical |
 | `apps/web/app/[city]/[category]/[facet]/loading.tsx` | D1030: the facet-listing loading boundary — same as above, deepest route of the SEO catalog |
 | `apps/web/src/lib/loading-boundaries.test.ts` | D1031: the boundary family contract — seven files, 15 arms: existence, the exact sr-only caption element, aria-hidden decorative layers, motion-reduce present, no literal caption strings anywhere in the files; caught the home boundary docstring smuggling literals and green since |
+| `apps/web/src/lib/rails-stream.ts` | D1032: the streamed-home substrate — canonical `RAIL_ORDER` + `RAIL_DEFS` (five rails, exact order/intent/limit) and shared server-only `loadRailCards`; the single source of truth for both the streamed page sections and the all-settled `homeRails()` composer |
+| `apps/web/src/components/rail-section.tsx` | D1032: the per-rail section — awaits its own rail, renders `<CardRail>`; a fetch failure renders `dict.merchant.degradedTitle` (the error boundary's own string key — no fixtures, no invention), empty rails stay absent |
+| `apps/web/src/components/rail-skeleton.tsx` | D1032: the Suspense fallback — boundary-disciplined skeleton rhythm (title bar + five rail-card shimmer slots), aria-hidden decorations, sr-only `dict.states.loading`, motion-reduce collapse |
+| `apps/web/app/page.tsx` | D1032: home page maps `RAIL_ORDER` into exactly five `<Suspense fallback={<RailSkeleton />}>` boundaries — no page-wide wait, `homeRails` no longer in use on the render path |
+| `apps/web/src/lib/streaming-rails.test.ts` | D1032: architecture text-probe — page maps RAIL_ORDER (never renders homeRails/allSettled), loader exported server-only, failure path renders the dictionary degrade title, skeleton boundary contract, `homeRails` entry-point formula intact; 5 arms |
 
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith

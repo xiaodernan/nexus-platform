@@ -42802,3 +42802,16 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** A text-probe cannot certify sighted experience or real streaming latency; it certifies the files' contractual markers.
 
 - readers: `apps/web/src/lib/loading-boundaries.test.ts`, this ledger entry.
+## 1032. D1032 — the five homepage rails finally stream, one Suspense boundary each: cold navigations no longer pay TTFP for the slowest upstream rail
+
+**Why.** The home route blocked on `Promise.allSettled([...five rails])` before the first byte painted — the whole page's first paint was the slowest rail's SQL+ranking round trip. Worse: one rails definition existed in two places (`homeRails`'s allSettled list and the page's own copy), with nothing pinning them together.
+
+**The unit.** Extraction before structure: `apps/web/src/lib/rails-stream.ts` owns the canonical `RAIL_ORDER` + `RAIL_DEFS` and the shared `loadRailCards(key, request)`, server-only, zero duplication — the composer (`homeRails`) and the streamed page sections both call the SAME loader. The page now renders the hero, example prompts and five `<Suspense fallback={<RailSkeleton/>}>` boundaries mapped from `RAIL_ORDER`; each `<RailSection railKey>` awaits only its own rail; a rail whose fetch throws renders the dictionary's existing degrade title (dict.merchant.degradedTitle — the error boundary's own line) instead of vanishing silently; an empty rail stays absent as before (§105). `rail-skeleton.tsx` paints the same skeleton rhythm as the loading boundaries (aria-hidden decor, sr-only states.loading caption, motion-reduce collapse).
+
+**The probe.** `apps/web/src/lib/streaming-rails.test.ts` — 5 arms pinning the architecture: page maps RAIL_ORDER (never calls `homeRails`/`allSettled` in render), loader exported server-only, failure path renders the dict's degrade title, skeleton honours the boundary contract, `homeRails` keeps its pinned entry-point semantics (degrade banner text unchanged — the degrade test in test_home-rails-degrade still pins counts and the "4 of 5" line).
+
+**Verified.** tsc --noEmit clean; next build green; the web suite 260/260 (255 pre-existing + this probe's 5 arms); the rails' cronological contract unchanged (`popular_near_you` distance → `for_you` rating/trending → `trending` → `recommended` price_low → `recently_viewed` favorites).
+
+**Honest boundary.** No claim about actual LCP/TTFB/ Lighthouse improvement — the win is structural (per-rail streaming), not benchmarked; the round-trip latency budget is the same, only now each rail answers as it lands. The favorites rail still never fires on an anonymous visit. The degraded count line on the page itself is gone (the old "N of 5 rails unavailable" summary) now lives per-section in an honesty note instead — a global count would be fiction in a world of independent streams. `homeRails` is retained as a library entry for the degrade test's pinned contract; the production page no longer uses it.
+
+- readers: `apps/web/src/lib/rails-stream.ts`, `apps/web/src/lib/data.ts` (composer over RAIL_DEFS), `apps/web/src/components/rail-section.tsx`, `apps/web/src/components/rail-skeleton.tsx`, `apps/web/app/page.tsx` (RAIL_ORDER → 5 `<Suspense>`), `apps/web/src/lib/streaming-rails.test.ts`, this ledger entry.
