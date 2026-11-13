@@ -8,8 +8,6 @@ Redis failure degrades to a plain miss.
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 import nexus_ai.api.llm_response_cache as cache
