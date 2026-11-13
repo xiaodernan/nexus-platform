@@ -77,6 +77,9 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/palette.ts` | D1056: pure kernel — open-shortcut truth table (exactly one modifier), typing-lane guard, Esc/Enter semantics, bounded `/search?q=` path |
 | `apps/web/src/lib/palette.test.ts` | D1056: 7 pure-logic pins for the kernel |
 | `apps/web/src/lib/command-palette.test.ts` | D1056: 6 structural pins — mount-once, labelled-dialog discipline, helper-only key wiring, secrets-free island |
+| `apps/web/src/lib/merchant-sticky-cta.test.ts` | D1060: four arms — mobile-only breakpoint, single primary action, `z-50` anchoring, reduced-motion blur drop |
+| `apps/web/app/globals.css` | D1060: the `.nexus-sticky-cta` class — `position: fixed` mobile quick-actions bar; `display: none` above 640px |
+| `apps/web/src/components/merchant-view.tsx` | D1060: the sticky quick-actions bar mounts as the last child of the article — region named by `dict.merchant.stickyCtaLabel` |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |

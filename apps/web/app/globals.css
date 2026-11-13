@@ -65,3 +65,32 @@
     animation: none !important;
   }
 }
+/* ---------- merchant profile sticky CTA bar (mobile only) ---------- */
+.nexus-sticky-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 50; /* below modal sheets, above page chrome */
+  padding: 0.4rem;
+  border-radius: var(--nexus-radius-lg);
+  border: 1px solid var(--nexus-border);
+  background: rgb(var(--nexus-surface-rgb) / 0.9);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--nexus-shadow-md);
+}
+
+@media (min-width: 640px) {
+  .nexus-sticky-cta {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-sticky-cta {
+    backdrop-filter: blur(2px);
+  }
+}

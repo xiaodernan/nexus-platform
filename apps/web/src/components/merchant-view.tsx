@@ -311,6 +311,31 @@ export function MerchantView({
         </Panel>
       ) : null}
 
+      {/* Mobile-only sticky quick actions: a phone-first HK discovery app keeps the call and
+          the route within thumb reach, above the page but below modal sheets. Desktop never sees it. */}
+      <div role="region" aria-label={dict.merchant.stickyCtaLabel} className="nexus-sticky-cta">
+        {location?.geo ? (
+          <a
+            href={directionsUrl(location.geo, geo)}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-md bg-accent text-sm font-medium text-accent-ink focus-visible:shadow-[0_0_0_3px_var(--nexus-accent-ring)]"
+          >
+            <Icon name="navigation" size={16} />
+            {dict.merchant.directions}
+          </a>
+        ) : null}
+        {location?.phone ? (
+          <a
+            href={`tel:${location.phone.replace(/[^\d+]/g, '')}`}
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-md border border-line-strong bg-surface px-4 text-sm text-ink-strong focus-visible:shadow-[0_0_0_3px_var(--nexus-accent-ring)]"
+          >
+            <Icon name="phone" size={16} />
+            {dict.merchant.call}
+          </a>
+        ) : null}
+      </div>
+
       <Panel id="facts" title={dict.facts.title} note={dict.facts.note}>
         <FactList facts={detail.facts} locale={locale} />
         {detail.top_offerings.length ? (
