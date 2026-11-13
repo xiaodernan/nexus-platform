@@ -98,6 +98,9 @@ class LLMResponse:
     #: D980: True when the provider's `usage` was physically implausible and had to be
     #: bounded locally. Keeps the untrusted value from silently polluting the cost ledger.
     usage_flagged: bool = False
+    #: tokens the provider explicitly marked as cache-hit (usage.prompt_tokens_details.cached_tokens).
+    #: NEVER invents the value — stays 0 when the provider does not report it.
+    cached_tokens: int = 0
 
     @property
     def total_tokens(self) -> int:
@@ -293,7 +296,11 @@ class HttpLLMAdapter:
 
     @staticmethod
     def _user_text(req: LLMRequest) -> str:
-        return req.prompt or json.dumps(req.payload, ensure_ascii=False)
+        if req.prompt:
+            return req.prompt
+        # sort_keys + fixed separators: identical payloads serialize byte-identically regardless
+        # of construction order, so provider-side prefix caches have one canonical shape to hit.
+        return json.dumps(req.payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
     async def complete(self, req: LLMRequest) -> LLMResponse:  # pragma: no cover
         raise NotImplementedError("subclasses implement the wire call")
