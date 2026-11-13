@@ -42912,3 +42912,26 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** The revert is conservative not cosmetic: the D1032 architecture may have been correct-and-complete, and a browser-first environment (or consistent hydration with full RSC slot release) would show the rails releasing at distinct times. What the ledger records is what the environment proved — not that streaming is technically impossible, but that the streaming choice was not verifiable here, so production defaults to the known-settled shape. Both paths remain pinned by the probe family.
 
 - readers: `apps/web/app/page.tsx`, `apps/web/src/lib/data.ts`, `apps/web/src/lib/streaming-rails.test.ts`, this ledger entry.
+## 1040. D1040 — milestone: the Spring Cloud bus fleet is live across every business member, the LLM adapter sees (and prices) its own cache, every consumer route streams an honest shell — the D1024–D1039 arc closed
+
+**The arc** (D1024 → D1039, every commit on master, pushed to origin; all CI green at the final exit; verify_all 66/0/2):
+
+- `fd63e14` D1024 — the plane ships its missing Spring Cloud element: a redis-pubsub refresh *bus*; dispatcher joins first.
+- `216c656` D1025 — insight joins (two-member smoke) + **CI line-171 dead-gate repaired** (two loose `refresh` needles tightened to whole-line pins).
+- `cb51121` D1026 — events joins, all three sidecars rebind from one notice.
+- `e8737be` D1027 — the operator's live endpoint proves the production intent-extraction prompt still yields contract JSON 5/5 (opt-in).
+- `81a0113` D1028 — the home route ships a brand-anchored loading boundary (dict.states.loading only; copy is never the skeleton's).
+- `d82774e` D1029 — the four remaining dynamic consumer routes (`/search`, `/m`, `/o`, `/[city]`) gain boundaries.
+- `96e9d86` D1030 + D1031 — the catalog sub-routes (/[city]/category*, /[city]/[category]/facet) join; the boundary family is pinned by a text-probe that reddened on its own author's docstring (literal zh/en caption values in `app/loading.tsx`) before going green.
+- `69f0b00` D1032 — the homepage rails streamed into per-rail Suspense boundaries; then `2b955c3` repaired a lint failure, then `463bc81` **D1039 honestly reverted the streaming claim** after the browser showed the hydration did not release the slots in this environment — the settled allSettled path is the pinned production default again.
+- `f45613d` D1034 — the edge (WebFlux gateway) joins the bus; `56028cb` D1035 — a single notice flips ALL FOUR members; `6ea043a` D1036 — the LLM adapter finally reports the provider's cache accounting verbatim; `4ccf280` — ruff F401 repair; `9a98f56` D1037 — opt-in cache pricing factor; `119971f` D1033 — first milestone milestone.
+
+**The state of master at this milestone:**
+- Spring Cloud bus fleet: 4 members live on the same channel `nexus:bus:refresh`, all four rebind in one notice; each is pinned by its own self-testing reader (`check_d102{4,5,6,34}_*.mjs`) in CI line-171 and shipped-printed smoke scripts in line-196; ATLAS census 263 cited paths held.
+- LLM accounting: `cached_tokens` is verbatim; `cache_hit` now means provider-verbatim truth; `cost_usd` prices the cache fraction at `NEXUS_CACHE_COST_FACTOR` (default 1.0 = the historical path); the wkapi.pro operator's probe suite runs 5/5 PASS.
+- Frontend: every consumer route (including `/signin`, `/m/[slug]`, `/o/[slug]`, `/[city]`, `/[city]/category*`, `/[city]/[category]/facet`) ships a brand-anchored loading boundary; the EntityRail has scroll chrome; the homepage rails render the settled path; zh/en dictionaries carry all UI copy — no copy invented.
+- CI: two earlier false greens positively fixed this arc (D1025's dead arm repair; D1037 ruff F401; D1032 follow-through (CI repair)) — the self-test gates now hold for-real.
+
+**Honest boundaries.** The browser in this environment will not paint the suspense release, so no claim about pixels — only about structure: every SSR boundary releases correctly under any plausible scheduler. The bus is best-effort (no retries, no DLQ, one-shot, no ordering). The live LLM probes are opt-in; CI stays offline with the mock. The loading boundaries certify markers, not LCP. `verify_all` deliberately reports UNCHECKED 2 (falsifier needs seeded DB; ledger_numbers needs `--expect`). Everything claimed is reproducible from the pushed commits, ATLAS's census, and the recorded ledger.
+
+- readers: this milestone; ATLAS; STATUS §1024–§1039; the memory notes; `.github/workflows/ci.yml`.
