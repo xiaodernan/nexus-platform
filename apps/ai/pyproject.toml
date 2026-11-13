@@ -84,5 +84,6 @@ filterwarnings = ["ignore::DeprecationWarning"]
 # scripts/: a reader that cannot run says so, in its own words, without being asked.
 addopts = "-rs"
 markers = [
+    "live_llm: opt-in live-provider coverage; runs only when the operator exports NEXUS_LLM_API_KEY and NEXUS_LLM_BASE_URL; never in CI (conftest forces mock)",
     "integration: needs the live Postgres container (skips cleanly when unavailable)",
 ]

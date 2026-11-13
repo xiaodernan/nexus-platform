@@ -268,6 +268,9 @@ census: a new `scripts/check_*.mjs`, `docs/*.md`, cloud smoke or module pom that
 list reddens the gate. That is the mechanism that keeps an "integration" page honest as the project
 grows.
 
+| `apps/ai/live_llm_smoke.py` | D1017: the operator-configured provider really answers through the production adapter path — env-gated smoke, never CI, key never committed |
+| `apps/ai/tests/test_live_llm_provider_gate.py` | D1017: the same proof as an opt-in pytest module (`live_llm` marker registered in pyproject.toml); skips without the env; CI stays on the offline mock |
+
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith
 was decomposed into microservices.
