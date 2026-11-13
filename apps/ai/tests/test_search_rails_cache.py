@@ -9,7 +9,6 @@ reachable Redis the round trip actually stores and serves the same body (minus i
 from __future__ import annotations
 
 import json
-import os
 import uuid
 
 import pytest
