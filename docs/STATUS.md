@@ -42677,3 +42677,17 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** This is arm RE-AIM on the plant, not a re-anchoring of the reader. The reader stays what it is; the harness's prediction moves with a deliberate UI change the team made and documented at D1018.
 
 - readers: `scripts/falsify_slot_keys.mjs`, this ledger entry.
+## 1021. D1021 — master full-green again without a port restart: D1017–D1020 land a live LLM provider proof, the rail-chrome visual upgrade, and the CI-census repair that followed it
+
+**Milestone.** Push `907e68b` (D1020) — `43368430500` — completes green across `changes`, `contract-drift`, `cloud`, `e2e` and `required`; `ai`, `platform`, `lint-type`, `security` skipped by policy. The cloud job ran the line-171 self-test chain including `check_cloud_edge.mjs --self-test`, `check_d1002_max_tool_calls_wired.mjs --self-test`, `check_dispatcher_eureka_admin.mjs --self-test`, `check_cloud_filter_covers_chain.mjs --self-test` — all passing on the GitHub runner for the first time on this arc; `cloud::success` covers every refresh/rate-limit/redis/<api ▸ SSE switch> + events chain steps too.
+
+**The arc** (four commits, one bisect):
+- `386de49` (D1017/D1018 docs memory) — the operator's OpenAI-compatible endpoint (`gpt-6-sol`) answered `NEXUS-LLM-LIVE-OK` through the app's production `build_adapters() → OpenAIAdapter` path; `apps/ai/live_llm_smoke.py` + opt-in pytest gate `test_live_llm_provider_gate.py`; CI stays offline, key never committed. Web moved `EntityRail` to a geometry-driven scroll chrome (prev/next chrome, physically-honest thumb, reduced-motion instant jump); `rail-nav-chrome.test.ts` pins the contract; zh + en dicts carry the two new `railPrev`/`railNext` strings.
+- `dab7ffa` (D1019) — React 19 client dispatcher (`scripts/react_dispatcher.mjs`) installed for the source-call census (`check_duplicate_keys.mjs`) so hooked components can finally be judged; all five card-list components run, 0 duplicate keys; falsifier 16/16.
+- `907e68b` (D1020) — the slot-key falsifier arm re-aimed at the `<div>` branch D1018 moved `action` into; `falsify_slot_keys.mjs` 15/15; this is what unblocked the current master; D1018 CI circle was red only because of this stale arm.
+
+**Verified on CI, and locally:** live API probe PASS (`NEXUS-LLM-LIVE-OK`, `cost_usd=0.067`), tsc `--noEmit` clean, `next build` green, web suite 239+6 rail-chrome+15 = **260 passed**, `verify_all` PASS 60 / FAIL 0 / UNCHECKED 2, `check_atlas` PASS 224 cited path(s).
+
+**Honest boundaries.** The live-provider round trip is a single probe, not a re-run of every corpus-intent test against the real model; the eval gate still runs `mock`. The `EntityRail` scroll chrome is tested by a source-scan probe, not by a browser-driven screenshot; no claim about the visual outcome beyond the code contract.
+
+- readers: this ledger entry; `apps/ai/live_llm_smoke.py`, `apps/ai/tests/test_live_llm_provider_gate.py`, `packages/ui/src/trust/EntityCard.tsx`, `apps/web/src/lib/rail-nav-chrome.test.ts`, `scripts/react_dispatcher.mjs`, `scripts/falsify_slot_keys.mjs`, `.github/workflows/ci.yml`.
