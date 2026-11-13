@@ -13,7 +13,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        # D1023: the events sidecar gains the same hot-refresh door the insight (D889) and
+        # dispatcher (D993/D994) sidecars have — a POST /actuator/refresh rebinding the resolved
+        # label without a restart, plus /events/config to prove which label was actually picked.
+        include: health,info,metrics,refresh
   metrics:
     enable:
       jvm: true

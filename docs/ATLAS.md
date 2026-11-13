@@ -277,6 +277,9 @@ grows.
 | `apps/ai/nexus_ai/api/routes_search.py` | D1022: cache check before `run_search` when the request is a sort-only, query-free, user-free payload; the cached body is returned byte-identically with `agent_run_id` re-minted and `took_ms=0`; `_record` still sees the run so the ledger tracks the served answer |
 | `apps/ai/tests/test_search_rails_cache.py` | D1022: offline invariants — shape gate (rails vs anything else), key determinism, Redis-unreachable-is-a-miss; 15 arms |
 | `apps/ai/tests/test_search_rails_cache_live.py` | D1022: opt-in live arm — on the seeded gate database with a reachable :6380, a repeated `POST /ai/v1/search` with identical rails payload returns the same body twice (`items`, `strategy`, `total_estimate`); skipped unless the env is supplied |
+| `services/cloud/events-service/src/main/java/com/nexus/cloud/events/EventsConfigController.java` | D1023: the sixth registry member joins the hot-refresh package — `@RefreshScope` controller serving `/events/config` with the label the process actually resolved (refresh-v1 → refresh-v2 round trip) |
+| `scripts/events_config_smoke.sh` | D1023: throwaway Config Server + the events service boot with eureka and redis disabled, `v1`→`v2` rewrite, POST /actuator/refresh, same pid answers v2 |
+| `scripts/check_d1023_events_config_wire.mjs` | D1023: 13 corruption arms + GREEN control — pom starter, refresh exposure, @RefreshScope, route, label, smoke guards (repo label, refresh door, PASS line), CI invocation, ATLAS, ledger — reader wired into the CI line-171 self-test chain and the cloud path filter |
 
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith
