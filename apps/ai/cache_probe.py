@@ -24,7 +24,6 @@ Never run in CI; honors the same opt-in discipline as the other live tools.
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import sys
 
