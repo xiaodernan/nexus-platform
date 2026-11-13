@@ -42653,3 +42653,16 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **What this does NOT claim.** No Scroll-Driven Animations API, no intersection-observer progress bars, no arrow keys on the container itself (buttons carry the tab stops). No claim the rail is keyboard-focusable at the container level. No claim about the web bundle size beyond next build's own report.
 
 - readers: `packages/ui/src/trust/EntityCard.tsx` (EntityRail), `packages/ui/src/trust/Renderers.tsx` (TrustLabels), `apps/web/src/lib/i18n/trust-labels.ts` (zh/en), `apps/web/src/lib/rail-nav-chrome.test.ts`, this ledger entry.
+## 1019. D1019 — the duplicate-keys census stopped running half its population the day `useRef` landed: the reader now installs a React 19 client dispatcher before calling the component
+
+**Before.** `check_duplicate_keys.mjs` walked every card-list component in the client plane and called its export with a fixture. The day D1018 made `EntityRail` a hooked client component, `useRef` died inside `react.cjs` ("dispatcher.getOwner is not a function" became "Invalid hook call" the moment the dispatcher existed in shape but not in behavior) — five components refused: EntityRail, CompareTable, CardGrid, CardRail, CompareTray. The reader's honest behavior was "NOT CHECKED — the reader could not run every card-list component", verdict exit 2 — which is correct, and also means the reader could never pass on master again without a renderer.
+
+**The unit.** `scripts/react_dispatcher.mjs` installs a benign React 19 **client** dispatcher into `__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H` (and `.A`): useState/useReducer return initial state, the effects are no-ops, useMemo/useCallback/useContext/useId return values a source walker never distinguishes from real ones, and `getOwner()` returns null (the shape the JSX runtime reads). `check_duplicate_keys.mjs` installs it before each call, restores it after, and still refuses to invent a verdict for a genuinely unrunnable shape. React 19 internals, not a mock of React's contract — the reader stays a source walker with a real client dispatcher underneath it.
+
+**What changed in the corpus itself:** nothing. No component edit. `EntityRail` stays hooked. `CompareTable`, `CardGrid`, `CardRail`, `CompareTray` are judged again — and pass: 5 card-list components run, 0 duplicate keys.
+
+**Verified.** `node scripts/check_duplicate_keys.mjs` → 5 components run, 0 duplicate keys, PASS. `node scripts/falsify_duplicate_keys.mjs` → **16 arms · 16 held · 0 missed**. `verify_all` → PASS 60 / FAIL 0 / UNCHECKED 2 (both seeded-DB UNCHECKED by design).
+
+**Honest boundaries.** The bench dispatcher is not a renderer. It exists so a source walker can call a function without crashing on a hook; it does not run effects, does not simulate reconciliation, and does not observe layout. It does NOT certify that a card list behaves correctly in a browser — only that the tree the component returns does not put two members of one list under one key. No component refuses, ever, for "hooks not installed" again.
+
+- readers: `scripts/react_dispatcher.mjs` (new), `scripts/check_duplicate_keys.mjs` (patched), this ledger entry.

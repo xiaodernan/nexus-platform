@@ -61,6 +61,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { parseFlags } from './cli_args.mjs';
+import { installClientDispatcher } from './react_dispatcher.mjs';
 
 const FLAGS = {
   '--plane': { kind: 'value', unit: 'directory' },
@@ -357,6 +358,7 @@ function componentsIn(sf) {
  * carry real keys; `next/*` is stubbed, because a link renders nothing this reader has to see.
  */
 const require_ = createRequire(join(ROOT, 'package.json'));
+const ReactRuntime = require_('react');
 const moduleCache = new Map();
 
 function loaderTarget(spec, fromFile) {
@@ -610,12 +612,16 @@ for (const abs of clientPlane) {
       continue;
     }
     let tree;
+    let restore = null;
     try {
+      restore = installClientDispatcher(ReactRuntime);
       tree = fn(props);
     } catch (e) {
+      if (restore) restore();
       refusals.push(`${rel(abs)} — calling ${comp.name} threw: ${e && e.message ? e.message : e}`);
       continue;
     }
+    if (restore) restore();
     if (!isElement(tree)) {
       refusals.push(`${rel(abs)} — ${comp.name} returned no tree for the fixture, so its list was never reached`);
       continue;

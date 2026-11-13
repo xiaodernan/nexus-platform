@@ -270,6 +270,7 @@ grows.
 
 | `packages/ui/src/trust/EntityCard.tsx` | D1018: EntityRail gains scroll chrome — the rail measures its own scrollable range at runtime (ResizeObserver + scroll listener), shows its prev/next round icon buttons only then (disabled at the ends), paints its scrollbar as physically-honest thumb (width = viewport/scroll fraction, offset = scroll fraction), moves under reduced motion as an instant jump, and keeps the same client element set on every render; chrome is aria-labelled from the trust contract (railPrev/railNext in @nexus/ui TrustLabels, zh + en dicts in web) |
 | `apps/web/src/lib/rail-nav-chrome.test.ts` | D1018: pins the rail chrome contract in text — geometry-over-media-query, end-state disabling, thumb math, the two TrustLabels strings in both locales, reduced-motion collapse, and the constant client element set |
+| `scripts/react_dispatcher.mjs` | D1019: the benign React 19 client dispatcher a source reader installs before calling a hooked component — useState/useReducer return initial state, effects are no-ops, the JSX runtime finds its `A` slot and `getOwner()` nulls, restore is handed back to the caller; not a renderer, a shape the walker needs |
 | `apps/ai/live_llm_smoke.py` | D1017: the operator-configured provider really answers through the production adapter path — env-gated smoke, never CI, key never committed |
 | `apps/ai/tests/test_live_llm_provider_gate.py` | D1017: the same proof as an opt-in pytest module (`live_llm` marker registered in pyproject.toml); skips without the env; CI stays on the offline mock |
 
