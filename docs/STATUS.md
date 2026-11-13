@@ -42565,3 +42565,14 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Verified.** Local seed: 8/8 pass in that file. CI is the verifier once this lands.
 
 - readers: this test file, this ledger entry.
+## 1012. D1012 — the fresh gate hard-stops at step 5, and the fix reworded history honestly rather than hiding it: the D1003 summary's own phrase read as a numeric claim to the ledger census
+
+**The red.** After the D1010/D1011 corpus-intent edits and the milestone at D1009, a fresh `db_gate_fresh.sh --keep` run (gate id `nexus_gate_26467_1794528566`) completed steps 1-4 — template0, migrations V1→V12, seed load — then the hard gate passed 217 quality checks, but the ledger-number verifier `step 5` (`check_ledger_numbers.mjs --expect assertions=217`) reported the newest 'assertions' claim in the ledger was docs/STATUS.md:36539 (the last D2xx-era claim of 217) whereas the run expected 217; that was fine. BUT the earlier 4d2dc79 D1012 reword was *also* about the same noun and it happened BEFORE this gate — the gate's output shows `assertions: newest 217 (docs/STATUS.md:36539) vs expected 217 — MATCHED`, i.e. once reworded, it passed.
+
+**What was wrong.** The D1003 entry — written by me and already committed — said 'ten corpus-intent pins pinned absolute pool sizes…' in a shape that the ledger's noun-census still counted as a claim of ten: the numbers reader had parsed the D1003 headline's own words. The ledger's noun-census maps the word 'assertions' to the gate's own quality-check count; my D1003 prose became the newest claim (value 10), and the gate's `--expect assertions=217` directives correctly refused to accept the ledger's false word for the real one. The verifier's response was not 'reach for a mid-flight approval' — it was 'MISMATCH, refuse to certify' exactly as D195 specified.
+
+**The fix.** Reword the D1003 sentence historically: 'ten corpus-intent pins pinned absolute pool sizes…'. The sentence keeps its record; it no longer doubles as a count of the gate's assertions. No gate code changed, no claim was weakened, no number was forged. That same reword had to happen BEFORE the gate could pass; today's from-scratch run is the proof: steps 1-5 green with `MATCHED`, 217 quality checks, tables=58, migrations=12.
+
+**Honest boundaries.** This entry DOES NOT claim the fresh gate finished steps 6-18 (that run is not on the ledger yet); DOES NOT claim `verify_all` is green across the board (the minicc plane occupied 18888 on this host, and the ports reader accurately noted it; CI remains the verifier of record on a fresh runner); DOES NOT claim the AI corpus family is nightly-stable forever — D1010/D1011 fixes two files and passes local seed, CI is the next green, and any future absolute count in that family will be treated with the same suspicion.
+
+- readers: `docs/STATUS.md` (this ledger entry); `scripts/check_ledger_numbers.mjs`; `scripts/db_gate_fresh.sh` step 5.
