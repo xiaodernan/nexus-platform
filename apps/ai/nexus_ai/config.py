@@ -43,6 +43,10 @@ class Settings:
     #: rarely. 45s keeps §105's degrade ladder bounded while giving a live model room to
     #: answer; operators override with NEXUS_REQUEST_TIMEOUT_S.
     request_timeout_s: float = 45.0
+    #: D1037: price of the cache-hit fraction of prompt_tokens (1.0 = no discount, the historical path).
+    #: Set NEXUS_CACHE_COST_FACTOR=0.5 (OpenAI-style cached-input billing) so `cost_usd` (an
+    #: estimate, never an invoice) reflects what the provider bills for the prefix it served.
+    cache_cost_factor: float = 1.0
     tool_timeout_s: float = 4.0
     max_tool_calls: int = 6
     max_llm_calls: int = 3
@@ -102,6 +106,7 @@ def load_settings() -> Settings:
         llm_model_mid=_env("NEXUS_LLM_MODEL_MID"),
         llm_model_reason=_env("NEXUS_LLM_MODEL_REASON"),
         request_timeout_s=float(_env("NEXUS_REQUEST_TIMEOUT_S") or 45),
+        cache_cost_factor=float(_env("NEXUS_CACHE_COST_FACTOR") or 1.0),
         tool_timeout_s=float(_env("NEXUS_TOOL_TIMEOUT_S") or 4),
         max_tool_calls=int(_env("NEXUS_MAX_TOOL_CALLS") or 6),
         max_llm_calls=int(_env("NEXUS_MAX_LLM_CALLS") or 3),

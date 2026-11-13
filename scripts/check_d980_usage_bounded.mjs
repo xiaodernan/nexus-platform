@@ -118,12 +118,12 @@ export function judge(files, present, ciPath = CI) {
   absent(ANTH, OLD_ANTH_METER, 'the old unbounded anthropic meter is gone', 'NO-OLD-ANTH');
 
   /* 3 — the cost-pipeline and degrade contracts survive (explicitly NOT a rewrite). */
-  has(OPENAI, 'cost_usd=cost_usd(meta["tier"], pt, ct)', 'openai cost still flows from the bounded meters', 'OAI-COST');
+  has(OPENAI, 'cost_usd=cost_usd(meta["tier"], pt, ct,', 'openai cost still flows from the bounded meters', 'OAI-COST');
   has(ANTH, 'cost_usd=cost_usd(meta["tier"], pt, ct)', 'anthropic cost still flows from the bounded meters', 'ANTH-COST');
   has(BASE, 'maybe_json', 'maybe_json is still imported for structured parsing', 'JSON');
   has(OPENAI, 'resp.raise_for_status()', 'openai status enforcement survives', 'OAI-RAISE');
   has(ANTH, 'resp.raise_for_status()', 'anthropic status enforcement survives', 'ANTH-RAISE');
-  has(OPENAI, 'degraded=False, finish_reason=choice.get("finish_reason") or "stop"',
+  has(OPENAI, 'degraded=False, finish_reason=finish,',
       'openai honest-response shape survives', 'OAI-HONEST');
   has(ANTH, 'degraded=False, finish_reason=raw.get("stop_reason") or "stop"',
       'anthropic honest-response shape survives', 'ANTH-HONEST');
@@ -213,7 +213,7 @@ if (SELF_TEST) {
     ['openai helper call removed', mutate(real, OPENAI, 'pt, ct, flagged = sanitize_usage(', 'pt, ct, flagged = (0, 0, False)  #'), 'OAI-PARSE'],
     ['anthropic helper call removed', mutate(real, ANTH, 'pt, ct, flagged = sanitize_usage(', 'pt, ct, flagged = (0, 0, False)  #'), 'ANTH-PARSE'],
     ['openai cost plumbing cut', mutate(real, OPENAI,
-        'cost_usd=cost_usd(meta["tier"], pt, ct)', 'cost_usd=0.0  # cost decoupled'), 'OAI-COST'],
+        'cost_usd=cost_usd(meta["tier"], pt, ct,', 'cost_usd=0.0  # cost decoupled'), 'OAI-COST'],
     ['anthropic cost plumbing cut', mutate(real, ANTH,
         'cost_usd=cost_usd(meta["tier"], pt, ct)', 'cost_usd=0.0  # cost decoupled'), 'ANTH-COST'],
     ['openai error mapping cut', mutate(real, OPENAI,

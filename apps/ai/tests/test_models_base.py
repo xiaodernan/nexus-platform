@@ -48,6 +48,25 @@ class TestCostUsd:
         # not in PRICE_PER_1K -> defaults to "mid" (0.003 in)
         assert B.cost_usd("bogus", 1000, 0) == 0.003
 
+    def test_cache_factor_zero_hits_is_default_behaviour(self):
+        # identical to the historical full-price path
+        assert B.cost_usd("cheap", 1000, 1000, cached_tokens=0, cache_factor=0.5) == 0.0015
+        assert B.cost_usd("cheap", 1000, 1000, cached_tokens=0, cache_factor=1.0) == 0.0015
+
+    def test_cache_factor_bounds_hits_to_the_prompt(self):
+        assert B.cost_usd("cheap", 1000, 0, cached_tokens=1500, cache_factor=0.0) == 0.0
+
+    def test_cache_factor_bills_cached_prefix_at_the_factor(self):
+        # half the prompt cached, factor=0.5: 500 plain*0.00025 + 500*0.000125 (20% for cached)
+        assert B.cost_usd("cheap", 1000, 0, cached_tokens=500, cache_factor=0.5) == 0.000188
+
+    def test_cache_factor_one_prices_as_full_price(self):
+        # all-cache with factor 1.0 equals the plain path — the knob cannot invent a free tier
+        assert B.cost_usd("cheap", 1000, 1000, cached_tokens=1000, cache_factor=1.0) == 0.0015
+
+    def test_cache_factor_zero_prices_cached_prompts_at_zero(self):
+        assert B.cost_usd("cheap", 1000, 1000, cached_tokens=1000, cache_factor=0.0) == 0.00125
+
 
 class TestNormLocale:
     def test_english_variants(self):

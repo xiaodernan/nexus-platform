@@ -38,6 +38,7 @@ def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
             models={"cheap": settings.llm_model_cheap, "mid": settings.llm_model_mid,
                     "reason": settings.llm_model_reason},
             timeout_s=timeout_s,
+            cache_cost_factor=getattr(settings, "cache_cost_factor", 1.0),
         )
     elif provider == "openai":
         pool["openai"] = OpenAIAdapter(
@@ -46,6 +47,7 @@ def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
             models={"cheap": settings.llm_model_cheap, "mid": settings.llm_model_mid,
                     "reason": settings.llm_model_reason},
             timeout_s=timeout_s,
+            cache_cost_factor=getattr(settings, "cache_cost_factor", 1.0),
         )
     pool["mock"] = MockAdapter()
     return pool
