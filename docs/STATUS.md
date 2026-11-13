@@ -42782,3 +42782,23 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **Honest boundary.** No claim about TTFB, LCP or Lighthouse deltas from the skeletons themselves; no route changed its data contract; no mock or bypass introduced; the skeletons' card shapes are intentionally identical to the rails', because anything more specific would assert facts the data plane has not delivered yet.
 
 - readers: `apps/web/app/search/loading.tsx`, `apps/web/app/m/[slug]/loading.tsx`, `apps/web/app/o/[slug]/loading.tsx`, `apps/web/app/[city]/loading.tsx`, this ledger entry.
+## 1030. D1030 — the /[city] catalog sub-routes finally ship their boundaries too: /[city]/[category], /[city]/[category]/[facet]
+
+**Why.** D1029's coverage audit closed the four main ƒ routes; the SEO catalog still had two deeper ƒ segments without boundaries — `/[city]/[category]` and `/[city]/[category]/[facet]` — identical page shape, identical blank-canvas defect on a cold first paint.
+
+**The unit.** Two new route-segment boundaries mirroring the `/[city]` shape; same discipline (`aria-hidden` decorative layers, `dict.states.loading` sr-only caption only, `motion-reduce:animate-none` shimmers, zero invented copy). The home boundary's docstring was also scrubbed of the literal zh/en caption strings at the test's request (D1031).
+
+**Verified.** tsc clean; next build green; web suite 255/255 (with the D1031 module).
+
+- readers: `apps/web/app/[city]/[category]/loading.tsx`, `apps/web/app/[city]/[category]/[facet]/loading.tsx`, this ledger entry.
+## 1031. D1031 — the boundary family is now pinned by a test that reddened on its own author: seven boundary files, 15 contract arms
+
+**Why.** Seven loading boundaries landed in D1028/D1029/D1030 with the same discipline by convention; a moment's inattention ships an eighth that leaks copy, skips the reduced-motion collapse, or renders without the sr-only caption — and nothing in the suite would notice.
+
+**The unit.** `apps/web/src/lib/loading-boundaries.test.ts`: for each of the seven boundary files it asserts existence, the exact sr-only caption element (`<span role="status" className="sr-only">{dict.states.loading}</span>`), at least one `aria-hidden="true"` decorative layer, at least one `motion-reduce:animate-none` shimmer, and — the gate — **no literal zh/en caption value anywhere in the file**, which is what caught the literal captions my own home boundary docstring was smuggling in. Plus one whitelist guarantee: `tokens.css` carries the `@media (prefers-reduced-motion: reduce)` rule this family depends on.
+
+**Verified.** The new module alone first ran RED on the boundary family (1 failure — the literal caption inside `app/loading.tsx`); the docstring was scrubbed; all 15 arms run green; web suite 255/255.
+
+**Honest boundary.** A text-probe cannot certify sighted experience or real streaming latency; it certifies the files' contractual markers.
+
+- readers: `apps/web/src/lib/loading-boundaries.test.ts`, this ledger entry.

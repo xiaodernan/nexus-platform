@@ -303,6 +303,9 @@ grows.
 | `apps/web/app/m/[slug]/loading.tsx` | D1029: the merchant detail loading boundary — hero block (brand tile, name/address shimmers, fact-strip chips) + two panel placeholders (facts-like rows); same §155/D981 copy discipline |
 | `apps/web/app/o/[slug]/loading.tsx` | D1029: the offering detail loading boundary — prose column shape: title bars + price chip + meta rows; shimmer-only, no facts |
 | `apps/web/app/[city]/loading.tsx` | D1029: the SEO catalog loading boundary — breadcrumb bar + H1 + category chip row + 6-card grid; shimmer-only |
+| `apps/web/app/[city]/[category]/loading.tsx` | D1030: the category-listing loading boundary — same landing shape as /[city], one level deeper (breadcrumb + H1 + category chips + 6-card shimmer grid); §155/D981 discipline identical |
+| `apps/web/app/[city]/[category]/[facet]/loading.tsx` | D1030: the facet-listing loading boundary — same as above, deepest route of the SEO catalog |
+| `apps/web/src/lib/loading-boundaries.test.ts` | D1031: the boundary family contract — seven files, 15 arms: existence, the exact sr-only caption element, aria-hidden decorative layers, motion-reduce present, no literal caption strings anywhere in the files; caught the home boundary docstring smuggling literals and green since |
 
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith

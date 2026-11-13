@@ -10,7 +10,7 @@ import { currentLocale } from '@/lib/i18n/server';
  * the blank white flash without claiming anything the data plane has not answered yet.
  *
  * Copy discipline (§155, D981): the only text rendered here comes from the dictionaries — the
- * eyebrow label and the sr-only loading caption (`dict.states.loading`, zh 加載中… / en Loading…).
+ * eyebrow label and the sr-only caption for the route's states.loading entry (zh + en carry it already).
  * Everything else is a shape, not a claim. `aria-hidden` keeps the shimmer bars off the
  * accessibility tree; the sr-only caption announces the state. Motion-reduce collapses every
  * shimmer bar to `animate-none`.
