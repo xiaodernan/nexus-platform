@@ -42609,3 +42609,18 @@ with the dispatcher had registered itself into the eureka view (D1004) before th
 **What this does NOT claim.** No other sibling-import is unaccounted for (they were audited); no claim the gate as a whole is now green end-to-end; no claim about step 10's falsifier (it does not plant a reader). The next gate step that plants a reader is the one to watch.
 
 - readers: `scripts/falsify_comment_plane.mjs` (arms D212–D214, D208/P3), this ledger entry.
+## 1016. D1016 — the D195 reader-reachability falsifier planted a CI anchor that didn't match: D956 extended the line with a compound `&& check_tinted_contrast.mjs` command, silently erasing the anchor the plant was meant to delete
+
+**The red.** `scripts/db_gate_fresh.sh` stopped at step 13/18 with `RESULT: NOT CHECKED — plant ci-a11y-gone.yml: its anchor occurs 0 time(s) in the shipped ci, not 1`. Every downstream gate step then hard-stops rather than false-pass. The defect has been in the tree since D956 (the tinted-ground census reclaimed the line by appending `&& node scripts/check_tinted_contrast.mjs | tee -a console-a11y.txt`).
+
+**Diagnosis.** `scripts/falsify_reader_reachability.mjs` arm "a reader invoked by no surface is an offender" asserts that deleting the ONE physical invocation line for `check_console_a11y.mjs` drives the census to report exactly one fewer invoked reader and to redden. The arm's anchor — written verbatim in D195 — was the whole line, which at the time of D956 was exactly one command. The append made the anchor unique to its ORIGINAL form and never matched again, so the plant substituted nothing and the census reported invoked-by = full census, never offender, never reddened for cause.
+
+**The fix.** Two parts, both anchored to the line's literal current shape:
+- the a11yGone / a17yMentioned plants now rename the a17y invocation to a non-reader (`node scripts/.a11y-gone.mjs`) while keeping the substantive tinted_contrast invocation intact — preserving the "one reader deleted" invariant the arm asserts;
+- the same pair's anchor lines are re-cut against the current shape so the plant substitutes exactly one line (the exact `grep -c` recipe the harness itself uses) and the arm remains reachable.
+
+**Verified.** `node scripts/falsify_reader_reachability.mjs` → **RESULT: PASS — 15 arms · 15 held · 0 missed**; the same package was red on these arms for days. Gate restart in background reclaims the planted-plane green.
+
+**Honest boundaries.** The falsifier is a planted-anchor harness — fixing the anchor does not certify the CI run itself; CI is the verifier of record for the full line-171 chain on master. `check_tinted_contrast.mjs` remains in the same CI step as the a11y census; the reachability census treats it as independently invoked, and the plant deliberately leaves it intact.
+
+- readers: `scripts/falsify_reader_reachability.mjs`, this ledger entry.

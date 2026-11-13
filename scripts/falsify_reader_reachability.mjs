@@ -91,13 +91,15 @@ function run(...argv) {
 const a11yGone = plant('gate-a11y-gone.sh', 'gate',
   [['( cd "$ROOT" && node scripts/check_console_a11y.mjs ) 2>&1 | sed -e \'s/^/    /\'\n', '']]);
 const ciA11yGone = plant('ci-a11y-gone.yml', 'ci',
-  [['          node scripts/check_console_a11y.mjs | tee console-a11y.txt\n', '']]);
+  [['          node scripts/check_console_a11y.mjs | tee console-a11y.txt && node scripts/check_tinted_contrast.mjs | tee -a console-a11y.txt\n',
+    '          node scripts/.a11y-gone.mjs | tee console-a11y.txt && node scripts/check_tinted_contrast.mjs | tee -a console-a11y.txt\n']]);
 // 2. The same reader named only in a comment: a mention is not a call site.
 const mentionedOnly = plant('gate-a11y-mentioned.sh', 'gate',
   [['( cd "$ROOT" && node scripts/check_console_a11y.mjs ) 2>&1 | sed -e \'s/^/    /\'\n',
     '# run node scripts/check_console_a11y.mjs by hand if this step ever looks wrong\n']]);
 const ciA11yMentioned = plant('ci-a11y-mentioned.yml', 'ci',
-  [['          node scripts/check_console_a11y.mjs | tee console-a11y.txt\n',
+  [['          node scripts/check_console_a11y.mjs | tee console-a11y.txt && node scripts/check_tinted_contrast.mjs | tee -a console-a11y.txt\n',
+    '          node scripts/.a11y-mentioned.mjs | tee console-a11y.txt && node scripts/check_tinted_contrast.mjs | tee -a console-a11y.txt\n',
     '          # run node scripts/check_console_a11y.mjs by hand if this step ever looks wrong\n']]);
 // 3. A piped CI step that loses the shell declaration.
 const ciNoShell = plant('ci-no-shell.yml', 'ci',
