@@ -205,8 +205,8 @@ async def persist_llm_call(database: Any, row: dict[str, Any]) -> bool:
     sql = """
     INSERT INTO llm_calls (agent_run_id, provider, model, purpose, prompt_tokens,
                            completion_tokens, cost_usd, latency_ms, status, cache_hit,
-                           cached_tokens)
-    VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                           cached_tokens, cache_reported)
+    VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     """
     try:
         await database.write(
@@ -222,6 +222,7 @@ async def persist_llm_call(database: Any, row: dict[str, Any]) -> bool:
             str(row.get("status") or "ok"),
             bool(row.get("cache_hit") or False),
             int(row.get("cached_tokens") or 0),
+            bool(row.get("cache_reported") or False),
         )
     except Exception:  # pragma: no cover - a ledger write never breaks a response
         log.warning("llm_calls insert failed (continuing degraded)", exc_info=True)

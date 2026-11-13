@@ -91,8 +91,12 @@ class OpenAIAdapter(HttpLLMAdapter):
         pt, ct, flagged = sanitize_usage(
             usage.get("prompt_tokens"), usage.get("completion_tokens"), text, req.max_tokens)
         # The provider's cache accounting — only ever trusted verbatim, never fabricated.
+        # D1052: `cache_reported` separates "the provider said zero cached" from "the provider
+        # did not answer". The latter is a reporting gap, not a miss, and the ledger must not
+        # charge it as one.
         cached_raw = (usage.get("prompt_tokens_details") or {}).get("cached_tokens")
-        cached = int(cached_raw) if isinstance(cached_raw, (int, float)) and cached_raw >= 0 else 0
+        cache_reported = isinstance(cached_raw, (int, float)) and not isinstance(cached_raw, bool)
+        cached = int(cached_raw) if cache_reported and cached_raw >= 0 else 0
         if cached > pt:
             cached = pt
         return LLMResponse(
@@ -106,6 +110,7 @@ class OpenAIAdapter(HttpLLMAdapter):
             usage_flagged=flagged,
             cache_hit=cached > 0,
             cached_tokens=cached,
+            cache_reported=cache_reported,
         )
 
     @staticmethod

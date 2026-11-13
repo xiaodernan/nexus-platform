@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   cacheHitRate,
+  cacheHitRateOf,
   costShare,
   degradedRate,
   dependencyStateOf,
@@ -39,6 +40,35 @@ describe('cache accounting (§9/D1045)', () => {
     expect(cacheHitRate(5248, 5413)).toBeCloseTo(5248 / 5413, 10);
     expect(cacheHitRate(9999, 100)).toBe(1);
     expect(cacheHitRate(-1, 100)).toBe(0);
+  });
+});
+
+describe('cache coverage — silence is not a miss (D1052)', () => {
+  it('divides over the calls whose provider answered, not over every row', () => {
+    // The measured shape: 8 byte-identical calls, prompt=4529 each; 5 reported
+    // cached=4352, the other 3 carried no prompt_tokens_details at all. Persisted as 0,
+    // the raw pair reads 60% — the operator's complaint. Over reporting rows it is 96%.
+    const row = {
+      reporting_calls: 5,
+      reporting_prompt_tokens: 5 * 4529,
+      reporting_cached_tokens: 5 * 4352,
+    };
+    const rawCached = 5 * 4352;
+    const rawPrompt = 8 * 4529;
+    expect(cacheHitRate(rawCached, rawPrompt)).toBeCloseTo(0.6006, 3);
+    expect(cacheHitRateOf(row, rawCached, rawPrompt)).toBeCloseTo(0.9609, 3);
+  });
+
+  it('falls back to the raw pair when nothing reported (pre-V14 ledgers included)', () => {
+    expect(cacheHitRateOf({ reporting_prompt_tokens: 0 }, 80, 2230)).toBeCloseTo(80 / 2230, 10);
+    expect(cacheHitRateOf({}, 80, 2230)).toBeCloseTo(80 / 2230, 10);
+    expect(cacheHitRateOf({ reporting_prompt_tokens: 1000, reporting_cached_tokens: 900 }, 0, 0))
+      .toBeCloseTo(0.9, 10);
+  });
+
+  it('is null — never 0 — when the reporting denominator is empty and there is nothing raw', () => {
+    expect(cacheHitRateOf({ reporting_prompt_tokens: 0 }, null, null)).toBeNull();
+    expect(cacheHitRateOf({ reporting_prompt_tokens: 0 }, 0, 0)).toBeNull();
   });
 });
 

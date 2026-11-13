@@ -101,6 +101,13 @@ class LLMResponse:
     #: tokens the provider explicitly marked as cache-hit (usage.prompt_tokens_details.cached_tokens).
     #: NEVER invents the value — stays 0 when the provider does not report it.
     cached_tokens: int = 0
+    #: D1050: did the provider answer the cache question at all? False means the response carried
+    #: no `prompt_tokens_details.cached_tokens`, which is NOT the same as "zero tokens were cached"
+    #: — measured on the operator's proxy, 3 of 8 byte-identical calls omitted it while the other 5
+    #: reported 4352/4529 cached (96%). Recording those three as 0 pulled the console's rate down to
+    #: 60%, which read as "the cache is broken". The ledger keeps the distinction so the aggregate
+    #: can be computed over reporting calls only.
+    cache_reported: bool = False
 
     @property
     def total_tokens(self) -> int:

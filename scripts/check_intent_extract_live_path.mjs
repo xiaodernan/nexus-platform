@@ -82,7 +82,13 @@ export function judge(files, present) {
   for (const p of PATHS) exists(p, `${p} exists`);
 
   /* 1 — the instruction is a constant, not a shrug. */
-  has(PIPE, 'INTENT_EXTRACT_SYSTEM = (', 'the §9 intent_extract instruction exists', 'PIPE-SYS-DEF');
+  // D1050: the instruction is now the TAIL of a frozen shared prefix, so the literal is
+  // named `_INTENT_SCHEMA_BODY` and `INTENT_EXTRACT_SYSTEM` is composed from it. The claim
+  // this reader makes is unchanged: the §9 instruction exists in this module and reaches
+  // the request. Pin both halves so neither the literal nor the composition can vanish.
+  has(PIPE, '_INTENT_SCHEMA_BODY = (', 'the §9 intent_extract instruction exists', 'PIPE-SYS-DEF');
+  has(PIPE, 'INTENT_EXTRACT_SYSTEM = contract_for("intent_extract", _INTENT_SCHEMA_BODY)',
+      'the instruction is composed into the system message', 'PIPE-SYS-COMPOSE');
   /* 2 — every atom of §7.1 the model needs to answer in schema is in it. */
   for (const atom of ['raw_query', 'intent', 'discover_merchant', 'category', 'location',
                       'time', 'budget', 'party_size', 'preferences', 'constraints',
@@ -153,7 +159,10 @@ if (SELF_TEST) {
   }
   const arms = [
     ['instruction erased',
-      mutate(real, PIPE, 'INTENT_EXTRACT_SYSTEM = (', 'INTENT_EXTRACT_SYSTEM_X = ('), 'PIPE-SYS-DEF'],
+      mutate(real, PIPE, '_INTENT_SCHEMA_BODY = (', '_INTENT_SCHEMA_BODY_X = ('), 'PIPE-SYS-DEF'],
+    ['the instruction stops being composed into the system message',
+      mutate(real, PIPE, 'INTENT_EXTRACT_SYSTEM = contract_for("intent_extract", _INTENT_SCHEMA_BODY)',
+             'INTENT_EXTRACT_SYSTEM = _INTENT_SCHEMA_BODY_X'), 'PIPE-SYS-COMPOSE'],
     ['understand() delinks the instruction',
       mutate(real, PIPE, 'system=INTENT_EXTRACT_SYSTEM, json_hint="json_object"',
              'json_hint="json_object"'), 'PIPE-DELIVER'],

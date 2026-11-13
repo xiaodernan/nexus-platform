@@ -43,6 +43,9 @@ class RoutedCall:
             "status": "ok",
             "cache_hit": r.cache_hit,
             "cached_tokens": int(getattr(r, "cached_tokens", 0)),
+            # D1050: carry the *reporting* fact, not just the value. A provider that omits
+            # `prompt_tokens_details` must not be counted as a miss in the aggregate.
+            "cache_reported": bool(getattr(r, "cache_reported", False)),
         }
 
 

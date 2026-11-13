@@ -116,7 +116,14 @@ public class AdminAiRepository {
                        coalesce(sum(l.prompt_tokens), 0) as prompt_tokens,
                        coalesce(sum(l.completion_tokens), 0) as completion_tokens,
                        coalesce(sum(l.cached_tokens), 0) as cached_tokens,
-                       count(*) filter (where l.cached_tokens > 0) as cache_hit_calls
+                       count(*) filter (where l.cached_tokens > 0) as cache_hit_calls,
+                       -- D1050: the rate is computed over the calls whose provider actually
+                       -- answered the cache question. "did not report" is not "zero cached".
+                       count(*) filter (where l.cache_reported) as reporting_calls,
+                       coalesce(sum(l.prompt_tokens) filter (where l.cache_reported), 0)
+                           as reporting_prompt_tokens,
+                       coalesce(sum(l.cached_tokens) filter (where l.cache_reported), 0)
+                           as reporting_cached_tokens
                 from llm_calls l
                 join agent_runs r on r.id = l.agent_run_id
                 where r.tenant_id = :tenant_id
@@ -130,7 +137,12 @@ public class AdminAiRepository {
                        count(*) as calls,
                        coalesce(sum(l.prompt_tokens), 0) as prompt_tokens,
                        coalesce(sum(l.cached_tokens), 0) as cached_tokens,
-                       count(*) filter (where l.cached_tokens > 0) as cache_hit_calls
+                       count(*) filter (where l.cached_tokens > 0) as cache_hit_calls,
+                       count(*) filter (where l.cache_reported) as reporting_calls,
+                       coalesce(sum(l.prompt_tokens) filter (where l.cache_reported), 0)
+                           as reporting_prompt_tokens,
+                       coalesce(sum(l.cached_tokens) filter (where l.cache_reported), 0)
+                           as reporting_cached_tokens
                 from llm_calls l
                 join agent_runs r on r.id = l.agent_run_id
                 where r.tenant_id = :tenant_id

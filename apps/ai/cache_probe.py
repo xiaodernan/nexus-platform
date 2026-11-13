@@ -116,6 +116,24 @@ async def main() -> int:
 
     smalls = [_request("Say exactly: NEXUS-CACHE-PROBE-X", SMALL, max_tokens=16) for _ in range(3)]
     await burst("tiny-system bursts (the default adapter system line — cold gauge for a prefix the app already uses)", pool, smalls)
+
+    # D1050 — the frozen prefix contract arm: the SAME diverse queries, now riding a
+    # byte-stable head that clears the provider's cacheable floor. First pass warms it;
+    # the second pass is the diverse-traffic hit rate the dashboard cares about.
+    try:
+        from nexus_ai.api.pipeline import INTENT_EXTRACT_SYSTEM
+
+        contract_requests = [_request(q, INTENT_EXTRACT_SYSTEM) for _ in range(2) for q in [
+            "鰂魚涌有咩好食嘅壽司",
+            "預算500港幣嘅拉麵",
+            "今日開到11點嘅茶餐廳",
+            "同價位幫我比較兩間皮膚管理中心",
+            "明晚11點半兩個人去食火鍋",
+            "排隊人龍一定長嘅雞煲我想去",
+        ]]
+        await burst("contract bursts (SAME diverse queries, frozen head — D1050)", pool, contract_requests)
+    except Exception as exc:
+        print(f"\n== contract bursts SKIP ({exc}) ==")
     return 0
 
 

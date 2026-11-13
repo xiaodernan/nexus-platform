@@ -201,6 +201,11 @@ public class AdminAiController {
             model.put("prompt_tokens", Json.longOf(row, "prompt_tokens"));
             model.put("cached_tokens", Json.longOf(row, "cached_tokens"));
             model.put("cache_hit_calls", Json.longOf(row, "cache_hit_calls"));
+            // D1050: coverage of the cache question, so a model whose provider never reports
+            // it is not silently averaged in as a permanent 0%.
+            model.put("reporting_calls", Json.longOf(row, "reporting_calls"));
+            model.put("reporting_prompt_tokens", Json.longOf(row, "reporting_prompt_tokens"));
+            model.put("reporting_cached_tokens", Json.longOf(row, "reporting_cached_tokens"));
             models.add(model);
         }
 
@@ -208,8 +213,13 @@ public class AdminAiController {
         Long promptTokens = Json.longOf(totalsRow, "prompt_tokens");
         Long cachedTokens = Json.longOf(totalsRow, "cached_tokens");
         Long calls = Json.longOf(totalsRow, "calls");
+        Long reportingCalls = Json.longOf(totalsRow, "reporting_calls");
+        Long reportingPrompt = Json.longOf(totalsRow, "reporting_prompt_tokens");
+        Long reportingCached = Json.longOf(totalsRow, "reporting_cached_tokens");
         long prompt = promptTokens == null ? 0 : promptTokens;
         long cached = cachedTokens == null ? 0 : cachedTokens;
+        long reported = reportingPrompt == null ? 0 : reportingPrompt;
+        long reportedCached = reportingCached == null ? 0 : reportingCached;
 
         Map<String, Object> out = new LinkedHashMap<>();
         Map<String, Object> totals = new LinkedHashMap<>();
@@ -218,14 +228,25 @@ public class AdminAiController {
         totals.put("completion_tokens", Json.longOf(totalsRow, "completion_tokens"));
         totals.put("cached_tokens", cached);
         totals.put("cache_hit_calls", Json.longOf(totalsRow, "cache_hit_calls"));
-        totals.put("cache_hit_rate", prompt > 0 ? (double) cached / (double) prompt : null);
+        totals.put("reporting_calls", reportingCalls == null ? 0 : reportingCalls);
+        totals.put("reporting_prompt_tokens", reported);
+        totals.put("reporting_cached_tokens", reportedCached);
+        // D1050: divide over the calls whose provider answered. When nothing reported (or the
+        // table predates V14), fall back to the raw pair so the number keeps its old meaning
+        // instead of turning null for a plane that does have accounting.
+        double rateBase = reported > 0 ? reported : prompt;
+        double rateCached = reported > 0 ? reportedCached : cached;
+        totals.put("cache_hit_rate", rateBase > 0 ? rateCached / rateBase : null);
         out.put("totals", totals);
         out.put("by_model", models);
         out.put("as_of", Instant.now().toString());
-        out.put("source", "llm_calls.cached_tokens (migration V13), joined onto agent_runs for the "
-                + "tenant scope - every row is this tenant's own cost-ledger record. cache_hit_rate "
-                + "is cached_tokens / prompt_tokens and is null until the tenant has made a call "
-                + "with a provider that reports cache accounting (D1036/D1042).");
+        out.put("source", "llm_calls.cached_tokens + llm_calls.cache_reported (migrations V13/V14), "
+                + "joined onto agent_runs for the tenant scope - every row is this tenant's own "
+                + "cost-ledger record. cache_hit_rate is reporting_cached_tokens / "
+                + "reporting_prompt_tokens (D1050: a provider that omits its cache accounting is "
+                + "not counted as a miss; reporting_calls/calls is the coverage) and is null until "
+                + "the tenant has made a call with a provider that reports cache accounting "
+                + "(D1036/D1042).");
         return out;
     }
 

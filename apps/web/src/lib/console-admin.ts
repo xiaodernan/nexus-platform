@@ -900,7 +900,13 @@ export interface AdminCacheModelRow {
   cached_tokens: number | null;
   /** Calls in this group whose cached_tokens > 0; null when not stated. */
   cache_hit_calls: number | null;
-  /** cached_tokens / prompt_tokens, clamped to [0, 1]; derived here, never invented. */
+  /** D1050: calls in this group whose provider actually answered the cache question. */
+  reporting_calls: number | null;
+  /** D1050: prompt tokens over those reporting calls — the honest denominator. */
+  reporting_prompt_tokens: number | null;
+  /** D1050: cached tokens over those reporting calls — the honest numerator. */
+  reporting_cached_tokens: number | null;
+  /** reporting_cached_tokens / reporting_prompt_tokens, clamped; derived here, never invented. */
   cache_hit_rate: number | null;
 }
 
@@ -911,6 +917,9 @@ export interface AdminAiCache {
     completion_tokens: number | null;
     cached_tokens: number | null;
     cache_hit_calls: number | null;
+    reporting_calls: number | null;
+    reporting_prompt_tokens: number | null;
+    reporting_cached_tokens: number | null;
     cache_hit_rate: number | null;
   };
   by_model: AdminCacheModelRow[];
@@ -923,6 +932,26 @@ export interface AdminAiCache {
 export function cacheHitRate(cached: number | null, prompt: number | null): number | null {
   if (cached === null || prompt === null || !Number.isFinite(prompt) || prompt <= 0) return null;
   return Math.min(1, Math.max(0, cached / prompt));
+}
+
+/**
+ * D1050: the hit rate divides over the calls whose provider actually answered the cache
+ * question. A provider that omits `prompt_tokens_details` is not a miss — measured on the
+ * operator's proxy, 3 of 8 byte-identical calls reported nothing while the other 5 served
+ * 4352/4529 tokens from cache, so counting the silent three as zero read as 60% instead of
+ * 96%. Falls back to the raw pair only when the payload has no reporting row at all, which
+ * keeps the number meaningful for a ledger written before V14.
+ */
+export function cacheHitRateOf(
+  row: Record<string, unknown>,
+  cached: number | null,
+  prompt: number | null,
+): number | null {
+  const reportingPrompt = intOf(row.reporting_prompt_tokens);
+  if (reportingPrompt !== null && reportingPrompt > 0) {
+    return cacheHitRate(intOf(row.reporting_cached_tokens) ?? 0, reportingPrompt);
+  }
+  return cacheHitRate(cached, prompt);
 }
 
 /**
@@ -987,7 +1016,10 @@ function mapCacheModelRow(row: Record<string, unknown>): AdminCacheModelRow | nu
     prompt_tokens: promptTokens,
     cached_tokens: cachedTokens,
     cache_hit_calls: pickNumber(row, ['cache_hit_calls', 'hits', 'cache_hits']),
-    cache_hit_rate: cacheHitRate(cachedTokens, promptTokens),
+    reporting_calls: pickNumber(row, ['reporting_calls']),
+    reporting_prompt_tokens: intOf(row.reporting_prompt_tokens),
+    reporting_cached_tokens: intOf(row.reporting_cached_tokens),
+    cache_hit_rate: cacheHitRateOf(row, cachedTokens, promptTokens),
   };
 }
 
@@ -1079,7 +1111,10 @@ export async function adminAiCacheRead(): Promise<ConsoleRead<AdminAiCache>> {
         completion_tokens: intOf(totalsRow.completion_tokens),
         cached_tokens: cachedTokens,
         cache_hit_calls: pickNumber(totalsRow, ['cache_hit_calls', 'hits', 'cache_hits']),
-        cache_hit_rate: cacheHitRate(cachedTokens, promptTokens),
+        reporting_calls: pickNumber(totalsRow, ['reporting_calls']),
+        reporting_prompt_tokens: intOf(totalsRow.reporting_prompt_tokens),
+        reporting_cached_tokens: intOf(totalsRow.reporting_cached_tokens),
+        cache_hit_rate: cacheHitRateOf(totalsRow, cachedTokens, promptTokens),
       },
       by_model,
     };
@@ -1386,6 +1421,8 @@ function demoCostRows(groupBy: CostGroupBy): AdminCostRow[] {
 function demoAiCache(): AdminAiCache {
   const totalPrompt = 61_230;
   const totalCached = 52_480;
+  // D1050 demo shape: 37 of 42 calls answered the cache question; the rate divides over
+  // those 37 (52_400 / 55_000), not over all 42 — the silent 5 are not misses.
   return {
     totals: {
       calls: 42,
@@ -1393,13 +1430,20 @@ function demoAiCache(): AdminAiCache {
       completion_tokens: 8_841,
       cached_tokens: totalCached,
       cache_hit_calls: 31,
-      cache_hit_rate: cacheHitRate(totalCached, totalPrompt),
+      reporting_calls: 37,
+      reporting_prompt_tokens: 55_000,
+      reporting_cached_tokens: 52_400,
+      cache_hit_rate: cacheHitRate(52_400, 55_000),
     },
     by_model: [
       { provider: 'openai', model: 'gpt-6-sol', calls: 40, prompt_tokens: 59_000,
-        cached_tokens: 52_400, cache_hit_calls: 31, cache_hit_rate: cacheHitRate(52_400, 59_000) },
+        cached_tokens: 52_400, cache_hit_calls: 31, reporting_calls: 37,
+        reporting_prompt_tokens: 55_000, reporting_cached_tokens: 52_400,
+        cache_hit_rate: cacheHitRate(52_400, 55_000) },
       { provider: 'mock', model: 'mock-heuristic-1', calls: 2, prompt_tokens: 2_230,
-        cached_tokens: 80, cache_hit_calls: 0, cache_hit_rate: cacheHitRate(80, 2_230) },
+        cached_tokens: 80, cache_hit_calls: 0, reporting_calls: 0,
+        reporting_prompt_tokens: 0, reporting_cached_tokens: 0,
+        cache_hit_rate: null },
     ],
   };
 }

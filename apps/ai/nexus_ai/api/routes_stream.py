@@ -99,13 +99,17 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
             yield ("status", StreamStatusFrame(
                 stage="summarizing", text=copy["answering"]).model_dump(mode="json"))
             from nexus_ai.models.base import LLMRequest
+            from nexus_ai.models.prefix_contract import contract_for
             from nexus_ai.models.router import CostMeter
 
             meter = CostMeter()
             wrapped, _report = _wrap_for_summary(chunks)
             call = await deps.router().run(LLMRequest(
                 task_class="summary",
-                payload={"records": wrapped, "locale": locale}), meter=meter)
+                payload={"records": wrapped, "locale": locale},
+                # D1050: the streamed answer shares the same frozen prefix as the JSON
+                # summary, so both paths warm one provider-side cache entry per model.
+                system=contract_for("summary")), meter=meter)
             # D437: the chat's model call is a row in the cost ledger too - written after
             # the run row, because the ledger row refers to it.
             usage = meter.usage()

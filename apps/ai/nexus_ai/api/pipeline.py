@@ -27,6 +27,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import Intent
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 from nexus_ai.models.router import BudgetExceeded, CostMeter
 from nexus_ai.nlu.state_merger import merge_turn, question_for
 from nexus_ai.nlu.understand import extract_intent_dict
@@ -54,7 +55,7 @@ from nexus_ai.contract import MAX_QUERY_LENGTH  # noqa: E402,F401
 #: with no task instruction at all, answered as a helpful chatbot, and §7.1's validator
 #: (correctly) refused the answer every time. Any payload that passes here must name the
 #: object, not the task.
-INTENT_EXTRACT_SYSTEM = (
+_INTENT_SCHEMA_BODY = (
     "You parse Hong Kong local-search and dining queries into a strict JSON object. "
     "No commentary, no markdown — answer with the object only. The object is the "
     "canonical Intent (API_CONTRACT §7.1):\n"
@@ -88,6 +89,12 @@ INTENT_EXTRACT_SYSTEM = (
     "Never invent: a field the query did not state is null and is named in `unknowns`. "
     "Answer with JSON only."
 )
+
+#: D1050: the schema body above is tuned and stays verbatim — it is now the TAIL of a
+#: byte-stable shared prefix instead of the whole system message. That moves the stable
+#: run from ~440 tokens (under the provider's cacheable floor, 0% measured on diverse
+#: traffic) to ~1850 tokens, so the upstream cache can actually serve it.
+INTENT_EXTRACT_SYSTEM = contract_for("intent_extract", _INTENT_SCHEMA_BODY)
 
 
 @dataclass
@@ -310,7 +317,10 @@ async def compose_summary(deps: Deps, pack: SearchPack, *,
         slim_records = slim_records_for_model(pack.items)
         call = await router.run(LLMRequest(
             task_class="summary",
-            payload={"records": slim_records, "locale": locale}), meter=meter)
+            payload={"records": slim_records, "locale": locale},
+            # D1050: without a system message this call's only stable head was the
+            # adapter's 17-token default — nothing the provider would ever cache.
+            system=contract_for("summary")), meter=meter)
         # D437: the summary's model call is a row in the cost ledger too - written after
         # the run row, because the ledger row refers to it.
         raw = call.response.text or ""

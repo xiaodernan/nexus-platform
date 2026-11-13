@@ -32,6 +32,20 @@ from nexus_ai.models.anthropic import AnthropicAdapter
 from nexus_ai.models.base import LLMRequest, cost_usd, estimate_tokens, sanitize_usage
 from nexus_ai.models.openai import OpenAIAdapter
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _direct_json_transport(monkeypatch):
+    """D1052: these arms are about the DIRECT JSON body shape.
+
+    D1044 made the SSE envelope the adapter default, and this module's fake response carries
+    only `.json()` — so without this opt-out the three direct-wire arms hit `resp.text` and
+    redden the ai job at `uv run pytest -q`. Same discipline test_live_adapters.py already
+    applies; the adapter's default is untouched.
+    """
+    monkeypatch.setenv("NEXUS_LLM_STREAM", "false")
+
 
 class _Resp:
     def __init__(self, payload):
