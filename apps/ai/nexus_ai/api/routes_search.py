@@ -19,12 +19,35 @@ from nexus_ai.api import errors, runs
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
 from nexus_ai.api.pipeline import run_search, validate_intent
+from nexus_ai.api.search_cache import rails_cache_get, rails_cache_set
 from nexus_ai.contract import SearchRequest
 from nexus_ai.nlu.understand import extract_intent_dict
 
 log = logging.getLogger("nexus_ai.api.routes_search")
 
 router = APIRouter()
+
+
+class _StandIn:
+    """Minimal pack-shaped stand-in for a cache hit — `_record`'s only consumer surface.
+
+    D1022: when the rails cache serves a sort-only answer, we still want the run ledger to see the
+    request, so `_record` keeps its exact contract. This stand-in exposes exactly that trio:
+    `pack.response.took_ms`, `pack.items` (list[dict] the ledger walks with `pack_response_ids`), and
+    `pack.degraded`. It is never used for anything but serving the ledger; the response body is
+    built in the route.
+    """
+
+    def __init__(self, cached: dict[str, Any], *, run_id: str) -> None:
+        self.items = cached.get("items") or []
+        self.response = _StandInResponse(self.items)
+        self.degraded = False
+
+
+class _StandInResponse:
+    def __init__(self, items: list[dict[str, Any]]) -> None:
+        self.items = items
+        self.took_ms = 0
 
 
 @router.post("/ai/v1/search")
@@ -37,6 +60,17 @@ async def search_endpoint(request: Request, body: SearchRequest) -> JSONResponse
         intent = validate_intent(extract_intent_dict(
             body.query, {"locale": body.locale,
                          **({"geo": body.geo.model_dump()} if body.geo else {})}))
+    payload = body.model_dump(mode="json") | {"tenant": str(deps.tenant_id())}
+    cached = rails_cache_get(payload)
+    if cached is not None:
+        # D1022: the cache stores the rail answer minus its per-run identifiers — agent_run_id is re-minted
+        # for this call, took_ms is zeroed (the cached round trip never happened in this request).
+        stand = _StandIn(cached, run_id=run_id)
+        data = dict(cached)
+        data["agent_run_id"] = str(run_id)
+        data["took_ms"] = 0
+        _record(deps, run_id=run_id, body=body, intent=intent, pack=stand)
+        return degraded_json(data)
     try:
         pack = await run_search(
             deps, intent, query=body.query or "", geo=body.geo,
@@ -56,6 +90,7 @@ async def search_endpoint(request: Request, body: SearchRequest) -> JSONResponse
         "degraded": bool(pack.degraded),
         "intent": intent,
     }).model_dump(mode="json")
+    rails_cache_set(payload, data)
 
     _record(deps, run_id=run_id, body=body, intent=intent, pack=pack)
     # D451: the degraded flag travels in the body AND the header - one place, so the two
