@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  cacheHitRate,
   costShare,
   degradedRate,
   dependencyStateOf,
@@ -25,6 +26,21 @@ import {
  * 0%; a health rollup that lists nothing is `unknown`, never `ok`; and the moderation counts are
  * case-shaped, so the overview cannot restate a review case as a "listing change".
  */
+
+describe('cache accounting (§9/D1045)', () => {
+  it('reports null, never NaN, when nothing was reported or there is nothing to divide', () => {
+    expect(cacheHitRate(null, 100)).toBeNull();
+    expect(cacheHitRate(50, null)).toBeNull();
+    expect(cacheHitRate(50, 0)).toBeNull();
+    expect(cacheHitRate(50, Number.NaN)).toBeNull();
+  });
+
+  it('divides cached by prompt and clamps into [0, 1]', () => {
+    expect(cacheHitRate(5248, 5413)).toBeCloseTo(5248 / 5413, 10);
+    expect(cacheHitRate(9999, 100)).toBe(1);
+    expect(cacheHitRate(-1, 100)).toBe(0);
+  });
+});
 
 describe('admin identity (§68)', () => {
   it('accepts only the two platform roles', () => {

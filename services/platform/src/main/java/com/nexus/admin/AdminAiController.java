@@ -25,12 +25,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * API_CONTRACT §9 — the admin AI observability reads ({@code /admin/ai/runs}, {@code /admin/ai/costs})
- * and the Admin Analytics Agent ({@code POST /admin/ai/ask}, §126).
+ * API_CONTRACT §9 — the admin AI observability reads ({@code /admin/ai/runs}, {@code /admin/ai/costs},
+ * {@code /admin/ai/cache}) and the Admin Analytics Agent ({@code POST /admin/ai/ask}, §126).
  *
  * <p>Both halves are read-only, and that is the point of the file. {@code /runs} shows what the agents
  * actually did (status, tokens, cost, whether a fallback fired); {@code /costs} rolls the same rows up by
- * the three groupings §9 documents; {@code /ask} answers a question from <em>aggregate SQL over this
+ * the three groupings §9 documents; {@code /cache} rolls the per-call provider cache accounting up through
+ * the same tenant join ({@code llm_calls} → {@code agent_runs}, because {@code llm_calls} carries no
+ * tenant column of its own) and reports measured values only — never an invented dollar saving;
+ * {@code /ask} answers a question from <em>aggregate SQL over this
  * tenant's own rows</em> and nothing else.
  *
  * <p>§126 requires the agent's tools to be read-only, so {@code /ask} refuses an instruction to change
@@ -177,6 +180,52 @@ public class AdminAiController {
         out.put("source", "agent_runs.cost_usd / *_tokens (DATABASE.md §3.12). llm_calls is finer-grained "
                 + "but carries no tenant column, so the run-level roll-up is what this tenant-scoped read "
                 + "reports; a per-call breakdown would need a join through agent_runs.");
+        return out;
+    }
+
+    // ---------------------------------------------------------------- cache
+
+    @GetMapping("/cache")
+    @RequiresPlatformRole
+    public Map<String, Object> cache(@RequestParam(required = false) String limit,
+                                     HttpServletRequest request) {
+        TenantContext tenant = Req.tenant(request);
+        int size = paging.limit(limit);
+
+        List<Map<String, Object>> models = new ArrayList<>();
+        for (Map<String, Object> row : ai.cacheByModel(tenant, size)) {
+            Map<String, Object> model = new LinkedHashMap<>();
+            model.put("provider", Json.str(row, "provider"));
+            model.put("model", Json.str(row, "model"));
+            model.put("calls", Json.longOf(row, "calls"));
+            model.put("prompt_tokens", Json.longOf(row, "prompt_tokens"));
+            model.put("cached_tokens", Json.longOf(row, "cached_tokens"));
+            model.put("cache_hit_calls", Json.longOf(row, "cache_hit_calls"));
+            models.add(model);
+        }
+
+        Map<String, Object> totalsRow = ai.cacheTotals(tenant);
+        Long promptTokens = Json.longOf(totalsRow, "prompt_tokens");
+        Long cachedTokens = Json.longOf(totalsRow, "cached_tokens");
+        Long calls = Json.longOf(totalsRow, "calls");
+        long prompt = promptTokens == null ? 0 : promptTokens;
+        long cached = cachedTokens == null ? 0 : cachedTokens;
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        Map<String, Object> totals = new LinkedHashMap<>();
+        totals.put("calls", calls == null ? 0 : calls);
+        totals.put("prompt_tokens", prompt);
+        totals.put("completion_tokens", Json.longOf(totalsRow, "completion_tokens"));
+        totals.put("cached_tokens", cached);
+        totals.put("cache_hit_calls", Json.longOf(totalsRow, "cache_hit_calls"));
+        totals.put("cache_hit_rate", prompt > 0 ? (double) cached / (double) prompt : null);
+        out.put("totals", totals);
+        out.put("by_model", models);
+        out.put("as_of", Instant.now().toString());
+        out.put("source", "llm_calls.cached_tokens (migration V13), joined onto agent_runs for the "
+                + "tenant scope - every row is this tenant's own cost-ledger record. cache_hit_rate "
+                + "is cached_tokens / prompt_tokens and is null until the tenant has made a call "
+                + "with a provider that reports cache accounting (D1036/D1042).");
         return out;
     }
 

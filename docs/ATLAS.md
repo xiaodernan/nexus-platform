@@ -49,6 +49,13 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/ai/nexus_ai/api/prefix_slim.py` | D1043: byte-stable whitelist slimmer for the summary prompt — ID/title/subtitle/tags/price/rating/distance_m/open_now/ai_match score only; fixes the provider-cache bust measured live (0% → 97% cached_tokens on identical payload) |
 | `apps/ai/tests/test_prefix_slim.py` | D1043: offline pin — byte-determinism, volatile-field absence, cap-after-filter, garbage tolerance |
 | `apps/ai/tests/test_openai_stream.py` | D1044: offline pins — default body carries the SSE envelope with include_usage; explicit opt-out restores direct JSON; end-to-end SSE assembly (content/usage/cached_tokens/model/finish_reason); `_reassemble_sse` noise handling |
+| `services/platform/src/main/java/com/nexus/admin/AdminAiController.java` | D1045: new `GET /api/v1/admin/ai/cache` — measured provider cache accounting rolled up through `llm_calls`→`agent_runs` (tenant scope lives on agent_runs); report carries no invented dollar saving |
+| `services/platform/src/main/java/com/nexus/admin/AdminAiRepository.java` | D1045: `cacheTotals` / `cacheByModel` — the two SQL readers behind /admin/ai/cache; measured tokens only, tenant-scoped by the join |
+| `apps/web/src/lib/console-admin.ts` | D1045: `adminAiCacheRead()` + `AdminAiCache` / `AdminCacheModelRow` types + clamped `cacheHitRate` helper; demo fixture labelled like the rest of the console; `ADMIN_SOURCES.aiCache` pinned to the §9 route |
+| `apps/web/app/admin/ai/page.tsx` | D1045: new §"Cache accounting" section — totals cells (calls, cached tokens, hit rate, hit calls) + per-provider/model table, ReadFailure and SourceStamp honoured |
+| `apps/web/src/lib/i18n/dict.ts` | D1045: zh + en copy for the cache section (`cacheTitle/cacheIntro/cacheEmpty/cacheColumns/cacheHitRateLabel`) |
+| `apps/web/src/lib/console-admin.test.ts` | D1045: `cacheHitRate` pins — null-never-NaN, [0,1] clamp, exact ratio |
+| `docs/API_CONTRACT.md` | D1045: §9 gains the `GET /api/v1/admin/ai/cache` route with its documented semantics |
 Infrastructure | `infra/docker-compose.yml`, `infra/db/migrations`, `infra/config` | compose profiles, Flyway DDL, ranking/market config |
 | Demo corpus | `data/seed` | labelled synthetic Hong Kong data (`data_origin='demo'`) |
 | Proof | `tests/e2e`, `docs/TESTING.md`, `docs/evidence` | Playwright suites, measured runbook, screenshots |

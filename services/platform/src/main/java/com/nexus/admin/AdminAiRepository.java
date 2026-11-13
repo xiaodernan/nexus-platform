@@ -99,6 +99,47 @@ public class AdminAiRepository {
                 """.formatted(expression), Json.map("limit", limit));
     }
 
+    // ------------------------------------------------------------- cache (§9/D1045)
+
+    /**
+     * The provider's per-call cache accounting, rolled up. `llm_calls` carries no tenant
+     * column (which is why the cost read uses the run-level roll-up), but it refers to the
+     * run in `agent_runs` — so the join below is the tenant scope, not a privacy hole:
+     * every `llm_calls` row considered belongs to this tenant's own run.
+     *
+     * Measured values only. No dollar figure is derived here — the provider reports token
+     * counts; anything more would be an invented price.
+     */
+    public Map<String, Object> cacheTotals(TenantContext tenant) {
+        return jdbc.firstForTenant(tenant, """
+                select count(*) as calls,
+                       coalesce(sum(l.prompt_tokens), 0) as prompt_tokens,
+                       coalesce(sum(l.completion_tokens), 0) as completion_tokens,
+                       coalesce(sum(l.cached_tokens), 0) as cached_tokens,
+                       count(*) filter (where l.cached_tokens > 0) as cache_hit_calls
+                from llm_calls l
+                join agent_runs r on r.id = l.agent_run_id
+                where r.tenant_id = :tenant_id
+                """, Json.map()).orElse(new LinkedHashMap<>());
+    }
+
+    public List<Map<String, Object>> cacheByModel(TenantContext tenant, int limit) {
+        return jdbc.forTenant(tenant, """
+                select coalesce(l.provider, 'unknown') as provider,
+                       coalesce(l.model, 'unknown') as model,
+                       count(*) as calls,
+                       coalesce(sum(l.prompt_tokens), 0) as prompt_tokens,
+                       coalesce(sum(l.cached_tokens), 0) as cached_tokens,
+                       count(*) filter (where l.cached_tokens > 0) as cache_hit_calls
+                from llm_calls l
+                join agent_runs r on r.id = l.agent_run_id
+                where r.tenant_id = :tenant_id
+                group by 1, 2
+                order by calls desc, provider asc, model asc
+                limit :limit
+                """, Json.map("limit", limit));
+    }
+
     public Map<String, Object> costTotals(TenantContext tenant) {
         return jdbc.firstForTenant(tenant, """
                 select count(*) as runs,

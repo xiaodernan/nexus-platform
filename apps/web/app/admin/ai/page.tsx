@@ -5,7 +5,7 @@ import { Badge, EmptyState } from '@nexus/ui';
 import { formatNumber } from '@/lib/format';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
-import { adminAiCostsRead, adminAiRunsRead, degradedRate, type CostGroupBy } from '@/lib/console-admin';
+import { adminAiCacheRead, adminAiCostsRead, adminAiRunsRead, degradedRate, type CostGroupBy } from '@/lib/console-admin';
 import { ConsoleSection, MetricCell, ReadFailure, SourceStamp } from '@/components/console/console-parts';
 import { ConsoleTable } from '@/components/console/console-table';
 import { AdminAsk } from '@/components/console/admin-ask';
@@ -40,7 +40,7 @@ export default async function AdminAiPage(props: {
   if (!access.granted) return <AdminDenied access={access} locale={locale} />;
 
   const groupBy = groupOf(search.group);
-  const [runs, costs] = await Promise.all([adminAiRunsRead({ limit: 50 }), adminAiCostsRead(groupBy)]);
+  const [runs, costs, cache] = await Promise.all([adminAiRunsRead({ limit: 50 }), adminAiCostsRead(groupBy), adminAiCacheRead()]);
   const rate = degradedRate(runs.data ?? []);
 
   const groups: CostGroupBy[] = ['agent', 'model', 'day'];
@@ -141,6 +141,57 @@ export default async function AdminAiPage(props: {
               empty={<EmptyState icon="trending" title={copy.costsEmpty} className="py-6" />}
             />
             <SourceStamp read={costs} locale={locale} className="mt-2" />
+          </>
+        )}
+      </ConsoleSection>
+
+      <ConsoleSection id="cache" title={copy.cacheTitle} note={copy.cacheIntro} icon="refresh">
+        {cache.status === 'failed' ? (
+          <ReadFailure read={cache} locale={locale} title={dict.merchant.degradedTitle} />
+        ) : (
+          <>
+            <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <MetricCell
+                label={copy.cacheColumns.calls}
+                value={cache.data?.totals.calls === null || cache.data?.totals.calls === undefined ? '—' : formatNumber(cache.data.totals.calls, dict.locale)}
+                read={cache}
+                locale={locale}
+              />
+              <MetricCell
+                label={copy.cacheColumns.cached}
+                value={cache.data?.totals.cached_tokens === null || cache.data?.totals.cached_tokens === undefined ? '—' : formatNumber(cache.data.totals.cached_tokens, dict.locale)}
+                read={cache}
+                locale={locale}
+              />
+              <MetricCell
+                label={copy.cacheColumns.hitRate}
+                value={cache.data?.totals.cache_hit_rate === null || cache.data?.totals.cache_hit_rate === undefined ? '—' : `${(cache.data.totals.cache_hit_rate * 100).toFixed(1)}%`}
+                note={<span className="text-2xs text-ink-faint">{copy.cacheHitRateLabel}</span>}
+                read={cache}
+                locale={locale}
+              />
+              <MetricCell
+                label={copy.cacheColumns.hits}
+                value={cache.data?.totals.cache_hit_calls === null || cache.data?.totals.cache_hit_calls === undefined ? '—' : formatNumber(cache.data.totals.cache_hit_calls, dict.locale)}
+                read={cache}
+                locale={locale}
+              />
+            </div>
+            <ConsoleTable
+              caption={copy.cacheTitle}
+              head={[copy.cacheColumns.provider, copy.cacheColumns.model, copy.cacheColumns.calls, copy.cacheColumns.prompt, copy.cacheColumns.cached, copy.cacheColumns.hitRate, copy.cacheColumns.hits]}
+              rows={(cache.data?.by_model ?? []).map((row) => [
+                <span key="p" className="font-mono text-2xs text-ink-strong">{row.provider}</span>,
+                <span key="m" className="font-mono text-2xs text-ink-muted">{row.model}</span>,
+                <span key="c" className="font-mono text-2xs">{row.calls ?? '—'}</span>,
+                <span key="t" className="font-mono text-2xs">{row.prompt_tokens === null ? '—' : formatNumber(row.prompt_tokens, dict.locale)}</span>,
+                <span key="ca" className="font-mono text-2xs">{row.cached_tokens === null ? '—' : formatNumber(row.cached_tokens, dict.locale)}</span>,
+                <span key="h" className="font-mono text-2xs">{row.cache_hit_rate === null ? '—' : `${(row.cache_hit_rate * 100).toFixed(1)}%`}</span>,
+                <span key="hi" className="font-mono text-2xs">{row.cache_hit_calls ?? '—'}</span>,
+              ])}
+              empty={<EmptyState icon="refresh" title={copy.cacheEmpty} className="py-6" />}
+            />
+            <SourceStamp read={cache} locale={locale} className="mt-2" />
           </>
         )}
       </ConsoleSection>

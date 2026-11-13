@@ -59,6 +59,7 @@ export const ADMIN_SOURCES = {
   merchantSuspend: 'POST /api/v1/admin/merchants/{id}/suspend',
   aiRuns: 'GET /api/v1/admin/ai/runs',
   aiCosts: 'GET /api/v1/admin/ai/costs',
+  aiCache: 'GET /api/v1/admin/ai/cache',
   aiAsk: 'POST /api/v1/admin/ai/ask',
   searchAnalytics: 'GET /api/v1/admin/search/analytics',
   systemHealth: 'GET /api/v1/admin/system/health',
@@ -888,6 +889,42 @@ export interface AdminCostRow {
 
 export type CostGroupBy = 'agent' | 'model' | 'day';
 
+/** §9/D1045: the provider's per-call cache accounting, rolled up per provider/model. */
+export interface AdminCacheModelRow {
+  provider: string;
+  model: string;
+  /** Calls in this group; null when the payload does not state one. */
+  calls: number | null;
+  prompt_tokens: number | null;
+  /** Tokens the provider served from its own prefix cache (llm_calls.cached_tokens, V13). */
+  cached_tokens: number | null;
+  /** Calls in this group whose cached_tokens > 0; null when not stated. */
+  cache_hit_calls: number | null;
+  /** cached_tokens / prompt_tokens, clamped to [0, 1]; derived here, never invented. */
+  cache_hit_rate: number | null;
+}
+
+export interface AdminAiCache {
+  totals: {
+    calls: number | null;
+    prompt_tokens: number | null;
+    completion_tokens: number | null;
+    cached_tokens: number | null;
+    cache_hit_calls: number | null;
+    cache_hit_rate: number | null;
+  };
+  by_model: AdminCacheModelRow[];
+}
+
+/**
+ * §9/D1045: cached_tokens / prompt_tokens clamped to [0, 1]. null — never NaN — when there
+ * is no prompt to divide or nothing was reported.
+ */
+export function cacheHitRate(cached: number | null, prompt: number | null): number | null {
+  if (cached === null || prompt === null || !Number.isFinite(prompt) || prompt <= 0) return null;
+  return Math.min(1, Math.max(0, cached / prompt));
+}
+
 /**
  * A run is degraded when it says `status='fallback'`/`degraded`, when `degraded` is true, or when
  * `fallback_used` states anything other than "no" — the platform serves `fallback_used` as a text
@@ -935,6 +972,23 @@ export async function adminAiRunsRead(options: { limit?: number } = {}): Promise
     asOf: outcome.page.asOf,
     demo: outcome.page.demo,
   });
+}
+
+function mapCacheModelRow(row: Record<string, unknown>): AdminCacheModelRow | null {
+  const provider = pickString(row, ['provider', 'provider_id']);
+  const model = pickString(row, ['model']);
+  if (!provider && !model) return null;
+  const promptTokens = intOf(row.prompt_tokens);
+  const cachedTokens = intOf(row.cached_tokens);
+  return {
+    provider: provider ?? 'unknown',
+    model: model ?? 'unknown',
+    calls: pickNumber(row, ['calls', 'call_count', 'count', 'runs']),
+    prompt_tokens: promptTokens,
+    cached_tokens: cachedTokens,
+    cache_hit_calls: pickNumber(row, ['cache_hit_calls', 'hits', 'cache_hits']),
+    cache_hit_rate: cacheHitRate(cachedTokens, promptTokens),
+  };
 }
 
 function mapCostRow(row: Record<string, unknown>): AdminCostRow | null {
@@ -991,6 +1045,50 @@ export async function adminAiCostsRead(groupBy: CostGroupBy): Promise<ConsoleRea
 /* ----------------------------------------------------- search analytics (§9) */
 
 /** One row of the platform's own `by_event` breakdown (`{name, events, sessions}`). */
+/**
+ * `GET /api/v1/admin/ai/cache` (§9/D1045). Not a §1 page — measured provider cache accounting:
+ * `{totals, by_model, as_of, source}`. Every number here is the provider's own report
+ * (`usage.prompt_tokens_details.cached_tokens`) joined with agent_runs for the tenant scope;
+ * when a provider reports nothing, `cached_tokens` is honestly 0 and the rate honestly null.
+ */
+export async function adminAiCacheRead(): Promise<ConsoleRead<AdminAiCache>> {
+  const path = ADMIN_SOURCES.aiCache;
+  if (IS_MOCK) {
+    return okRead({ data: demoAiCache(), origin: 'mock', source: DEMO_SOURCE(path), asOf: null, demo: true });
+  }
+  try {
+    const payload = await nexusAuthedGet<unknown>('platform', '/api/v1/admin/ai/cache', {
+      cache: 'no-store',
+    });
+    const record = recordOf(payload);
+    if (!record) return failedRead({ source: path, errorCode: 'invalid_payload' });
+    const totalsRow = recordOf(record.totals) ?? {};
+    const promptTokens = intOf(totalsRow.prompt_tokens);
+    const cachedTokens = intOf(totalsRow.cached_tokens);
+    const by_model: AdminCacheModelRow[] = [];
+    for (const raw of listOf(record.by_model ?? record.items)) {
+      const row = recordOf(raw);
+      if (!row) continue;
+      const mapped = mapCacheModelRow(row);
+      if (mapped) by_model.push(mapped);
+    }
+    const data: AdminAiCache = {
+      totals: {
+        calls: pickNumber(totalsRow, ['calls', 'call_count', 'count']),
+        prompt_tokens: promptTokens,
+        completion_tokens: intOf(totalsRow.completion_tokens),
+        cached_tokens: cachedTokens,
+        cache_hit_calls: pickNumber(totalsRow, ['cache_hit_calls', 'hits', 'cache_hits']),
+        cache_hit_rate: cacheHitRate(cachedTokens, promptTokens),
+      },
+      by_model,
+    };
+    return okRead({ data, origin: 'live', source: path, asOf: asOfOf(record), demo: false });
+  } catch (cause) {
+    return failedRead({ source: path, errorCode: errorCodeOf(cause), requestId: requestIdOf(cause) });
+  }
+}
+
 export interface AdminSearchEventRow {
   name: string;
   events: number | null;
@@ -1283,6 +1381,27 @@ function demoCostRows(groupBy: CostGroupBy): AdminCostRow[] {
       share: costShare(cost, total),
     };
   });
+}
+
+function demoAiCache(): AdminAiCache {
+  const totalPrompt = 61_230;
+  const totalCached = 52_480;
+  return {
+    totals: {
+      calls: 42,
+      prompt_tokens: totalPrompt,
+      completion_tokens: 8_841,
+      cached_tokens: totalCached,
+      cache_hit_calls: 31,
+      cache_hit_rate: cacheHitRate(totalCached, totalPrompt),
+    },
+    by_model: [
+      { provider: 'openai', model: 'gpt-6-sol', calls: 40, prompt_tokens: 59_000,
+        cached_tokens: 52_400, cache_hit_calls: 31, cache_hit_rate: cacheHitRate(52_400, 59_000) },
+      { provider: 'mock', model: 'mock-heuristic-1', calls: 2, prompt_tokens: 2_230,
+        cached_tokens: 80, cache_hit_calls: 0, cache_hit_rate: cacheHitRate(80, 2_230) },
+    ],
+  };
 }
 
 function demoSearchAnalytics(): AdminSearchAnalytics {
