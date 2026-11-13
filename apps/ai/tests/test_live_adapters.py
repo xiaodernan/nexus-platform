@@ -21,6 +21,10 @@ from __future__ import annotations
 import httpx
 import pytest
 
+from nexus_ai.models.anthropic import AnthropicAdapter
+from nexus_ai.models.base import LLMError, LLMRequest, cost_usd
+from nexus_ai.models.openai import OpenAIAdapter
+
 
 @pytest.fixture(autouse=True)
 def _direct_envelope(monkeypatch):
@@ -28,10 +32,6 @@ def _direct_envelope(monkeypatch):
     # The tests below pin the direct JSON wire, so they opt out explicitly.
     monkeypatch.setenv("NEXUS_LLM_STREAM", "false")
 
-
-from nexus_ai.models.anthropic import AnthropicAdapter
-from nexus_ai.models.base import LLMError, LLMRequest, cost_usd
-from nexus_ai.models.openai import OpenAIAdapter
 
 ANTH_PAYLOAD = {
     "content": [
