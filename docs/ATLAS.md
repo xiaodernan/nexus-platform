@@ -103,6 +103,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1108: the seventh Hong Kong chapter (hk-yu-huei-chronicle) |
 | `apps/web/src/lib/mock/seed.ts` | D1106: the fish-market chapter (hk-fish-market-chronicle) |
 | `apps/web/src/lib/i18n/dict.ts` | D1107: the HK series consolidates in home rail / quiz chips / hub page |
+| `tests/e2e/specs/consumer/hong-kong.spec.ts` | D1110: 1 arm — the /hong-kong mega hub e2e: h1 + seven /guides chapter hrefs + quiz teaser + search taster |
 | `apps/web/app/hong-kong/page.tsx` | D1109: unconditionally rendered, dict-driven editorial across all deployments |
 | `apps/web/src/components/hk-quiz.tsx` | D1095: the /hk-type client island — idle/playing/result arc, deterministic archetype scoring, zero telemetry |
 | `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |

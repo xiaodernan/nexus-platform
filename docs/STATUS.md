@@ -43791,3 +43791,14 @@ Dict consolidates the HK series across all three artefacts to seven chapters, ca
 **Honest boundaries.** The page renders on every deployment — that is the scope. What the page *cannot* fix: the chapters themselves live behind the mock fixture plane, and in live mode `/guides/hk-*` still lands on whatever the platform seed catalogue holds. The hub becoming visible doesn't turn the guides live — it is an honest pointer map, not magic. The user sees the cover, but the content is still what the platform delivers.
 
 - readers: `apps/web/app/hong-kong/page.tsx`, this ledger entry.
+## 1110. D1110 — the /hong-kong mega hub gains its e2e spine: identity, chapter grid, quiz teaser and search taster, verified across the wire
+
+**Why.** D1109 removed the data-mode gate and the page now renders on every deployment. Without an e2e arm, that guarantee was a hope wearing a type signature; the page got merged, the wire said nothing, and CI had no witness specific to the hub. This unit closes the loop.
+
+**The unit.** `tests/e2e/specs/consumer/hong-kong.spec.ts` — one test, three assertions: `<h1>` renders; at least seven `<a href="/guides/hk-…">` chapter cards render; the `/hk-type` quiz teaser link and at least one `/search?q=` link are visible. Live mode renders the same content (the strings are dict-carried) so this arm doubles as the live-plane smoke test once CI exercises it.
+
+**Verified on this host.** `playwright test specs/consumer/hong-kong.spec.ts --project=desktop` returns **1 passed (10.8s)** against the dev plane on port 3235. The e2e suite's `test:consumer` lane will pick this up on the next push, giving the mega hub a real CI witness.
+
+**Honest boundaries.** One arm on desktop; mobile fold path would come on a follow-up. The assertion for the quiz teaser uses `[href="/hk-type"]` rather than an exact verb — avoids drift if the copy changes. Chapter href-prefix `/guides/hk-…` plus a `count ≥ 7` floor: any new HK chapter added to the seed catalogue satisfies this without spec changes, which is the right property for an evolving series.
+
+- readers: `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
