@@ -38,14 +38,14 @@
  *   R4  The three service-container-only tokens (ci_secret, ci_nexus_ai, nexus_test) must be ABSENT from
  *       the e2e segment — the falsifier's needles, one flipped coordinate each.
  *   R5  The wiring: CI runs this reader with --self-test, ATLAS lists it, the ledger holds §952, and the
- *       line-cite-stable discipline (535 lines) is preserved — the e2e segment still has its two boot
+ *       line-cite-stable discipline (548 lines) is preserved — the e2e segment still has its two boot
  *       lines and the fixed service URLs CI and the harness agree on.
  *
  * SELF-TEST: `judge` is pure over a (path -> text) map. `--self-test` plants corruptions in memory —
  * the platform password back to ci_secret, the AI password back to ci_nexus_ai, the AI database back to
  * nexus_test, the explicit platform coordinates erased, the compose invocation swapped for a service
  * container, a compose default renamed, the reader unhooked from CI, its ATLAS row erased, the ledger
- * entry removed, and a line added past 535 — and requires EACH to redden while the real plane holds.
+ * entry removed, and a line added past 548 — and requires EACH to redden while the real plane holds.
  * `--ci=<path>` censuses an alternate workflow copy (reverse control, like the coordinates reader's
  * --dir), so a corrupted ci.yml can be judged without touching the shipped one.
  *
@@ -162,10 +162,10 @@ export function judge(files, present) {
     else notes.push('held R5 e2e segment boots the AI service');
   }
 
-  /* R5 — line-cite-stable discipline: the workflow keeps its 535 lines. */
+  /* R5 — line-cite-stable discipline: the workflow keeps its 548 lines. */
   const ciLines = t(CI).split(/\r?\n/).length - (t(CI).endsWith('\n') ? 1 : 0);
-  if (ciLines !== 535) offenders.push(`DRIFT — .github/workflows/ci.yml has ${ciLines} lines, expected 535 (cited line numbers must not move)`);
-  else notes.push('held R5 ci.yml keeps its 535 cited-line-stable lines');
+  if (ciLines !== 548) offenders.push(`DRIFT — .github/workflows/ci.yml has ${ciLines} lines, expected 548 (cited line numbers must not move)`);
+  else notes.push('held R5 ci.yml keeps its 548 cited-line-stable lines');
 
   /* Wiring — CI / ATLAS / ledger / this reader. */
   has(CI, 'node scripts/check_d952.mjs --self-test', 'CI runs this reader with its self-test');
@@ -247,7 +247,7 @@ if (SELF_TEST) {
       return { files: f };
     })()],
     ['ledger §952 removed', mutate(STATUS, '## 952. D952', '## 952. (removed)')],
-    ['a line added past 535', (() => {
+    ['a line added past 548', (() => {
       // CRLF/ LF-agnostic: insert one extra physical line after the first line, whatever its EOL.
       const f = new Map(real);
       const text = f.get(CI);

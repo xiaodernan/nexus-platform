@@ -485,6 +485,19 @@ jobs:
         shell: bash
         run: |
           node scripts/falsify_ui_script.mjs | tee ui-script-arms.txt
+      # D1127 — the console fixture plane's script auditor + its arms. Same pair tables, same three
+      # exclusions (台, 面, 嘅), same discipline as the zh-HK dict census above: the admin/merchant
+      # screens' strings go to real operators, so they obey the same written-script law.
+      - name: The console fixture plane is written in Traditional characters
+        shell: bash
+        run: |
+          node scripts/check_console_script.mjs | tee console-script.txt
+          { echo "## Console fixture script"; echo '```'; cat console-script.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: The console fixture script census can still fail (its own arms)
+        shell: bash
+        run: |
+          node scripts/falsify_console_script.mjs | tee console-script-arms.txt
+          { echo "## Console fixture script arms"; echo '```'; tail -3 console-script-arms.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Every reader is reachable, and every pipe that runs one can fail
         shell: bash
         run: |
