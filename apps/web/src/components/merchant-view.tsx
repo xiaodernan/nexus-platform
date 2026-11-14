@@ -22,6 +22,7 @@ import { merchantToCard, offeringToCard } from '@/lib/adapters';
 import type { MerchantPage } from '@/lib/data';
 import { CardGrid } from './cards';
 import { AskMerchant } from './ask-merchant';
+import { MerchantShare } from './merchant-share';
 import { FactList } from './fact-list';
 
 function Panel({
@@ -117,6 +118,20 @@ export function MerchantView({
                 <Icon name="phone" size={14} />
                 {dict.merchant.call}
               </a>
+            ) : null}
+            {location ? (
+              <MerchantShare
+                slug={detail.slug}
+                name={detail.name}
+                labels={{
+                  share: dict.merchant.shareLabel,
+                  shareTitle: dict.merchant.shareTitle,
+                  copy: dict.merchant.shareCopyLink,
+                  copyFailed: dict.merchant.shareCopyFailed,
+                  waLabel: dict.merchant.shareWhatsapp,
+                  copied: dict.merchant.shareCopied,
+                }}
+              />
             ) : null}
           </div>
         </div>

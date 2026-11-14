@@ -131,6 +131,12 @@ export interface Dict {
     degradedTitle: string;
     cuisineLabel: string;
     attributesLabel: string;
+    shareLabel: string;
+    shareTitle: string;
+    shareCopyLink: string;
+    shareWhatsapp: string;
+    shareCopied: string;
+    shareCopyFailed: string;
   };
   /**
    * The merchant Q&A widget (§142). The agent answers only from the merchant's knowledge base and
@@ -850,6 +856,12 @@ const zhHK: Dict = {
     degradedTitle: '部分資料暫時無法讀取',
     cuisineLabel: '菜系',
     attributesLabel: '設施與特色',
+    shareLabel: '分享',
+    shareTitle: '分享這間商戶',
+    shareCopyLink: '複製連結',
+    shareWhatsapp: '用 WhatsApp 分享',
+    shareCopied: '已複製連結',
+    shareCopyFailed: '無法複製到剪貼簿；請長按上方的連結自行複製。',
   },
   ask: {
     title: '問問這間商戶',
@@ -1609,6 +1621,12 @@ const en: Dict = {
     degradedTitle: 'Some sections could not be loaded',
     cuisineLabel: 'Cuisine',
     attributesLabel: 'Features',
+    shareLabel: 'Share',
+    shareTitle: 'Share this merchant',
+    shareCopyLink: 'Copy link',
+    shareWhatsapp: 'Share on WhatsApp',
+    shareCopied: 'Link copied',
+    shareCopyFailed: 'Could not write to the clipboard; hold the link above to copy it by hand.',
   },
   ask: {
     title: 'Ask this merchant',

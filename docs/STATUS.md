@@ -43248,3 +43248,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Verified.** `docker build -t nexus/ai:dev .` completed clean on the same host that builds the cloud reactor — the image is 727 MB. Boot against a freshly-empty DB is not claimed: host hygiene whacked the seeded plane between D1060 delivered and this turn, so the image was only built, never booted. No production code changed — one Dockerfile added, Dockerfile stage naming follows the cloud modules' idiom.
 
 - readers: `apps/ai/Dockerfile`, this ledger entry.
+## 1066. D1066 — the merchant profile gains a share affordance: a live share popover for WhatsApp + copy-link, Traditional-script glyphs, no third parties, no analytics, anchored next to the directions/call buttons
+
+**Why.** Hong Kong conversion happens in WhatsApp and WeChat, not in form submissions. Every merchant page had `Tel:` and directions — but nothing a consumer could pass on to a partner without typing the name over text. A share affordance is the missing key between a two-person decision and an act.
+
+**The unit.** `apps/web/src/components/merchant-share.tsx` ('use client') — opens on a single glyph `<Icon name="share"/>` button rendered next to the two existing actions; folds into a compact popover that offers exactly two actions (copy-link via `navigator.clipboard`, WhatsApp via `https://wa.me/?text=...` carrying the merchant name + canonical URL), closes on Escape or outside-pointer-down, and is labelled by the dict both locales. The HK copy is Traditional script (`分享` / `分享這間商戶` / `用 WhatsApp 分享` / `已複製連結` — census 0 offenders, 906 literals); the en sibling is the same shape in English. No analytics, no shorteners, no third-party scripts; the page merely offers its own URL.
+
+**Verified.** `merchant-share.test.ts` — 4 arms (island present and mounted inside the header once, the two actions are the two actions and nothing else, HK copy Trad, Esc/outside close). `vitest 289/289` (+4 over D1065); `tsc --noEmit` clean; `next build` green; zh-HK copy census PASS.
+
+**Honest boundaries.** The affordance is *direct* — no shortener means the recipient sees the canonical `/m/{slug}`. The WhatsApp draft carries the merchant's *name*, not a personalized line; the recipient does the personalization. The popover is not a `role="menu"` because it is not a menu of commands — it is a single action and a pair of channels. The share button does not attempt social cards or Open Graph. The button is not shown for a merchant with neither a `slug` nor a `name` — the normalization in `merchant-share.tsx` handles `undefined` safely, but a merchant with nothing to name is a fixture edge case (no share anchor for a scaffold).
+
+- readers: `apps/web/src/components/merchant-share.tsx`, `apps/web/src/components/merchant-view.tsx`, `apps/web/src/lib/merchant-share.test.ts`, this ledger entry.

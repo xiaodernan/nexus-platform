@@ -82,6 +82,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/merchant-sticky-cta.test.ts` | D1060: four arms — mobile-only breakpoint, single primary action, `z-50` anchoring, reduced-motion blur drop |
 | `apps/web/app/globals.css` | D1060: the `.nexus-sticky-cta` class — `position: fixed` mobile quick-actions bar; `display: none` above 640px |
 | `apps/web/src/components/merchant-view.tsx` | D1060: the sticky quick-actions bar mounts as the last child of the article — region named by `dict.merchant.stickyCtaLabel` |
+| `apps/web/src/components/merchant-share.tsx` | D1066: the share popover — WhatsApp + copy-link, `use client`, no analytics, no shorteners, no third-party SDKs |
+| `apps/web/src/lib/merchant-share.test.ts` | D1066: 4 arms — island mounted once, two channels only, Traditional script in zh-HK, Esc/outside close |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |
