@@ -1604,4 +1604,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-vic-park-sunday-chronicle', title: '星期天早上九點：維園的外國傭工（香港系列 · 第四十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：跟着一班菲律賓姐妹，由東頭的公園一層一層到西頭——香港每個星期天才會出現的擁抱與合影。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天早上九點。維園東邊場內——一群菲律賓姐妹坐下來整理自己的行李。阿蓮（合成敘事，非真實人物）手裡拿著一卷番茄醬菜：這是她這週的第一口乾炒飯。這比星期天的brunch 更像brunch，比早餐更溫暖的早晨。' },
+      { type: 'heading', text: '一、星期天才會出現的擁抱' },
+      { type: 'paragraph', text: '菲律賓姐妹星期天從凌晨五點半起來，有些是從新界起程，有些直接在這個區住了一年。他們對話是菲律賓話、英語、廣東話、甚至是泰國話的片斷。全部來這裡只有同一個理由：六天加班後的一個休息日。這裡沒有rules，但她們會彼此告知今日是誰的生日。' },
+      { type: 'cards', title: '維園可見', items: [] },
+      { type: 'heading', text: '二、一對不同意的合影' },
+      { type: 'paragraph', text: '有人在維園的亭子辦公室煮飯；有人在維園的小江直接吃粉絲；有人從菲律賓港來幫廚、從馬尼拉去東京，最後在這裡長得比上個世代更希望這裡。或許她們永遠不會到西邊的咖啡店，但她們每天都用這個公園當咖啡店的鏡子。' },
+      { type: 'cards', title: '維園可聽', items: [] },
+      { type: 'heading', text: '三、星期天再見' },
+      { type: 'paragraph', text: '下午四點，西北邊的長者委員會會員開始舉手示意清場。部分姐妹還在草坪上聊天；有些正在包飯盒回家。有人這個星期天從維園去eat-bo，有人只想回去睡。阿蓮寫進筆記本：「整個維園的綠樹都是他們的故鄉。」' },
+      { type: 'cards', title: '維園可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、口味、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「維園 菲律賓」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

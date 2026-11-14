@@ -117,6 +117,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `scripts/check_console_script.mjs` | D1127: the console fixture plane's Traditional-HK script auditor |
 | `scripts/falsify_console_script.mjs` | D1127: the census arms — 9 planes on scratch trees, exit verdict first-class |
 | `scripts/stress_search.mjs` | D1132: the load harness — bursts of concurrent users against the BFF, honest failure counting and p50/p99 |
+| `apps/web/src/lib/mock/seed.ts` | D1158: the forty-second HK chapter (hk-vic-park-sunday-chronicle, 維園的外國傭工) — opens WORLD_ROADMAP Layer F |
 | `apps/web/src/lib/mock/seed.ts` | D1157: the forty-first HK chapter (hk-mumbai-curry-central-chronicle, 灣仔咖哩魚飯堂) |
 | `apps/web/src/lib/mock/seed.ts` | D1156: the thirty-eighth, thirty-ninth and fortieth HK chapters (hk-beijing-writer-chronicle, 北漂作家; hk-teochew-markets-chronicle, 旺角菜市場; hk-filipino-central-chronicle, 菲律賓中環) — opens WORLD_ROADMAP Layer E |
 | `apps/web/src/lib/mock/seed.ts` | D1155: the thirty-sixth and thirty-seventh HK chapters (hk-north-run-chronicle, 隔水渡輪; hk-tai-o-chronicle, 大澳) — opens WORLD_ROADMAP Layer D |

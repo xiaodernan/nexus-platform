@@ -44353,3 +44353,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the curry rice ratios, the five types of curry customer, and the smell of 01:30 nothing else wakes matter for this narrative only. No real chef, no real shop, no real menu — none claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1158. D1158 — chapter XLII lands the 09:00 slot: 星期天早上九點：維園的外國傭工 — the Sunday riot of tongues at Victoria Park
+
+**Why.** Layer F opens. Every Sunday at 07:00 the largest religious gathering in Hong Kong is English tongues and Filipino songs at Victoria Park — an invisible congregation that arrives by ferry, by minibus, by train from New Territories; the product catalogue still has no chapter for it; now it does.
+
+**The unit.** `DEMO_GUIDES` gains `hk-vic-park-sunday-chronicle` — 「星期天早上九點：維園的外國傭工（香港系列 · 第四十二章）」. Three heading cards（一、星期天才會出現的擁抱 · 二、一對不同意的合影 · 三、星期天再見）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「維園 菲律賓」）。Both locales carry the chapter; the arc clock gains 09:00 between school bus and Cheung Chau (84 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-two on both locales; e2e floors ≥42; census 1647 literals clean (0 simplified).
+
+**Honest boundaries.** Synthetic fixture; the specific Sunday phrases, the Joy FM station alternative, and the taxi-driver dialogue are narrative constructions. No real park permit, no registered congregation count, no actual address for any named café — none claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
