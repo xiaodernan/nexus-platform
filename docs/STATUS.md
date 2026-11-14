@@ -44403,3 +44403,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** The numeral is a display badge, not a data contract: kicker text (dict-carried) remains the numbered truth; display order follows `cards.map` exactly; a real time-of-day logic change still travels through the dict. No motion added (respects `prefers-reduced-motion` by omission), no colour beyond the existing accent token.
 
 - readers: `apps/web/src/lib/roman-numeral.ts`, `apps/web/src/components/hk-series-progress.tsx`, `apps/web/src/lib/hk-series-numeral.test.ts`, SSR `/hong-kong.html`, this ledger entry.
+
+## 1164. D1164 — chapter XLV lands the 21:00 slot: 晚上九點：星期天最後一間有排隊的餐廳 — the Sunday arc's closing door
+
+**Why.** Layer F closes its first circuit in one arc: XLII 09:00（星期天的擁抱）→ XLIII 13:00（天台的飯局）→ XLIV 17:30（觀音借的香火）→ XLV 21:00（皇后大道東盡頭最後一間排隊的餐廳）。世界發展不是騎里數；它是一天，由門到門。
+
+**The unit.** `DEMO_GUIDES` gains `hk-last-queue-sunday-chronicle` — 「晚上九點：星期天最後一間有排隊的餐廳（香港系列 · 第四十五章）」. Three heading cards（一、排隊的理由 · 二、熟悉的陌生人 · 三、九點以後的光線）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「星期天 排隊」）。Both locales carry the chapter; the arc clock gains 21:00 between the communal long table and the cardboard elder (90 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-five on both locales; e2e floors ≥45; census 1674 literals clean (0 simplified); web 350/350.
+
+**Honest boundaries.** Synthetic fixture; the restaurant, the street, the uncle, the teapot and the fire are narrative constructions. No real address, no actual queue is claimed; every claim is gated behind 合成敘事示例 framing and the `flags: { demo: true }` flag on the guide.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

@@ -1667,4 +1667,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-last-queue-sunday-chronicle', title: '晚上九點：星期天最後一間有排隊的餐廳（香港系列 · 第四十五章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：星期天的晚上九點，皇后大道東盡頭——最後一間有排隊的餐廳內，守候着的不是一桌飯，而是整個星期天的尾聲。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天的晚上九點。皇后大道東的盡頭（合成敘事地點）——阿興（合成敘事，非真實人物）把門簾掀開，看見的還是排隊。整個星期天，這座城在這個屋檐下結束：從早上維園的擁抱，到中午的天台飯局，到黃昏觀音借的香火，再到這裡。星期天的最後一家店，永遠不缺人。' },
+      { type: 'heading', text: '一、排隊的理由' },
+      { type: 'paragraph', text: 'Queue 門的理由各異：有人說是豬手；有人說是燒鴨；有人說是阿興的太太一盤砂鍋的味道。只有過來人才懂——他們不是為了吃，而是為了完成整個星期天。排隊的隊伍像是一雙腳：一邊是這個星期每一隻腳都累得要死，另一邊是一個下午以來每個人都還固執的那點體面。阿興把排隊的秩序記心裡：這邊的阿婆要坐窗邊，那邊的小孩想吃白飯多打一份菜；他不需要問任何一個問題。' },
+      { type: 'cards', title: '餐廳可見', items: [] },
+      { type: 'heading', text: '二、熟悉的陌生人' },
+      { type: 'cards', title: '餐廳可聽', items: [] },
+      { type: 'paragraph', text: '明星最常出現在這裡：這裡有小孩問功課、有老港女耍賴抖肩、有剛剛還是階下囚的學生為了一碗肉脞麵而來。阿興的太太（合成敘事，非真實人物）一邊下鍋一邊說：「星期天的菜沒什麼特別，只是都是自己做的東西。」桌上的每一道菜都不新潮，但都讓人感覺自己也是這座城的房東。' },
+      { type: 'heading', text: '三、九點以後的光線' },
+      { type: 'paragraph', text: '晚上九點半，阿興把門簾放下一半——不是打烊，是怕蟲蚊進來。最後一枱客人在報紙上把金融股看完，然後結賬，然後說「星期天再見」。阿興點點頭，不發表什麼觀點。他這輩子沒離開過這裡，他也不打算在星期天說太多。如果真的需要總結，他在筆記本上只寫了一句話：「這座星期天，是整個城市最可靠的聚餐。」' },
+      { type: 'cards', title: '餐廳可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「星期天 排隊」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

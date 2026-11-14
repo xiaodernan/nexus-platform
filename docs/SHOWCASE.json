@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1163",
-  "milestone_full": "羅馬章節徽章降臨 · 後台 verify_all 一次瞬時 FAIL 已排查並排除（70 PASS · 0 FAIL ×2）",
+  "milestone": "D1164",
+  "milestone_full": "香港系列篇四十五章 · 00:30→22:45 · Layer F 星期一日循環圓滿 — 晨至暮",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: forty-four Traditional chapters — 00:30→22:45 full day arc · 88-chip clock both locales",
-    "/hong-kong: every chapter card wears its Roman badge (XLII · XLIII · XLIV …) — D1163",
-    "Edition XLIV — 星期天的觀音借 (17:30) · Layer F traces the Sunday door by door",
-    "Edition XLIII — 霍普韋爾的外傭午餐 (13:00) · Edition XLII — 維園的外國傭工 (09:00) · Layer F opens the Sunday cycle",
-    "D1160: wkapi.pro measured — only whole-request cache; replay cache whitespace-folded",
-    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1665 clean"
+    "HK series: forty-five Traditional chapters — 00:30→22:45 full day arc · 90-chip clock both locales",
+    "/hong-kong: every chapter card wears its Roman badge (XLII–XLIV · XLV …) — D1163",
+    "Edition XLV — 星期天最後一間有排隊的餐廳 (21:00) · Layer F closes the Sunday circuit",
+    "Layer F: XLII 維園 (09:00) · XLIII 霍普韋爾 (13:00) · XLIV 觀音借 (17:30) · XLV 最後一間排隊 (21:00)",
+    "D1163: chapter cards wear print-annual Roman numerals · D1160: replay cache whitespace-folded",
+    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1674 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }
