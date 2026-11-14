@@ -43650,3 +43650,14 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** The rail is **mock-plane only** by design; in live mode the page cannot verify fixtures it does not have — a learn-block is removed rather than blindly shown. The cards container carries no aria-label — each link is readable by its text; the row is visual reinforcement. No new tokens.
 
 - readers: `apps/web/app/page.tsx`, `apps/web/src/lib/home-series-rail.test.ts`, this ledger entry.
+## 1100. D1100 — /hk-type brings the full series to the start screen: the fourth chapter lands as its own chip
+
+**Why.** D1097 added the fourth chapter to the demo plane; /hk-type still listed only three at the top — the fourth was a ghost with no door on the quiz page. The quiz and the chapter rail on home (D1099) should be consistent flavours of the same brand rail; chapter four now appears on both.
+
+**The unit.** `apps/web/src/lib/i18n/dict.ts` — `hkType` grows a fourth `chapters` entry (`/guides/hk-temple-street-chronicle`, zh `廟街：宵夜成的一座廟` hint `第四章`, en `Temple Street: The Night Market` hint `Chapter four`); `seriesLabel` extended to `四章香港系列指南` / `Four HK chapters`. `/hk-type` page renders four chips now — no code change, the page already maps `dict.hkType.chapters` unconditionally. `hk-type.test.ts` dict pins updated in the same pass.
+
+**Verified.** web suite **325/325**; `tsc --noEmit` clean; census PASS over 1087 literals; `next build` green; `/guides` mock listing shows all four chapters including node.
+
+**Honest boundaries.** Still mock-plane; live mode will not carry the chapter rail or the chips until the platform seed adds the row.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.
