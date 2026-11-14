@@ -44198,3 +44198,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Shared-budget correctness is only as strong as Redis's EVAL serialization — no cluster, no sentinel, no clock-frame beyond millisecond wall time. No throughput number is claimed; the smoke measures ORDER, not fairness. Fallback ≠ fail-open (the local budget still caps the client) and ≠ fail-closed (a Redis outage does not 429 the whole edge). Existing deployments see zero change: the store defaults to `inmemory`.
 
 - readers: `services/cloud/gateway/**`, `scripts/ratelimit_gateway_redis_smoke.sh`, `scripts/falsify_ratelimit_gateway_redis_smoke.sh`, `scripts/check_ratelimit_gateway_redis.mjs`, `docs/ATLAS.md`, `docs/DECISIONS.md`, `docs/cloud_claims.yaml`, `docs/CLOUD.md`, `docs/STATUS.md`, this ledger entry.
+## 1141. D1141 — chapter XXI opens the night's deep end: 00:30 的士站最後一客 — the last fare at the taxi stand takes the night shift from the cart noodles
+
+**Why.** The arc jumped from 22:45 (cart noodles) straight to 02:00 (congee) — a two-hour hole where the city is still awake on its own terms: the Star Ferry lands, the taxi stand is the last loading dock of the day, and the city says goodbye for the night. The twenty-second-first chapter plugs exactly that hole.
+
+**The unit.** `DEMO_GUIDES` gains `hk-last-taxi-chronicle` — 「半夜十二點半：的士站最後一客（香港系列 · 第二十一章）」. Three heading cards (一、先泊好位置 · 二、最後一客的算法 · 三、隧道口的一盞燈), full Traditional HK prose with Cantonese interior monologue, `合成敘事示例` framing, cards with empty items, 後記 + SearchBox pointer (「渡輪 的士」). Synthetic fixture, no vendor claims. Both locales carry the chapter; the arc clock gains 00:30 as the earliest slot (42 chips across both locales); hk-type link list; handbook reading-order re-sorted to twenty-one chapters; e2e floors ≥21.
+
+**Honest boundaries.** Synthetic fixture; the taxi fare arithmetic, night-shift routine and locations （中環碼頭 / 紅磡海底隧道） are narrative constructions, not sourced from any transport authority. No price, operator or fleet claim anywhere.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
