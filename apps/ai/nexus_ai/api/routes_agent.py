@@ -29,6 +29,8 @@ from fastapi.encoders import jsonable_encoder
 from nexus_ai.api import runs
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.contract import AgentPlanRequest
+import os
+
 from nexus_ai.orchestrator import execute_plan, plan_tools
 from nexus_ai.orchestrator.planner import resolve_max_steps
 
@@ -52,9 +54,21 @@ async def agent_plan(request: Request, body: AgentPlanRequest):
 
     report = None
     tool_calls: list[dict[str, Any]] = []
+    # D1142: NEXUS_AI_ENGINE=graph swaps in the opt-in LangGraph execution plane (same plan,
+    # same registry, parallel fan-out of independent reads). Default is the planner's serial loop.
+    use_graph = os.environ.get("NEXUS_AI_ENGINE", "planner").strip().lower() == "graph"
     if body.execute:
-        report = await execute_plan(plan, deps.tool_registry(),
-                                    subject=body.subject or "anonymous", max_steps=max_steps)
+        if use_graph:
+            from nexus_ai.orchestrator.langgraph_engine import run_engine
+            plan, report = await run_engine(
+                text=body.query, context=context,
+                registry=deps.tool_registry(),
+                subject=body.subject or "anonymous",
+                idempotency_key=None,
+                max_steps=max_steps)
+        else:
+            report = await execute_plan(plan, deps.tool_registry(),
+                                        subject=body.subject or "anonymous", max_steps=max_steps)
         tool_calls = [
             {"tool": step.tool, "status": step.status, "ok": step.status == "ok",
              "reason": step.reason, "ms": round(step.ms, 2)}

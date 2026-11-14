@@ -48,6 +48,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | Cloud sidecar | `services/cloud` | registry, config, edge gateway, admin window |
 | Shared TS | `packages/types`, `packages/ui`, `packages/sdk` | contract types, design system, client SDK |
 | `infra/db/migrations/V13__llm_calls_cached_tokens.sql` | D1042: additive column — `llm_calls.cached_tokens integer NOT NULL DEFAULT 0` — backs the §9 cost ledger with the provider-reported cache saving per call; applied by `scripts/db_apply_migrations.sh` to the throwaway and to the seeded plane without error; every prior row reads as 0 honestly |
+| `apps/ai/nexus_ai/orchestrator/langgraph_engine.py` | D1142: the opt-in LangGraph execution plane — `make_plan`/`route`/`fanout`/`emit`, parallel fan-out of independent reads, byte-identical fingerprint to the serial executor |
+| `apps/ai/tests/test_langgraph_engine_fingerprint.py` | D1142: 18 offline pins — serial vs graph parity, missing-context honesty, refused turn, parallel fan-out complete lines |
 | `apps/ai/nexus_ai/api/runs.py` | D1042: `persist_llm_call` inserts `cached_tokens` as the eleventh parameter; the pre-existing ten are unchanged |
 | `apps/ai/nexus_ai/models/router.py` | D1042: `RoutedCall.as_llm_call_row` carries `cached_tokens`; `int(getattr(resp, …, 0))` guards the pre-D1036 response shape |
 | `apps/ai/nexus_ai/api/prefix_slim.py` | D1043: byte-stable whitelist slimmer for the summary prompt — ID/title/subtitle/tags/price/rating/distance_m/open_now/ai_match score only; fixes the provider-cache bust measured live (0% → 97% cached_tokens on identical payload) |

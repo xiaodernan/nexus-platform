@@ -44207,3 +44207,14 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the taxi fare arithmetic, night-shift routine and locations （中環碼頭 / 紅磡海底隧道） are narrative constructions, not sourced from any transport authority. No price, operator or fleet claim anywhere.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+## 1142. D1142 — the orchestrator gets an opt-in LangGraph execution plane: NEXUS_AI_ENGINE=graph, same plan, same registry, parallel fan-out of independent reads
+
+**Why.** Everything in the repo flows through the serial loop in `nexus_ai/orchestrator/executor.execute_plan`. It was the right v1 — but the mandate asks for real LangGraph and LangChain knowledge in the product, not a dependency as decoration. The honest seam: an engine that makes the plan's shape explicit as a `StateGraph` and runs the plan's independent reads CONCURRENTLY, which the serial loop could never do.
+
+**The unit.** `apps/ai/nexus_ai/orchestrator/langgraph_engine.py` — a compiled `StateGraph` (`make_plan` → conditional `route` → `fanout` → `emit`) from LangGraph 0.3.34. The plan node calls the same deterministic `plan_tools` the serial path uses (no model, no new tools). The fan-out node executes the steps through the same registry — same `asyncio.wait_for`, same per-tool retries, same idempotency threading, same missing-context skip — with `asyncio.gather`, then re-sorts outcomes into plan order. The serial fingerprint test pins all 15 turns of the fixture corpus to the identical plan and the identical ExecutionReport tool/status sequence. `is_enabled()` is gated by `NEXUS_AI_ENGINE=graph`; the default is `planner` and the HTTP route branches on that one env, nothing else changes.
+
+**Fingerprint.** `apps/ai/tests/test_langgraph_engine_fingerprint.py` — 18 tests; the corpus includes the tricky cases on purpose: refused turns (`你好`), missing-context (`幾點開`), cap truncation, multi-rule turns. Serial-vs-graph equality asserts tools, statuses, reasons, and `missing` keys; only timing differs. All offline, no LLM.
+
+**Honest boundaries.** Parallel fan-out is safe only because every v1 tool is an independent read; if any v1 tool ever gains a side effect, this graph must be revisited in the same change set (the registry's idempotency check stays the backstop). Audit events are emitted from concurrent coroutines — the observed event ORDER may differ from the serial path while the assembled report is byte-identical. Default is off; no existing behaviour changes until `NEXUS_AI_ENGINE=graph` is set.
+
+- readers: `apps/ai/nexus_ai/orchestrator/langgraph_engine.py`, `apps/ai/nexus_ai/orchestrator/__init__.py`, `apps/ai/nexus_ai/api/routes_agent.py`, `apps/ai/tests/test_langgraph_engine_fingerprint.py`, `apps/ai/pyproject.toml`, `uv.lock`, this ledger entry.

@@ -18,4 +18,13 @@ __all__ = [
     "StepOutcome",
     "execute_plan",
     "plan_tools",
+    "run_engine",
 ]
+
+def __getattr__(name):
+    # D1142: lazy — langgraph is only imported when the operator arms NEXUS_AI_ENGINE=graph;
+    # the default planner path never pays the import cost.
+    if name == "run_engine":
+        from nexus_ai.orchestrator.langgraph_engine import run_engine
+        return run_engine
+    raise AttributeError(name)
