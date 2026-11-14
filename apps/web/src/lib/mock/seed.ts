@@ -1184,4 +1184,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-school-bus-chronicle', title: '早上八點半：校巴的秘密班機（香港系列 · 第二十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：跟着校巴師傅，由住宅區仔頁一直開到九樓操場——香港每個早上最守時的鐘。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點二十分，校巴師傅阿姐（合成敘事，非真實人物）在屋苑門前停好車，把趟環燈拉到八。這台巴士的鐘不是靠電，是靠一個一個打呵欠的小學生校服。' },
+      { type: 'heading', text: '一、她的路線是一個秘密' },
+      { type: 'paragraph', text: '校巴的路線不寫在任何一張車站圖上——阿姐自己背：先接五個住九龍城寨公館的、再接兩個港島西樓的住戶、最後停在寶雲道。未上車的時候，她會一個一個數校服口袋有沒有塞好眼鏡。全部人坐好，她才肯撬油門。' },
+      { type: 'cards', title: '校巴可聽', items: [] },
+      { type: 'heading', text: '二、一個鐘，加兩分鐘' },
+      { type: 'paragraph', text: '八點三十分開出去，八點三十五分一定到校——每一個家長都知道：阿姐的校巴比港鐵站違約還要準時。少了一個人，她會原地等三分鐘，也不會動。九歲的阿妹每天都是最後一個跳上車，阿姐已經數好她的步伐：兩步上，一步停，兩步落椅。' },
+      { type: 'cards', title: '校巴可數', items: [] },
+      { type: 'heading', text: '三、下課鐘聲的另一面' },
+      { type: 'paragraph', text: '放學三點四十分，同一班校巴又在校門口出現。全部人換了位置：早上的課堂袋拎着、放學後的人空了——只有一個傻小子拿着抽水會員卡和一個濕漉漉的書包回家。阿姐不按鈴，她只會說：「今日不用你幫我關門，我自己會關。」行一程密密的路，兩個鐘，一個城市，一顆下課的種子。' },
+      { type: 'cards', title: '校巴可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、口味、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「校巴 午飯」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

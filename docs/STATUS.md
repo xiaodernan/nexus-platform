@@ -44218,3 +44218,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Parallel fan-out is safe only because every v1 tool is an independent read; if any v1 tool ever gains a side effect, this graph must be revisited in the same change set (the registry's idempotency check stays the backstop). Audit events are emitted from concurrent coroutines — the observed event ORDER may differ from the serial path while the assembled report is byte-identical. Default is off; no existing behaviour changes until `NEXUS_AI_ENGINE=graph` is set.
 
 - readers: `apps/ai/nexus_ai/orchestrator/langgraph_engine.py`, `apps/ai/nexus_ai/orchestrator/__init__.py`, `apps/ai/nexus_ai/api/routes_agent.py`, `apps/ai/tests/test_langgraph_engine_fingerprint.py`, `apps/ai/pyproject.toml`, `uv.lock`, this ledger entry.
+## 1143. D1143 — chapter XXII native the 08:30 slot: 校巴的秘密班機 — the custody transfer from breakfast to the first bell
+
+**Why.** The arc jumped from 07:30 (yum cha) straight to 09:30 (Cheung Chau) — a missing beat where the city hands its children over, morning by morning. Twenty-two chapters now cover the day from the last taxi to cart noodles.
+
+**The unit.** `DEMO_GUIDES` gains `hk-school-bus-chronicle` — 「早上八點半：校巴的秘密班機（香港系列 · 第二十二章）」. Three heading cards (一、她的路線是一個秘密 · 二、一個鐘，加兩分鐘 · 三、下課鐘聲的另一面), Traditional HK script throughout, `合成敘事示例` framing, empty cards, 後記 + SearchBox pointer (「校巴 午飯」). Synthetic fixture, no vendor claims. Both locales carry the chapter; arc clock gains 08:30 between yum cha and Cheung Chau (44 chips across both locales); hk-type link list; handbook reading order re-sorted chronologically to twenty-two on both locales; e2e floors ≥22.
+
+**Honest boundaries.** Synthetic fixture; the route, the driver, the buggy scheduling are narrative constructions, not sourced from any transport operator. No actual school route, no actual driver, no actual fare claim anywhere.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
