@@ -44413,3 +44413,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the restaurant, the street, the uncle, the teapot and the fire are narrative constructions. No real address, no actual queue is claimed; every claim is gated behind 合成敘事示例 framing and the `flags: { demo: true }` flag on the guide.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1165. D1165 — the stampede: 2,000 concurrent-style hits across two gateway processes behind ONE Redis token bucket
+
+**Why.** The user's standing instruction: 模拟大量用户或者高并发瞬间撞库 — high-concurrency pressure on the edge,看系统会不会崩溃. D1140 proved one bucket is shared across processes; the missing artifact was the pressure test nobody had run, and it exists nowhere in the tree until now.
+
+**The unit.** `scripts/stress_gateway_stampede.sh` (operator-invoked, not CI — the reactor build is heavy): boots two gateways (18092/18093), 2,000 `GET /probe` requests at 128 in flight across both ports, reports p50/p95/p99 (client-side ns timing) and per-store admit accounting. TWO arms — arm 1 (redis, the claim) asserts admission ≤ shared budget + fallback headroom; arm 2 (default inmemory, the falsifier) must admit MORE than the arm-1 shared cap (two private budgets — and it did, loudly: 461 vs redis-arm's 399 in the accepted window). The run that counts caught two genuine instrumentation defects before its numbers landed: (a) the original assertion forgot the `redis-fallback-local` private-budget admits by design; (b) its "zero 5xx" expectation ignored the designed fallback answer (503) with the upstream dead; (c) the store header was never attributed per-arm — the new stamp tracks `redis | redis-fallback-local | inmemory | absent` admits separately and closes the accounting (admitted == sum by store; 287 redis + 112 fallback-local = 399). Final verdict in the accepted run: **all eight assertions ok** — status contract ∈ {429, 503} everywhere, transport errors 0, gateways stayed `/actuator/health` UP past the stampede, p95 under 6s.
+
+**Honest boundaries.** The stampede is saturation-shaped (dead upstream, 128 in flight), not a throughput benchmark; `burst=50/replenish=20` are knobs, not a claim about capacity; the fallback counts are part of the protocol (a slow Redis degrades the plane honestly rather than opening or hanging it); 2000 requests/arm costs ~6–18s of gateway time each; the build it needs rides the maven reactor and is NOT duplicated in CI (weekly ops invocation).
+
+- readers: `scripts/stress_gateway_stampede.sh`, `docs/ATLAS.md`, `.workbuddy/memory/2026-11-12.md`, this ledger entry.
