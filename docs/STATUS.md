@@ -44133,3 +44133,16 @@ Dict carries fifteen chapters everywhere (rail, Featured band, `/hk-type`, `/hon
 **Honest boundaries.** The chapter is about *the motion* from office to home, not about any one resident, office or MTR car; nothing in it is offered as news or record. The arc clock now shows 15 checkpoints; the Featured rail holds eleven (the most recent releases) — the rail check self-sizes by `cards.length` to match.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1135. D1135 — chapter XVI lands: 鯉魚門 — the oldest seafront left awake in Hong Kong; the arc clock is now chronological across the whole day
+
+**Why.** The arc ran 03:10 → 02:00 with the clock order preserved from the user's point of view: 02:00, 03:10, …, 22:45 — actually sorted by day order rather than by write order. The newest chapter plus an honest clock re-sort makes the "one-day Hong Kong" reading possible without a bookmarklet.
+
+**The unit.** `DEMO_GUIDES` gains `hk-lei-yue-mun-chronicle` — 「鯉魚門：晨的海風與黃昏的聲音」. Three heading cards: 一、碼頭上的早晨 (the fish landed at 70 readable minutes every dawn), 二、海鮮與叫價 (the menu prices written in HKD, the year the ferry was renamed twice), 三、堤壩下的河 (the old waterway slipping west toward its mouth; the ferry is not transportation, it is the story). Cards with empty items; mock fixtures; synthetic from the first sentence.
+
+Dict consolidates every lede to **十六章**, every kicker to **第十六章**; the 179-hook test suites (`home-series-rail`, `hk-type`) and the e2e floors (**≥16**) are aligned; the arc **clock** on `/hong-kong` is re-sorted chronologically at byte-level on both locales; the hub counts and the rail are self-sized; the handbook FAQ now asks about the seventeenth chapter.
+
+**Verified on this host.** web suite **346/346**; census PASS over **1388 literals**; tsc clean; build clean; e2e floor ≥16 across desktop arms both locales; verify_all NO OFFENDER both release runs.
+
+**Honest boundaries.** Same as every synthetic chapter — no real vendor, price, timetable or ferry line is claimed; the prose is stylized Hong Kong seafront fiction-grade on purpose. The clock is now chronologically ordered; before D1135 its entries were grouped by unit-order, after D1135 they are grouped by time-of-day, which is the only honest ordering for the "one Hong Kong day" premise.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
