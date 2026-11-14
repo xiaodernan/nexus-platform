@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1165",
-  "milestone_full": "壓力測試實戰：兩個閘道進程 + 一條共享 Redis 令牌桶 · 2000 請求 @128 並發 · 全員會計閉環",
+  "milestone": "D1166",
+  "milestone_full": "香港系列篇四十六章 · 00:30→22:45 · WORLD_ROADMAP Layer G 開卷 — 羅湖站的雙向貨幣",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "D1165: THE STAMPEDE — two gateway JVMs, one shared Redis token bucket, 2000 requests @128 way in flight — p50/p95/p99 reported on the wire; store accounting closes (admit admitted by arm); status contract ∈ {429, 503} with the upstream dead; falsifier arm sharp",
-    "D1164: 45 Traditional chapters · 90-chip arc clock both locales · Layer F Sunday circuit complete",
-    "D1163: chapter cards wear print-annual Roman numerals · D1162: showcase facts sync live",
-    "D1160: wkapi.pro measured — only whole-request cache; replay cache whitespace-folded; probe weekly",
-    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket",
-    "census 1683 clean · verify_all NO OFFENDER · web 350/350"
+    "HK series: forty-six Traditional chapters — 00:30→22:45 full day arc · 92-chip clock both locales",
+    "Edition XLVI — 羅湖站的雙向貨幣 (14:30) · Layer G opens the outpost of the outpost",
+    "WORLD_ROADMAP Layer F closes (the Sunday circuit), Layer G opens (the border crossing)",
+    "D1165: the stampede — two gateways, one shared Redis token bucket, 2000 requests @128 in flight, full store accounting",
+    "D1163: chapter cards wear print-annual Roman numerals · D1160: replay cache whitespace-folded",
+    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1683 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

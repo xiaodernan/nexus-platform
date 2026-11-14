@@ -44423,3 +44423,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** The stampede is saturation-shaped (dead upstream, 128 in flight), not a throughput benchmark; `burst=50/replenish=20` are knobs, not a claim about capacity; the fallback counts are part of the protocol (a slow Redis degrades the plane honestly rather than opening or hanging it); 2000 requests/arm costs ~6–18s of gateway time each; the build it needs rides the maven reactor and is NOT duplicated in CI (weekly ops invocation).
 
 - readers: `scripts/stress_gateway_stampede.sh`, `docs/ATLAS.md`, `.workbuddy/memory/2026-11-12.md`, this ledger entry.
+
+## 1166. D1166 — chapter XLVI lands the 14:30 slot: 下午兩點半：羅湖站的雙向貨幣 — Layer G opens the outpost
+
+**Why.** Layer G is no longer a roadmap row. The counter-flow at Lok Ma Chau is the one crossing HK readers take with both hands full — Hong Kong into Shenzhen and always back again. The catalogue now holds that pressure too.
+
+**The unit.** `DEMO_GUIDES` gains `hk-loohu-weekend-chronicle` — 「下午兩點半：羅湖站的雙向貨幣（香港系列 · 第四十六章）」. Three heading cards（一、雙向貨幣的禮儀 · 二、椰青與鳳梨的輪換 · 三、反流的光線）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「羅湖 反流」）。Both locales carry the chapter; the arc clock gains 14:30 between the dish pit and the pigeon coop (92 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-six on both locales; e2e floors ≥46; census 1683 literals clean (0 simplified); web 350/350; build passes.
+
+**Honest boundaries.** Synthetic fixture; the exchange windows, the queue, the pineapple cakes, the crossing itself are narrative constructions. No real border, no actual merchant, no visa or transit advice is claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

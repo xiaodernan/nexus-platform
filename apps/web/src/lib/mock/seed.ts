@@ -1688,4 +1688,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-loohu-weekend-chronicle', title: '下午兩點半：羅湖站的雙向貨幣（香港系列 · 第四十六章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：星期天下午兩點半，羅湖站反流人潮——港幣換人民幣、椰青換鳳梨——一座城用另一座城衡量的星期天。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天下午兩點半。羅湖站反流的隊伍（合成敘事，非真實人物與真實時刻——時刻與商戶全部是敘事建構）——帶一卡車零食回家的妻子，鞋墊裡藏着兩種貨幣的爸爸，空空的背包裡只帶回來一個龍蝦球。香港的每一個星期天，都有一半的人從這個方向回來。' },
+      { type: 'heading', text: '一、雙向貨幣的禮儀' },
+      { type: 'paragraph', text: '兌換窗口的人從來不問你今天換多少、為什麼換。店員把港幣放左邊、人民幣放右邊；兩堆硬幣碰撞的聲音比任何一種方言都更快、更誠實。沒有人對金額有意見——因為其實沒有人在乎金額。在這裡，「國界」只是一個需要換零錢的盒子。' },
+      { type: 'cards', title: '羅湖可見', items: [] },
+      { type: 'heading', text: '二、椰青與鳳梨的輪換' },
+      { type: 'paragraph', text: '有人在羅湖買燕塘牛奶帶回來——「人各有其價」。阿傑（合成敘事，非真實人物）每個星期往返一次，不是為了便宜：他說，他只是做一個「兩個地方都是家」的人。每逢星期天，兩個城市各自都在吃同一種早餐，但他們各自替自己算着另一個地方的賬。' },
+      { type: 'cards', title: '羅湖可聽', items: [] },
+      { type: 'heading', text: '三、反流的光線' },
+      { type: 'paragraph', text: '下午三點半，列車終於搖晃。窗戶裡映着滿滿的人臉——他們在香港人的鏡子裡看見自己。羅湖站不是邊界，而是家門口的門框。阿傑把一盒鳳梨放進袋子，把下一週的自己也一起擁着回去。' },
+      { type: 'cards', title: '羅湖可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「羅湖 反流」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
