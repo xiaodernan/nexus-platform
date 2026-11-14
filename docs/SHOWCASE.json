@@ -1,16 +1,16 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1120",
-  "milestone_full": "香港系列十章 + 內建使用說明書",
+  "milestone": "D1123",
+  "milestone_full": "香港系列十一章 + 內建使用說明書 + 新手上路條",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
-  "updated_at_commit": "caa3abd",
+  "updated_at_commit": "current-master",
   "features": [
-    "HK series: ten Traditional-script chapters, dawn→dessert · search/amp rails",
-    "Today: 今日食運 daily almanac (FNV-1a, Hong Kong clock)",
+    "HK series: eleven Traditional-script chapters, dawn→dessert→cart",
+    "今日食運 daily almanac (FNV-1a, Hong Kong clock)",
     "每日一句 Cantonese-of-the-day, hand-checked Jyutping",
     "/hk-type: ten questions, five archetypes, zero telemetry",
-    "/handbook: the full bilingual usage manual, new-user tour, quiz tutorial",
+    "/handbook + newcomer strip: five-anchor first-run tour",
     "Spring Cloud: eureka, gateway, config-server, bus-lite, insight, events"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."

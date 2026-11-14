@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the ten chapters (D1093 → D1120)
+document is the continuity plan for that world-layer: how the eleven chapters (D1093 → D1123)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -106,9 +106,17 @@ one last spoonful before the lights go out. *What the product serves here:* sear
 it. *Interlock:* the same hands that ground the sesame were awake before dawn; the two ends
 of the day run from the same single city's sleep schedule.
 
+### 22:45 — 車仔麵 (the cart noodles) · chapter XI
+**The night's own postscript.** Six small pots, one white smoke — the standing-cart
+night-feeding line that only materializes after the dinner crowd goes home and the last
+taxi pulls in. The people who arrive here at 22:45 are not arguing about dinner any
+more — they are asking for hot broth against the night's edge. *What the product
+serves here:* search "廟街 車仔麵" — one tap; the cart is still steaming. *Interlock:*
+Temple Street's postscript — the quieter the city gets, the louder the ladle.
+
 ## What this arc demands of the product
 
-1. **Search intent varies by hour.** The demo fixture plane must hold all nine arc segments
+1. **Search intent varies by hour.** The demo fixture plane must hold every arc segment
    without phase-breaking: morning question, morning vocabulary; midnight question, midnight
    vocabulary. The SearchBox's charm is knowing which hour it is inside — not which brand
    ad to push.

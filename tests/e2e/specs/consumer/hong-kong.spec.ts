@@ -25,7 +25,7 @@ test('marking a chapter read fills the local-first progress bar', async ({ page 
   await expect(page.getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '1');
 });
 
-test('the /hong-kong mega hub renders its identity, the ten chapters, the quiz teaser and the search taster', async ({ page }) => {
+test('the /hong-kong mega hub renders its identity, the eleven chapters, the quiz teaser and the search taster', async ({ page }) => {
   await page.goto('/hong-kong');
 
   // Identity heading: the hero block with a real subline.
@@ -35,7 +35,7 @@ test('the /hong-kong mega hub renders its identity, the ten chapters, the quiz t
   const chapterCards = page.locator('a[href^="/guides/hk-"]');
   await expect(chapterCards.first()).toBeVisible();
   const count = await chapterCards.count();
-  expect(count).toBeGreaterThanOrEqual(10);
+  expect(count).toBeGreaterThanOrEqual(11);
 
   // Quiz teaser: links to /hk-type.
   const quizLink = page.locator('a[href="/hk-type"]').first();
