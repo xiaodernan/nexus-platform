@@ -43552,3 +43552,12 @@ Web side: `offeringBySlug` no longer casts the wire straight onto `OfferingDetai
 **Verified.** web suite **320/320** (+1 over D1089's 319); census/ledger readers stay green on the next pass — no other reader judges a web-pin change.
 
 - readers: `apps/web/src/lib/me-page.test.ts`, this ledger entry.
+## 1092. D1092 — the empty /me favourites state gains the action to leave the dead-end: a CTA to /search
+
+**Why.** `/me`'s favourites empty state was a full stop — an honest "還沒有收藏" with nowhere to go. The empty state (`packages/ui EmptyState`) has an `action` slot; the page just never used it. The state before this unit left the reader holding a page with nothing to do.
+
+**The unit.** `apps/web/app/me/page.tsx` favourites empty branch passes Link → `/search` as the EmptyState action; the label reuses `dict.me.favoritesManage` ('去搜尋更多'). No new dict keys, no new state, no new tokens. Orders and reservations empty states stay as they are — those are account-facts; their honest statement is sufficient there.
+
+**Verified.** web suite **320/320**; `next build` green; `tsc --noEmit` clean.
+
+- readers: `apps/web/app/me/page.tsx`, this ledger entry.

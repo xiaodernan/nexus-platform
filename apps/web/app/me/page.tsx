@@ -240,6 +240,14 @@ export default async function MePage() {
                 icon="heart"
                 title={dict.me.favoritesEmptyTitle}
                 description={dict.me.favoritesEmptyText}
+                action={
+                  <Link
+                    href="/search"
+                    className="rounded-md border border-line px-3 py-1.5 text-xs font-medium text-accent hover:border-accent"
+                  >
+                    {dict.me.favoritesManage}
+                  </Link>
+                }
                 className="mt-4 rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-10"
               />
             )}
