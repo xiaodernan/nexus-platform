@@ -11,6 +11,7 @@ import { currentLocale } from '@/lib/i18n/server';
 import { examplePrompts } from '@/lib/prompts';
 import { CardRail } from '@/components/cards';
 import { SearchBox } from '@/components/search-box';
+import { HkDailyAlmanac } from '@/components/hk-daily-almanac';
 
 /**
  * Home (§6): the search box is the product. Everything below it is a rail of EntityCards built from
@@ -120,6 +121,8 @@ export default async function HomePage(props: {
           </div>
         </Container>
       </section>
+
+      <HkDailyAlmanac daily={dict.home.hkDaily} />
 
       {IS_MOCK ? (
         <section className="border-b border-line bg-canvas">

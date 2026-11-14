@@ -80,6 +80,13 @@ export interface Dict {
     };
     /** D1099: the HK story series rail — four chapters presented as a single literary thread on home. */
     hkSeries: { kicker: string; title: string; cards: Array<{ slug: string; label: string; kicker: string }> };
+    /** D1112: 今日食運 — the deterministic daily card; twelve Traditional-HK entries chosen by the HK date's FNV hash. */
+    hkDaily: {
+      eyebrow: string;
+      note: string;
+      placeholder: string;
+      entries: string[];
+    };
     /** One sentence under the tagline line underlining the sourcing discipline. */
     sourceNote: string;
     rails: Record<
@@ -882,6 +889,25 @@ const zhHK: Dict = {
         { slug: 'hk-fish-market-chronicle', label: '天光魚市：凌晨四點半的香港', kicker: '第六章' },
         { slug: 'hk-yu-huei-chronicle', label: '春花姨', kicker: '第七章' },
         { slug: 'hk-fruit-market-chronicle', label: '果欄：凌晨三點的卸貨', kicker: '第八章' },
+      ],
+    },
+    hkDaily: {
+      eyebrow: '今日食運',
+      note: '按香港時間的今日日期推算，純粹好玩——想食咩，最後都係你話事。',
+      placeholder: '正在翻今日的牌…',
+      entries: [
+        '『宜』：果欄當令的山竹——一日一果，香味最足',
+        '『宜』：早茶第二籠蝦餃——第一籠留畀家人',
+        '『留意』：燒味飯排隊的話，六點前落手最啱',
+        '『宜』：茶餐廳的鴛鴦——紅茶加奶，三點後的魂都收得番',
+        '『宜』：上環茶樓的陳皮普洱——理氣順喉',
+        '『留意』：蘭芳園先睇牆上的位牌，再排隊',
+        '『宜』：檸蜜金桔雪葩——一口都是甜',
+        '『留意』：夜冷車前的艇仔麵——最後一口最入味',
+        '『宜』：新鮮五花肉，回家燒給唞齊——週末先香',
+        '『宜』：維園蛋撻檔剛出爐——先排先食',
+        '『留意』：上水豬潤粥，熱辣辣落肚',
+        '『宜』：兩隻腸粉加常餐——雨天不需要傘',
       ],
     },
     hkHub: {
@@ -1908,6 +1934,25 @@ const en: Dict = {
         { slug: 'hk-fish-market-chronicle', label: 'The Four-Thirty Fish Market', kicker: 'Chapter VI' },
         { slug: 'hk-yu-huei-chronicle', label: 'Auntie Chun Fa Yee', kicker: 'Chapter VII' },
         { slug: 'hk-fruit-market-chronicle', label: 'The Fruit Market', kicker: 'Chapter VIII' },
+      ],
+    },
+    hkDaily: {
+      eyebrow: "TODAY'S FOOD TICKET",
+      note: 'Computed from today’s Hong Kong date — a bit of fun. Your appetite always has the last word.',
+      placeholder: 'Peeking at today’s ticket…',
+      entries: [
+        'Fruit lorries at dawn — mangosteen at the peak of its swing best',
+        'A second basket of har gow at yum cha — the first one stays with the family',
+        'Roast-meat rice before six — the siu mei case empties fast',
+        'Yuenyeung at 3 p.m. — red tea with milk, built for the afternoon',
+        'Aged pu-erh with chenpi at a cha lau — smooth and easy',
+        'Lan Fong Yuen hint: scout the queue board before joining the line',
+        'Lemon-and-orange sorbet — one mouthful of Hong Kong summer',
+        'Teng jai at two in the morning — the last bowl tastes the best',
+        'Fresh pork belly, home roast — Saturday smells like this',
+        'Warm egg tarts at Victoria Park — the first batch is the right batch',
+        'Pork-offal congee at Sheung Shui — hot going in, quiet day after',
+        'Two cheung fun and a set meal — enough rain-gear for any wet afternoon',
       ],
     },
     hkHub: {

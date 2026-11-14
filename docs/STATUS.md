@@ -43817,3 +43817,20 @@ Pinned tests are updated in lock-step:`home-series-rail.test.ts` (八章反覆�
 **Honest boundaries.** Mock-plane fixture only. The live `/guides/hk-fruit-market-chronicle` needs the platform seed plane to carry `DEMO_GUIDES`; this host still cannot run a seeded platform, so live mode shows the Suspense/degraded shell — consistent with every earlier chapter. The prose is written plain on purpose; the Traditional script bar outranks lyric. The earlier insertion class defect (dangling comma at the tail; TS2322 `({...} | undefined)[]`) recurred exactly as predicted by the summary and was repaired in the same pass — the union scan + `tsc --noEmit` catch it both before push.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1112. D1112 — the home page gains 今日食運: a deterministic daily HK food card, seeded by FNV-1a over the Hong Kong date
+
+**Why.** Every screen on the home page is static fate: search, rails, steps — nothing that breathes with the calendar. The HK series tells a long arc of food culture; a small daily ritual on the very first screen is the right instrument to make the product feel alive without a single live dependency, and the algorithm is a genuine piece of that story: a 53-bit FNV-hash over the local date — no fetch, no randomness, no state, no telemetry. Same day, same card, forever.
+
+**The unit.** `src/lib/almanac.ts` — `cyrb53` (FNV-1a folded to 53 bits via the standard avalanche constants), `hkDateKey` (ISO `YYYY-MM-DD` in `Asia/Hong_Kong` via `en-CA`), `almanacIndex` (mod, bounded, `RangeError` on poolSize < 1). Pure functions, dependency-free, synchronous; vitest covers determinism, 53-bit containment, pool bounds, adjacent-day spread across 30 days of November, the HK date bucket-edge at 15:59:59Z/16:30:00Z, and a source-level no-fetch/no-analytics arm on the island itself.
+
+`src/components/hk-daily-almanac.tsx` — a client island rendering the eyebrow 「今日食運」, the twelve-entry pick with the two-character verdict prefix inside every string, and a footer note saying plainly it is a bit of fun ("想食咩，最後都係你話事"). First paint shows the placeholder line (「正在翻今日的牌…」) so no server/client mismatch is possible; the real line swaps in after mount.
+
+Twelve entries, all Traditional HK script （山竹、第二籠蝦餃、蘭芳園位牌、維園蛋撻檔、上水豬潤粥…), en mirror present per D958 discipline. The card sits between the hero and the mobile-scroll rails — first new thing under the search box.
+
+Dict carried: `home.hkDaily` on both locales; interface typed in the `home` block; census charges it unchanged.
+
+**Verified on this host.** web suite **331/331** (+6 almanac arms); `tsc --noEmit` clean; next build green; census PASS over **1157 literals**; home dev render shows eyebrow ×3, placeholder ×2.
+
+**Honest boundaries.** Cosmetic only — the card asserts nothing and gates nothing; it is a cold-start-safe gimmick, not a rule engine. It never touches /me, rails, fixtures, analytics or the wire. The zh entries lean on HK common food words; nothing is location-specific beyond text. The date is client-side (`useEffect`) to keep home cache-clean, so print and first paint show the placeholder, not the entry.
+
+- readers: `apps/web/src/lib/almanac.ts`, `apps/web/src/components/hk-daily-almanac.tsx`, `apps/web/app/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
