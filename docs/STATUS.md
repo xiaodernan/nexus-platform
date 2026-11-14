@@ -43606,3 +43606,14 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** The quiz is playful taste, not psychometrics — no claims measured on anyone. `scores` are never kept past the process boundary; the page stores nothing. The result link is a plain `<Link>` to a guide, unenforceable quality gate downstream. The three archetypes roughly mirror the three chapters, not the city. `/hktype.island` honour this honesty in the `noTracking` copy on the result card.
 
 - readers: `apps/web/app/hk-type/page.tsx`, `apps/web/src/components/hk-quiz.tsx`, this ledger entry.
+## 1096. D1096 — /hk-type joins the site header/footer explore column: the quiz is now a first-class Hong Kongership surface
+
+**Why.** D1095 shipped `/hk-type` as an orphan page — it answered to direct URL only and nowhere else. The type-driven, link-wise discovery surface a reader actually uses is the footer's explore column (native language per locale — 瀏覽/Explore); adding one more link is the quietest way to make the quiz legible to visitors without adding nav-rail noise.
+
+**The unit.** `site-chrome.tsx` gains the footer entry `{ href: '/hk-type', label: dict.nav.hkType }`; dict `nav` gains `hkType` in both locales (zh Traditional `香港人格`, en `HK quiz`) — Traditional parity with the rest of the nav chrome. The me-page test pin (the footer `match /hk-type/` + dict parity in both locales) extends the same arm that already proved `/me` landed in chrome.
+
+**Verified.** web suite **323/323**; `tsc --noEmit` clean; census PASS over 1070 literals; console-i18n PASS (dict-carried move of D1087-class inline CJK remains the rule); `next build` green.
+
+**Honest boundaries.** The footer was chosen specifically because `/me` already covered the strong-nav column; stacking two member links would have outpaced the brand discipline. The quiz remains force-static and unaccessed from the merchant/admin planes (intentional — it is a consumer curiosity).
+
+- readers: `apps/web/src/components/site-chrome.tsx`, this ledger entry.

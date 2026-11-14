@@ -74,6 +74,12 @@ describe('D1075 consumer account hub', () => {
     // Nav rail carries JSX `href="/me"`; the footer carries the object-literal `{ href: '/me' }`.
     expect(chrome.match(/href="\/me"/g)?.length).toBe(1);
     expect(chrome.match(/href: '\/me'/g)?.length).toBe(1);
+    // D1096: /hk-type sits in the footer only — the /me chrome and nav deliberately stay minimal.
+    expect(chrome).toContain("href: '/hk-type'");
+    expect(chrome).toContain('dict.nav.hkType');
+    const dict = read(DICT);
+    expect(dict).toContain("hkType: '香港人格'");
+    expect(dict).toContain("hkType: 'HK quiz'");
   });
 
   it('the inbox carries a read-all door onto the documented §123 endpoint', () => {

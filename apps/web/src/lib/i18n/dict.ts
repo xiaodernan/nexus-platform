@@ -48,6 +48,8 @@ export interface Dict {
     /** The theme switch's accessible name, per direction: the theme it moves TO. */
     themeToDark: string;
     themeToLight: string;
+    /** D1095: the /hk-type archetype quiz link, shown in the footer. */
+    hkType: string;
   };
   home: {
     eyebrow: string;
@@ -834,6 +836,7 @@ const zhHK: Dict = {
     backToTop: '回到頁首',
     themeToDark: '切換至深色主題',
     themeToLight: '切換至淺色主題',
+    hkType: '香港人格',
   },
   home: {
     eyebrow: '對話式本地發現',
@@ -1792,6 +1795,7 @@ const en: Dict = {
     backToTop: 'Back to top',
     themeToDark: 'Switch to the dark theme',
     themeToLight: 'Switch to the light theme',
+    hkType: 'HK quiz',
   },
   home: {
     eyebrow: 'Conversational local discovery',
