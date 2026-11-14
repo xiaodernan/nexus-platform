@@ -43561,3 +43561,19 @@ Web side: `offeringBySlug` no longer casts the wire straight onto `OfferingDetai
 **Verified.** web suite **320/320**; `next build` green; `tsc --noEmit` clean.
 
 - readers: `apps/web/app/me/page.tsx`, this ledger entry.
+## 1093. D1093 — the demo plane gains one epic chapter: 「香港三餐的血脈」— HK-love narrative in Traditional script, linked hygiene-clean from /guides
+
+**Why.** The mandate asks for the product to grow *content* and *epic perimeter*, not only chrome. A demo plane with only technical fixtures is a tool, not a love letter to the city it serves. One fully-written Hong Kong chapter — Traditional script, HK-native vocabulary (茶餐廳、常餐、菠蘿油、公仔麵、燒味、糖水、火鍋) — is the smallest possible demonstration that the platform can carry authored content at any depth the editorial care agenda ever reaches.
+
+**The unit.** `DEMO_GUIDES` in `apps/web/src/lib/mock/seed.ts` gains one entry:
+- `hk-food-chronicle` — 「香港三餐的血脈：一座用火烹出來的史詩」 — 8 body blocks covering a full day's arc (清晨第一杯奶茶 → 上班低噪的中環 → 午市移動 → 午後糖水 → 黃昏燒味 → 深夜火鍋 → 作者後記). The honesty line at the bottom states the limits explicitly (合成敘事示例, not real travel advice, demo flagged).
+- `category: 'activities'` (same grammar as sibling guides), `generated_by: 'ai'`, `reviewed_by_human: false` — exactly the same shape as the existing `rainy-day-hong-kong` guide, so nothing new in the render/review path is required.
+- `cards` blocks carry the existing fixture merchants unchanged — the guide renders merchants through the same EntityCard trust pipeline as every other guide.
+
+**Verified.** `/guides/hk-food-chronicle` renders with 15+ mentions of the chapter title (the dev plane `NODE_ENV=development` reached it with 200 and no error text in the payload); `/guides` index lists it; web suite **320/320**; union-table scan of the new block reports **0 residual Simplified-only chars**; `tsc --noEmit` clean. A merge-or-abandoned commit quirk was caught and repaired mid-unit: the insertion once left a dangling `,` in the `DEMO_GUIDES` array — found by `tsc`, fixed in-place before tests ran.
+
+**Honest boundaries.** Demo-plane fixture only: the chapter lives in `lib/mock/seed.ts`, so it renders in mock mode and **will not exist** in live/production mode without a platform-side insert of this row — that is deliberate (this is authored content, not a platform contract), but it also means the chapter is not yet observable to real HK readers. Authoring a live-catalog guide is the follow-through unit once the editorial desk decision lands.
+
+Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed alongside this unit as `D1093` — it measures cold vs warm latency on byte-identical system prefixes (https://wkapi.pro/v1, temperature 0). This identity-shaped measurement was the source of the D1084 numbers; nothing in this unit used the model.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/ai/cache_latency_probe.py`, this ledger entry.
