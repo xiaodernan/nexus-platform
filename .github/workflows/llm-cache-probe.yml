@@ -1,0 +1,70 @@
+name: llm-cache-probe
+# On-demand provider-cache probe against the wkapi.pro (OpenAI-compatible) endpoint.
+#
+# The intent of running this in CI rather than on a developer laptop: the provider
+# refuses some egress IPs and accepts others, so a scheduled run on a neutral runner
+# IP measures the same provider behaviour every Monday, cold-start every time, with no local cache to
+# confound the answer.
+#
+# Cadence: weekly Tuesday 00:00 UTC + on-demand. NOT on every push — the probe costs real provider
+# budget and its signal moves with provider-side changes, not with code changes.
+#
+# Gate: this workflow never runs on forks or on pushes; dispatch and schedule only.
+# Cost: roughly 30 requests below 128k prompt tokens each; measured total ~2.5k tokens this design.
+#
+# Secrets required: WKAPI_PRO_API_KEY (the wkapi.pro key; set via gh from the operator's machine).
+on:
+  schedule:
+    - cron: '0 0 * * 2'   # Tuesdays at 00:00 UTC
+  workflow_dispatch:
+    inputs:
+      bursts:
+        description: 'Bursts per arm: identical / diverse'
+        required: false
+        default: 'small'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python via uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: 'latest'
+
+      - name: Write the AI lane's weekly probe header
+        shell: bash
+        run: |
+          {
+            echo "## Live provider-cache probe (Tuesday cron + dispatch)"
+            echo ""
+            echo "Runs the AI lane's own probe script against wkapi.pro with the production-default SSE-with-usage envelope."
+            echo "Each burst reports cached_tokens and prompt_tokens so the hit rate is measured, not asserted."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run the cache probe
+        shell: bash
+        env:
+          NEXUS_LLM_PROVIDER: openai
+          NEXUS_LLM_BASE_URL: https://wkapi.pro/v1
+          NEXUS_LLM_API_KEY: ${{ secrets.WKAPI_PRO_API_KEY }}
+          NEXUS_LLM_MODEL_CHEAP: gpt-6-sol
+          NEXUS_LLM_MODEL_MID: gpt-6-sol
+          NEXUS_LLM_MODEL_REASON: gpt-6-sol
+          NEXUS_LLM_STREAM: 'true'
+        run: |
+          cd apps/ai && uv run python cache_probe.py | tee cache-probe.txt
+          echo "## Cache probe" >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY" && tail -40 cache-probe.txt >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload probe log as an artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-cache-probe-log
+          path: apps/ai/cache-probe.txt
+          retention-days: 90

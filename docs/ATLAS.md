@@ -450,4 +450,5 @@ was decomposed into microservices.
 
 - readers: `apps/web/app/me/page.tsx`, this ledger entry.| `docs/SHOWCASE.json` | D1117: curated showcase milestone for the external personal page; refreshed manually on heavy milestones (currently D1116) |
 | `docs/HONG_KONG_ARC.md` | D1117: the Hong Kong Day-Arc — the reading order across the nine chapters and the product-interlock contract |
+| `.github/workflows/llm-cache-probe.yml` | D1130: the weekly (Tuesday 00:00 UTC) + dispatchable provider-cache probe for wkapi.pro |
 

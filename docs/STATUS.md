@@ -44062,3 +44062,23 @@ Dict carries XIII across every artefact: home rail, `/guides` Featured band, `/h
 **Honest boundaries.** Mock fixture only; the Lion Rock Tourist Association is a real entity ignored here; every detail is synthetic narrative; the jyutping of no Cantonese phrase here needed widening. The circadian frame (17:58 → dawn loop) means the arc doc now reads 03:10 → 02:00 → dawn → dusk → 02:00 → the dawn again, same city, same arc, same ten years from today — that is the point, and that was the finding.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1130. D1130 — the provider cache gets a live witness: a weekly cron (Tuesday 00:00 UTC) plus dispatch, running the AI lane's own probe on CI's neutral IP
+
+**Why.** The user-reported problem — "为什么你调用我的 openai 大模型 api 的时候缓存命中率这么低
+而且一直显示非流" — could not be measured from this host because wkapi.pro refuses our egress IP (HTTP 403, consistent). The fix landed in D1044 (`NEXUS_LLM_STREAM=true` by default — SSE with `include_usage`) and V14 (`cache_reported` column, splitting "provider silent" from "provider miss"), but there was **no scheduled, neutral measurement**: all probe numbers came from one laptop's one IP.
+
+**The unit.** `.github/workflows/llm-cache-probe.yml` — new workflow, no e2e dependency, `timeout-minutes: 12`:
+- `ubuntu-latest` runner, generic `astral-sh/setup-uv@v5`.
+- On Tuesday 00:00 UTC via cron + `workflow_dispatch`.
+- Env: `NEXUS_LLM_PROVIDER=openai`, `NEXUS_LLM_BASE_URL=https://wkapi.pro/v1`, `NEXUS_LLM_API_KEY=${{ secrets.WKAPI_PRO_API_KEY }}`, `NEXUS_LLM_MODEL_{CHEAP,MID,REASON}=gpt-6-sol`, `NEXUS_LLM_STREAM=true`.
+- Step writes `$GITHUB_STEP_SUMMARY` with the streaming-bytes header, runs `uv run python cache_probe.py`, tee'd into `cache-probe.txt`, uploads it as a retained artifact for 90 days.
+- Gated by schedule and dispatch only — never on push, never on fork, to keep both the budget and the branch-of-work-decision honest.
+- Secret set via `gh secret set` from the operator's machine, never printed or committed.
+
+**Honest boundaries.**
+- Cost budget: this cron burns ~20–40 provider requests per week, well under 2.5k tokens; dispatched on-demand pays the same per run, explicitly.
+- This workflow never invokes CI until you dispatch, and does not gate any merge; its job is consistent measurement, not CI law.
+- wkapi.pro's response to GitHub's US-East runner IP is unproven; the probe will tell us rather than assume.
+- D1044 was the adapter fix. This is the instrument; the verdict is not claimed in this unit.
+
+- readers: `.github/workflows/llm-cache-probe.yml`, `apps/ai/cache_probe.py`, `apps/ai/cache_latency_probe.py`, this ledger entry.
