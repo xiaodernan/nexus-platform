@@ -43,7 +43,7 @@ export default async function HongKongHubPage() {
         </Container>
       </section>
 
-      {/* Seven chapter cards */}
+      {/* Eight chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">
         <h2 className="text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">{hub.chaptersTitle}</h2>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

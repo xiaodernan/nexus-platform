@@ -8,7 +8,7 @@ import { test, expect } from '../../lib/fixture.js';
  *  3. the quiz teaser links into /hk-type and the search taster does so too.
  */
 
-test('the /hong-kong mega hub renders its identity, the seven chapters, the quiz teaser and the search taster', async ({ page }) => {
+test('the /hong-kong mega hub renders its identity, the eight chapters, the quiz teaser and the search taster', async ({ page }) => {
   await page.goto('/hong-kong');
 
   // Identity heading: the hero block with a real subline.
@@ -18,7 +18,7 @@ test('the /hong-kong mega hub renders its identity, the seven chapters, the quiz
   const chapterCards = page.locator('a[href^="/guides/hk-"]');
   await expect(chapterCards.first()).toBeVisible();
   const count = await chapterCards.count();
-  expect(count).toBeGreaterThanOrEqual(7);
+  expect(count).toBeGreaterThanOrEqual(8);
 
   // Quiz teaser: links to /hk-type.
   const quizLink = page.locator('a[href="/hk-type"]').first();

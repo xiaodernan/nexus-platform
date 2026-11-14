@@ -100,6 +100,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/console-consumer.ts` | D1081: +`mePreferencesRead` — §33 preference rows for /me |
 | `services/platform/src/main/java/com/nexus/catalog/OfferingDetailController.java` | D1089: the public offering detail read — same projection the menu serves, merchant identity from primary location, cacheable, active-only |
 | `apps/web/src/lib/offering-detail-wire.test.ts` | D1089: 5 arms pin §4 wire → OfferingDetail projection, null-on-missing merchant, §20 availability discipline |
+| `apps/web/src/lib/mock/seed.ts` | D1111: the eighth HK chapter (hk-fruit-market-chronicle, 果欄) |
 | `apps/web/src/lib/mock/seed.ts` | D1108: the seventh Hong Kong chapter (hk-yu-huei-chronicle) |
 | `apps/web/src/lib/mock/seed.ts` | D1106: the fish-market chapter (hk-fish-market-chronicle) |
 | `apps/web/src/lib/i18n/dict.ts` | D1107: the HK series consolidates in home rail / quiz chips / hub page |

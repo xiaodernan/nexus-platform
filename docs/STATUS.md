@@ -43802,3 +43802,18 @@ Dict consolidates the HK series across all three artefacts to seven chapters, ca
 **Honest boundaries.** One arm on desktop; mobile fold path would come on a follow-up. The assertion for the quiz teaser uses `[href="/hk-type"]` rather than an exact verb — avoids drift if the copy changes. Chapter href-prefix `/guides/hk-…` plus a `count ≥ 7` floor: any new HK chapter added to the seed catalogue satisfies this without spec changes, which is the right property for an evolving series.
 
 - readers: `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1111. D1111 — the HK series opens its fruit market: chapter VIII （果欄） is the city's engine before dawn, and the series count is now eight across everyartefact
+
+**Why.** The seven-chapter Hong Kong chronicle walked the city's food clock from dawn (fish market) to midnight (Temple Street) — but the engine that loads the city's freshness, the wholesale fruit market 「果欄」 in Yau Ma Tei, still had no chapter of its own. It completes the arc of the series: fish market (raw dawn), fruit market (raw dawn's sibling), cha chaan teng / dim sum (morning table), siu mei and yum cha (noon), temple street (night). One honest hour-by-hour spine across the full day.
+
+**The unit.** `DEMO_GUIDES` gains `hk-fruit-market-chronicle` — 「果欄：凌晨三點的卸貨」. The body carries the established architecture: an opening synthetic-narrative scene, three heading cards （一 / 二 / 三）, three `cards` blocks, a 後記 disclaimer, demo flags, `generated_by: 'ai'`. Cast: 阿金 — the sampan-fresh earlier bird — is a synthetic invention; no real stall or operator is named.
+
+The dict lands the eighth chapter across all three artefacts in step: home rail, `/hk-type` chapters, `/guides` Featured band (self-sizing by `cards.length`), `/hong-kong` hub grid. `next build` enumerates `/guides/hk-fruit-market-chronicle` as a static path. The hub title tightens from 「香港的四碗飯」 / "Six meals of one Hong Kong" (stale copy naming six chapters against seven) to 「香港的一桌宴」 / 'One table, one Hong Kong'. The `/hk-type` zh intro is corrected from "用八條問題" — always stale, the quiz has been ten questions since D1104 — to "用十條問題". `hkHub.intro` names both 4:30 a.m. lanes（果欄與魚市） instead of only the fish market.
+
+Pinned tests are updated in lock-step:`home-series-rail.test.ts` (八章反覆走完一個 HK / One HK in eight chapters) and`hk-type.test.ts` (seriesLabel 八章香港系列指南 / Eight HK chapters); `hong-kong.spec.ts` asserts ≥ 8 chapter hrefs and its test title says "eight chapters".
+
+**Verified on this host.** web suite **325/325**; `tsc --noEmit` clean; census PASS over **1142 literals** (0 simplified; the one `面` hit is the census's excluded face/under word, not 麵）; next build green; dev-plane render: `/hong-kong` shows **8** chapter hrefs on the mock plane, `/guides/hk-fruit-market-chronicle` renders 果欄 × 57 and 第八章 × 15. Playwright `hong-kong.spec.ts --project=desktop` against the mock dev plane — **1 passed (11.5s)**.
+
+**Honest boundaries.** Mock-plane fixture only. The live `/guides/hk-fruit-market-chronicle` needs the platform seed plane to carry `DEMO_GUIDES`; this host still cannot run a seeded platform, so live mode shows the Suspense/degraded shell — consistent with every earlier chapter. The prose is written plain on purpose; the Traditional script bar outranks lyric. The earlier insertion class defect (dangling comma at the tail; TS2322 `({...} | undefined)[]`) recurred exactly as predicted by the summary and was repaired in the same pass — the union scan + `tsc --noEmit` catch it both before push.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.

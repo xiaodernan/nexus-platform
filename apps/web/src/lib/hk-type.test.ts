@@ -50,8 +50,8 @@ describe('D1095 /hk-type archetype quiz', () => {
     expect(dict).toContain("guideHref: '/guides/hk-siu-mei-chronicle'");
     expect(dict).toContain("guideHref: '/guides/hk-dim-sum-chronicle'");
     expect(dict).toContain("guideHref: '/guides/hk-food-chronicle'");
-    expect(dict).toContain("seriesLabel: '七章香港系列指南'");
-    expect(dict).toContain("seriesLabel: 'Seven HK chapters'");
+    expect(dict).toContain("seriesLabel: '八章香港系列指南'");
+    expect(dict).toContain("seriesLabel: 'Eight HK chapters'");
     expect(dict).toContain("hint: '第四章'");
     expect(dict).toContain("hint: 'Chapter four'");
   });
