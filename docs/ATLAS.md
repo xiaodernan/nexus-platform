@@ -115,6 +115,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `scripts/check_console_script.mjs` | D1127: the console fixture plane's Traditional-HK script auditor |
 | `scripts/falsify_console_script.mjs` | D1127: the census arms — 9 planes on scratch trees, exit verdict first-class |
 | `scripts/stress_search.mjs` | D1132: the load harness — bursts of concurrent users against the BFF, honest failure counting and p50/p99 |
+| `apps/web/src/lib/mock/seed.ts` | D1139: the twentieth HK chapter (hk-window-cleaner-chronicle, 抹窗師傅) |
 | `apps/web/src/lib/mock/seed.ts` | D1138: the nineteenth HK chapter (hk-er-chronicle, 急症室入口) |
 | `apps/web/src/lib/mock/seed.ts` | D1137: the eighteenth HK chapter (hk-central-bourse-chronicle, 中環交易所) |
 | `apps/web/src/lib/mock/seed.ts` | D1136: the seventeenth HK chapter (hk-bakery-dawn-chronicle, 鹹光燒餅) |

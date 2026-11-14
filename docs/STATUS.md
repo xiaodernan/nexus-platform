@@ -44180,3 +44180,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture track; hospital poDesequence is an allusion, not a claim about any actual public hospital's process. The `inference` the narrator draws ("this city trusts the night") is an editorial gesture, not a statistical model.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1139. D1139 — chapter XX enters the 04:00 slot: 抹窗師傅 — the hands that wipe the harbour clean before the city opens its eyes
+
+**Why.** The arc had quieted at 03:00 (the triage desk) and picked up again at 03:30 (the dawn bakery) — but the hour that makes every other hour legible was missing. This city's glass is clean at 08:10. Someone makes it so. The 04:00 slot is the first page of the day that nobody sees; the chapter grinds it in.
+
+**The unit.** `DEMO_GUIDES` gains `hk-window-cleaner-chronicle` — 「抹窗師傅：凌晨四點（香港系列 · 第二十章）」. Three heading cards (一、先繫繩，再看海 · 二、刮一下，深一層 · 三、擦乾淨的早晨） with substantive Traditional prose (written fresh this unit, not scaffolded from a template), cards with empty items, 後記 clause with the standing disclaimer and a SearchBox pointer (「維港 景觀」). Synthetic fixture with no vendor claims. Both locales carry the chapter everywhere: home rail, hub grid, arc clock at 04:00 between 03:30 and 04:15 (40 chips across both locales), hk-type link list, handbook reading-order re-sorted chronologically to twenty chapters. e2e floors ≥20. ARC doc gained the 04:00 anchor entry and bumped to twenty chapters (D1093 → D1139).
+
+**Honest boundaries.** Synthetic fixture; the "吊籃工" job title, ages and routine are narrative constructions, not sourced from any Hong Kong labour authority, and no wage claim is made anywhere. The chapter's one-line moral ("the city's clarity is bought by hands it never sees") is an editorial stance, not a statistic. Census exclusions used exactly as the product allows: 一面 (the city's face) and 天文台 (the Observatory).
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

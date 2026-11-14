@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the nineteen chapters (D1093 → D1138)
+document is the continuity plan for that world-layer: how the twenty chapters (D1093 → D1139)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -26,6 +26,16 @@ the shopper who wonders about the morning market; the almanac (D1112) quietly pi
 fruit pick to taste with the day's heat. *Why this hour anchors the arc:* every ingredient in
 this city passes through a market nobody visits in daylight. The product's promise of
 "real place, one tap away" begins here, invisible from every other seat in Hong Kong.
+
+### 04:00 — 抹窗師傅 (the window cleaners) · chapter XX
+**The city is wiped clean by hands nobody photographs.** On the roofs above Central
+and Wan Chai, before the lifts unlock, the 吊籃 rides one man sidelong across every
+pane the business district trusts to double as mirrors. *What the product serves
+here:* a small pride of the dawn economy — and for the searcher who asks why the
+harbour view from the 88th floor renders so sharply, the honest answer is four in
+the morning and a man who refuses to let the glass lie. *Interlock:* the rooftop
+sweep is the unseen layer between the 03:30 bakery oven and the 04:15 jetty; the
+whole city's clarity begins one rope away from the sky's edge.
 
 ### 04:15 — 春花姨 (the auntie) · chapter VII
 **The curtain gets pulled at 4:28, before the city admits it is awake.** Her white basin is

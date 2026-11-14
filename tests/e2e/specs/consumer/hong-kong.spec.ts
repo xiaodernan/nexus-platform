@@ -13,7 +13,7 @@ test('the mega hub renders its day-arc horizon band', async ({ page }) => {
   await expect(page.locator('.nexus-horizon')).toHaveCount(1);
 });
 
-test('the arc clock renders all nineteen chapters in chronological order', async ({ page }) => {
+test('the arc clock renders all twenty chapters in chronological order', async ({ page }) => {
   await page.goto('/hong-kong');
   await expect(page.getByRole('heading', { name: /香港一日的讀法|Reading the day/i }).first()).toBeVisible();
   await expect(page.locator('a[href="/guides/hk-cart-noodles-chronicle"]')).toHaveCount(2);
@@ -36,7 +36,7 @@ test('marking a chapter read fills the local-first progress bar', async ({ page 
   await expect(page.getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '1');
 });
 
-test('the /hong-kong mega hub renders its identity, the nineteen chapters, the quiz teaser and the search taster', async ({ page }) => {
+test('the /hong-kong mega hub renders its identity, the twenty chapters, the quiz teaser and the search taster', async ({ page }) => {
   await page.goto('/hong-kong');
 
   // Identity heading: the hero block with a real subline.
@@ -46,7 +46,7 @@ test('the /hong-kong mega hub renders its identity, the nineteen chapters, the q
   const chapterCards = page.locator('a[href^="/guides/hk-"]');
   await expect(chapterCards.first()).toBeVisible();
   const count = await chapterCards.count();
-  expect(count).toBeGreaterThanOrEqual(19);
+  expect(count).toBeGreaterThanOrEqual(20);
 
   // Quiz teaser: links to /hk-type.
   const quizLink = page.locator('a[href="/hk-type"]').first();
