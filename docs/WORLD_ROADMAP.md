@@ -20,8 +20,8 @@ What remains unclaimed in a classic HK day: the hours when the city changes shif
 | 29 — **landed D1152** | 17:00 | 太古城候車亭 | hk-typhoon-shelter-chronicle | Bus shelter that becomes a typhoon shelter for ten minutes every afternoon |
 | 30 — **landed D1152** | 20:00 | 粥府的長枱 | hk-soup-kitchen-communal-chronicle | The long table in the communal soup kitchen on Temple Street |
 | 31 — **landed D1152** | 21:30 | 屋邨電梯口的紙箱老伯 | hk-estate-cardboard-chronicle | The cardboard man outside the lift lobby who sorts the whole night |
-| 32 | 23:00 | 麥當勞得來速的深夜排隊 | hk-drive-thru-midnight-chronicle | The midnight drive-through queue that never stops, never rushes |
-| 33 | 00:00 | 紙包饮品・自动贩卖机 | hk-vending-machine-chronicle | The one machine in the estate that sells a drink nobody wants |
+| 32 — **landed D1153** | 23:00 | 麥當勞得來速的深夜排隊 | hk-drive-thru-midnight-chronicle | The midnight drive-through queue that never stops, never rushes |
+| 33 — **landed D1153** | 00:00 | 紙包飲品販賣機 | hk-vending-machine-chronicle | The one machine in the estate that sells a drink nobody wants |
 
 ## The layers beyond the day-arc (structural)
 

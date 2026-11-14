@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the thirty-one chapters (D1093 → D1152)
+document is the continuity plan for that world-layer: how the thirty-three chapters (D1093 → D1153)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,22 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 23:00 — 麥當勞得來速 (the midnight drive-thru) · chapter XXXII
+**This is the one light whose promise has never broken.** At 23:00, the drive-thru's lamp does the
+shift — the soul of the midnight crowd, the feeder of every night-shift worker arriving at midnight
+with the same four-item order. *What the product serves here:* nobody needs the product at 23:00 to
+make a decision — except the product knows what that crowd will be hungry for, and shows it to them.
+*Interlock:* the 22:30 cart noodles chapter is the street hot-table; the 23:00 drive-thru is the
+house-overflow when the table is closed.
+
+### 00:00 — 紙包飲品販賣機 (the vending machine) · chapter XXXIII
+**The one machine that has been holding the same spot since the estate was built.** At exactly
+00:00, it lights up brighter than any home; it has never been attended by any human hand and nobody
+has been able to budge it. *What the product serves here:* the estate's unspoken supervisor; nobody
+asks it for opinions — and it has never asked for one either. *Interlock:* the 23:00 drive-thru and
+00:00 vending machine together are how the night shift survives; the 01:00 tower cleaner chapter is
+what happens after they both close.
 
 ### 17:00 — 太古城候車亭 (the typhoon shelter) · chapter XXIX
 **Between the rain stopping and the Bourse door slamming shut, there is a five-metre-wide refuge.**

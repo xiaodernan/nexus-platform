@@ -44308,3 +44308,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the shelter's physical geometry, the communal table's etiquette, and the cardboard elder's legal authority to fold neighbours' trash are narrative constructions. No real operator, no real person, no price, no address, no policy.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1153. D1153 — chapters XXXII and XXXIII complete Layer C: 23:00 麥當勞得來速 · 00:00 紙包飲品販賣機
+
+**Why.** WORLD_ROADMAP rows 32 and 33 — the last two "start here" rows. The drive-thru is the one light whose promise never breaks in the midnight crowd; the vending machine is the estate's unspoken supervisor who nobody asks for opinions, but nobody overlooks either. Completing Layer C means every row of the roadmap's opening table now has a chapter — the first coherent map of Hong Kong's unphotographed night.
+
+**The unit.** `DEMO_GUIDES` gains two fixtures: `hk-drive-thru-midnight-chronicle` — 「深夜十一點：麥當勞得來速（香港系列 · 第三十二章）」, and `hk-vending-machine-chronicle` — 「凌晨零時零分：紙包飲品販賣機（香港系列 · 第三十三章）」. Traditional HK script throughout; census 1566 literals, 0 simplified; 台/面 only. Both locales carry both chapters; the arc clock gains 23:00 and 00:00 in chronological slots (66 chips across both locales); hk-type link list; handbook reading order re-sorted to thirty-three on both locales; e2e floors ≥33; WORLD_ROADMAP rows 32/33 marked landed; ARC doc gained two interlock entries.
+
+**Honest boundaries.** Synthetic fixtures; the drive-thru's named staff, the vending machine's handwritten warts, and the deal attribution are narrative constructions with no real operator behind them. No address, no price, no brand claim beyond the generic descriptor.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
