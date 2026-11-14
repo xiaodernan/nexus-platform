@@ -29,6 +29,7 @@ export default async function HandbookPage() {
 
   const quickLinks = [
     { href: '/search', label: dict.nav.search },
+    { href: '/daily', label: dict.nav.daily },
     { href: '/hong-kong', label: dict.home.hkHub.seriesLink },
     { href: '/hk-type', label: dict.nav.hkType },
     { href: '/me', label: dict.nav.account },

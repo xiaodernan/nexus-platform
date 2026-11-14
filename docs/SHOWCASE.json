@@ -1,14 +1,14 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1143",
-  "milestone_full": "香港系列二十二章 · 00:30→22:45 · Spring Cloud Redis 桶 · LangGraph 引擎",
+  "milestone": "D1144",
+  "milestone_full": "香港系列二十二章 · 00:30→22:45 · /daily 每日儀式頁登場",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
     "HK series: twenty-two Traditional chapters — 00:30→22:45 full day arc",
+    "/daily: the daily ritual page — almanac + Cantonese phrase + one chapter per date hash + copy-the-card island",
     "/hong-kong: twenty-two-checkpoint arc clock — chronological, both locales",
-    "Edition XXII — 校巴的秘密班機, the 08:30 school-bus queue",
     "D1142: LangGraph opt-in engine — parallel fan-out of independent reads",
     "D1140: Spring Cloud edge rate limiter shares ONE Redis bucket across processes",
     "/handbook: complete bilingual manual · quiz tutorial · newcomer strip"

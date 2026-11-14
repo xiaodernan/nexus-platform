@@ -44227,3 +44227,14 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the route, the driver, the buggy scheduling are narrative constructions, not sourced from any transport operator. No actual school route, no actual driver, no actual fare claim anywhere.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+## 1144. D1144 — `/daily` ships the daily-ritual page: three instruments, one city rhythm, zero backend
+
+**Why.** The home page said "eat today well" in a strip; the mega hub said "here's a Cantonese sentence"; the HK series said "twenty-two chapters of a single day". Nobody had collected the three into the page a reader opens at 07:00 with coffee — the page that knows it's Tuesday.
+
+**The unit.** `apps/web/app/daily/page.tsx` — server-rendered shell, `force-static`, one giant headline (「今日，好好過。」 / "Today, done well."), the arc of the day revealed by `HkDailyDate`, the three instruments side by side: 今日食運 (deterministic, hk date's cyrb53 % 12 locked entries), 每日一句廣東話 (hand-checked Jyutping + English gloss), `HkDailyArcPick` — a chapter picked by the SAME hash so the whole city reads one chapter per day — and `HkDailyShare` — one tap, composes the three into a shareable card, writes it to the clipboard. Server→client boundaries carry no functions (the RSC rule): `HkDailyShare` takes a placeholder `format` string, the island does the substitution. No fetch, no telemetry; everything client-side, everything reproducible from the date.
+
+**Home and Handbook** each gained one link to `/daily` (home inkline below the almanac, handbook quickLinks gains `dict.nav.daily`). Nav key added to both locales, footer-visible.
+
+**Honest boundaries.** The arc pick is a hash, not curatorship — it's the same rhythm for everyone, by design. The clipboard button degrades honestly ("clipboard unavailable") when the API is absent. No SSR↔client hydration mismatch: date and share actions are all mounted after mount. No new network traffic of any kind.
+
+- readers: `apps/web/app/daily/page.tsx`, `apps/web/src/components/hk-daily-*.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/page.tsx`, `apps/web/app/handbook/page.tsx`, this ledger entry.

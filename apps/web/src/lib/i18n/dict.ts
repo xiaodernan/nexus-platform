@@ -51,8 +51,29 @@ export interface Dict {
     /** D1095: the /hk-type archetype quiz link, shown in the footer. */
     hkType: string;
     handbook: string;
+    /** D1144: the /daily daily-ritual page link, shown in the footer. */
+    daily: string;
   };
   home: {
+    /** D1144: the /daily page — everything the date can pick, in one place. */
+    daily: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      arcPick: { eyebrow: string; note: string; cta: string };
+      share: {
+        eyebrow: string;
+        title: string;
+        note: string;
+        cta: string;
+        copied: string;
+        unavailable: string;
+        /** Token-substituted by the /daily island — server→client boundaries cannot carry functions. */
+        format: string;
+      };
+      weeks: string[];
+      dateSeparator: string;
+    };
     eyebrow: string;
     title: string;
     subtitle: string;
@@ -912,8 +933,26 @@ const zhHK: Dict = {
     themeToLight: '切換至淺色主題',
     hkType: '香港人格',
     handbook: '說明書',
+    daily: '今日',
   },
   home: {
+    daily: {
+      eyebrow: '每日儀式 · DAILY RITUAL',
+      title: '今日，好好過。',
+      intro: '一頁收攏了每日儀式的三根支柱：今日食運、每日一句廣東話，和香港系列今天的那一章。同一天讀同一章、同一天講同一句——這座城市的節奏，你聽得見。',
+      arcPick: { eyebrow: '今日讀一章', note: '由今天的星期曆選出——同一天，全城讀同一章。', cta: '去讀這章' },
+      share: {
+        eyebrow: '今日卡',
+        title: '把今日卡寄給朋友',
+        note: '複製一張可以分享的今日卡——今日食運、廣東話一句、今天讀的那一章。',
+        cta: '複製今日卡',
+        copied: '已複製到剪貼簿',
+        unavailable: '剪貼簿不可用',
+        format: '【今日 · NEXUS】{date}｜{almanac}｜{phrase}（{gloss}）｜今天讀一章：{chapter}',
+      },
+      weeks: ['日', '一', '二', '三', '四', '五', '六'],
+      dateSeparator: '.',
+    },
     eyebrow: '對話式本地發現',
     title: '想說就去。',
     subtitle: '講出你的條件——地區、預算、時間、口味——NEXUS 會理解需求、搜索真實商戶並解釋每個推薦。',
@@ -2120,8 +2159,26 @@ const en: Dict = {
     themeToLight: 'Switch to the light theme',
     hkType: 'HK quiz',
     handbook: 'Handbook',
+    daily: 'Daily',
   },
   home: {
+    daily: {
+      eyebrow: 'DAILY RITUAL',
+      title: 'Today, done well.',
+      intro: 'One page collects the three pillars of the daily ritual: today’s food-luck, a Cantonese phrase for the day, and today’s chapter of the HK series. Same day, same chapter, same phrase — a shared city rhythm you can hear from your kitchen.',
+      arcPick: { eyebrow: 'READ TODAY’S CHAPTER', note: 'Picked by the date — everyone on this page reads the same chapter today.', cta: 'Read the chapter' },
+      share: {
+        eyebrow: 'THE DAILY CARD',
+        title: 'Send today’s card to a friend',
+        note: 'Copies one shareable card — today’s almanac line, today’s Cantonese phrase, today’s chapter.',
+        cta: 'Copy the daily card',
+        copied: 'Copied to the clipboard',
+        unavailable: 'Clipboard unavailable',
+        format: 'Today on NEXUS — {date} | {almanac} | {phrase} ({gloss}) | Chapter to read: {chapter}',
+      },
+      weeks: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+      dateSeparator: '.',
+    },
     eyebrow: 'Conversational local discovery',
     title: 'Just say it.',
     subtitle:

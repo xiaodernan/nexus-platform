@@ -125,6 +125,18 @@ export default async function HomePage(props: {
 
       <NewcomerTour copy={dict.home.newcomer} />
       <HkDailyAlmanac daily={dict.home.hkDaily} />
+      <div className="border-b border-line bg-canvas">
+        <Container size="shell" className="flex items-center justify-between gap-4 py-3 text-sm">
+          <p className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">{dict.brand.name} DAILY</p>
+          <Link
+            href="/daily"
+            className="inline-flex items-center gap-1.5 font-medium text-ink-muted transition-colors hover:text-accent"
+          >
+            {dict.nav.daily}
+            <Icon name="arrowRight" size={14} />
+          </Link>
+        </Container>
+      </div>
 
       {IS_MOCK ? (
         <section className="border-b border-line bg-canvas">
