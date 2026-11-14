@@ -43303,3 +43303,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** The line is a prose claim, not a runtime check — it does not prove any rendered number on the page traces to a fact. The platform already does runtime source-checking on the `/m/[slug]` pathway; this line is the promise that if that check fails or isn't wired, the page prints "no source available", never a fabricated number. The wording deliberately mirrors the seed/fact backbone's discipline: if a number shows up, something traceable stands behind it.
 
 - readers: `apps/web/app/page.tsx`, this ledger entry.
+## 1071. D1071 — the document shell gains a back-to-top island: above the fold nobody sees, past the fold chevron, reduced-motion-honoring scroll behavior
+
+**Why.** A long guide page (and `/search?q=…` with many results) drops a reader two or three viewports deep. Reaching the top for the next query meant thumb-scrolling on a phone or guessing that the fixed header was where they wanted to go. A small circular button bottom-left does the job without stealing a tap from a CTA — it never overlaps the nav, the rail, or the merchant sticky-cta (fixed bottom-centre, z-50; the back-to-top is left edge).
+
+**The unit.** `apps/web/src/components/back-to-top.tsx` — a `'use client'` island mounted once in `app/layout.tsx`: renders only past the first viewport height; single passive scroll listener + rAF coalescing; Escape for no keyboard traps; `aria-hidden` while not rendered; `window.scrollTo` under the reader's motion preference (reduced-motion → no smooth). Dict carries both locales (`跳到主要內容` + `回到頁首` for zh-HK, `Skip to content` + `Back to top` for en) — Traditional-script zh.
+
+**Verified.** vitest 294/294 (+3 over D1066); tsc clean; `next build` green; zh-HK census PASS over 941 literals. The icon name `chevronUp` is already present in the `@nexus/ui` Icon union (so the island can declare it without modifying the icon file).
+
+**Honest boundaries.** Scrolling to top is a nicety; it is not a feature with telemetry. It is not the first thing a newcomer will reach; it's only for the rare reader who is 2+ viewports deep. No persisted state, no debounces, no duplicated scroll handlers.
+
+- readers: `apps/web/src/components/back-to-top.tsx`, `apps/web/app/layout.tsx`, this ledger entry.

@@ -44,6 +44,7 @@ export interface Dict {
     account: string;
     merchantPortal: string;
     skipToContent: string;
+    backToTop: string;
     /** The theme switch's accessible name, per direction: the theme it moves TO. */
     themeToDark: string;
     themeToLight: string;
@@ -763,6 +764,7 @@ const zhHK: Dict = {
     account: '我的',
     merchantPortal: '商戶中心',
     skipToContent: '跳到主要內容',
+    backToTop: '回到頁首',
     themeToDark: '切換至深色主題',
     themeToLight: '切換至淺色主題',
   },
@@ -1543,6 +1545,7 @@ const en: Dict = {
     account: 'Account',
     merchantPortal: 'Merchant portal',
     skipToContent: 'Skip to content',
+    backToTop: 'Back to top',
     themeToDark: 'Switch to the dark theme',
     themeToLight: 'Switch to the light theme',
   },
