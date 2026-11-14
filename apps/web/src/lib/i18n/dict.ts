@@ -263,8 +263,8 @@ export interface Dict {
     start: string;
     progress: (current: number, total: number) => string;
     questionAria: string;
-    questions: Array<{ text: string; options: Array<{ label: string; scores: Partial<Record<'yum_cha' | 'siu_mei' | 'cha_chaan_teng', number>> }> }>;
-    results: Record<'yum_cha' | 'siu_mei' | 'cha_chaan_teng', { title: string; blurb: string; guideHref: string; guideTitle: string }>;
+    questions: Array<{ text: string; options: Array<{ label: string; scores: Partial<Record<'yum_cha' | 'siu_mei' | 'cha_chaan_teng' | 'temple_street' | 'cha_chaan', number>> }> }>;
+    results: Record<'yum_cha' | 'siu_mei' | 'cha_chaan_teng' | 'temple_street' | 'cha_chaan', { title: string; blurb: string; guideHref: string; guideTitle: string }>;
     resultEyebrow: string;
     copyShare: string;
     shareCopied: string;
@@ -1181,11 +1181,28 @@ const zhHK: Dict = {
         ],
       },
       {
+        text: '有一天你夜歸，看見廟街的鬼火，你會：',
+        options: [
+          { label: '走過去問解籤婆婆', scores: { temple_street: 2 } },
+          { label: '去吃點東西，然後離開', scores: { cha_chaan: 2 } },
+          { label: '徑直回家，不告訴別人', scores: { cha_chaan_teng: 2 } },
+        ],
+      },
+      {
+        text: '茶餐廳的紙巾，你會：',
+        options: [
+          { label: '抹手然後放到盤子底下', scores: { cha_chaan_teng: 2 } },
+          { label: '整理包裝外頭一起帶走', scores: { cha_chaan: 2 } },
+          { label: '寫下今晚火氣的方向，留下給朋友', scores: { temple_street: 2 } },
+        ],
+      },
+      {
         text: '凌晨三點，你會在做什麼？',
         options: [
           { label: '茶樓消夜，不限數量的蒸籠', scores: { yum_cha: 2 } },
           { label: '常餐宵夜，對帳', scores: { cha_chaan_teng: 2 } },
           { label: '街市巡邏，看燒味檔燈熄了沒', scores: { siu_mei: 2 } },
+          { label: '廟街散步，解籤婆婆還醒着', scores: { temple_street: 2 } },
         ],
       },
     ],
@@ -1207,6 +1224,18 @@ const zhHK: Dict = {
         blurb: '你不是大師，也不是職員——你是儀式本身。常餐一落枱，時間就對了；這座城市不缺店長，缺的是記得你的人。',
         guideHref: '/guides/hk-food-chronicle',
         guideTitle: '閱讀《香港三餐的血脈》',
+      },
+      temple_street: {
+        title: '廟街之夜：',
+        blurb: '你晚上去廟街是為了解籤婆婆把你的困境一字一句念完。這才是香港。',
+        guideHref: '/guides/hk-temple-street-chronicle',
+        guideTitle: '閱讀《廟街：宵夜成的一座廟》',
+      },
+      cha_chaan: {
+        title: '茶餐廳血脈：',
+        blurb: '你不是新來的——你是從戰後那把椅子爬出來的。絲襪奶茶流過你的血，常餐落在你的手上你不需要問。',
+        guideHref: '/guides/hk-cha-chaan-teng-chronicle',
+        guideTitle: '閱讀《茶餐廳》',
       },
     },
     resultEyebrow: '你的香港人格',
@@ -2089,7 +2118,7 @@ const en: Dict = {
   hkType: {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
-    intro: 'Food is the one exam Hong Kong will give you without warning. Eight questions to find which Hong Kong you are.',
+    intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
     seriesLabel: 'Five HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
@@ -2159,11 +2188,28 @@ const en: Dict = {
         ],
       },
       {
+        text: 'Walking home late, you see the ghosts of Temple Street. You:',
+        options: [
+          { label: 'Ask the fate-teller for the name of the ghost', scores: { temple_street: 2 } },
+          { label: 'Keep walking to the cha chaan teng with the warm door', scores: { cha_chaan: 2 } },
+          { label: 'Go home, say nothing, and eat left-overs', scores: { cha_chaan_teng: 2 } },
+        ],
+      },
+      {
+        text: 'The napkin at the cha chaan teng is kept:',
+        options: [
+          { label: 'folded tightly on the tray', scores: { cha_chaan_teng: 2 } },
+          { label: 'passed on the way out for the road', scores: { cha_chaan: 2 } },
+          { label: 'scribbled with something for the next person who sits here', scores: { temple_street: 2 } },
+        ],
+      },
+      {
         text: 'At three in the morning, you are:',
         options: [
           { label: 'Yum cha, no limits, no names on baskets', scores: { yum_cha: 2 } },
           { label: 'Cha chaan teng — the books are closed for the day', scores: { cha_chaan_teng: 2 } },
           { label: 'The last street patrol: is the roaster still lit?', scores: { siu_mei: 2 } },
+          { label: 'Temple Street: the fate-teller still probably up', scores: { temple_street: 2 } },
         ],
       },
     ],
@@ -2185,6 +2231,18 @@ const en: Dict = {
         blurb: 'You are not a connoisseur or a staff member — you are the ritual. The cha chaan teng lands the moment ordered; the city owes you its breath.',
         guideHref: '/guides/hk-food-chronicle',
         guideTitle: 'Read 香港三餐的血脈',
+      },
+      temple_street: {
+        title: 'Temple Street: the fortune-walker',
+        blurb: 'You go to Temple Street to let the fate-teller read what you have been avoiding. This is the Hong Kong the streetcar people will never know.',
+        guideHref: '/guides/hk-temple-street-chronicle',
+        guideTitle: 'Read Temple Street',
+      },
+      cha_chaan: {
+        title: 'The Cha Chaan Teng bloodline',
+        blurb: 'You are silk-stocking milk tea walking. You are an egg tart in motion. Every morning starts with custard, every night ends with one more cup.',
+        guideHref: '/guides/hk-cha-chaan-teng-chronicle',
+        guideTitle: 'Read the Cha Chaan Teng',
       },
     },
     resultEyebrow: 'Your Hong Kong archetype',

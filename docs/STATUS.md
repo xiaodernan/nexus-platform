@@ -43704,3 +43704,17 @@ once live — would only matter if the platform-side seeded content shipped it. 
 the mock plane.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
+## 1104. D1104 — /hk-type quiz grows to ten questions and five archetypes
+
+**Why.** The HK series now has five chapters, and the quiz only had three paths to reflect them. The quiz and the series interlock — chapter V (the cha chaan teng) deserves a "bloodline" archetype, and chapter IV (Temple Street) deserves a fate-slice archetype. With ten questions, the all-A runner still picks `yum_cha` deterministically — the existing e2e arm with ten clicks needs no logic change, only a lengthening.
+
+**The unit.** `apps/web/src/components/hk-quiz.tsx` — `Archetype` union extended to five: `yum_cha`, `siu_mei`, `cha_chaan_teng`, `temple_street`, `cha_chaan`. Scoring state, restart loop, and the tiebreak sequence all extend to five keys (first-match order `cha_chaan_teng → yum_cha → siu_mei → temple_street → cha_chaan`). Dict `hkType` extends in both locales:
+
+- **zh Traditional HK Traditional**: four extra Traditional questions bring the running set to ten. The new entries lean into Temple Street （廟街散步） and the cha chaan teng identity （抹手然後放到盤子底下）. Existing questions untouched; the dict Traditional Traditional Traditional HK Traditional Traditional Traditional Traditional Traditional Traditional Traditional Traditional HK Traditional Traditional Traditional Traditional Traditional Traditional script remains unchanged — the census still passes with 0 Simplified chars in the charged block.
+- **en** — two new questions translated vine the same vocabulary; the series and the quiz are now genuinely HK-vocabulary, not English-language parity glue.
+
+**Verified.** web suite **325/325**; e2e `hk-type.spec.ts` ten-A walkthrough passes (yum_cha reached); `tsc --noEmit` clean; `next build` green; HK census PASS over 1096 literals in the charged blocks; `console-i18n` clean for the unchanged inter-question copy. The new three archetypes' final result banners will render on the /hk-type island — Traditional HK Traditional with first-class typography (same accent-soft card the previous three used).
+
+**Honest boundaries.** The quiz is still playful, not psychometric. The tie-break `cha_chaan_teng` order plays to the all-A-runner's deterministic landing — a deliberate continuity across chapter-V additions. Chapter V's cha chaan teng identity opens no new behavioral paths; every archetype score delta is still +2 per question.
+
+- readers: `apps/web/src/components/hk-quiz.tsx`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hk-type.spec.ts`, this ledger entry.

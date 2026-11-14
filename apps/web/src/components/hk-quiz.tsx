@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { Icon } from '@nexus/ui';
 import { getDict } from '@/lib/i18n';
 
-type Archetype = 'yum_cha' | 'siu_mei' | 'cha_chaan_teng';
+type Archetype = 'yum_cha' | 'siu_mei' | 'cha_chaan_teng' | 'temple_street' | 'cha_chaan';
 type Phase = 'idle' | 'playing' | 'result';
 
 export function HkQuiz({ locale }: { locale: string }) {
@@ -26,6 +26,8 @@ export function HkQuiz({ locale }: { locale: string }) {
     yum_cha: 0,
     siu_mei: 0,
     cha_chaan_teng: 0,
+    temple_street: 0,
+    cha_chaan: 0,
   });
   const [shared, setShared] = useState(false);
 
@@ -49,7 +51,7 @@ export function HkQuiz({ locale }: { locale: string }) {
   const result = useMemo(() => {
     let best: Archetype = 'cha_chaan_teng';
     let bestScore = -1;
-    for (const key of ['yum_cha', 'siu_mei', 'cha_chaan_teng'] as const) {
+    for (const key of ['yum_cha', 'siu_mei', 'cha_chaan_teng', 'temple_street', 'cha_chaan'] as const) {
       if (scores[key] > bestScore) {
         best = key;
         bestScore = scores[key];
@@ -168,7 +170,7 @@ export function HkQuiz({ locale }: { locale: string }) {
           onClick={() => {
             setPhase('idle');
             setStep(0);
-            setScores({ yum_cha: 0, siu_mei: 0, cha_chaan_teng: 0 });
+            setScores({ yum_cha: 0, siu_mei: 0, cha_chaan_teng: 0, temple_street: 0, cha_chaan: 0 });
           }}
           className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent"
         >

@@ -20,8 +20,8 @@ test('the /hk-type quiz is playable end-to-end', async ({ page }) => {
   const progressbar = page.locator('[role="progressbar"]');
   await expect(progressbar).toBeVisible();
 
-  // Play through deterministically: eight option-A clicks → yum_cha archetype.
-  for (let n = 0; n < 8; n += 1) {
+  // Play through deterministically: ten option-A clicks → yum_cha archetype.
+  for (let n = 0; n < 10; n += 1) {
     await page.getByRole('button', { name: /^A / }).click();
   }
 
