@@ -117,6 +117,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `scripts/check_console_script.mjs` | D1127: the console fixture plane's Traditional-HK script auditor |
 | `scripts/falsify_console_script.mjs` | D1127: the census arms — 9 planes on scratch trees, exit verdict first-class |
 | `scripts/stress_search.mjs` | D1132: the load harness — bursts of concurrent users against the BFF, honest failure counting and p50/p99 |
+| `apps/web/src/lib/mock/seed.ts` | D1155: the thirty-sixth and thirty-seventh HK chapters (hk-north-run-chronicle, 隔水渡輪; hk-tai-o-chronicle, 大澳) — opens WORLD_ROADMAP Layer D |
 | `apps/web/src/lib/mock/seed.ts` | D1154: the thirty-fourth and thirty-fifth HK chapters (hk-tung-chung-chronicle, 東涌; hk-peng-chau-chronicle, 坪洲) — opens WORLD_ROADMAP Layer D |
 | `apps/web/src/lib/mock/seed.ts` | D1153: the thirty-second and thirty-third HK chapters (hk-drive-thru-midnight-chronicle, 麥當勞得來速; hk-vending-machine-chronicle, 紙包飲品販賣機) — completes WORLD_ROADMAP Layer C |
 | `apps/web/src/lib/mock/seed.ts` | D1152: the twenty-ninth, thirtieth and thirty-first HK chapters (hk-typhoon-shelter-chronicle, 太古城候車亭; hk-soup-kitchen-communal-chronicle, 粥府的長枱; hk-estate-cardboard-chronicle, 屋邨電梯口的紙箱老伯) |

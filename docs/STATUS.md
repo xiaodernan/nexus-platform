@@ -44326,3 +44326,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the cable-car exact route, the shutter-count in the concourse glare, and the harbour-weather queue are narrative constructions. No real airport operator, cable route, nor shop names — none claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1155. D1155 — chapters XXXVI and XXXVII complete Layer D rows 34-37: the islands wake up across the water
+
+**Why.** Layer D mapping rows 36-37 landed together — the steel skeleton and salt-scented fish are the two images the city keeps in its pocket whenever it misses its mother. Layer D stays the outlying-island layer; every chapter here lives outside downtown — the ferries, Tai O, the typhoon shelter, the ferrymen who don't take tips.
+
+**The unit.** `DEMO_GUIDES` gains two fixtures: `hk-north-run-chronicle` — 「清晨七點：隔水渡輪（香港系列 · 第三十六章）」 (the old ferry at seven — the cheapest kindness the water keeps), and `hk-tai-o-chronicle` — 「中午十一點半：大澳——鹹魚棧（香港系列 · 第三十七章）」 (the last unmodernised salt-fish row in the Pearl Delta). Traditional HK script throughout (census 1602 literals, 0 simplified; 台/面 only). Both locales carry both chapters; the arc clock gains 07:00 and 11:30 in chronological slots (74 chips across both locales); hk-type link list; handbook reading order re-sorted to thirty-seven on both locales; e2e floors ≥37; WORLD_ROADMAP rows 36/37 marked landed; ARC doc gained two interlock entries.
+
+**Honest boundaries.** Synthetic fixtures; the ferry's exact chimney diameter, the salt-fish village's exact GPS, and the tour-blog claim about "日本的每個駐大嶼西灣的日本人" are narrative constructions with no verifiable operator, route or № plate behind them. No real price, no brand, no named operator.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.

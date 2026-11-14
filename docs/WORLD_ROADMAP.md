@@ -25,6 +25,9 @@ What remains unclaimed in a classic HK day: the hours when the city changes shif
 | 34 — **landed D1154** | 12:30 | 東涌——機場的風 | hk-tung-chung-chronicle | Tung Chung: the new airport shift, the clock that never stops |
 | 35 — **landed D1154** | 16:30 | 坪洲——纜車鐵箱子 | hk-peng-chau-chronicle | Peng Chau: the cable car and the island that stays itself |
 
+| 36 — **landed D1155** | 07:00 | 隔水渡輪 | hk-north-run-chronicle | The old ferry crossing at seven, the cheapest kindness the water keeps |
+| 37 — **landed D1155** | 11:30 | 大澳——鹹魚棧 | hk-tai-o-chronicle | The story about the still-unmodernised smell this city never let go |
+
 ## The layers beyond the day-arc (structural)
 
 **Layer C — the back streets (every hour):** chapters 34–46 fill the remaining half-hours (00:45 / 01:30 / 02:30 / 07:00 / 10:30 / 14:30 / 15:30 / 20:30 / 21:00 / 23:30), each an ordinary Hong Kong where there is no camera but there is always a story.

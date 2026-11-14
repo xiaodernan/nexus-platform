@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the thirty-five chapters (D1093 → D1154)
+document is the continuity plan for that world-layer: how the thirty-seven chapters (D1093 → D1155)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,19 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 07:00 — 隔水渡輪 (the old ferry crossing) · chapter XXXVI
+**The cheapest kindness the water keeps.** At 07:00 the old laundry-deck ferry pushes off — every
+passenger holding a thermos and watching the same grey water fold itself. *What the product serves
+here:* one tap on the cheapest way across; the rail knows the next departure. *Interlock:* between
+06:45 the ice-room and 07:30 yum cha, the city wakes up to the smell of the river.
+
+### 11:30 — 大澳：鹹魚棧 (Tai O and the dried fish) · chapter XXXVII
+**The only street in this city nobody has renamed.** At 11:30, the island streets are wet — the
+salt fish patio, the bamboo rail, the voices choosing which catches will dry today. *What the
+product serves here:* the one strip of Macau-washed air this city left active; the rail knows which
+boat is still at the pier. *Interlock:* between 11:00 newspaper and 12:00 siu mei, the city pays its
+respects to the last economy nobody measured.
 
 ### 12:30 — 東涌：機場的風 (the new airport wind) · chapter XXXIV
 **The wind that arrives at noon smells like the sea and a refinery and a jet engine.** At 12:30,
