@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the thirty-three chapters (D1093 → D1153)
+document is the continuity plan for that world-layer: how the thirty-five chapters (D1093 → D1154)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,21 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 12:30 — 東涌：機場的風 (the new airport wind) · chapter XXXIV
+**The wind that arrives at noon smells like the sea and a refinery and a jet engine.** At 12:30,
+Tung Chung is the city's loud voice for one hour — the departure lounge noise spills into the
+shopping concourse as every passenger does their duty of pretending to be somewhere else. *What the
+product serves here:* the one warm hour in the new city's calendar — the rail knows the best bench,
+the least crowded stairs, and one dish worth standing for. *Interlock:* between 12:00 siu mei and
+13:30 the dish pit, the city pretends it is not melting under the airport glare.
+
+### 16:30 — 坪洲：纜車鐵箱子 (Peng Chau and the cable-car) · chapter XXXV
+**The oldest cable in Hong Kong still moves.** At 16:30, the Peng Chau cable car rattles from the
+pier to the summit — ten people know the exact rhythm and the rest of the island muddles through.
+*What the product serves here:* a one-tap search bar for an island that the rest of the city doesn't
+know exists; the rail carries the next train's seat number. *Interlock:* between 15:00 the pigeon
+coop and 17:00 the typhoon shelter, the city sighs into the outlying islands.
 
 ### 23:00 — 麥當勞得來速 (the midnight drive-thru) · chapter XXXII
 **This is the one light whose promise has never broken.** At 23:00, the drive-thru's lamp does the

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1153",
-  "milestone_full": "香港系列篇三十三章 · 00:30→22:45 · /daily · WORLD_ROADMAP Layer C 全部落地",
+  "milestone": "D1154",
+  "milestone_full": "香港系列篇三十五章 · 00:30→22:45 · /daily · WORLD_ROADMAP Layer D 開卷",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: thirty-three Traditional chapters — 00:30→22:45 full day arc · 66-chip clock both locales",
-    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order",
-    "Edition XXXII+XXXIII — 麥當勞得來速 (23:00, the light whose promise never breaks) and 屋邨飲品販賣機 (00:00, the estate's unspoken supervisor)",
-    "WORLD_ROADMAP Layer C (rows 24-33) now mapped & landed · next cadences: Layer D (Lantau outlying islands)",
+    "HK series: thirty-five Traditional chapters — 00:30→22:45 full day arc · 70-chip clock both locales",
+    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order — 70 slots, bilingual",
+    "Edition XXXIV+XXXV — 東涌——機場的風 (12:30) · 坪洲——纜車鐵箱子 (16:30) — Layer D opens",
     "/daily: the daily ritual page — almanac + Cantonese phrase + one chapter by date hash",
-    "D1150: the teaching manual lives inside product chrome; D1142: LangGraph engine · D1140: Redis shared token bucket · census 1566 clean"
+    "Layer C landed (rows 24-33); Layer D landed rows 34-35; Layer D.next maps chapters 36-46",
+    "D1150: the teaching manual inside product chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1584 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

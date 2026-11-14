@@ -44317,3 +44317,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the drive-thru's named staff, the vending machine's handwritten warts, and the deal attribution are narrative constructions with no real operator behind them. No address, no price, no brand claim beyond the generic descriptor.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1154. D1154 — chapters XXXIV and XXXV land the outlying islands: 東涌——機場的風 · 坪洲——纜車鐵箱子
+
+**Why.** WORLD_ROADMAP Layer D begins — the islands east/north of the Pearl: the two stories the city keeps just out of view, where everyone else has gone and only the ferries remain. Tung Chung at 12:30 is the shopping concourse noise spilling across the airport glare; Peng Chau at 16:30 is the cable car the rest of the city never hears.
+
+**The unit.** `DEMO_GUIDES` gains two fixtures: `hk-tung-chung-chronicle` — 「中午十二點半：東涌——機場的風（香港系列 · 第三十四章）」, and `hk-peng-chau-chronicle` — 「下午四點半：坪洲——纜車鐵箱子（香港系列 · 第三十五章）」. Traditional HK script throughout (census 1584 literals, 0 simplified; 台/面 only). Both locales carry both chapters; the arc clock gains 12:30 and 16:30 in chronological slots (70 chips across both locales); hk-type link list; handbook reading order re-sorted to thirty-five on both locales; e2e floors ≥35; WORLD_ROADMAP rows 34/35 marked landed; ARC doc gained two interlock entries.
+
+**Honest boundaries.** Synthetic fixtures; the cable-car exact route, the shutter-count in the concourse glare, and the harbour-weather queue are narrative constructions. No real airport operator, cable route, nor shop names — none claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
