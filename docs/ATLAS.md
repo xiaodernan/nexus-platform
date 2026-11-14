@@ -431,4 +431,6 @@ was decomposed into microservices.
 
 **Honest boundaries.** Anchor navigation only; no scroll spy, no active-state tracking. The chips remain visible on every /me render — the hub is a page people revisit often and the row costs nothing.
 
-- readers: `apps/web/app/me/page.tsx`, this ledger entry.
+- readers: `apps/web/app/me/page.tsx`, this ledger entry.| `docs/SHOWCASE.json` | D1117: curated showcase milestone for the external personal page; refreshed manually on heavy milestones (currently D1116) |
+| `docs/HONG_KONG_ARC.md` | D1117: the Hong Kong Day-Arc — the reading order across the nine chapters and the product-interlock contract |
+

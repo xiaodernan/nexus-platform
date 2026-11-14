@@ -43890,3 +43890,28 @@ Dict threads the ninth chapter through all three artefacts: home rail, `/hk-type
 **Honest boundaries.** Mock-plane fixture only; the live plane (like every chapter) needs the seeded platform. The prose leans on common tong-sui craft facts — nothing vendor-specific is claimed. The arc is now structurally complete dawn→dessert; further HK chapters after this would widen rather than deepen (e.g. a tea-room north-point contrast chapter is the queued next).
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, the two pinning tests, this ledger entry.
+## 1117. D1117 — the editorial world gets its spine document: docs/HONG_KONG_ARC.md tells the whole story of one Hong Kong day and how every artefact interlocks
+
+**Why.** Nine chapters, four artefact surfaces, three daily instruments — and no single document that said how all of it connected. The user's standing mandate asked for "史詩般的敘事" (epic-scale narrative); a nine-chapter fixture rail is not itself epic until it is *arranged* and *reasoned about*. This document provides the arrangement.
+
+**The unit.** `docs/HONG_KONG_ARC.md`. Two layers:
+
+1. The day, hour by hour — 果欄 03:10 → 魚市 04:30 → cha chaan teng dawn 06:00 → yum cha 07:30 → siu mei at noon 12:00 → cha chaan teng afternoon 15:30 (the same cha chaan teng, re-read) → Temple Street 19:00 → 糖水 22:30. Each segment names (a) what the-city smells like at that hour, (b) what the product serves there (SearchBox phrasing, rails, the freshness/distance ranking), (c) the chapter slug + interlock with the earlier segments.
+2. What this arc demands of the product — four contract lines: hour-varying search intent on the fixture plane; rails that stay honest about freshness, not hype; three daily instruments (progress, Cantonese-of-the-day, the HK almanac) all as one instrument; STATUS/ATLAS/e2e ledger fidelity as the discipline.
+
+Plus five bounded growth directions: a Sai Ying Pun dawn-contrast chapter, a 12:10 lunch-rush phone-order chapter, an ice-room (「冰室」) chapter, an off-grid chapter that pins our own 4 a.m. barbecue across both dawns, and a future on-device arc-line pool.
+
+**Honest boundaries.** It is an editorial plan, not a shipped feature: no code touched in this unit; no additional guide enters the fixture plane here; chapters proposed in "where can grow" are not committed shipping. The nine-chapter reading order (clock, not writing order) is described — writing order remains D1093→D1116.
+
+- readers: `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1118. D1118 — the mixed-language leak is closed on the mega hub: QUIZ / REAL SEARCH / Read the chapter are now dict-carried on both locales
+
+**Why.** The user's standing requirement for the whole product: in zh-HK mode everything must be Chinese; in en mode everything must be English — no in-between. The mega hub (`/hong-kong`) was carrying its three loudest eyebrows in English for everyone: 「QUIZ」「REAL SEARCH」and the chapter CTAs 「Read the chapter」(an English string on Traditional-HK cards). The sweep: the badges move to dict (`home.hkHub.quizBadge` / `realSearchBadge`), and the chapter CTA to `home.hkProgress.readCta` — zh 「讀章節」, en 「READ THE CHAPTER」.
+
+`getDict` already drives every other reader-facing surface (rails, chips, labels, CTAs); the three that survived only did so because each lived in a hardcoded literal. The unit is small but it makes the visible zh plane homogenous Traditional HK script again — census charges the new literals as PASS over **1208**.
+
+Pinned by `hk-series-progress.test.ts`: `readCta` on both locales, `quizBadge`/`realSearchBadge` on both locales. web suite **337/337**; `tsc --noEmit` clean; build green.
+
+**Honest boundaries.** The seed fixtures' prose remains Traditional-HK Traditional on the en plane (documented HK-series choice, not an accident); a fully English chapter mirror is a future unit, not a fifth of this one. Everything else on the routed consumer surfaces is dict-identical or locale-symmetric.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/components/hk-series-progress.tsx`, `apps/web/src/lib/hk-series-progress.test.ts`, this ledger entry.
