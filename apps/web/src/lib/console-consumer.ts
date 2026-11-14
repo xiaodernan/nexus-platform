@@ -28,6 +28,7 @@ export const RESERVATIONS_SOURCE = 'GET /api/v1/me/reservations';
 export const ORDERS_SOURCE = 'GET /api/v1/me/orders';
 export const SAVED_SEARCHES_SOURCE = 'GET /api/v1/me/saved-searches';
 export const NOTIFICATIONS_SOURCE = 'GET /api/v1/notifications';
+export const PREFERENCES_SOURCE = 'GET /api/v1/me/preferences';
 
 function reasonOf(cause: unknown): string {
   const code = (cause as { code?: string } | null)?.code;
@@ -107,7 +108,7 @@ export async function meProfileRead(): Promise<ConsoleRead<MeProfileView>> {
       tenant: null,
       createdAt: me.user.created_at,
       memberships: [],
-      preferencesUsed: me.personalization.signals_used,
+      preferencesUsed: me.preferences.length,
       demo: true,
     };
     return okRead({ data: view, origin: 'mock', source: 'fixture:mockMe', asOf: me.user.created_at, demo: true });
@@ -388,6 +389,79 @@ export async function meSavedSearchesRead(limit = 6): Promise<ConsoleRead<MeSave
     return okRead({ data: list, origin: 'live', source: SAVED_SEARCHES_SOURCE, asOf: null, demo: false });
   } catch (cause) {
     return failedRead({ source: SAVED_SEARCHES_SOURCE, errorCode: reasonOf(cause), requestId: (cause as { requestId?: string }).requestId ?? null });
+  }
+}
+
+/* -------------------------------------------------------------- preferences */
+
+export type MePreferenceSource = 'declared' | 'inferred' | 'explicit_feedback' | 'transaction';
+
+export interface MePreferenceRow {
+  id: string;
+  /** kind (user-facing taxonomy on the platform); '' when the service sent no kind at all. */
+  kind: string;
+  key: string;
+  /** value rendered as JSON text; never a float, never an invention — the wire's own JSON. */
+  value: string;
+  scope: 'session' | 'long_term';
+  source: MePreferenceSource;
+  confidence: number | null;
+  updatedAt: string | null;
+}
+
+interface WirePreferenceRow {
+  id?: string | null;
+  kind?: string | null;
+  key?: string | null;
+  value?: unknown;
+  source?: string | null;
+  scope?: string | null;
+  weight?: number | null;
+  updated_at?: string | null;
+}
+
+function preferenceSource(raw: string | null | undefined): MePreferenceSource {
+  if (raw === 'declared' || raw === 'inferred' || raw === 'explicit_feedback' || raw === 'transaction') return raw;
+  return 'declared';
+}
+
+/**
+ * The caller's own preference memory (§32/§33), capped at 8 rows. Read-only by design: the hub
+ * shows what the ranker may read — it does not edit, because §33 says the person owns every row
+ * and this page is a mirror, not an eraser.
+ */
+export async function mePreferencesRead(limit = 8): Promise<ConsoleRead<MePreferenceRow[]>> {
+  if (IS_MOCK) {
+    const me = mockMe();
+    const rows = me.preferences.slice(0, limit).map((pref): MePreferenceRow => ({
+      id: pref.id,
+      kind: '',
+      key: pref.key,
+      value: typeof pref.value === 'object' ? JSON.stringify(pref.value) : String(pref.value),
+      scope: pref.scope === 'session' ? 'session' : 'long_term',
+      source: preferenceSource(pref.source),
+      confidence: typeof pref.confidence === 'number' ? pref.confidence : null,
+      updatedAt: pref.updated_at,
+    }));
+    return okRead({ data: rows, origin: 'mock', source: 'fixture:mockMe', asOf: null, demo: true });
+  }
+  try {
+    const rows = await nexusAuthedGet<WirePreferenceRow[]>('platform', '/api/v1/me/preferences', {
+      searchParams: { limit },
+    });
+    const list = (Array.isArray(rows) ? rows : []).slice(0, limit).map((row): MePreferenceRow => ({
+      id: row.id ?? '',
+      kind: row.kind ?? '',
+      key: row.key ?? '',
+      value: typeof row.value === 'object' && row.value !== null ? JSON.stringify(row.value) : String(row.value ?? ''),
+      scope: row.scope === 'session' ? 'session' : 'long_term',
+      source: preferenceSource(row.source),
+      confidence: typeof row.weight === 'number' ? row.weight : null,
+      updatedAt: row.updated_at ?? null,
+    }));
+    return okRead({ data: list, origin: 'live', source: PREFERENCES_SOURCE, asOf: null, demo: false });
+  } catch (cause) {
+    return failedRead({ source: PREFERENCES_SOURCE, errorCode: reasonOf(cause), requestId: (cause as { requestId?: string }).requestId ?? null });
   }
 }
 

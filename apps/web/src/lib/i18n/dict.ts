@@ -726,6 +726,11 @@ export interface Dict {
     eyebrow: string;
     membershipsLabel: string;
     preferencesSignals: (count: number) => string;
+    preferencesTitle: string;
+    preferencesIntro: string;
+    preferencesSource: Record<'declared' | 'inferred' | 'explicit_feedback' | 'transaction', string>;
+    preferencesScope: Record<'session' | 'long_term', string>;
+    preferencesConfidence: string;
     statsFavorites: string;
     statsReservations: string;
     statsOrders: string;
@@ -1546,7 +1551,20 @@ const zhHK: Dict = {
     intro: '檔案、收藏、訂位與提醒——一個頁面讀完你在平台上的全部',
     eyebrow: '你的帳戶',
     membershipsLabel: '你的身份',
-    preferencesSignals: (count) => `已用於排序的偏好：${count}`,
+    preferencesSignals: (count) => `排序偏好：${count} 筆`,
+    preferencesTitle: '我的排序訊號',
+    preferencesIntro: '排名器會參考這些你講明或系統推斷的偏好。這些紀錄只屬於你，不會為他人開口。',
+    preferencesSource: {
+      declared: '你講明咗',
+      inferred: '系統推斷',
+      explicit_feedback: '你明確反饋',
+      transaction: '你的交易',
+    },
+    preferencesScope: {
+      session: '今次',
+      long_term: '長期',
+    },
+    preferencesConfidence: '信心',
     statsFavorites: '收藏',
     statsReservations: '訂位',
     statsOrders: '訂單',
@@ -2381,7 +2399,20 @@ const en: Dict = {
     intro: 'Your profile, saves, bookings and inbox — one honest read of your page',
     eyebrow: 'Your account',
     membershipsLabel: 'Your roles',
-    preferencesSignals: (count) => `Preferences used by ranking: ${count}`,
+    preferencesSignals: (count) => `Ranking preferences: ${count}`,
+    preferencesTitle: 'My ranking signals',
+    preferencesIntro: 'Ranking draws on these, declared by you or inferred by the system. They belong only to you.',
+    preferencesSource: {
+      declared: 'Declared by you',
+      inferred: 'Inferred',
+      explicit_feedback: 'Explicit feedback',
+      transaction: 'Your transactions',
+    },
+    preferencesScope: {
+      session: 'This session',
+      long_term: 'Long-term',
+    },
+    preferencesConfidence: 'Confidence',
     statsFavorites: 'Saved',
     statsReservations: 'Reservations',
     statsOrders: 'Orders',

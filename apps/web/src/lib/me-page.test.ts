@@ -85,4 +85,17 @@ describe('D1075 consumer account hub', () => {
     expect(dict).toContain("notificationsReadAll: '全部標記為已讀'");
     expect(dict).toContain("notificationsReadAll: 'Mark all as read'");
   });
+
+  it('the preferences section reads §33 rows and renders both locales', () => {
+    const page = read('apps/web/app/me/page.tsx');
+    expect(page).toContain("aria-labelledby=\"me-preferences\"");
+    expect(page).toContain('dict.me.preferencesSource[row.source]');
+    const consumer = read(CONSUMER);
+    expect(consumer).toContain("/api/v1/me/preferences");
+    expect(consumer).toContain('mePreferencesRead');
+    const dict = read(DICT);
+    expect(dict).toContain("preferencesTitle: '我的排序訊號'");
+    expect(dict).toContain("preferencesTitle: 'My ranking signals'");
+    expect(dict).toContain("preferencesSource: {");
+  });
 });

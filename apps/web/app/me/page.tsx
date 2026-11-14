@@ -10,6 +10,7 @@ import {
   meFavoritesRead,
   meNotificationsRead,
   meOrdersRead,
+  mePreferencesRead,
   meProfileRead,
   meReservationsRead,
   meSavedSearchesRead,
@@ -66,13 +67,14 @@ export default async function MePage() {
   }
 
   const locale = session.locale;
-  const [profile, favorites, reservations, orders, savedSearches, inbox] = await Promise.all([
+  const [profile, favorites, reservations, orders, savedSearches, inbox, preferences] = await Promise.all([
     meProfileRead(),
     meFavoritesRead(6),
     meReservationsRead(3),
     meOrdersRead(3),
     meSavedSearchesRead(6),
     meNotificationsRead(6),
+    mePreferencesRead(8),
   ]);
 
   const me = profile.data;
@@ -241,6 +243,42 @@ export default async function MePage() {
               />
             )}
           </section>
+
+          {/* preference memory — §33: the ranker's window onto the person, and the person's view of it */}
+          {preferences.data && preferences.data.length > 0 ? (
+            <section aria-labelledby="me-preferences">
+              <h2 id="me-preferences" className="text-xl font-semibold tracking-tight text-ink-strong">
+                {dict.me.preferencesTitle}
+              </h2>
+              <p className="mt-0.5 max-w-prose text-xs leading-relaxed text-ink-muted">{dict.me.preferencesIntro}</p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {preferences.data.map((row) => (
+                  <li
+                    key={row.id}
+                    className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-3"
+                  >
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <Badge tone="outline" size="sm">{row.scope === 'session' ? dict.me.preferencesScope.session : dict.me.preferencesScope.long_term}</Badge>
+                      <span className="min-w-0 truncate font-mono text-2xs text-ink-faint" title={row.key}>{row.kind ? `${row.kind}.${row.key}` : row.key}</span>
+                    </span>
+                    <span className="truncate font-mono text-xs font-medium text-ink-strong" title={row.value}>{row.value}</span>
+                    <span className="flex flex-wrap items-center justify-between gap-2 text-2xs text-ink-faint">
+                      <span className="inline-flex items-center gap-1">
+                        <Icon name="user" size={11} />
+                        {dict.me.preferencesSource[row.source]}
+                      </span>
+                      {typeof row.confidence === 'number' ? (
+                        <span className="font-mono tabular-nums">{dict.me.preferencesConfidence} {Math.round(row.confidence * 100)}%</span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {preferences.status === 'ok' ? <SourceStamp read={preferences} locale={locale} className="mt-2" /> : null}
+            </section>
+          ) : preferences.status === 'failed' ? (
+            <ReadFailure read={preferences} locale={locale} title={dict.states.error} />
+          ) : null}
         </div>
 
         {/* ------------------------------------------- right rail */}

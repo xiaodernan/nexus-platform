@@ -43427,3 +43427,16 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** No visual screenshot of `/me` landed in the e2e set — the visual suite owns pixel baselines; this spine owns wiring. The favourites-card-count assertion deliberately accepts both planes' truths rather than betting on seeded data volume.
 
 - readers: `tests/e2e/specs/consumer/me.spec.ts`, this ledger entry.
+## 1081. D1081 — the hub gains 「我的排序訊號」: the person's §33 preference memory, rendered — every signal the ranker may see, with its source and confidence
+
+**Why.** The platform has had §32/§33 preference memory from day one and the person never got to see what the ranker reads. Every personalized surface in this product quietly depends on these rows — and §106/§33 promise they belong to the user alone. A visible row-list is the missing half of that promise: ownership you can't see isn't ownership.
+
+**The unit.** `console-consumer.ts` gains `mePreferencesRead` — mock: `mockMe().preferences.slice(0, 8)`; live: `GET /api/v1/me/preferences` (§3) mapped row-by-row, `value` printed as the wire's own JSON text (never a float, never a guess — object values stringified verbatim), `weight` surfaced as the per-row confidence percentage. The `/me` page gained a full-width `me-preferences` section: per-row `Badge` (session/long_term label), mono `kind.key`, mono `value`, source label (declared / explicit_feedback / inferred / transaction — all four platform sources), confidence %; `SourceStamp` under the section. Section hides entirely when the person has zero rows, and a failed read renders the §1 code in-section.
+
+**Semantic fix riding along.** The profile strip's `preferencesSignals` line printed `personalization.signals_used` (mock-only fixture semantics, "26") in mock mode but row count in live — two meanings under one label. Both planes now print the row count with one neutral label: zh `排序偏好：N 筆` / en `Ranking preferences: N`.
+
+**Verified.** mock plane walkthrough — `me-preferences` renders Ada's 4 rows (`ambience.quiet`, `budget_per_person_max.HKD 300`, `cuisine_avoid.spicy`, `district.Sha Tin`) with per-row source + confidence percentages; web suite **311/311** (+1: preferences pin); zh-HK census PASS over 998 literals; `next build` green (`/me` 2.33 kB). e2e arm extended? No — CI's live hub satisfies the same headings-only contract unchanged.
+
+**Honest boundaries.** Read-only mirror — the §33 doors offer edit/delete, this page does not wire them (that pass is a bigger contract: partial preference edit + fresh `used_by_ranking` recompute). `kind` is '' for the fixture plane (no field on the mock row) — rows render key-only there; `kind.key` renders when the platform sends a kind. Confidence is the platform's own `weight` column relabeled, not a new inference.
+
+- readers: `apps/web/src/lib/console-consumer.ts`, `apps/web/app/me/page.tsx`, this ledger entry.
