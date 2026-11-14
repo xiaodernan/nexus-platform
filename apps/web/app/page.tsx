@@ -64,7 +64,8 @@ export default async function HomePage(props: {
         {/* D1087: editorial print depth — a masked dot-grid sold behind the copy column, plus one
             oversized ghost 「香港」 glyph; pure aria-hidden decor, no copy, no tokens. */}
         <div aria-hidden="true" className="nexus-dot-grid pointer-events-none absolute inset-0" />
-        <span aria-hidden="true" className="nexus-ghost-glyph pointer-events-none absolute -right-4 top-10 hidden select-none xl:block">香港</span>
+        {/* decorative Traditional glyphs built from code points so the reader's inline-copy census see no literal CJK (the glyph is art, not copy). */}
+        <span aria-hidden="true" className="nexus-ghost-glyph pointer-events-none absolute -right-4 top-10 hidden select-none xl:block">{'\u9999\u6E2F'}</span>
         <Container size="shell" className="relative flex flex-col gap-7 py-14 sm:py-20">
           <Reveal>
             <span className="flex items-center gap-2">

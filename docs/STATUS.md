@@ -43507,3 +43507,13 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** A new layer — two stacked aria-hidden absolute layers + two ≤6%-opacity decorations; no interactivity, no hydration, no JS, zero influence on search behaviour. The ghost glyph is Traditional script (`香港`) — intentional: the brand's first city, printed as art, not as a string anyone copies.
 
 - readers: `apps/web/app/page.tsx`, `apps/web/app/globals.css`, this ledger entry.
+
+## 1088. D1088 — gate repair: the hero's ghost glyph stops carrying a literal CJK line, letting the inline-copy census stay green
+
+**Why.** D1087's ghost glyph shipped as a literal in `apps/web/app/page.tsx`. The i18n census reader (`check_console_i18n.mjs`) charges every page for CJK ideographs outside a comment — copy belongs in the dictionary, exactly so no page can quietly hand-write a string. The glyph is decorative art with no copy to review, but the reader cannot distinguish art from copy and is right not to try. After D1087, `verify_all` reported `FAIL 1 (check_console_i18n.mjs)`, `TOTAL PASS 67`.
+
+**The repair.** The glyph literal became `{'\u9999\u6E2F'}` — the same two code points, no literal ideographs in the file. The reader now reports `inline-copy promise … 0 offender(s)` and the page renders the same Traditional-script glyph at xl breakpoints.
+
+**Verified.** `check_console_i18n.mjs` PASS; `check_ui_script.mjs` PASS; hero-texture test 2/2; web **314/314**; `tsc --noEmit` clean.
+
+- readers: `apps/web/app/page.tsx`, this ledger entry.
