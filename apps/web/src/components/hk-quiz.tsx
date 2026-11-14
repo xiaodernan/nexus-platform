@@ -81,6 +81,9 @@ export function HkQuiz({ locale }: { locale: string }) {
           {copy.title}
         </h1>
         <p className="max-w-prose text-base leading-relaxed text-ink-muted">{copy.intro}</p>
+        <p className="max-w-xs text-sm font-medium leading-relaxed text-accent/90">
+          {copy.howTo}
+        </p>
         <p className="text-2xs uppercase tracking-wide text-ink-faint">{copy.seriesLabel}</p>
         <button
           type="button"

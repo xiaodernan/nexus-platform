@@ -53,6 +53,8 @@ export interface Dict {
     handbook: string;
     /** D1144: the /daily daily-ritual page link, shown in the footer. */
     daily: string;
+    /** D1150: the newbie mini-manual in the header — visible teaching entrypoint. */
+    newbie: string;
   };
   home: {
     /** D1144: the /daily page — everything the date can pick, in one place. */
@@ -328,6 +330,8 @@ export interface Dict {
   hkType: {
     eyebrow: string;
     title: string;
+    /** D1150: the one-line newbie tutorial shown on the idle screen. */
+    howTo: string;
     intro: string;
     seriesLabel: string;
     chapters: Array<{ href: string; title: string; hint: string }>;
@@ -934,6 +938,7 @@ const zhHK: Dict = {
     hkType: '香港人格',
     handbook: '說明書',
     daily: '今日',
+    newbie: '新手教學',
   },
   home: {
     daily: {
@@ -1338,6 +1343,7 @@ const zhHK: Dict = {
   hkType: {
     eyebrow: '香港系列 · 互動篇章',
     title: '你係邊一個 HK？',
+    howTo: '玩法：撳 A／B／C（或直接撳選項）；沒有啱錯之分——十題心情，一刻定型。',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
     seriesLabel: '二十六章香港系列指南',
     chapters: [
@@ -2173,6 +2179,7 @@ const en: Dict = {
     hkType: 'HK quiz',
     handbook: 'Handbook',
     daily: 'Daily',
+    newbie: 'How to play',
   },
   home: {
     daily: {
@@ -2578,6 +2585,7 @@ const en: Dict = {
   hkType: {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
+    howTo: 'How to play: tap A / B / C or tap any option — there is no right or wrong; ten questions, one mood.',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
     seriesLabel: 'Twenty-six HK chapters',
     chapters: [

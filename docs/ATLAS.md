@@ -467,7 +467,8 @@ was decomposed into microservices.
 
 **Honest boundaries.** Anchor navigation only; no scroll spy, no active-state tracking. The chips remain visible on every /me render — the hub is a page people revisit often and the row costs nothing.
 
-- readers: `apps/web/app/me/page.tsx`, this ledger entry.| `docs/SHOWCASE.json` | D1117: curated showcase milestone for the external personal page; refreshed manually on heavy milestones (currently D1116) |
+- readers: `apps/web/app/me/page.tsx`, this ledger entry.| `apps/web/src/components/site-chrome.tsx` | D1150: header gains a `dict.nav.newbie` door to `/handbook` (desktop pill, mobile info icon); nav key in both locales, hk-type idle screen gains dict.hkType.howTo (`玩法：撳 A／B／C……` / `How to play: tap A / B / C or tap any option……`) |
+| `docs/SHOWCASE.json` | D1117: curated showcase milestone for the external personal page; refreshed manually on heavy milestones (currently D1116) |
 | `apps/web/app/daily/page.tsx` | D1144: the daily-ritual page — almanac + Cantonese-of-the-day + one chapter by the date hash + a copy-the-daily-card island |
 | `apps/web/src/components/hk-daily-share.tsx` | D1144: the share island — composes the three picks into a shareable card, clipboard-only, honest unavailable state |
 | `apps/web/src/components/hk-daily-arc-pick.tsx` | D1144: deterministic one-chapter pick by the HK date hash (same chapter city-wide today) |

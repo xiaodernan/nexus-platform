@@ -60,8 +60,18 @@ export function SiteHeader({ locale }: { locale: string }) {
           >
             {dict.nav.collections}
           </Link>
-          <Link href="/search" className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong">
+          <Link
+            href="/search"
+            className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong"
+          >
             {dict.nav.search}
+          </Link>
+          <Link
+            href="/handbook"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-ink-strong hover:bg-accent hover:text-accent-ink"
+            aria-label={dict.nav.newbie}
+          >
+            {dict.nav.newbie}
           </Link>
           <Link
             href="/me"
@@ -73,6 +83,13 @@ export function SiteHeader({ locale }: { locale: string }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <Link
+            href="/handbook"
+            aria-label={dict.nav.newbie}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-muted transition-colors hover:border-accent hover:text-accent sm:hidden"
+          >
+            <Icon name="info" size={18} />
+          </Link>
           {IS_MOCK ? (
             <span
               title={dict.home.demoText}

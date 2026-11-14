@@ -44281,3 +44281,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the tong sui composition, the fishball series-log, and the 02:30 crowd quality are narrative constructions with no real vendor operator behind them. No shop, no stall-holder, no price claim anywhere.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1150. D1150 — the teaching manual graduates from `/handbook` to the product chrome: a visible newbie door on every page
+
+**Why.** The mandate said the teaching booklet must be *inside the product*, not a doc nobody opens — "startup一起就能看到". `/handbook` existed as a route; the product now carries a `/handbook`-linked control in the chrome itself, so every visitor sees the tutorial before they even look for it.
+
+**The unit.** `apps/web/src/components/site-chrome.tsx` — the desktop nav gains a `dict.nav.newbie` pill linking to `/handbook`, and the mobile right-rail gains an `info`-icon link with the same destination and labels. Dict carries `nav.newbie` (zh 「新手教學」 / en "How to play") in both locales with its type registered on `Dict['nav']`. The `/hk-type` idle screen now renders a one-line tutorial (`dict.hkType.howTo`) directly under the intro: 「玩法：撳 A／B／C（或直接撳選項）；沒有啱錯之分——十題心情，一刻定型。」 / "How to play: tap A / B / C or tap any option — there is no right or wrong; ten questions, one mood." — the game explains itself on arrival instead of leaving the reader to infer the rules.
+
+**Honest boundaries.** The embedded tutorial is one line by design — the full booklet still lives at `/handbook`; the chrome door is a signpost, not a fork of the manual. No new routes; no e2e changes; no telemetry of any kind.
+
+- readers: `apps/web/src/components/site-chrome.tsx`, `apps/web/src/components/hk-quiz.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
