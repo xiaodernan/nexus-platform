@@ -43577,3 +43577,16 @@ Web side: `offeringBySlug` no longer casts the wire straight onto `OfferingDetai
 Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed alongside this unit as `D1093` — it measures cold vs warm latency on byte-identical system prefixes (https://wkapi.pro/v1, temperature 0). This identity-shaped measurement was the source of the D1084 numbers; nothing in this unit used the model.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/ai/cache_latency_probe.py`, this ledger entry.
+## 1094. D1094 — 「香港系列」追加第二章、第三章：燒味的凌晨與早茶的竹籠
+
+**Why.** D1093 給這座城寫出第一章——但一章不是世界。曼左的意思是這個專案的上限是無限，而連載的形式是把一章變成一條線。第二章把燒味師傅凌晨留在吊爐前的時間寫成一個工序；第三章把早茶的竹籠寫成一座城市早上的禮儀。兩章仍然以「合成敘事示例」誠實收口，並請讀者自然導引到 SearchBox 真實本地搜尋場景（「沙田 燒味」、「荃灣 點心」）。
+
+**Chapter 2 — `hk-siu-mei-chronicle` · 「燒味：凌晨兩點的光與炭（香港系列 · 第二章）」。**開篇定場：凌晨兩點，整條街都沉默，只有燒味檔的爐口還亮著。首段蜜汁的學問——蜜糖鬆開、下麥芽糖、薑、陳皮、南乳與生抽，慢火七天收一個琥珀色才有資格淋雞；二段選炭的白話——不挑最亮的那堆，而按灰缸裡的焦殼形狀揀回爐的炭排；三段出座的三分鐘——竹串穿頸、吊臂托尾、煙冒出的一秒才算生效。結尾一句：香港人不說「我吃飽了」，他們說「一件燒鴨髀飯」。
+
+**Chapter 3 — `hk-dim-sum-chronicle` · 「早茶：竹籠與陳皮茶香（香港系列 · 第三章）」。**開篇：早茶是這座城市桌面上最重的朝拜——不是用金銀換，而是用竹籠換。蝦餃與烧賣各有自己的分鐘數；普洱加菊花的調配是醒脾不解酒的順水；茶樓訂摺紙菜單的習慣是金鐘每家店長兜底的默契。結語：港人吃早餐不是為了吃飽，而是為了讓鬧鐘停一下——在冷氣與蒸氣之間，把今天重新想一遍。
+
+**Verified.** web suite **320/320**; `tsc --noEmit` clean; union-table scan（`CANONICAL_FORMS ∪ _TRAD_SIMP_PAIRS`）of the two chapters: 0 residual simplified chars; the flagged 2 `面` chars are in legitimate Traditional usage（桌面、上面） under the census' own 面 exception. Dev server renders both new chapters with HTTP 200; `/guides` index lists all four. One dangling `,` in the array literal was caught by `tsc` and fixed in place — same defect class as D1093's insertion slip.
+
+**Honest boundaries.** Both chapters are demo-plane fixtures in `lib/mock/seed.ts`; they do not render in live mode until platform-side seed carries the rows. Every chapter closes with the honest disclaimer + a reader-finder CTA. These are authored fictions with names and scenes of the demo catalogue; they are not editorial guidance and are flagged `flags.demo = true` on every block of content.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
