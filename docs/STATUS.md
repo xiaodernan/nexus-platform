@@ -44335,3 +44335,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the ferry's exact chimney diameter, the salt-fish village's exact GPS, and the tour-blog claim about "日本的每個駐大嶼西灣的日本人" are narrative constructions with no verifiable operator, route or № plate behind them. No real price, no brand, no named operator.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1156. D1156 — chapters XXXVIII + XXXIX + XL complete Layer E rows 38-40: three substrate languages, three hour_slots
+
+**Why.** Layer E is the layer nobody writes — Macau/Hong Kong has been translating English, Teochew, Filipino, Portuguese, and Arabic into the city's daily arithmetic for a century; almost none of it was ever written down in a single coherent voice. Layer E is the next field in the world-literary arc: every chapter here is a language the city keeps under no flag and no wall — and every reader understands it before they are told they should.
+
+**The unit.** `DEMO_GUIDES` gains three fixtures: `hk-beijing-writer-chronicle` — 「早上十點半：北漂作家的香港筆記（香港系列 · 第三十八章）」, `hk-teochew-markets-chronicle` — 「傍晚六點：潮州話．旺角菜市場（香港系列 · 第三十九章）」, `hk-filipino-central-chronicle` — 「深夜十點：中環寫字樓的菲律賓人（香港系列 · 第四十章）」. Traditional HK script throughout (census 1629 literals, 0 simplified; 台/面 only). Both locales carry all three chapters; the arc clock gains 10:30, 18:00, 22:00 in chronological slots (80 chips across both locales); hk-type link list; handbook reading order re-sorted to forty on both locales; e2e floors ≥40; WORLD_ROADMAP Layer E rows 38-40 marked landed; ARC doc gained three interlock entries.
+
+**Honest boundaries.** Synthetic fixtures; the Beijing-writer's presence in the café, the language frequency in the wet market, and the Filipino cleaner's exact shift-end dialogue are narrative constructions. No real police log, no real bank application, no real school — none claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.

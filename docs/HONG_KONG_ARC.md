@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the thirty-seven chapters (D1093 → D1155)
+document is the continuity plan for that world-layer: how the forty chapters (D1093 → D1156)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,27 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 10:30 — 北漂作家的香港筆記 (a Beijing writer in Hong Kong) · chapter XXXVIII
+**Every northern migrant comes south for the same reason and leaves for the same reason.** At
+10:30, the café at the corner of Chater reads her laptop sheen the way a beacon. *What the product
+serves here:* the rail knows the one café in Central that serves drip coffee to someone rehearsing
+silence. *Interlock:* between 10:00 fishball and 11:00 newspaper, the city considers what a home is
+worth.
+
+### 18:00 — 潮州話：旺角菜市場 (the wet market runs on Teochew) · chapter XXXIX
+**The market that runs on Teochew doesn't make the news — but it feeds the city.** At 18:00, the
+curtain-withdrawal dusk peaks in Mong Kok's alley; the third wave of the day's meat is cooking in
+the big woks. *What the product serves here:* the one place the city treats as home but never names
+— the rail knows what season the crab arrives and when the green mango stops. *Interlock:* between
+17:58 Lion Rock and 18:30 office-to-MTR, the city passes custody from work to home.
+
+### 22:00 — 菲律賓中環 (a cleaner in Central at ten) · chapter XL
+**The quietest voice in every office tower is also the loudest one in the parable.** At 22:00, the
+Filipina night-shift cleaner Ali walks every floor, wipes every table, sticks a note to the office
+lift: "who will remember this tomorrow?" *What the product serves here:* the rail knows the final
+item that will ever be cleaned by 22:00, and the one dish worth every cleaner's leftover. *Interlock:
+* between 22:00 and 22:30, the city exchanges its sweat for one last bite of something warm.
 
 ### 07:00 — 隔水渡輪 (the old ferry crossing) · chapter XXXVI
 **The cheapest kindness the water keeps.** At 07:00 the old laundry-deck ferry pushes off — every
