@@ -43672,3 +43672,14 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** The cache is Pattern-only — the text is read fresh on every call, exactly as before. `maxsize=512` was chosen as a workable balance; the internal Python regex cache is 512 entries too, so hitting this ceiling is intentional and the table is warm for the cues in the shipped lexicon. Latency figures on this host are not a SLA — 5000 `cue_positions('weekend', ...)` calls in ~5ms after warm-up is indicative, not a treaty. This is an algorithm-discipline pass; the grammar itself (`longest_cue`, word-boundary pairing) is unchanged from D478/D476.
 
 - readers: `apps/ai/nexus_ai/nlu/matching.py`, this ledger entry.
+## 1102. D1102 — /guides gains the Hong Kong series editorial teaser above the listing grid
+
+**Why.** The HK series chapters were discoverable only through the footer, the quiz intro, and the home rail — the `/guides` entry, the canonical editorial listing page, did not wink at them. A reader who lands on `/guides` looking for content from HK should see four of them in the first fold, not only a flat grid of pre-made pages.
+
+**The unit.** `apps/web/app/guides/page.tsx` — above the `<GrowthIndex>` body, when `IS_MOCK`, an accent-soft rounded-2xl band: eyebrow `dict.growth.hkSeriesFeatured.eyebrow` (`香港系列 · 編者點線` in zh / `HK SERIES · The Editor's Line` in en), display title (`四章反覆走完一個香港` / `Four chapters, one Hong Kong`), a Traditional-script blurbed paragraph in HK-tone voice, `<ul>` of the four chapters as link cards (icon `layers`, small-caps accent kicker). The list is the same `OR .hkSeries` dictionary carrier home uses — one dict block drives both; no new tokens.
+
+**Verified.** `/guides` renders the band and the grid below it in the dev plane; census PASS over **1090 literals** in 4 zh blocks; console-i18n PASS (a literal CJK slippage in an earlier draft of the eyebrow id — exclusionary quotes on an apostrophe — was caught by `tsc` and fixed straight, before commit); web suite **325/325**; `next build` green; `tsc --noEmit` clean.
+
+**Honest boundaries.** The band only mounts when `IS_MOCK` — live mode has the guide plane backed by the seed database; we do not render fixtures that aren't on the plane it is a tool to do. The teaser visually echoes the identity panel (gradient corner, accent-soft wash, no new tokens). In live mode the district nav carries the live route's real value.
+
+- readers: `apps/web/app/guides/page.tsx`, this ledger entry.

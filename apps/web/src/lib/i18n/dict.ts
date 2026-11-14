@@ -246,6 +246,12 @@ export interface Dict {
     unreviewed: string;
     publishedOn: (date: string) => string;
     updatedOn: (date: string) => string;
+    /** D1102: the HK series featured group — a tasteful teaser for the home-made chapters. */
+    hkSeriesFeatured: {
+      eyebrow: string;
+      title: string;
+      blurb: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -1095,6 +1101,11 @@ const zhHK: Dict = {
     unreviewed: '尚未經人工審核',
     publishedOn: (date) => `發佈於 ${date}`,
     updatedOn: (date) => `更新於 ${date}`,
+    hkSeriesFeatured: {
+      eyebrow: '香港系列 · 編者點線',
+      title: '四章反覆走完一個香港',
+      blurb: '從凌晨四點半街市裡冒煙的叉燒店，到午夜廟街的霓虹還剩最後一格——這是一座還沒被現實寫完的城市。',
+    },
   },
   hkType: {
     eyebrow: '香港系列 · 互動篇章',
@@ -2066,6 +2077,11 @@ const en: Dict = {
     unreviewed: 'Not checked by a human',
     publishedOn: (date) => `Published ${date}`,
     updatedOn: (date) => `Updated ${date}`,
+    hkSeriesFeatured: {
+      eyebrow: "HK SERIES · The Editor's Line",
+      title: 'Four chapters, one Hong Kong',
+      blurb: "From the wok smoke still rising at 4:30 a.m. to the neon that has not yet retired on Temple Street — a city still being written.",
+    },
   },
   hkType: {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
