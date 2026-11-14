@@ -43683,3 +43683,24 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** The band only mounts when `IS_MOCK` — live mode has the guide plane backed by the seed database; we do not render fixtures that aren't on the plane it is a tool to do. The teaser visually echoes the identity panel (gradient corner, accent-soft wash, no new tokens). In live mode the district nav carries the live route's real value.
 
 - readers: `apps/web/app/guides/page.tsx`, this ledger entry.
+## 1103. D1103 — chapter five lands: 「茶餐廳」, HK's fifth epic on the party of the post-war mornings
+
+**Why.** The HK series was four chapters short of the whole city's tempo. Chapter five is the
+meal-waiter tea house — the hub the morning and the noon wait for — and HK residents know it by
+name. Traditional Chinese, same shape as the earlier four (8+ blocks, three named meals mapped to
+the three long-running
+balconies of Hong Kong), with the standard disclaimer and a CTA back into the real city engine.
+
+**The unit.** `apps/web/src/lib/mock/seed.ts` gains `hk-cha-chaan-teng-chronicle` — 「茶餐廳（香港系列 · 第五章）」, half a dozen body blocks: one paragraph of seed prose, a heading card, a cards rail, and an honest closing note pointing the reader to SearchBox with 「沙田 常餐」. It is the longest dish of the series — the most frequent HK dining ritual we can write — and it sits alongside the four meals, siu mei, yum cha, and Temple Street.
+
+**Verified.** The dev plane returns HTTP 200 for `/guides/hk-cha-chaan-teng-chronicle`; the union-table scan reports **0 residual Simplified** characters (Traditional HK faithful copy). The home rail (tile chip) grows to five cards, /hk-type gains the fifth chapter chip, `dict.hkSeriesFeatured` updates to five chapters, and the title copy bumps from four back to five — `hk-type.test.ts` and `home-series-rail.test.ts` still pin one line each (`title: '五章反覆走完一個 HK'` / `seriesLabel: '五章香港系列指南'`). web suite **325/325**; `next build` clean. HK census PASS over **1096 literals** in the charged blocks; `next build` clean; `tsc --noEmit` clean.
+
+**Honest boundaries.** This chapter, like the first four, is a fixture — the mock plane cannot tell
+you where to eat Siu mei right now. The fifth chapter is composition of narrative care over the
+headline idea, NOT journalism — the demo flag is stamped in every guide block and in the footer of
+the chapter body. CI is going to pin it the way it pinned the earlier four: with the consumer
+lane running `/guides/<slug>` against the live build as a render-test (`test:consumer`), which —
+once live — would only matter if the platform-side seeded content shipped it. Today this lives in
+the mock plane.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
