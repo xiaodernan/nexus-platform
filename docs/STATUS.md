@@ -44254,3 +44254,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the dish-washing routine and the "崩口碗" honour rule are narrative constructions, not sourced from any operator. Nobody's kitchen is claimed; the plate classification is a fiction of tidiness.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+## 1147. D1147 — the world-layer roadmap: 50 chapters and the layers above them, on paper where the execution can find it
+
+**Why.** The HK series stopped being a couple of stories and became the product's distinctive volume; the mandate repeatedly asks for more infinite stories. This unit writes them down before they evaporate.
+
+**The unit.** `docs/WORLD_ROADMAP.md` — the plan now has a name: Layers A/B are shipped (00:30→22:45, 23 chapters). Layer C (10 unclaimed back-street half-hours), Layer D (10 Lantau/outlying chapters), Layer E (foreign-language substrate narration, English canon this time), Layer F (the Sunday cycle), Layer G (the counter-flow into Shenzhen), and three canonical arcs no one else owns (the shared supplier; the one fridge one family six-chapter novella; the two-cities-at-dawn mirror). Every chapter here passes the existing census/ledger/e2e/handbook/arc-clock contracts by construction — one chapter per milestone, however many D-days that takes.
+
+**Honest boundaries.** A plan, not a shipment. No chapter in this file is claimed live; STATUS/ATLAS record it as plan. Until each D-milestone lands one row, it is exactly what it looks like: a well-organised walking skeleton.
+
+- readers: `docs/WORLD_ROADMAP.md`, this ledger entry.

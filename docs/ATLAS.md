@@ -469,6 +469,7 @@ was decomposed into microservices.
 | `apps/web/app/daily/page.tsx` | D1144: the daily-ritual page — almanac + Cantonese-of-the-day + one chapter by the date hash + a copy-the-daily-card island |
 | `apps/web/src/components/hk-daily-share.tsx` | D1144: the share island — composes the three picks into a shareable card, clipboard-only, honest unavailable state |
 | `apps/web/src/components/hk-daily-arc-pick.tsx` | D1144: deterministic one-chapter pick by the HK date hash (same chapter city-wide today) |
+| `docs/WORLD_ROADMAP.md` | D1147: the world-layer roadmap — 23 landed chapters + six future layers (C: back streets, D: outlying islands, E: five substrate tongues, F: the Sunday cycle, G: counter-flow into Shenzhen) + three canonical arcs no other city product owns |
 | `docs/HONG_KONG_ARC.md` | D1117: the Hong Kong Day-Arc — the reading order across the nine chapters and the product-interlock contract |
 | `.github/workflows/llm-cache-probe.yml` | D1130: the weekly (Tuesday 00:00 UTC) + dispatchable provider-cache probe for wkapi.pro |
 
