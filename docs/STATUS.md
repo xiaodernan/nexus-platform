@@ -43769,3 +43769,14 @@ tokens, no new code paths for slf-serve.
 **Honest boundaries.** Still mock-plane. Live mode must carry a platform-side Singapore crew for the fish-market chapter to render there — the platform seed fixture needs a new row, which this unit does not own.
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+## 1108. D1108 — the HK series reaches chapter VII: 「春花姨」is the quiet guardian of the Hong Kong dawn
+
+**Why.** Six chapters walked the city's food clock from dawn to midnight. But the most quiet HongKongian in every street — the auntie selling fish before the first bus, the man buying egg noodles at 5:00 a.m. — still had no chapter of their own. This chapter gives them one: Auntie Chun Fa Yee, who stands in the market at 4:28 a.m. every single day with her white basin, before the whole city knows she is awake too.
+
+**The unit.** `DEMO_GUIDES` gains `hk-yu-huei-chronicle` — 「春花姨（香港系列 · 第七章）」. The seven blocks carry the same architecture the earlier six use: opening scene, three heading cards, three cards grids, and a closing disclaimer. The casting is introduced lighter and slower in Traditional HK Traditional — Chun Fa Yee (formalised aunt, not a distant lover) is a regular, not a hero; she sells her fish for one price for every customer, never for her status. The only virtue this chapter celebrates is dignity-with-practicality, which is its own kind of HK commonwealth, and exactly the kind the earlier chapters defer to.
+
+Dict consolidates the HK series across all three artefacts to seven chapters, cards/cta/rail all in step. web suite **325/325** (after the expected test-pin updates the same pass); census PASS over **1136 literals** in the charged blocks; `next build` clean; `tsc --noEmit` clean.
+
+**Honest boundaries.** Mock-plane fixture only — the Chun Fa Yee universe is not a real person nor a named stall. The Traditional script HK authenticity sacrifices some literary byte count for accuracy with the census bar — the chapter is written plain, not lyrical, so it does not wander into over-scripting Traditional which star-deconstructs Hong Kong into fantasy. The fish-market chapter and the Chun Fa Yee chapter lean on each other — same 4:30 a.m. clock — but are independent narratives.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
