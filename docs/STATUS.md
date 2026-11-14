@@ -44433,3 +44433,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the exchange windows, the queue, the pineapple cakes, the crossing itself are narrative constructions. No real border, no actual merchant, no visa or transit advice is claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1167. D1167 — chapter XLVII lands the 19:15 slot: 晚上七點一刻：皇崗口岸的員工餐廳 — the border crew at mealtime
+
+**Why.** Layer G continues: the outpost of the outpost is not seen across the water — it is seen across a table. The 7:15p rush before the trains start running back is the quietest most-crowded place on the map.
+
+**The unit.** `DEMO_GUIDES` gains `hk-huanggang-crossing-crew-chronicle` — 「晚上七點一刻：皇崗口岸的員工餐廳（香港系列 · 第四十七章）」. Three heading cards（一、進出兩面的那張票 · 二、兩扇窗戶的電影 · 三、燈亮了，人回家）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「皇崗 員工餐廳」）。Both locales carry the chapter; the arc clock gains 19:15 between Temple Street and the communal long table (94 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-seven on both locales; e2e floors ≥47; census 1692 literals clean (0 simplified); web 350/350; build passes; verify_all NO OFFENDER.
+
+**Honest boundaries.** Synthetic fixture; the eatery, the staff, the cashier and the rush are narrative constructions. No real border crossing is described; every claim is gated behind 合成敘事示例 framing and the `flags: { demo: true }` flag on the guide.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1166",
-  "milestone_full": "香港系列篇四十六章 · 00:30→22:45 · WORLD_ROADMAP Layer G 開卷 — 羅湖站的雙向貨幣",
+  "milestone": "D1167",
+  "milestone_full": "香港系列篇四十七章 · 00:30→22:45 · WORLD_ROADMAP Layer G 續 — 皇崗口岸的晚上",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: forty-six Traditional chapters — 00:30→22:45 full day arc · 92-chip clock both locales",
-    "Edition XLVI — 羅湖站的雙向貨幣 (14:30) · Layer G opens the outpost of the outpost",
-    "WORLD_ROADMAP Layer F closes (the Sunday circuit), Layer G opens (the border crossing)",
-    "D1165: the stampede — two gateways, one shared Redis token bucket, 2000 requests @128 in flight, full store accounting",
+    "HK series: forty-seven Traditional chapters — 00:30→22:45 full day arc · 94-chip clock both locales",
+    "Edition XLVII — 皇崗口岸的員工餐廳 (19:15) · Layer G at mealtime at the border",
+    "WORLD_ROADMAP Layer G: XLVI 羅湖站的雙向貨幣 (14:30) · XLVII 皇崗口岸的員工餐廳 (19:15) — the two crossings",
+    "D1165: the stampede — two gateways, one shared Redis token bucket, 2000 requests @128 in flight, store accounting closed",
     "D1163: chapter cards wear print-annual Roman numerals · D1160: replay cache whitespace-folded",
-    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1683 clean"
+    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1692 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

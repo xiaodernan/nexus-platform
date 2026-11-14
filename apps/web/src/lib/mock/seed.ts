@@ -1709,4 +1709,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-huanggang-crossing-crew-chronicle', title: '晚上七點一刻：皇崗口岸的員工餐廳（香港系列 · 第四十七章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：星期天晚上七點一刻，皇崗口岸——把這座城和另一座城接起來的一座橋，承載着迎面而來的萬家燈火。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天的晚上七點一刻。皇崗口岸（合成敘事，非真實商戶與真實時刻——時刻與街道全部是敘事建構）——一間撐着電風扇的員工餐廳，塞滿了人和菜。過港的的士師傅、空服員學徒、把月薪兩邊寄的家政姐妹，各自對着一鍋湯吃飯、對着手機看新聞、對着明天的自己說晚安。' },
+      { type: 'heading', text: '一、進出兩面的那張票' },
+      { type: 'paragraph', text: '阿怡（合成敘事，非真實人物）這家餐廳為什麼客滿：她知道誰的孩子明天要上學、誰的媽媽在老人院要換敷料、誰從上個月開始忽然沒有航班。她沒有優惠券，沒有任何一種優惠券能記得這些事——只有她靠記憶記着：「短米粉，不要蔥，多一碗。」飯桌上沒有人問任何問題。' },
+      { type: 'cards', title: '皇崗可見', items: [] },
+      { type: 'heading', text: '二、兩扇窗戶的電影' },
+      { type: 'paragraph', text: '餐廳後面的牆掛着一張舊電影海報——村上人那種年代的故事。每個來吃飯的人都認得那張臉。阿怡說，這裏的人從來不提到明天要去哪裡，因為牠們知道明天一定還要回來——回來吃米粉、回來看海報、回來說一句「又見到你啦」。這座橋兩面的人都是同一批人，牠們只是輪流過來過去。' },
+      { type: 'cards', title: '皇崗可聽', items: [] },
+      { type: 'heading', text: '三、燈亮了，人回家' },
+      { type: 'paragraph', text: '晚上八點，口岸的燈一盞盞亮起來。過了這裏的人把行李拉回自己的肩膀上，把鞋帶綁好、手機充飽。阿怡把最後一盤水餃放在最後一張桌上——那張桌永遠預留、從來沒人來坐。她說，兩岸的人今天晚上終於懂得：不需要選擇，兩邊都是自己，兩邊都是家。' },
+      { type: 'cards', title: '皇崗可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「皇崗 員工餐廳」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
