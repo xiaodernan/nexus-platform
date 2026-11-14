@@ -43314,3 +43314,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** Scrolling to top is a nicety; it is not a feature with telemetry. It is not the first thing a newcomer will reach; it's only for the rare reader who is 2+ viewports deep. No persisted state, no debounces, no duplicated scroll handlers.
 
 - readers: `apps/web/src/components/back-to-top.tsx`, `apps/web/app/layout.tsx`, this ledger entry.
+## 1072. D1072 — the SearchBox gains a focus-on-empty popover: the same five example prompts, one tap to submit, the ARIA combobox contract
+
+**Why.** The empty textbox is the worst first-impression moment on the page — the user has a stomach full of want but no words. Yelp, Google, OpenRice and eater.ai all open that moment with a short menu of tasteful suggestions. The home page's example prompts already exist; we just haven't shown them in the field.
+
+**The unit.** `apps/web/src/components/search-box.tsx` — when the field is empty and focused, a rounded popover appears beneath it listing 6 of the locale-specific example prompts (`lib/prompts.ts`); each is a `role="option"` `<button>` with the same dot-icon shape used on the hero chip row; clicking one submits — the same code path as an Enter submit — and closes. Escape closes. Outside-pointer closes. The popover never claims focus. ARIA: `role="combobox"` on the input, `aria-expanded` true only when the popover shows AND the field is empty, `aria-controls` tied to the `<ul role="listbox">`. Only 6 suggestions render per locale — there are only 5 in `lib/prompts.ts` today, so effectively all of them; the slice-cap means the row scales without changing dict.
+
+**Verified.** `search-box-suggestions.test.ts` — 4 arms pinning the ARIA contract, the focus/empty guard, Esc dismiss, and the submit-on-click parity. web suite **298/298** (+4); `tsc --noEmit` clean; `next build` green; e2e already covers this file on mobile + desktop.
+
+**Honest boundaries.** The popover is *only* a shortcut to the example prompts — no probability-ranked "what people are searching near you" *leaderboard*. Live-trending suggestion would require a backend signal the platform doesn't expose to this page today. The popover does not include the district chips because the hero row immediately above it is the same intent (the two would be the same product two times over). No new tokens; no new dict keys; no new API endpoints.
+
+- readers: `apps/web/src/components/search-box.tsx`, this ledger entry.

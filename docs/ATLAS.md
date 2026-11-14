@@ -89,6 +89,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/app/page.tsx` | D1068: the home hero gains a second chip row — six hot districts (沙田/中環/旺角/尖沙咀/銅鑼灣/荃灣), each routing to a district+intent `/search?q=` |
 | `apps/web/src/components/back-to-top.tsx` | D1071: the back-to-top island — passive scroll listener, visible only past the first viewport, reduced-motion honored |
 | `apps/web/src/lib/back-to-top.test.ts` | D1071: 3 arms pin mount-once, past-fold visibility, dict presence in both locales |
+| `apps/web/src/lib/search-box-suggestions.test.ts` | D1072: 4 arms pin the combobox/listbox ARIA contract, the empty+focus guard, Esc/dismiss, click-to-submit |
+| `apps/web/src/components/search-box.tsx` | D1072: SearchBox gains a popover flavour of the example prompts on empty+focus — the same two navigation paths as Enter |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |
