@@ -43979,3 +43979,18 @@ Dict threads chapter XI across all artefacts; e2e floor 10 → 11; the handbook'
 **Honest boundaries.** Mock fixture only; live plane unchanged. The cast is invented; no stall, broth, or business-hours claim is real. The arc doc's next closing chapter beyond XI is queued — the eleven-count is the current ceiling; there is no chapter XI+ published yet.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1124. D1124 — the /hong-kong hub learns to carry the day on a single horizontal line: eleven tap-through checkpoints from 03:10 to 22:45 — and the clock taps back, chalking what you read
+
+**Why.** A reader who lands on the nine-chapter/ten/eleven grid wants to know *how the day flows* — the arc was always a clock. A horizontal timeline of checkpoints (03:10 → 22:45), one per chapter, entered in reading-clock order, makes that single glance visible without copy; and making it tappable turns the reading order from an explanation into an action, chalking the chapter as read in local-first storage — the same signal the grid uses, so the progress bar and the clock speak one language.
+
+**The unit.** New client island `hk-arc-timeline.tsx` — eleven checkpoints (時間 + 名 + link), follows the grid's tick position, and a tiny check badge after mount when a checkpoint's chapter is in storage. New shared module `src/lib/chapter-read.ts` — `CHAPTER_READ_KEY`, `readChapters`, `markChapter`, `slugFromGuideHref` — dependency-free, safe-mode (private mode degrades to session-local badges), single source of truth for both the grid island and the clock island. `hk-series-progress.tsx` refactor to consume the shared module (behaviour unchanged; test pins re-pointed to the module). Server rendering unchanged in spirit: first paint identical, hydrate swaps in count badges.
+
+Dict gains `home.hkHub.clockTitle / clockHint / clock[]` on both locales; Traditional in zh; en mirror; census charged unchanged. Hub grid wires `<HkArcTimeline>` above the chapter grid; note the 06:00 chapter shows as 已訴, the 11 legend holds.
+
+**Pinned.** `hk-arc-timeline.test.ts` — island (use client, chapter-read import, aria-labelledby, no fetch/analytics), dict 11×2 timestamps + clockTitle both locales, hub wiring pins. `hk-series-progress.test.ts` — storage key pin re-pointed to the shared module. `tests/e2e/specs/consumer/hong-kong.spec.ts` — new arm: arc timeline renders, scrolls to an ordered grid with role list items, and the `hk-cart-noodles-chronicle` anchor appears once in the arc and once in the grid (expected two).
+
+**Verified on this host.** web **346/346**; `tsc` clean; census **1343 literals** PASS (the new Traditional clock labels charged clean); build green; mock-plane e2e desktop **4/4 passed (24.5s)** — including the marking arm that had been red after the clock strip first listed the fruit-market link first.
+
+**Honest boundaries.** The arc timeline works entirely on the fixture plane's dict-carried chapter list — it does not re-sequence at runtime, does not compute durations, and its links point at `/guides/*` routes whose live-plane presence depends on the seeded platform (unchanged caveat as everywhere in the HK series). Tapping a checkpoint in local mode only chalks the read; no server-side read beacon is emitted.
+
+- readers: `apps/web/src/lib/chapter-read.ts`, `apps/web/src/components/hk-arc-timeline.tsx`, `apps/web/src/components/hk-series-progress.tsx`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.

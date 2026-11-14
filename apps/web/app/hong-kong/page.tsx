@@ -6,6 +6,7 @@ import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { HkSeriesProgress } from '@/components/hk-series-progress';
 import { HkCantoneseDaily } from '@/components/hk-cantonese-daily';
+import { HkArcTimeline } from '@/components/hk-arc-timeline';
 
 export const dynamic = 'force-static';
 
@@ -44,6 +45,10 @@ export default async function HongKongHubPage() {
           <p className="max-w-prose text-base leading-relaxed text-ink-muted">{hub.intro}</p>
         </Container>
       </section>
+
+      <Container size="shell" className="pt-8">
+        <HkArcTimeline copy={{ title: hub.clockTitle, hint: hub.clockHint, entries: hub.clock }} />
+      </Container>
 
       {/* Eleven chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">

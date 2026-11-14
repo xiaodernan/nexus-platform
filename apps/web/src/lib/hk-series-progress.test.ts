@@ -21,7 +21,9 @@ describe('D1114 HK series reading-progress island', () => {
   it('is a client island that persists only to localStorage and ships no telemetry', () => {
     const island = read(ISLAND);
     expect(island.startsWith("'use client';")).toBe(true);
-    expect(island).toContain("STORAGE_KEY = 'nexus.hk-series.read'");
+    const chapterRead = read('apps/web/src/lib/chapter-read.ts');
+    expect(chapterRead).toContain("CHAPTER_READ_KEY = 'nexus.hk-series.read'");
+    expect(island).toContain('CHAPTER_READ_KEY');
     expect(island).toContain('window.localStorage');
     expect(island).not.toContain('fetch(');
     expect(island).not.toContain('XMLHttpRequest');

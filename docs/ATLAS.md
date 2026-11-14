@@ -1,3 +1,6 @@
+| `apps/web/src/components/hk-arc-timeline.tsx` | D1124: the /hong-kong eleven-checkpoint clock strip — reading-order in one glance |
+| `apps/web/src/lib/chapter-read.ts` | D1124: shared local-first read persistence for HK chapters (progress strip + clock strip) |
+| `apps/web/src/lib/hk-arc-timeline.test.ts` | D1124: the clock-strip's source pins + dict-pins |
 # NEXUS Atlas — the whole repository on one page
 
 **Status:** a map, not a claim. Every path written in backticks on this page is checked by

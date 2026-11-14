@@ -8,6 +8,12 @@ import { test, expect } from '../../lib/fixture.js';
  *  3. the quiz teaser links into /hk-type and the search taster does so too.
  */
 
+test('the arc clock renders all eleven chapters in chronological order', async ({ page }) => {
+  await page.goto('/hong-kong');
+  await expect(page.getByRole('heading', { name: /香港一日的讀法|Reading the day/i }).first()).toBeVisible();
+  await expect(page.locator('a[href="/guides/hk-cart-noodles-chronicle"]')).toHaveCount(2);
+});
+
 test('the Cantonese-of-the-day tile renders on the mega hub', async ({ page }) => {
   await page.goto('/hong-kong');
   await expect(page.getByRole('region', { name: /每日一句|ONE CANTONESE TODAY/i }).first()).toBeVisible();

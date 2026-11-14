@@ -5,17 +5,14 @@
  *
  * When the reader finishes a chapter, the card gets a checkmark badge and the thin progress bar
  * above the grid fills a little more. Everything lives in `localStorage` (`nexus.hk-series.read`):
- * no writes to the server, no identity, no telemetry, works identical in both data modes. The
- * SSR paint is deliberately empty of badges; the first client pass is too — hydrate, then effect,
- * so there is nothing to mismatch.
- *
- * Honesty notes: marked chapters persist until the reader asks to reset them; chapters the reader
- * opens straight from a guide page are not marked until the hub renders (acceptable and stated).
+ * no writes to the server, no identity, no telemetry, works identical in both data modes.
  */
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@nexus/ui';
+
+import { CHAPTER_READ_KEY, markChapter, readChapters } from '@/lib/chapter-read';
 
 export interface HkSeriesProgressCard {
   slug: string;
@@ -31,22 +28,10 @@ export interface HkSeriesProgressCopy {
   readCta: string;
 }
 
-const STORAGE_KEY = 'nexus.hk-series.read';
-
 const formatDone = (template: string, read: number, total: number): string =>
   template.replaceAll('{read}', String(read)).replaceAll('{total}', String(total));
 
-function readStored(): string[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((slug): slug is string => typeof slug === 'string');
-  } catch {
-    return [];
-  }
-}
+export const STORAGE_KEY = CHAPTER_READ_KEY;
 
 export function HkSeriesProgress({
   cards,
@@ -59,7 +44,7 @@ export function HkSeriesProgress({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setRead(readStored());
+    setRead(readChapters());
     setReady(true);
   }, []);
 
@@ -69,16 +54,11 @@ export function HkSeriesProgress({
   const percent = total === 0 ? 0 : Math.round((readCount / total) * 100);
 
   const mark = (slug: string) => {
-    setRead((current) => {
-      if (current.includes(slug)) return current;
-      const next = [...current, slug];
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        /* private-mode or quota — keep the in-memory badge for this session only */
-      }
-      return next;
-    });
+    try {
+      setRead(markChapter(slug));
+    } catch {
+      setRead((current) => (current.includes(slug) ? current : [...current, slug]));
+    }
   };
 
   const reset = () => {
@@ -159,3 +139,4 @@ export function HkSeriesProgress({
     </div>
   );
 }
+

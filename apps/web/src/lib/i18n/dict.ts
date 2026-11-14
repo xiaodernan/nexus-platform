@@ -82,6 +82,10 @@ export interface Dict {
       quizBadge: string;
       realSearchBadge: string;
       seriesLink: string;
+      /** D1124: the arc timeline strip — chapters in clock order. */
+      clockTitle: string;
+      clockHint: string;
+      clock: Array<{ time: string; name: string; href: string }>;
       /** D1115: 每日一句 — the Cantonese-of-the-day pool, picked by the HK date's FNV hash. */
       cantonese: {
         eyebrow: string;
@@ -976,6 +980,21 @@ const zhHK: Dict = {
       title: '香港的一桌宴',
       intro: '從凌晨四點半的魚市與果欄，到廟街的車仔麵、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
       chaptersTitle: '十一章反覆走完一個香港',
+      clockTitle: '香港一日的讀法：照時間讀',
+      clockHint: '由果欄 03:10 到車仔麵 22:45 — 照順序進入這座城的節拍',
+      clock: [
+        { time: '03:10', name: '果欄', href: '/guides/hk-fruit-market-chronicle' },
+        { time: '04:15', name: '春花姨', href: '/guides/hk-yu-huei-chronicle' },
+        { time: '04:30', name: '天光魚市', href: '/guides/hk-fish-market-chronicle' },
+        { time: '05:30', name: '三餐', href: '/guides/hk-food-chronicle' },
+        { time: '06:00', name: '茶餐廳', href: '/guides/hk-cha-chaan-teng-chronicle' },
+        { time: '06:45', name: '冰室', href: '/guides/hk-bing-sat-chronicle' },
+        { time: '07:30', name: '早茶', href: '/guides/hk-dim-sum-chronicle' },
+        { time: '12:00', name: '燒味', href: '/guides/hk-siu-mei-chronicle' },
+        { time: '19:00', name: '廟街', href: '/guides/hk-temple-street-chronicle' },
+        { time: '22:30', name: '糖水', href: '/guides/hk-tongsui-chronicle' },
+        { time: '22:45', name: '車仔麵', href: '/guides/hk-cart-noodles-chronicle' },
+      ],
       quizCtaTitle: '你係邊一個 HK？',
       quizCtaBody: '10 道問題，找出你在香港的最近似的人格——從常餐店長到廟街解籤婆婆。',
       quizCta: '去 /hk-type 試自己',
@@ -2137,6 +2156,21 @@ const en: Dict = {
       title: 'One table, one Hong Kong',
       intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the cart-noodles at Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
       chaptersTitle: 'Eleven chapters through one Hong Kong',
+      clockTitle: 'Reading the day in Hong Kong — clock order',
+      clockHint: 'Every chapter, one time of day — from 03:10 through 22:45',
+      clock: [
+        { time: '03:10', name: 'Fruit market', href: '/guides/hk-fruit-market-chronicle' },
+        { time: '04:15', name: 'Auntie', href: '/guides/hk-yu-huei-chronicle' },
+        { time: '04:30', name: 'Fish market', href: '/guides/hk-fish-market-chronicle' },
+        { time: '05:30', name: 'Three meals', href: '/guides/hk-food-chronicle' },
+        { time: '06:00', name: 'Cha chaan teng', href: '/guides/hk-cha-chaan-teng-chronicle' },
+        { time: '06:45', name: 'Ice-room', href: '/guides/hk-bing-sat-chronicle' },
+        { time: '07:30', name: 'Yum cha', href: '/guides/hk-dim-sum-chronicle' },
+        { time: '12:00', name: 'Siu mei', href: '/guides/hk-siu-mei-chronicle' },
+        { time: '19:00', name: 'Temple Street', href: '/guides/hk-temple-street-chronicle' },
+        { time: '22:30', name: 'Tong sui', href: '/guides/hk-tongsui-chronicle' },
+        { time: '22:45', name: 'Cart noodles', href: '/guides/hk-cart-noodles-chronicle' },
+      ],
       quizCtaTitle: 'Which HK are you?',
       quizCtaBody: 'Ten questions — from Cha Chaan Teng manager to the fate-teller on Temple Street.',
       quizCta: 'Try /hk-type',
