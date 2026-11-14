@@ -50,6 +50,7 @@ export interface Dict {
     themeToLight: string;
     /** D1095: the /hk-type archetype quiz link, shown in the footer. */
     hkType: string;
+    handbook: string;
   };
   home: {
     eyebrow: string;
@@ -77,9 +78,10 @@ export interface Dict {
       searchCtaBody: string;
       searchHref: string;
       searchHrefLabel: string;
-      /** D1118: eyebrow badges that had previously leaked English into the zh plane. */
+      /** D1118: eyebrow badges that had previously leaked English into the zh plane; D1119: handbook chapter-link label. */
       quizBadge: string;
       realSearchBadge: string;
+      seriesLink: string;
       /** D1115: 每日一句 — the Cantonese-of-the-day pool, picked by the HK date's FNV hash. */
       cantonese: {
         eyebrow: string;
@@ -866,6 +868,22 @@ export interface Dict {
     trustText: string;
     rights: string;
   };
+  /** D1119: the /handbook page — the complete usage manual, new-user tour and game tutorial. */
+  handbook: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    cta: string;
+    navTitle: string;
+    exampleLabel: string;
+    exampleQuery: string;
+    exampleCaption: string;
+    tourTitle: string;
+    tour: Array<{ title: string; text: string }>;
+    sections: Array<{ id: string; kicker: string; title: string; paragraphs: string[]; bullets?: string[] }>;
+    nextTitle: string;
+    screenshotNote: string;
+  };
 }
 
 const zhHK: Dict = {
@@ -883,6 +901,7 @@ const zhHK: Dict = {
     themeToDark: '切換至深色主題',
     themeToLight: '切換至淺色主題',
     hkType: '香港人格',
+    handbook: '說明書',
   },
   home: {
     eyebrow: '對話式本地發現',
@@ -946,6 +965,7 @@ const zhHK: Dict = {
       searchCtaBody: '用關鍵字去這座城市搜一次——下一頓吃飯就在那兒。',
       quizBadge: '測驗',
       realSearchBadge: '真·搜尋',
+      seriesLink: '香港九章',
       searchHref: '/search?q=沙田%20下午茶',
       searchHrefLabel: '沙田 下午茶',
       cantonese: {
@@ -1939,6 +1959,77 @@ const zhHK: Dict = {
     trustText: '任何結論都可追溯到來源事實；模型不會直接寫入數據庫，商戶資料修改由商戶決定。',
     rights: '© 2026 NEXUS',
   },
+  handbook: {
+    eyebrow: 'NEXUS · 簡明說明書',
+    title: '玩盡 NEXUS，三分鐘讀完的完整說明書',
+    intro: '由首頁的 SearchBox 到九章香港系列、每日食運，再到 /me 帳戶 hub——這本手冊逐頁告訴你：每個功能是什麼、怎麼用、注意什麼。',
+    cta: '立即試第一步',
+    navTitle: '本手冊目錄',
+    exampleLabel: '試試看：把下面這句打進 SearchBox',
+    exampleQuery: '油麻地 魚蛋，要抵食又快',
+    exampleCaption: 'NEXUS 收到這句話，會拆出「油麻地」（地區）、「魚蛋」（品類）以及「抵食又快」（預算、時間偏好），再返回附近的商戶；每張卡下面都寫明為什麼推薦你這一間。',
+    tourTitle: '三分鐘，五步上手',
+    tour: [
+      { title: '一句話入門', text: '搜尋任何你想吃的、做的、遇見的——「油麻地 魚蛋 抵食」或「廟街 宵夜」。' },
+      { title: '看 AI 的理由', text: '每張推薦卡都會寫明為何推薦；每個數字都能追到事實。' },
+      { title: '按你的口味收窄', text: '把條件說出來即得——「要有堂食座位」「預算 HK$200 內」「附近 15 分鐘步行」。' },
+      { title: '香港九章照單全收', text: '/hong-kong 九章放完這座城的一整天；讀過哪章，進度條會記住。' },
+      { title: '/me 收起你的最愛', text: '收藏店舖、偏好、預約和收件匣全在一頁；九成功能不登入也用得。' },
+    ],
+    sections: [
+      { id: 'search', kicker: 'SEARCH', title: '1 · SearchBox：一句話，就是一張地圖', paragraphs: [
+        'SearchBox 收的不是關鍵詞——是一句人話。地區（油麻地／將軍澳／沙田）、品類（魚蛋／燒味飯／茶餐廳）、預算（HK$200 內）、時間（今晚／假日／打烊前）、口味（辣的／要快）都可以混在一起講。',
+        '結果每張卡下面都有一行「為什麼推薦」——那是 AI 判斷鏈的任務聲明，每一步都能追到事實（距離、營業時段、最新評價、預算匹配）。找不到就直接告訴你找不到，不會把亂湊的東西塞進表格。',
+      ] },
+      { id: 'home', kicker: 'HOME', title: '2 · 首頁 rails 與 district chips', paragraphs: [
+        '首頁的 rails（你附近熱門／為你推薦／熱門榜）由同一份本地事實聚合而來；登入之後，為你推薦才會反映你聲明過的偏好——這是為什麼「為你推薦」在登入前看起來像預設榜單。',
+        'District chips（沙田／中環／旺角／銅鑼灣／荃灣…）是無腦跳法：點一下就把搜索丟進那個地區；想再精修就在 SearchBox 後面加條件即可。',
+      ] },
+      { id: 'hkseries', kicker: 'STORY', title: '3 · 香港九章 · 由凌晨三點走到最甜的杯底', paragraphs: [
+        '九章反覆走一遍香港這座城市的一整天。順序按讀書順序：03:10 果欄（第八章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 06:00 茶餐廳（第五章）→ 07:30 早茶（第三章）→ 12:00 燒味（第二章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）。',
+        '每章都是「合成敘事示例」（旗幟標誌 demo: true），用於演示內容層的呈現能力；不是真實店家推薦，但就是那樣真實的一頓飯。',
+        '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
+      ] },
+      { id: 'quiz', kicker: 'PLAY', title: '4 · /hk-type「香港人格」：怎麼玩', paragraphs: [
+        '10 題——由早餐到夜宵，找出你在香港的最近似的人格：常餐店長、茶餐廳老闆、廟街解籤婆婆。沒有對錯，結果只是一面哈哈鏡。',
+      ], bullets: [
+        '每題三個選項；手機上點、桌面上撳 A / B / C 均可。',
+        '每個選項會加權到一種人格；最高分的那一類勝出。',
+        '結果頁一共三樣：專屬指南、分享（複製連結）、重新開始。',
+        '全程無分析、無 cookie、無後端——結果不會離開你的螢幕。',
+      ] },
+      { id: 'daily', kicker: 'RITUAL', title: '5 · 三個每日儀式：今日食運／每日一句／章節進度', paragraphs: [
+        '今日食運：以香港時間今日的日期（HKT）走 FNV-1a 雜湊取一句籤評——同一日同一張卡；它是純粹好玩，不是建議。',
+        '每日一句：十二條手工核對過的廣東話，附 jyutping 與英文註釋（可作為簡單的廣東話入門）。',
+        '章節進度：在目錄卡片上點一下即記錄；九章讀完，進度條就會滿了——地圖上每章會出現「已讀」徽章。',
+      ] },
+      { id: 'me', kicker: 'ACCOUNT', title: '6 · 我的 /me：收藏、偏好、預約、收件匣', paragraphs: [
+        '/me 是登入後的總部。六份讀取（檔案／收藏／預約／訂單／已儲存搜索／收件匣）各自呈現在同一頁；任何一份壞了就明說，不會沉默。',
+        '收件匣底部有「全部已讀」一鍵清空；偏好（§33 visibility）可以隨時打開或關閉「為你推薦」——不勾選，rails 也不會作任何假設。',
+      ] },
+      { id: 'merchant', kicker: 'MERCHANT', title: '7 · 如果你是商家：商戶中心', paragraphs: [
+        '/merchant 是開店的地方：listing、對話、分析、預約欄、評價維護全在裡面；批量導入可以讓新商店把舊 listing 一次過入平台。',
+        '想試商戶 shell 的話，demo 模式會給你一個示例商戶（merchant@example.hk）可以玩一遍；live 模式才看到真的成交和評價。',
+      ] },
+      { id: 'privacy', kicker: 'PRIVACY', title: '8 · 隱私與誠實說明', paragraphs: [
+        '這是一個刻意誠實標示示例的產品——你看到的「示例數據」標籤不是彩蛋；而是所有沒有真數據時會寫明的合同。',
+      ], bullets: [
+        'Mock 模式（NEXT_PUBLIC_DATA_MODE=mock）：所有商戶／評價／預約皆為虛構，頁面會標註「示例數據」。',
+        'Live 模式（NEXT_PUBLIC_DATA_MODE=live）：數字來自已連上的真實商戶；標籤消失，所以你會知道你看到哪一種。',
+        '不接入任何分析 pixel、不載入第三方廣告；AI 草拟的東西會明文標註「由 AI 草拟／未有人審」。',
+        '僅本地儲存：章節進度、已讀計數存在瀏覽器；清一清 localStorage 就回到零。',
+      ] },
+      { id: 'faq', kicker: 'FAQ', title: '9 · 常見問題，三條最實用', paragraphs: [
+        '你衝過來只想知道一兩件事的話，先看這三條：',
+      ], bullets: [
+        '「為什麼我打不到東京的結果？」示例數據集僅有香港樣本；將來會拓更多城市。',
+        '「商戶的價錢是真的嗎？」mock 模式是虛構；live 模式才有實時價錢。',
+        '「還有第十章嗎？」新章發佈進度寫進 STATUS.md（開發者賬本）；跟進九章的節奏就來 /hong-kong 看板更新。',
+      ] },
+    ],
+    nextTitle: '想要更多？',
+    screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
+  },
 };
 
 const en: Dict = {
@@ -1956,6 +2047,7 @@ const en: Dict = {
     themeToDark: 'Switch to the dark theme',
     themeToLight: 'Switch to the light theme',
     hkType: 'HK quiz',
+    handbook: 'Handbook',
   },
   home: {
     eyebrow: 'Conversational local discovery',
@@ -2020,6 +2112,7 @@ const en: Dict = {
       searchCtaBody: 'Type it and actually eat it — your next meal is one tap away.',
       quizBadge: 'QUIZ',
       realSearchBadge: 'REAL SEARCH',
+      seriesLink: 'HK Series',
       searchHref: '/search?q=Sha%20Tin%20afternoon',
       searchHrefLabel: 'Sha Tin afternoon tea',
       cantonese: {
@@ -3013,7 +3106,79 @@ const en: Dict = {
     trustText: 'Every claim traces back to a source fact. The model never writes to the database, and merchants control their own data.',
     rights: '© 2026 NEXUS',
   },
+  handbook: {
+    eyebrow: 'NEXUS · THE HANDBOOK',
+    title: 'Own NEXUS in three minutes',
+    intro: 'From the SearchBox on the home page to the nine guide chapters, the daily cards and the /me hub — this book tells you what every feature is, how to drive it, and what to watch for.',
+    cta: 'Take the first step',
+    navTitle: 'IN THIS BOOK',
+    exampleLabel: 'TRY THIS IN THE SEARCHBOX',
+    exampleQuery: 'Yau Ma Tei fish balls, cheap and fast',
+    exampleCaption: 'NEXUS parses the sentence into district (Yau Ma Tei), item (fish ball), budget and rush cues (cheap and fast); then returns matching merchants — every card tells you why that one made the cut.',
+    tourTitle: 'Five steps, three minutes',
+    tour: [
+      { title: 'Ask once', text: 'Search for anything you would want nearby — "Yau Ma Tei fish balls, cheap" or "Temple Street late night".' },
+      { title: 'Read the why', text: 'Each card prints its reason; every number traces back to a fact.' },
+      { title: 'Tighten the answer', text: 'State the constraint like a sentence — "only with a bathroom", "under HK$200", "within a fifteen-minute walk".' },
+      { title: 'Walk the series', text: 'One full day of Hong Kong in /hong-kong; the strip above the grid remembers every chapter you finished.' },
+      { title: 'Save what you love', text: 'Favourites, preferences, reservations and inbox in /me — nine-tenths of the product works without an account.' },
+    ],
+    sections: [
+      { id: 'search', kicker: 'SEARCH', title: '1 · SearchBox — one sentence is a map', paragraphs: [
+        'The SearchBox reads a sentence, not keywords: districts (Yau Ma Tei / Sha Tin / Central), items (fish balls / siu mei / cha chaan teng), budgets (under HK$200), timing (tonight / rainy day / before close) and taste (spicy / steps from a cab) — mix them freely.',
+        'Every result carries a "why this" line; the model writes it from the fact chain (distance, open hours, latest ratings, budget match). If nothing matches, it says so plainly — it never pads the list with a passable guess.',
+      ] },
+      { id: 'home', kicker: 'HOME', title: '2 · Home rails and district chips', paragraphs: [
+        'The rails (popular near you / for you / trending) come from the same local fact set; the for-you rail only reflects your declared preferences after you sign in — before that it is honestly just the local leaderboard.',
+        'District chips (Sha Tin / Central / Mong Kok / Causeway Bay / Tsuen Wan…) are the no-thinking jump: tap one, and the search is re-fired with the district preset — then refine from the SearchBox as usual.',
+      ] },
+      { id: 'hkseries', kicker: 'STORY', title: '3 · The HK series — nine chapters, dawn to dessert', paragraphs: [
+        'Nine chapters walk through a whole Hong Kong day. In chronological reading order: Chapter 8 (fruit market, 03:10) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 5 (cha chaan teng, 06:00) → Chapter 3 (yum cha, 07:30) → Chapter 2 (siu mei, 12:00) → Chapter 4 (Temple Street, 19:00) → Chapter 9 (tong sui, 22:30).',
+        'Every chapter is a synthetic editorial fixture (flags: demo) built to demonstrate the content layer — not a real restaurant list, but very much a real day of appetite.',
+        'The strip above the chapter grid on /hong-kong remembers which ones you read (localStorage only; a new device starts from zero).',
+      ] },
+      { id: 'quiz', kicker: 'PLAY', title: '4 · /hk-type — how to play the Hong Kong persona quiz', paragraphs: [
+        'Ten questions — from the first bowl at dawn to the one before you sleep — find the closest-matching Hong Kong you. There are no wrong answers; the result is a fun mirror, not a diagnosis.',
+      ], bullets: [
+        'Three options per question; tap on mobile or press A / B / C on desktop.',
+        'Each option weights one persona; the highest-scoring persona wins.',
+        'The result screen gives you three things: a matching guide, share (copy the link), and restart.',
+        'Zero analytics, zero cookies, zero backend — your scores never leave the page.',
+      ] },
+      { id: 'daily', kicker: 'RITUAL', title: '5 · Three daily rituals — the almanac, the Cantonese of the day, the reading strip', paragraphs: [
+        'The almanac: a deterministic one-liner seeded by the live Hong Kong clock (FNV-1a over the local date); same day, same card — it is a wink, not advice.',
+        'Cantonese of the day: twelve hand-checked phrases with Jyutping and an English gloss — treat it as a seven-second Cantonese class before breakfast.',
+        'The reading strip: tap a chapter on /hong-kong to chalk it; nine glyphs worth of pride are one tap away.',
+      ] },
+      { id: 'me', kicker: 'ACCOUNT', title: '6 · /me — favorites, preferences, reservations, inbox', paragraphs: [
+        '/me is the post-sign-in headquarters. Six reads (profile, favorites, reservations, orders, saved searches, inbox), each on its own fate — if one fails, it says so, never silent filler.',
+        'The inbox carries a read-all button; the preferences section toggles personalized ranking per surface — unset it, and the rails make no assumption about you.',
+      ] },
+      { id: 'merchant', kicker: 'MERCHANT', title: '7 · If you are a merchant', paragraphs: [
+        '/merchant is where a storefront opens: listings, conversations, analytics, reservations queue, review moderation — plus a bulk import if a new store comes with forty legacy listings in a spreadsheet.',
+        'want to try it before committing? The demo mode ships you with a demo merchant (merchant@example.hk) — feel around the console with zero paperwork.',
+      ] },
+      { id: 'privacy', kicker: 'PRIVACY', title: '8 · Privacy and honesty', paragraphs: [
+        'This is a product built to say "synthetic" out loud — those tags are the contract, not a footnote.',
+      ], bullets: [
+        'Mock mode (NEXT_PUBLIC_DATA_MODE=mock): every merchant, review and reservation is invented; the page tags say "synthetic demo".',
+        'Live mode (NEXT_PUBLIC_DATA_MODE=live): the numbers come from the merchants the platform has actually wired; the tags vanish because the demo story is now the real one.',
+        'No analytics pixels, no advertising trackers; AI-drafted copy is flagged as "AI-drafted, unedited".',
+        'localStorage only: reading progress and inbox counters live in your browser; wipe it, start over.',
+      ] },
+      { id: 'faq', kicker: 'FAQ', title: '9 · The three questions everyone asks', paragraphs: [
+        'If you stuck around for three lines, here they are:',
+      ], bullets: [
+        '"Why no Tokyo?" The fixture set holds Hong Kong; other cities are future expansion.',
+        '"Is the price real?" In mock mode it is imaginary; in live mode the platform only shows what it has checked.',
+        '"Which chapter is next?" The series arc and its growth list live in STATUS.md (developer ledger); the reader-facing board is /hong-kong.',
+      ] },
+    ],
+    nextTitle: 'Want more?',
+    screenshotNote: 'Screenshots lag the running build; this handbook is refreshed on every shipped milestone.',
+  },
 };
+
 
 const DICTS: Record<Locale, Dict> = { 'zh-HK': zhHK, en };
 

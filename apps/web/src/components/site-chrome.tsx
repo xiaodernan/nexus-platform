@@ -109,6 +109,7 @@ export function SiteFooter({ locale }: { locale: string }) {
     { href: '/search', label: dict.nav.search },
     { href: '/me', label: dict.nav.account },
     { href: '/hk-type', label: dict.nav.hkType },
+    { href: '/handbook', label: dict.nav.handbook },
   ];
   return (
     <footer className="mt-16 border-t border-line bg-surface">

@@ -43915,3 +43915,19 @@ Pinned by `hk-series-progress.test.ts`: `readCta` on both locales, `quizBadge`/`
 **Honest boundaries.** The seed fixtures' prose remains Traditional-HK Traditional on the en plane (documented HK-series choice, not an accident); a fully English chapter mirror is a future unit, not a fifth of this one. Everything else on the routed consumer surfaces is dict-identical or locale-symmetric.
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/components/hk-series-progress.tsx`, `apps/web/src/lib/hk-series-progress.test.ts`, this ledger entry.
+## 1119. D1119 — the product learns to instruct: /handbook, the complete bilingual user manual, the new-user tour and the quiz tutorial, and it is a first-class product citizen from day one
+
+**Why.** The mandate explicitly asked for 簡明說明書 — one booklet a user can open, describing in plain words how to experience everything the product ships, plus a real new-user quickstart and game tutorial. Docs/ are out of a reader's reach; the handbook lives *in the product* at `/handbook`, where every reader is one click away from it.
+
+**The unit.** A new consumer route, page + dict slice + unit pins + e2e + footer integration:
+- `apps/web/app/handbook/page.tsx` — force-static, no islands, no telemetry; hero (eyebrow/title/intro and what is-not a promise), a "try this SearchBox query" panel quoting the seed sentence 「油麻地 魚蛋，要抵食又快」, the **five-step new-user tour** (一句話入門 → 看 AI 的理由 → 按你的口味收窄 → 香港九章照單全收 → /me 收起你的最愛), then a **jump rail + nine numbered sections** — SearchBox, home rails/chips, HK series, the /hk-type game tutorial （玩法 list + result screen trio: 指南 / 分享链接 / 重新開始）, the three daily rituals, /me, merchant shell, the honesty contract （example data vs live, no analytics pixels, AI-drafted flag, localStorage-only persistence), and the three most-asked FAQ.
+- `dict.handbook` on both locales — zh Traditional HK script / en native-English prose; the zh honesty line owns that the mock sample is synthetic; the en one just calls it the contract.
+- `site-chrome.tsx` footer gains the fifth explore-link (`/handbook`) with the new `dict.nav.handbook` key.
+- `handbook.test.ts` pins: both locales carry the manual; nine section ids appear twice; page force-static + no island + no telemetry; footer links and dict keys.
+- e2e `handbook.spec.ts`: the nine anchor ids render, the example query is quoted verbatim, the jump rail links at minimum /hk-type and /hong-kong, and the hero CTA navigates to /search. Local desktop project **2 passed (36.7s)**.
+
+**Verified.** web suite **340/340** (+3); `tsc --noEmit` clean; build green; census PASS over **1286 literals**; e2e desktop 2/2; browser smoke on the dev plane h1 renders, nine sections render after reload (early dev build briefly showed double-hydrated sections — a stale compile artefact, not source).
+
+**Honest boundaries.** The manual is text-first — no screenshots (the note inside tells readers screenshots lag ships); every claim about the current product stays true deliberately, but the next milestone that invalidates a line must regenerate it. The product world itself remains synthetic in demo; the handbook says so plainly on both locales.
+
+- readers: `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/handbook.test.ts`, `tests/e2e/specs/consumer/handbook.spec.ts`, `apps/web/src/components/site-chrome.tsx`, this ledger entry.
