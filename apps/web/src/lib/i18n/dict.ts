@@ -2109,10 +2109,11 @@ const zhHK: Dict = {
         '結果頁一共三樣：專屬指南、分享（複製連結）、重新開始。',
         '全程無分析、無 cookie、無後端——結果不會離開你的螢幕。',
       ] },
-      { id: 'daily', kicker: 'RITUAL', title: '5 · 三個每日儀式：今日食運／每日一句／章節進度', paragraphs: [
+      { id: 'daily', kicker: 'RITUAL', title: '5 · 三個每日儀式：今日食運／每日一句／章節進度／/daily 頁', paragraphs: [
         '今日食運：以香港時間今日的日期（HKT）走 FNV-1a 雜湊取一句籤評——同一日同一張卡；它是純粹好玩，不是建議。',
         '每日一句：十二條手工核對過的廣東話，附 jyutping 與英文註釋（可作為簡單的廣東話入門）。',
         '章節進度：在目錄卡片上點一下即記錄；十章讀完，進度條就會滿了——地圖上每章會出現「已讀」徽章。',
+        '/daily（D1144）：三個儀式加一重「今日讀一章」——由今日的 FNV 雜湊從 HK 系列揀出一章，全城同一天讀同一章；按一下即可複製「今日卡」（食運＋廣東話一句＋今日一章）分享給朋友。',
       ] },
       { id: 'me', kicker: 'ACCOUNT', title: '6 · 我的 /me：收藏、偏好、預約、收件匣', paragraphs: [
         '/me 是登入後的總部。六份讀取（檔案／收藏／預約／訂單／已儲存搜索／收件匣）各自呈現在同一頁；任何一份壞了就明說，不會沉默。',
@@ -3343,6 +3344,7 @@ const en: Dict = {
         'The almanac: a deterministic one-liner seeded by the live Hong Kong clock (FNV-1a over the local date); same day, same card — it is a wink, not advice.',
         'Cantonese of the day: twelve hand-checked phrases with Jyutping and an English gloss — treat it as a seven-second Cantonese class before breakfast.',
         'The reading strip: tap a chapter on /hong-kong to chalk it; nine glyphs worth of pride are one tap away.',
+        '/daily (D1144): the three daily instruments in one page plus a chapter pick — the hash of today’s Hong Kong date chooses one chapter from the HK series; everyone on the page reads the same chapter today. One tap copies a shareable daily card (almanac + Cantonese phrase + today’s chapter).',
       ] },
       { id: 'me', kicker: 'ACCOUNT', title: '6 · /me — favorites, preferences, reservations, inbox', paragraphs: [
         '/me is the post-sign-in headquarters. Six reads (profile, favorites, reservations, orders, saved searches, inbox), each on its own fate — if one fails, it says so, never silent filler.',

@@ -44238,3 +44238,10 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** The arc pick is a hash, not curatorship — it's the same rhythm for everyone, by design. The clipboard button degrades honestly ("clipboard unavailable") when the API is absent. No SSR↔client hydration mismatch: date and share actions are all mounted after mount. No new network traffic of any kind.
 
 - readers: `apps/web/app/daily/page.tsx`, `apps/web/src/components/hk-daily-*.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/page.tsx`, `apps/web/app/handbook/page.tsx`, this ledger entry.
+## 1145. D1145 — the handbook teaches the /daily ritual too: one more page you won't have to guess how to use
+
+**Why.** /daily (D1144) added a fourth daily-ritual instrument, and the newcomer had to find it by exploring hrefs. The manual is the place that enumerates every feature; it now enumerates /daily.
+
+**The unit.** The manual's daily section (id `daily`) gains a fourth paragraph in both locales: the zh copy explains /daily (three pillars + 章進度 → hash-picked chapter + copy the daily card), the EN copy explains the same for the English reader. No sections added, no reordering; the quiz/canonical census counts stay flat.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
