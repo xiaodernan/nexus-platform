@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1136",
-  "milestone_full": "香港系列十七章 + 簡明說明書 + 前五×壓力測試 + 出函煙火",
+  "milestone": "D1137",
+  "milestone_full": "香港系列十八章 · 時鐘全天UTC讀序",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
-  "updated_at_commit": "4f5eafa",
+  "updated_at_commit": "current-master",
   "features": [
-    "HK series: seventeen Traditional chapters — 02:00→02:30→03:10→03:30 bookended",
-    "/hong-kong: seventeen-checkpoints arc clock — chronological, with tap-to-chalk",
-    "今日食運 daily almanac · 每日一句 Cantonese-of-the-day",
+    "HK series: eighteen Traditional chapters — 02:00→02:45, 03:10→03:30, 04:15→22:45 full day",
+    "/hong-kong: eighteen-checkpoints arc clock — chronological, tap to chalk",
+    "Today: 今日食運 · 每日一句 Cantonese-of-the-day · 一起跨過杯底",
     "/handbook: complete bilingual manual · quiz tutorial · newcomer strip",
-    "scroll-behavior:smooth removed — the finger belongs to the reader again",
-    "LLM cache probe: weekly Tue 00:00 UTC — identical 100% warm · tiny 95.5% · contract 100%"
+    "scroll-behavior:smooth removed · wc consumer test 无 broken tests",
+    "LLM cache probe: identical 100% · contract prefix 100% · tiny-system 95.5%"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

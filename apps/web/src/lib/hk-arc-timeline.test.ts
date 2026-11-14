@@ -32,10 +32,10 @@ describe('D1124 HK arc timeline — eleven clock checkpoints', () => {
     const dict = read(DICT);
     expect(dict).toContain("clockTitle: '香港一日的讀法：照時間讀'");
     expect(dict).toContain("clockTitle: 'Reading the day in Hong Kong — clock order'");
-    expect((dict.match(/\{ time: '/g) || []).length).toBe(34); // 17 chips × 2 locales
+    expect((dict.match(/\{ time: '/g) || []).length).toBe(36); // 18 chips × 2 locales
     expect(dict).toContain("'/guides/hk-cart-noodles-chronicle'");
     expect(dict).toContain("'/guides/hk-food-chronicle'");
-    for (const t of ['06:30', '03:10', '03:30', '04:15', '04:30', '05:30', '06:00', '06:45', '07:30', '09:30', '12:00', '17:58', '18:30', '19:00', '22:30', '22:45', '02:00']) {
+    for (const t of ['06:30', '03:10', '03:30', '04:15', '04:30', '05:30', '06:00', '06:45', '07:30', '09:30', '12:00', '16:00', '17:58', '18:30', '19:00', '22:30', '22:45', '02:00']) {
       expect((dict.match(new RegExp(`time: '${t}'`, 'g')) || []).length).toBe(2);
     }
   });

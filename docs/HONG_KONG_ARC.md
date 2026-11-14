@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the fifteen chapters (D1093 → D1134)
+document is the continuity plan for that world-layer: how the eighteen chapters (D1093 → D1137)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -86,6 +86,10 @@ rice in a vinyl bag for the bus. *What the product serves here:* search "燒味�
 11:45 — distance × freshness × queue time is exactly the kind of ranking the rail engine
 was built to do. *Interlock:* the siu mei section is the daytime sequel of the fish market —
 what came in on ice at 04:30 is arguing for your attention at noon in fat and skin.
+
+### 16:00 — 中環交易所 (central bourse) · chapter XVIII
+**The bell that bids the city goodbye.** The closing bell out rings the 4:00 p.m. collapse of the glass box;
+the staff inside have been on the clock since 09:30 a.m. Together it is less than a heartbeat and the day is done. *What the product serves here:* search "中環 晚餐" — one tap; the working crowd falls into the nearest cha chaan teng scarfing down fish-ball noodles. *Interlock:* the bell's last toll; the city once signs the reforms its bureaucrats wrote — and the austere banker becomes the same man who can talk over small talk about fishballs.
 
 ### 15:30 — 茶餐廳，第二段 (cha chaan teng, the afternoon) · chapter V again, re-read
 **The hour the city goes quiet.** The post-lunch blue, the glass of milk tea, the newspaper

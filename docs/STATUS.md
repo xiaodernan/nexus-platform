@@ -44158,3 +44158,14 @@ Dict carries seventeen chapters everywhere; the home rail, /guides Featured band
 **Honest boundaries.** Synthetic fixture track. No operator, no address, no real prices; the bakery is fictional and stands for an archetype that historically never had a recognisable sign anyway.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1137. D1137 — chapter XVIII closes the day's middle: 中環交易所 — the Four O'Clock Bell, the city's afternoon purge and the cha chaan teng empty before the bell rings
+
+**Why.** The arc already covered morning, mid-day, dusk, night, but had no chapter for 15:00–17:00 — the part where the city holds its collective breath between the lunch calories drying and the dinner price battles beginning. Chapter XVIII is the space every office-worker owns: 16:00 is the thud of the bell that ends the day's trade, settling all the odds that the day could have given.
+
+**The unit.** `DEMO_GUIDES` gains `hk-central-bourse-chronicle` — 「中環交易所：下午四點的鐘聲」. Three heading cards: 一、開市 (the quiet before the first screen lights, 09:30), 二、盤中 (peerthrough the half-empty hall at 14:00 — the hongbao taps that don't matter), 三、四點鐘聲 (the bell ringing at 16:00, the cha chaan tengs below filling for the commuting wave). Cards with empty items; mock fixture; chapter prose is mock-treated HK business atmosphere, no real identity.
+
+Dict carries eighteen chapters everywhere; the hub counts is chronological by time-step, the handbook's order is re-sorted time-of-day on both locales; the ARC doc inserts the new 16:00 section in chronological place.
+
+**Honest boundaries.** Every chapter is still synthetic narrative fiction with empty `items` on cards; the series is an editorial arc, not a guide; no real person, no real exchange parity, no real LSEG attribution. The equality bar guarded on the reader side has not changed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `docs/HONG_KONG_ARC.md`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
