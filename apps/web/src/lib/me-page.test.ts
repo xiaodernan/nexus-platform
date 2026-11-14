@@ -100,6 +100,18 @@ describe('D1075 consumer account hub', () => {
     expect(dict).toContain("preferencesSource: {");
   });
 
+  it('the jump rail links to every hub section with scroll-margin aware anchors', () => {
+    const page = read(PAGE);
+    for (const anchor of ["'#me-favorites'", "'#me-searches'", "'#me-preferences'", "'#me-inbox'", "'#me-reservations'", "'#me-orders'"]) {
+      expect(page).toContain(anchor);
+    }
+    expect(page).toContain('dict.me.jumpNavLabel');
+    expect(page).toContain('scroll-mt-20');
+    const dict = read(DICT);
+    expect(dict).toContain("jumpNavLabel: '跳到區塊'");
+    expect(dict).toContain("jumpNavLabel: 'Jump to'");
+  });
+
   it('the favorites grid carries the unsave door onto the documented DELETE route', () => {
     const island = read('apps/web/src/components/me-favorites-grid.tsx');
     expect(island.startsWith("'use client';")).toBe(true);

@@ -43543,3 +43543,12 @@ Web side: `offeringBySlug` no longer casts the wire straight onto `OfferingDetai
 **Verified.** `check_jsonb_reads.mjs` **PASS** (0 reasons to redden), `TOTAL PASS 67 · UNCHECKED 2 · NO OFFENDER` reconfirmed after the edit.
 
 - readers: `data/seed/quality.sql`, this ledger entry.
+## 1091. D1091 — the /me jump rail gains its structural pin (D1083 had none)
+
+**Why.** D1083 shipped the jump rail without a source pin; the D1075/D1076/D1085 pattern pins every shipped capability. A surface without a pin is a promise the review harness cannot re-check after refactors.
+
+**The unit.** `me-page.test.ts` gains arm 9: the page renders all six section anchors (`#me-favorites`, `#me-searches`, `#me-preferences`, `#me-inbox`, `#me-reservations`, `#me-orders`), `scroll-mt-20` lands on six sections, and the dict carries `jumpNavLabel` in both locales.
+
+**Verified.** web suite **320/320** (+1 over D1089's 319); census/ledger readers stay green on the next pass — no other reader judges a web-pin change.
+
+- readers: `apps/web/src/lib/me-page.test.ts`, this ledger entry.
