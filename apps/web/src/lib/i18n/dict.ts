@@ -1910,7 +1910,7 @@ const en: Dict = {
     hkHub: {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'Six meals of one Hong Kong',
-      intro: 'From the 4:30 a.m. fish market to the last bowl on Temple Street — a chapter-by-chapter narrative of a city.',
+      intro: 'From the 4:30 a.m. fish market to the last dish on Temple Street — a chapter-by-chapter narrative of a city.',
       chaptersTitle: 'Seven chapters through one Hong Kong',
       quizCtaTitle: 'Which HK are you?',
       quizCtaBody: 'Ten questions — from Cha Chaan Teng manager to the fate-teller on Temple Street.',
