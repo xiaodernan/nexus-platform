@@ -892,7 +892,7 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '八章反覆走完一個 HK',
+      title: '九章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
@@ -902,6 +902,7 @@ const zhHK: Dict = {
         { slug: 'hk-fish-market-chronicle', label: '天光魚市：凌晨四點半的香港', kicker: '第六章' },
         { slug: 'hk-yu-huei-chronicle', label: '春花姨', kicker: '第七章' },
         { slug: 'hk-fruit-market-chronicle', label: '果欄：凌晨三點的卸貨', kicker: '第八章' },
+        { slug: 'hk-tongsui-chronicle', label: '糖水：宵夜後的一碗甜', kicker: '第九章' },
       ],
     },
     hkDaily: {
@@ -931,8 +932,8 @@ const zhHK: Dict = {
     hkHub: {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
-      intro: '從凌晨四點半的魚市與果欄，到廟街散場——本系列為香港人的早餐、午飯與宵夜寫下了一頁頁，每一章都是這座城市的一個縮影。',
-      chaptersTitle: '八章反覆走完一個香港',
+      intro: '從凌晨四點半的魚市與果欄，到廟街散場、抵埗一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
+      chaptersTitle: '九章反覆走完一個香港',
       quizCtaTitle: '你係邊一個 HK？',
       quizCtaBody: '10 道問題，找出你在香港的最近似的人格——從常餐店長到廟街解籤婆婆。',
       quizCta: '去 /hk-type 試自己',
@@ -1205,7 +1206,7 @@ const zhHK: Dict = {
     eyebrow: '香港系列 · 互動篇章',
     title: '你係邊一個 HK？',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
-    seriesLabel: '八章香港系列指南',
+    seriesLabel: '九章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
@@ -1215,6 +1216,7 @@ const zhHK: Dict = {
       { href: '/guides/hk-fish-market-chronicle', title: '天光魚市：凌晨四點半的香港', hint: '第六章' },
       { href: '/guides/hk-yu-huei-chronicle', title: '春花姨', hint: '第七章' },
       { href: '/guides/hk-fruit-market-chronicle', title: '果欄：凌晨三點的卸貨', hint: '第八章' },
+      { href: '/guides/hk-tongsui-chronicle', title: '糖水：宵夜後的一碗甜', hint: '第九章' },
     ],
     start: '開始',
     progress: (current, total) => `第 ${current} / ${total} 問`,
@@ -1961,7 +1963,7 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in eight chapters',
+      title: 'One HK in nine chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
@@ -1971,6 +1973,7 @@ const en: Dict = {
         { slug: 'hk-fish-market-chronicle', label: 'The Four-Thirty Fish Market', kicker: 'Chapter VI' },
         { slug: 'hk-yu-huei-chronicle', label: 'Auntie Chun Fa Yee', kicker: 'Chapter VII' },
         { slug: 'hk-fruit-market-chronicle', label: 'The Fruit Market', kicker: 'Chapter VIII' },
+        { slug: 'hk-tongsui-chronicle', label: 'Tong Sui: The Sweet Finish', kicker: 'Chapter IX' },
       ],
     },
     hkDaily: {
@@ -2000,8 +2003,8 @@ const en: Dict = {
     hkHub: {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'One table, one Hong Kong',
-      intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the last dish on Temple Street — a chapter-by-chapter narrative of a city.',
-      chaptersTitle: 'Eight chapters through one Hong Kong',
+      intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to Temple Street and the bowl of sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
+      chaptersTitle: 'Nine chapters through one Hong Kong',
       quizCtaTitle: 'Which HK are you?',
       quizCtaBody: 'Ten questions — from Cha Chaan Teng manager to the fate-teller on Temple Street.',
       quizCta: 'Try /hk-type',
@@ -2274,7 +2277,7 @@ const en: Dict = {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'Eight HK chapters',
+    seriesLabel: 'Nine HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
@@ -2284,6 +2287,7 @@ const en: Dict = {
       { href: '/guides/hk-fish-market-chronicle', title: 'The Four-Thirty Fish Market', hint: 'Chapter six' },
       { href: '/guides/hk-yu-huei-chronicle', title: 'Auntie Chun Fa Yee', hint: 'Chapter seven' },
       { href: '/guides/hk-fruit-market-chronicle', title: 'The Fruit Market', hint: 'Chapter eight' },
+      { href: '/guides/hk-tongsui-chronicle', title: 'Tong Sui: The Sweet Finish', hint: 'Chapter nine' },
     ],
     start: 'Start',
     progress: (current, total) => `Question ${current} / ${total}`,

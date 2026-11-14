@@ -43877,3 +43877,16 @@ Dict carries `home.hkProgress` on both locales with `done` as a `{read}/{total}`
 **Honest boundaries.** The Jyutping is hand-written and corrected in review; native HK proofreaders would catch snakes. Where a phrase differs in tone sandhi in real speech (e.g. connected speech vs citation form), the citation form is printed — the unit is pedagogy-flavoured, not prescription. No audio is shipped; a Mandarin-accented TTS would do more harm here than silence. The same day renders the same phrase for every visitor (that is the whole point) — the note says so.
 
 - readers: `apps/web/src/components/hk-cantonese-daily.tsx`, `apps/web/src/lib/hk-cantonese-daily.test.ts`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+## 1116. D1116 — the HK series closes the day with a bowl of sweet soup: chapter IX （糖水） is the story's natural full stop
+
+**Why.** The series has always been one arc from the dawn wholesale market (fish market → fruit market) through morning table, noon table, night — and then? Nothing absorbs an evening in Hong Kong quite like the bowl of tong sui that follows the meal. It is the dessert's whole thesis: a sleep-adjacent, candle-lit, unhurried full stop before bed. As the last movement of the arc it also completes the dinner-to-dessert path — the product's founding promise.
+
+**The unit.** `DEMO_GUIDES` gains `hk-tongsui-chronicle` — 「糖水：宵夜後的一碗甜」. Three heading cards: 一、柴火與石磨 (the craft — sesame stone-grind, fresh ginger paste), 二、北角的燈，油麻地的火 (two neighbourhoods, two doors in), 三、宵夜之後，吞不下鹹 (why the body asks for sweet). Three populated-cards grids (items: []); closing 後記 with the customary synthetic-data disclaimer and a SearchBox seed. Cast: a named machine of the north point kitchens and the Yau Ma Tei five-bell men — no real stall, no real operator, all construction.
+
+Dict threads the ninth chapter through all three artefacts: home rail, `/hk-type` chapters, `/guides` Featured band (self-sizing), `/hong-kong` hub grid; `next build` enumerates the new static path. Tests pin nine; the staging tests (`home-series-rail`, `hk-type`) and the e2e floor move to nine; census charges `1205 literals`.
+
+**Verified on this host.** web suite **337/337**; `tsc --noEmit` clean; census PASS over **1205 literals**; dev-plane mock render: hub shows **9** `/guides/hk-*` hrefs and one occurrence of 糖水 ×6 / 九章 ×5; the fixture guide renders 糖水 ×61 and 第九章 ×15; `playwright --project=desktop` **3 passed (9.2s)**.
+
+**Honest boundaries.** Mock-plane fixture only; the live plane (like every chapter) needs the seeded platform. The prose leans on common tong-sui craft facts — nothing vendor-specific is claimed. The arc is now structurally complete dawn→dessert; further HK chapters after this would widen rather than deepen (e.g. a tea-room north-point contrast chapter is the queued next).
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, the two pinning tests, this ledger entry.

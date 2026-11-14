@@ -106,6 +106,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/hk-cantonese-daily.test.ts` | D1115: the tile's source pins, dict-pool geometry and hub wiring |
 | `apps/web/src/components/hk-series-progress.tsx` | D1114: the local-first HK-chapter reading strip — progressbar + mark/reset, storage-bound |
 | `apps/web/src/lib/hk-series-progress.test.ts` | D1114: the strip's source pins + dict-copy pins + hub-wiring pin |
+| `apps/web/src/lib/mock/seed.ts` | D1116: the ninth HK chapter (hk-tongsui-chronicle, 糖水) — the arc's dessert close |
 | `apps/web/src/lib/mock/seed.ts` | D1111: the eighth HK chapter (hk-fruit-market-chronicle, 果欄) |
 | `apps/web/src/lib/mock/seed.ts` | D1108: the seventh Hong Kong chapter (hk-yu-huei-chronicle) |
 | `apps/web/src/lib/mock/seed.ts` | D1106: the fish-market chapter (hk-fish-market-chronicle) |
