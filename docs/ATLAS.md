@@ -97,6 +97,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/signin-desk.test.ts` | D1077: 2 structural pins — two-panel composition, dict proofs in both locales (HK Traditional script) |
 | `apps/web/src/lib/merchant-card-cache.ts` | D1079: unstable_cache(10 min, tag merchant-card) over the anonymous public merchant read |
 | `apps/web/src/lib/console-consumer.ts` | D1081: +`mePreferencesRead` — §33 preference rows for /me |
+| `tests/e2e/specs/consumer/signin.spec.ts` | D1082: the /signin two-panel desk e2e — HK proof copy + display headline roles |
+| `apps/web/app/me/page.tsx` | D1083: in-page jump rail — HK-labeled anchor chips to each hub section |
 | `tests/e2e/specs/consumer/me.spec.ts` | D1080: 2 arms — anonymous stop (no session, no hub sections) + signed-in hub (501-or-ok gates, skips honestly without a live stack) |
 | `apps/web/src/lib/merchant-card-cache.test.ts` | D1079: 4 arms — tag/TTL wiring, anonymous-fetch contract, failure propagation, consumer source-pin |
 | `apps/web/src/components/me-read-all.tsx` | D1076: the consumer inbox read-all door — POSTs §123 `notifications/read-all` via the BFF; envelope-honest failure print; `router.refresh()` on success |
@@ -395,3 +397,14 @@ grows.
 **What this page does not say:** that any listed gate is currently green (run `scripts/verify_all.mjs`),
 that the smokes were run in this session, that the plane is production-ready, or that the monolith
 was decomposed into microservices.
+## 1083. D1083 — the hub gains a jump rail: six anchor chips onto its own sections, scroll-margin aware, preferences-gated
+
+**Why.** D1075's `/me` renders a long single-column page; a reader coming back mid-scroll has no way to jump to the inbox or orders without wandering the whole column. Six tasteful chips under the identity panel do it with zero new state — pure `<a href="#…">` skip-links, the HK-Traditional label 跳到區塊, horizontal scroll on mobile.
+
+**The unit.** `apps/web/app/me/page.tsx` — a `<nav aria-label>` between the identity panel and the content grid; chips reuse the existing section titles (dict, no new keys beyond `jumpNavLabel`); the preferences chip renders **only when the person actually has preference rows** (linking nowhere would be a broken promise). `scroll-mt-20` on all six sections keeps them clear of the sticky header when jumped-to.
+
+**Verified.** mock plane walkthrough: `jumpNavLabel` + `#me-preferences` ×3 render; `tsc --noEmit` clean; web **311/311**. Not visual-verified (desktop window not visible on this host during the check).
+
+**Honest boundaries.** Anchor navigation only; no scroll spy, no active-state tracking. The chips remain visible on every /me render — the hub is a page people revisit often and the row costs nothing.
+
+- readers: `apps/web/app/me/page.tsx`, this ledger entry.

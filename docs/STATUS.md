@@ -43440,3 +43440,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** Read-only mirror — the §33 doors offer edit/delete, this page does not wire them (that pass is a bigger contract: partial preference edit + fresh `used_by_ranking` recompute). `kind` is '' for the fixture plane (no field on the mock row) — rows render key-only there; `kind.key` renders when the platform sends a kind. Confidence is the platform's own `weight` column relabeled, not a new inference.
 
 - readers: `apps/web/src/lib/console-consumer.ts`, `apps/web/app/me/page.tsx`, this ledger entry.
+## 1082. D1082 — the sign-in desk gets an e2e spine: both panels, the HK proof copy, the §46/§48 door untouched
+
+**Why.** D1077's two-panel `/signin` landed with structural vitest pins; CI's consumer lane could not tell a dict regression from a rendering regression. A one-minute spec tells the difference forever.
+
+**The unit.** `tests/e2e/specs/consumer/signin.spec.ts` — one test on the `desktop` project: `goto /signin`; asserts the left panel's HK proof copy (`為什麼是香港本地`, `香港本地優先`, `每個數字都有出處`, `一句話就能搜`), the right card heading (`示例登入`), and the display headline (`用一句話，找到今天想去的地方`) via role-scoped text queries. That is the visible promise surface; the interactive door keeps its own suite (`ask-merchant.spec.ts`).
+
+**Run on this host (mock).** `playwright test specs/consumer/signin.spec.ts --project=desktop` — **passed** (4.2s).
+
+**Honest boundaries.** Text-level, not pixel-level — the visual suite owns baselines. zh-HK default locale assumption, same as every other consumer spec (CI serves the same shell).
+
+- readers: `tests/e2e/specs/consumer/signin.spec.ts`, this ledger entry.
