@@ -44169,3 +44169,14 @@ Dict carries eighteen chapters everywhere; the hub counts is chronological by ti
 **Honest boundaries.** Every chapter is still synthetic narrative fiction with empty `items` on cards; the series is an editorial arc, not a guide; no real person, no real exchange parity, no real LSEG attribution. The equality bar guarded on the reader side has not changed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `docs/HONG_KONG_ARC.md`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1138. D1138 — chapter XIX enters the 03:00 slot: 急症室入口 — the triage desk is the city's 3 a.m. witness
+
+**Why.** The arc drew a module the reader can trust recognizing "the city has been awake while everyone thinks its sleep is one smooth thing" — now literal. The pagination runs 02:00 congee → 03:00 emergency room. Before them: 22:45 cart noodles. The close of a Hong Kong day is not silence; it is a nurse counting wristbands.
+
+**The unit.** `DEMO_GUIDES` gains `hk-er-chronicle` — 「半夜三點：急症室入口的警惕」. Three heading cards: 一、首先是分診 (the wristband question), 二、等待 (the collective quiet, no music), 三、當下 (the protocol for the next hour). Cards with empty items; 後記 clause. Synthetic fixture only with no vendor claims.
+
+Dict carries nineteen chapters everywhere; the arc clock re-sorted chronologically on both locales; the handbook reading-order is re-synced to the same nineteen-in-time order; the e2e floor tests bumped from ≥18 to ≥19; every rail 被pinned; the arc re-entry displays 19 hrefs.
+
+**Honest boundaries.** Synthetic fixture track; hospital poDesequence is an allusion, not a claim about any actual public hospital's process. The `inference` the narrator draws ("this city trusts the night") is an editorial gesture, not a statistical model.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.

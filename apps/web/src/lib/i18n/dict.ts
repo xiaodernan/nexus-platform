@@ -925,7 +925,7 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '十八章反覆走完一個 HK',
+      title: '十九章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
@@ -945,6 +945,7 @@ const zhHK: Dict = {
         { slug: 'hk-lei-yue-mun-chronicle', label: '鯉魚門：晨的海風與黃昏的聲音', kicker: '第十六章' },
         { slug: 'hk-bakery-dawn-chronicle', label: '鹹光燒餅：凌晨三點的第十七章', kicker: '第十七章' },
         { slug: 'hk-central-bourse-chronicle', label: '中環交易所：下午四點的鐘聲', kicker: '第十八章' },
+        { slug: 'hk-er-chronicle', label: '半夜三點：急症室入口', kicker: '第十九章' },
       ],
     },
     hkDaily: {
@@ -986,11 +987,12 @@ const zhHK: Dict = {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
       intro: '從凌晨四點半的魚市與果欄，到廟街的車仔麵、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
-      chaptersTitle: '十八章反覆走完一個香港',
+      chaptersTitle: '十九章反覆走完一個香港',
       clockTitle: '香港一日的讀法：照時間讀',
       clockHint: '由果欄 03:10 到車仔麵 22:45 — 照順序進入這座城的節拍',
       clock: [
         { time: '02:00', name: '皮蛋瘦肉粥', href: '/guides/hk-congee-chronicle' },
+        { time: '03:00', name: '急症室入口', href: '/guides/hk-er-chronicle' },
         { time: '03:10', name: '果欄', href: '/guides/hk-fruit-market-chronicle' },
         { time: '03:30', name: '鹹光燒餅', href: '/guides/hk-bakery-dawn-chronicle' },
         { time: '04:15', name: '春花姨', href: '/guides/hk-yu-huei-chronicle' },
@@ -1284,7 +1286,7 @@ const zhHK: Dict = {
     eyebrow: '香港系列 · 互動篇章',
     title: '你係邊一個 HK？',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
-    seriesLabel: '十八章香港系列指南',
+    seriesLabel: '十九章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
@@ -1304,6 +1306,7 @@ const zhHK: Dict = {
       { href: '/guides/hk-lei-yue-mun-chronicle', title: '鯉魚門：晨的海風與黃昏的聲音', hint: '第十六章' },
       { href: '/guides/hk-bakery-dawn-chronicle', title: '鹹光燒餅：凌晨三點的第十七章', hint: '第十七章' },
       { href: '/guides/hk-central-bourse-chronicle', title: '中環交易所：下午四點的鐘聲', hint: '第十八章' },
+      { href: '/guides/hk-er-chronicle', title: '半夜三點：急症室入口', hint: '第十九章' },
     ],
     start: '開始',
     progress: (current, total) => `第 ${current} / ${total} 問`,
@@ -2046,7 +2049,7 @@ const zhHK: Dict = {
         'District chips（沙田／中環／旺角／銅鑼灣／荃灣…）是無腦跳法：點一下就把搜索丟進那個地區；想再精修就在 SearchBox 後面加條件即可。',
       ] },
       { id: 'hkseries', kicker: 'STORY', title: '3 · 香港系列 · 由凌晨三點走到最甜的杯底', paragraphs: [
-        '十八章反覆走一遍香港這座城市的一整天——本系列經已拓至第十八章。順序按讀書順序：02:00 皮蛋瘦肉粥（第十二章）→ 03:10 果欄（第八章）→ 03:30 鹹光燒餅（第十七章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 05:30 三餐的血（第一章）→ 06:00 茶餐廳（第五章）→ 06:30 鯉魚門（第十六章）→ 06:45 冰室（第十章）→ 07:30 早茶（第三章）→ 09:30 長洲（第十四章）→ 12:00 燒味（第二章）→ 16:00 交易所鐘聲（第十八章）→ 17:58 獅子山（第十三章）→ 18:30 寫字樓落到地鐵（第十五章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）。',
+        '十九章反覆走一遍香港這座城市的一整天——本系列經已拓至第十九章。順序按讀書順序：03:00 急症室入口（第十九章）→ 02:00 皮蛋瘦肉粥（第十二章）→ 03:10 果欄（第八章）→ 03:30 鹹光燒餅（第十七章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 05:30 三餐的血（第一章）→ 06:00 茶餐廳（第五章）→ 06:30 鯉魚門（第十六章）→ 06:45 冰室（第十章）→ 07:30 早茶（第三章）→ 09:30 長洲（第十四章）→ 12:00 燒味（第二章）→ 16:00 交易所鐘聲（第十八章）→ 17:58 獅子山（第十三章）→ 18:30 寫字樓落到地鐵（第十五章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）。',
         '每章都是「合成敘事示例」（旗幟標誌 demo: true），用於演示內容層的呈現能力；不是真實店家推薦，但就是那樣真實的一頓飯。',
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
       ] },
@@ -2122,7 +2125,7 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in eighteen chapters',
+      title: 'One HK in nineteen chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
@@ -2142,6 +2145,7 @@ const en: Dict = {
         { slug: 'hk-lei-yue-mun-chronicle', label: 'Lei Yue Mun: Morning Sea Wind, Evening Harbour Voice', kicker: 'Chapter XVI' },
         { slug: 'hk-bakery-dawn-chronicle', label: 'The Dawn Bakery', kicker: 'Chapter XVII' },
         { slug: 'hk-central-bourse-chronicle', label: 'The Central Bourse: The Four O Clock Bell', kicker: 'Chapter XVIII' },
+        { slug: 'hk-er-chronicle', label: 'The Emergency Entrance at Half-Past Three', kicker: 'Chapter XIX' },
       ],
     },
     hkDaily: {
@@ -2183,11 +2187,12 @@ const en: Dict = {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'One table, one Hong Kong',
       intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the cart-noodles at Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
-      chaptersTitle: 'Eighteen chapters through one Hong Kong',
+      chaptersTitle: 'Nineteen chapters through one Hong Kong',
       clockTitle: 'Reading the day in Hong Kong — clock order',
       clockHint: 'Every chapter, one time of day — from 03:10 through 22:45',
       clock: [
         { time: '02:00', name: 'Congee', href: '/guides/hk-congee-chronicle' },
+        { time: '03:00', name: 'Emergency Entrance', href: '/guides/hk-er-chronicle' },
         { time: '03:10', name: 'Fruit market', href: '/guides/hk-fruit-market-chronicle' },
         { time: '03:30', name: 'The Dawn Bakery', href: '/guides/hk-bakery-dawn-chronicle' },
         { time: '04:15', name: 'Auntie', href: '/guides/hk-yu-huei-chronicle' },
@@ -2481,7 +2486,7 @@ const en: Dict = {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'Eighteen HK chapters',
+    seriesLabel: 'Nineteen HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
@@ -2501,6 +2506,7 @@ const en: Dict = {
       { href: '/guides/hk-lei-yue-mun-chronicle', title: 'Lei Yue Mun: Morning Sea Wind, Evening Harbour Voice', hint: 'Chapter sixteen' },
       { href: '/guides/hk-bakery-dawn-chronicle', title: 'The Dawn Bakery', hint: 'Chapter seventeen' },
       { href: '/guides/hk-central-bourse-chronicle', title: 'The Central Bourse: The Four O Clock Bell', hint: 'Chapter eighteen' },
+      { href: '/guides/hk-er-chronicle', title: 'The Emergency Entrance at Half-Past Three', hint: 'Chapter nineteenth' },
     ],
     start: 'Start',
     progress: (current, total) => `Question ${current} / ${total}`,
@@ -3284,7 +3290,7 @@ const en: Dict = {
       ], bullets: [
         '"Why no Tokyo?" The fixture set holds Hong Kong; other cities are future expansion.',
         '"Is the price real?" In mock mode it is imaginary; in live mode the platform only shows what it has checked.',
-        '"Is a nineteenth chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
+        '"Is a twentieth chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
       ] },
     ],
     nextTitle: 'Want more?',
