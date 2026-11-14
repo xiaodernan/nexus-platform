@@ -224,6 +224,7 @@ flagged by `demo_notice` and the `X-Demo-Data: true` response header (§155).
 | GET | `/api/v1/merchants/{id}/reviews?sort=&limit=&cursor=` | published reviews + recomputed `aggregate` |
 | GET | `/api/v1/merchants/{id}/reviews/summary` | AI summary **with review_ids as evidence** (§55) |
 | GET | `/api/v1/merchants/{id}/availability?starts_at&ends_at&party_size&limit` | real-time, no cache (§20) |
+| GET | `/api/v1/offerings/{id_or_slug}` | one active offering + merchant identity |
 | GET | `/api/v1/locations/geo?bbox=&zoom=` | marker clustering payload |
 
 `{id}` and `{id_or_slug}` accept either form; a slug and an id name the same merchant. Every list above is a
@@ -244,6 +245,13 @@ one typed), plus the directory page's `as_of`, `filters` and `unit`.
   = 0`).
 - Cached as `public, max-age=60, s-maxage=300, stale-while-revalidate=86400` with `Vary: X-Tenant`; availability is
   `no-store`. `X-Demo-Data` badges a page as soon as one row in it is synthetic (§109).
+- `GET /api/v1/offerings/{id_or_slug}` — one **active** offering, the same §2 facts the menu serves (price,
+  capacity, rating), the row's own images as `CardImage[]`-ready objects, plus a `merchant` block
+  `{id, slug, name, district, city, geo}` read from the primary location (falling back to any location).
+  Archived and absent offerings answer the same `404 offering_not_found` (the code leaks nothing about row
+  existence). Slug ambiguity inside a tenant is resolved `active first, highest popularity_score` — a caller
+  needing siblings uses the menu endpoint with the merchant id. The route is a cacheable public page
+  (`Cache-Control: public, max-age=60…stale-while-revalidate=86400`).
 
 ## 5. Merchant workspace (tenant + RBAC enforced; role from `merchant_users`)
 

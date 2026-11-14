@@ -16,6 +16,7 @@ import { nexusGet } from './api/base';
 import { toCollection, toCollectionPage, toGuide, toGuidePage } from './platform-guides';
 import {
   merchantDetailFrom,
+  offeringDetailFrom,
   offeringFrom,
   pageFrom,
   reviewFrom,
@@ -24,6 +25,7 @@ import {
   type WireAvailability,
   type WireMerchantProfile,
   type WireOffering,
+  type WireOfferingDetail,
   type WirePage,
   type WireReview,
   type WireReviewSummary,
@@ -241,7 +243,12 @@ export async function merchantBySlug(slug: string): Promise<NexusResult<Merchant
 export async function offeringBySlug(slug: string): Promise<NexusResult<OfferingDetail | null>> {
   if (IS_MOCK) return { data: mockOffering(slug), mocked: true };
   try {
-    const data = await nexusGet<OfferingDetail>('platform', `/api/v1/offerings/${encodeURIComponent(slug)}`);
+    // Projected, not cast (same class of defect that pages the web off `/api/v1/merchants/{id}`): the
+    // §4 wire serves the raw offering shape, and the view-model wants its own — a direct cast compiles
+    // and renders blank because `undefined` in the view is indistinguishable from "the service sent none".
+    const payload = await nexusGet<WireOfferingDetail>('platform', `/api/v1/offerings/${encodeURIComponent(slug)}`);
+    const data = offeringDetailFrom(payload);
+    if (data === null) return { data: null, mocked: false };
     return { data, mocked: false };
   } catch (cause) {
     if (isNotFound(cause)) return { data: null, mocked: false };

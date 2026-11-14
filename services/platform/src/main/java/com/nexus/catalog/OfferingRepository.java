@@ -86,6 +86,19 @@ public class OfferingRepository {
                 Json.map("merchant_id", merchantId, "slug", slug));
     }
 
+    /**
+     * One offering by tenant + slug, whichever merchant carries it — the public read (§4), not the
+     * merchant-scoped lookup. Slug uniqueness inside a tenant is not guaranteed by the schema, so the
+     * row picked is the one with the most recent activity for that slug; a caller that needs the
+     * sibling list should ask the menu endpoint with the merchant id.
+     */
+    public Optional<Map<String, Object>> findBySlugAny(TenantContext tenant, String slug) {
+        return jdbc.firstForTenant(tenant, "select " + COLUMNS + FROM
+                        + " where o.slug = :slug and o.tenant_id = :tenant_id"
+                        + " order by (o.status = 'active') desc, coalesce(o.popularity_score, 0) desc limit 1",
+                Json.map("slug", slug));
+    }
+
     public List<Map<String, Object>> listByMerchant(TenantContext tenant, UUID merchantId, String status, String kind,
                                                     int limit, int offset) {
         StringBuilder sql = new StringBuilder("select " + COLUMNS + FROM + " where o.tenant_id = :tenant_id");

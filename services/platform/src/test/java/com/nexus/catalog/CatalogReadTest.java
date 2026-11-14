@@ -394,6 +394,53 @@ class CatalogReadTest extends NexusIntegrationTest {
                 .isEqualTo(fact.path("fact_id").asText());
     }
 
+    // ---------------------------------------------------------------- offering detail (§4)
+
+    @Test
+    @DisplayName("GET /api/v1/offerings/{slug} answers one active offering with its merchant block and §2 facts — archived and absent slugs both 404")
+    void offeringDetailIsPublicAndFactsThePrice() {
+        String tag = tag();
+        UUID merchant = directoryMerchant(tenant, "offer-detail-" + tag, "Sha Tin", "Hot Pot",
+                new BigDecimal("180.00"), null);
+        seedOffering(tenant, merchant, "shu-ang-noodle-" + tag, "product", new BigDecimal("48.00"), 3, "active");
+        UUID archived = seedOffering(tenant, merchant, "arch-soup-" + tag, "product", new BigDecimal("66.00"), 99, "archived");
+
+        JsonNode detail = Json.tree(body("/api/v1/offerings/shu-ang-noodle-" + tag));
+        assertThat(detail.path("offering_id").asText()).isNotBlank();
+        assertThat(detail.path("slug").asText()).isEqualTo("shu-ang-noodle-" + tag);
+        assertThat(detail.path("kind").asText()).isEqualTo("product");
+        assertThat(detail.path("price").path("amount").asText()).isEqualTo("48.00");
+        assertThat(detail.path("price").path("currency").asText()).isEqualTo("HKD");
+        assertThat(detail.path("merchant").path("id").asText()).isEqualTo(merchant.toString());
+        assertThat(detail.path("merchant").path("slug").asText()).isEqualTo("offer-detail-" + tag);
+        assertThat(detail.path("merchant").path("name").asText()).isNotBlank();
+        assertThat(detail.path("merchant").path("district").asText()).isEqualTo("Sha Tin");
+        assertThat(detail.path("merchant").path("geo").path("lat").asText()).isNotBlank();
+        assertThat(detail.path("as_of").asText()).isNotBlank();
+
+        // The 404 code is the same for archived and absent — one shape, no existence leak (D5).
+        assertNotFound("/api/v1/offerings/arch-soup-" + tag, "offering_not_found");
+        assertNotFound("/api/v1/offerings/no-such-offering-" + tag, "offering_not_found");
+    }
+
+    @Test
+    @DisplayName("The public offering read does not leak other tenants' rows — the slug resolves inside the caller's tenant only")
+    void offeringDetailIsTenantScoped() {
+        String tag = tag();
+        UUID mine = directoryMerchant(tenant, "mine-" + tag, "Sha Tin", "Hot Pot",
+                new BigDecimal("99.00"), null);
+        seedOffering(tenant, mine, "shared-noodle-" + tag, "service", new BigDecimal("88.00"), 9, "active");
+
+        UUID foreign = directoryMerchant(other, "foreign-" + tag, "Wan Chai", "Sushi",
+                new BigDecimal("99.00"), null);
+        seedOffering(other, foreign, "shared-noodle-" + tag, "service", new BigDecimal("120.00"), 9, "active");
+
+        // Same slug, other tenant — the caller's tenant wins, the foreign row is not in the payload.
+        JsonNode mineSide = Json.tree(body("/api/v1/offerings/shared-noodle-" + tag));
+        assertThat(mineSide.path("price").path("amount").asText()).isEqualTo("88.00");
+        assertThat(mineSide.path("merchant").path("id").asText()).isEqualTo(mine.toString());
+    }
+
     // ---------------------------------------------------------------- reviews
 
     @Test

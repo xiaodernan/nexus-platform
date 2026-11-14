@@ -43517,3 +43517,20 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Verified.** `check_console_i18n.mjs` PASS; `check_ui_script.mjs` PASS; hero-texture test 2/2; web **314/314**; `tsc --noEmit` clean.
 
 - readers: `apps/web/app/page.tsx`, this ledger entry.
+## 1089. D1089 — the public offering detail read ships: platform `GET /api/v1/offerings/{id_or_slug}` + web projection (live `/o/[slug]`, which was a 404 in live mode before)
+
+**Why.** The offering detail page `/o/[slug]` had a documented placeholder route in web (`GET /api/v1/offerings/{slug}`) that the platform never served — §4 listed no such door, so in live mode every offering page answered 404. The menu read existed (`GET /api/v1/merchants/{id}/menu`), the facts projection existed (`OfferingRepository.view` with price/capacity/rating facts), but the consumer-facing detail page was wired to an empty air. This unit closes the loop with one contract-documented read.
+
+**The unit.** Platform side:
+- `OfferingRepository.findBySlugAny(tenant, slug)` — tenant-scoped, ordered `active first, then popularity_score`; only `active` offerings serve (archived and absent answer the same 404 `offering_not_found`, D5 — the code leaks no existence).
+- New `OfferingDetailController` — public, cacheable (`Cache-Control: public, max-age=60, s-maxage=300, stale-while-revalidate=86400`), payload = the offering's own projection (`OfferingRepository.view(row)` — same §2 facts as the menu, never a second style of facts) + a `merchant` block `{id, slug, name, district, city, geo}` read from the primary location (fallback: any location). Facts ride verbatim — the price shown is the price the menu shows (§19).
+- Integration tests added to `CatalogReadTest` (2 arms): the public read answers one active offering with merchant block + district + geo; tenant scoping holds (a foreign tenant's row with the same slug answers the caller's tenant's offering); archived/absent both 404 with the same code.
+- `API_CONTRACT.md` §4 documents the read (table row + shape/caching semantics).
+
+Web side: `offeringBySlug` no longer casts the wire straight onto `OfferingDetail` — the exact defect class of merchant-profile blank pages (§155, D6). It projects through new `offeringDetailFrom` (`platform-catalog.ts`): `merchant.id/slug/name` are required identity for the view-model; a payload without them answers `null`; `highlights`/`availability` never invent themselves (§20); `rating` carried when the wire states one. Types relax the `merchant.district/geo` requirement to optional/nullable (untouched by the view).
+
+**Verified.** Platform compiles offline (`mvn -o compile` and `test-compile` exit 0); the new Java integration tests run in the seeded platform CI job (can't execute on this host — its DB was wiped earlier; artifacts match the existing `CatalogReadTest` style/helpers). Web: offering-detail-wire.test.ts 5 arms; suite **319/319** (+5); `tsc --noEmit` clean; `next build` green; lint+types pass (two unused-var fixes riding the same unit). Mock walkthrough renders `/o/tsuen-dimsum-basket-five` (200) — the consumer page answers with its full copy in zh-HK.
+
+**Honest boundaries.** No e2e asserts `/o/*` in CI (live slug names aren't deterministic across seed runs); the platform-side integration is the contract-proof for the read, the mock-plane e2e remains the page proof for zh-HK rendering. Slug ambiguity inside one tenant resolves `active first, then popularity_score` — a caller that needs siblings asks the menu endpoint with the merchant id.
+
+- readers: `services/platform/src/main/java/com/nexus/catalog/OfferingDetailController.java`, `OfferingRepository.java`, `apps/web/src/lib/data.ts`, `apps/web/src/lib/platform-catalog.ts`, this ledger entry.

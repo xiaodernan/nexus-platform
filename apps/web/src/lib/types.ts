@@ -202,7 +202,7 @@ export interface OfferingSummary {
 }
 
 export type OfferingDetail = OfferingSummary & {
-  merchant: { id: string; slug: string; name: string; district: string; geo: GeoPoint };
+  merchant: { id: string; slug: string; name: string; district?: string | null; geo?: GeoPoint | null };
   highlights?: string[] | null;
   availability?: EntityCard['availability'] | null;
   rating?: { value: number; count: number } | null;

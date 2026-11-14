@@ -38,6 +38,7 @@ import type {
   BusinessHoursDay,
   MerchantDetail,
   MerchantLocation,
+  OfferingDetail,
   OfferingSummary,
   Review,
   ReviewSummary,
@@ -251,6 +252,18 @@ function offeringPrice(offering: WireOffering): CardPrice | null {
 /* --------------------------------------------------------------- the projections */
 
 /** §4 menu / `top_offerings` row → `OfferingSummary`. `merchant` names the listing the row belongs to. */
+/** `GET /api/v1/offerings/{idOrSlug}` (§4) — the public detail wire: menu row + merchant identity. */
+export interface WireOfferingDetail extends WireOffering {
+  merchant?: {
+    id?: string | null;
+    slug?: string | null;
+    name?: string | null;
+    district?: string | null;
+    city?: string | null;
+    geo?: { lat?: number | null; lng?: number | null } | null;
+  } | null;
+}
+
 export function offeringFrom(
   offering: WireOffering,
   merchant?: { id: string; slug: string; name: string } | null,
@@ -272,6 +285,44 @@ export function offeringFrom(
     merchant: merchant ?? null,
     facts: offering.facts ?? [],
     flags: offering.flags ?? {},
+  };
+}
+
+/**
+ * Wire offering detail → `OfferingDetail` (§34). The projection is the honest one: the merchant
+ * identity block comes from the payload or the read fails — there is no invented breadcrumb — and
+ * `highlights`/`availability` are deliberately left absent (the wire never asserted them: no highlights
+ * array exists on the platform, and §20 forbids an availability claim that was not computed just now).
+ * The view-model requires `merchant.id/slug/name` for the breadcrumb link; a payload without them is
+ * not offering-shaped and answers `null` (the page then asks `notFound()`).
+ */
+export function offeringDetailFrom(payload: WireOfferingDetail): OfferingDetail | null {
+  const merchant = payload.merchant;
+  const merchantId = str(merchant?.id);
+  const merchantSlug = str(merchant?.slug);
+  const merchantName = str(merchant?.name);
+  if (!merchantId || !merchantSlug || !merchantName) return null;
+
+  const summary = offeringFrom(payload, { id: merchantId, slug: merchantSlug, name: merchantName });
+  if (!summary) return null;
+
+  const rating = payload.rating && num(payload.rating.value) !== null
+    ? { value: num(payload.rating.value) as number, count: Math.max(0, Math.trunc(num(payload.rating.count) ?? 0)) }
+    : null;
+  const lat = num(merchant?.geo?.lat);
+  const lng = num(merchant?.geo?.lng);
+  return {
+    ...summary,
+    merchant: {
+      id: merchantId,
+      slug: merchantSlug,
+      name: merchantName,
+      district: str(merchant?.district),
+      geo: lat !== null && lng !== null ? { lat, lng } : null,
+    },
+    rating,
+    highlights: [],
+    availability: null,
   };
 }
 
