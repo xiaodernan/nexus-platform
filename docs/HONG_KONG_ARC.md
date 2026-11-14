@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the thirteen chapters (D1093 → D1129)
+document is the continuity plan for that world-layer: how the fourteen chapters (D1093 → D1133)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -69,6 +69,15 @@ end. *What the product serves here:* ask for "早茶 蝦餃" or "早茶 普洱";
 a second-basket logic for exactly the table you are heading to. *Interlock:* yum cha is where
 the fish market's dawn becomes the first meal; the pot of aged pu-erh is the same herb
 discipline that finishes dinner later in the same pot-line.
+
+### 09:30 — 長洲 (Cheung Chau) · chapter XIV
+**The harbour shrinks to a single grey stripe.** The slow boat leaves Central at eight;
+by the time the sun hits the prow, the Island has opened up to its own skyline — two
+kilometres of fairground and food stalls with the city quietly gone. *What the product
+serves here:* search "長洲 海鮮" or "長洲 渡輪" — one tap; the rail surfaces the
+island fast-ferries and the seaside stalls. *Interlock:* the morning rail gold at
+09:30 across HKT, fighting the threshold; and the loop returns at sundown into the
+evening rail.
 
 ### 12:00 — 燒味 (charcoal twice a day) · chapter II
 **The heat of the day swings to the table.** Charcoal at two in the morning is the myth;
@@ -154,11 +163,12 @@ night clock resets. *Interlock:* the dawn economy; the day ends by restarting it
 - A **lunch-rush phone-order chapter** — the 12:10 cha chaan teng order queue, the counter
   phone vibrating back through the glass; a scene the app could re-render as an optional
   "your table exists in 3 minutes" flow.
-- A **「冰室」 (ice-room) chapter** — the original Hong Kong hour of stylish caffeine, where
-  the 1960s working class made the corned-beef sandwich the legal breakfast of record.
-- A **"the 4 a.m. barbecue" bridge** — the tripod grill at the night market's true 4 a.m.
-  ascent, closing the loop between the fruit market's wholesale dawn and the eaters who feed
-  the wholesale men before the first bus leaves.
+- An on-week-end **「西貢鹽田」 night-care chapter** — a kayak and a guesthouse, sais pai
+  roasted across the fire, the city outside the one window and the one lamp.
+- A **「金鐘摩天輪」 30:30 chapter** — the returning echo of the Queen Victoria night,
+  built entirely in sound and one sentence of the ledger.
+- A **Deep Water Bay dawn chapter** — the silent surfers gathering in groups of two,
+  no music, no names, just the water.
 - An on-device **arc-opening-line pool** — nine Cantonese opening lines, one per arc hour,
   layered over the existing daily-Cantonese tile (D1115). A future unit if the editorial
   world wants it.

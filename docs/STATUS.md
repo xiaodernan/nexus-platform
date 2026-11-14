@@ -44109,3 +44109,14 @@ Dict carries XIII across every artefact: home rail, `/guides` Featured band, `/h
 **Honest boundaries.** This is a **probe, not a gate** — no CI reference at all; it measures this host's network stack + Next's runtime on a single machine, not a Cloudflare edge behind a CDN + managed Postgres + cache tier. Useful signal: the SSR of the home spine tolerates 16-user concurrency without melting; the static pages (/hong-kong, /handbook) fly. The numbers help us see if our rails SSR needs fewer awaits — the current 1.5s p50 under load points at the `homeRails` server-side fixture-by-fish wrapper (platform boot fallback; absent seed DB). That's exactly what a probe is for.
 
 - readers: `scripts/stress_search.mjs`, this ledger entry.
+## 1133. D1133 — chapter XIV leaves the city behind: 長洲 — the ferry is not transportation, it is the story
+
+**Why.** The arc drove dawn → dinner across a single Hong Kong island home; the thirteenth chapter closed at the Lion Rock seen from 17:58 — but the actual story of the city also lives in the ferry routes, the outlying island weekends, the Sunday-afternoon-the-car-is-empty-from-early-morning. A chapter that sends the reader away from the city, only to have him/her come back with new eyes for the city, is the eleven-of-the-soul duality the arc all along craved.
+
+**The unit.** `DEMO_GUIDES` gains `hk-cheung-chau-chronicle` — 「長洲：海與大嶼之內的那個週末」. Three heading cards: 一、航線與海風 (slow boat at 45 vs fast at 25, the crossing contains the "leaving the city" feeling), 二、碼頭邊的早晨 (the fairground stalls at the ferry timetable edge — fishballs and congee), 三、把手機放下一半天 (knowing to be willing to say no and the island will mail the memory you want). Cards throughout; 後記 SearchBox seed. No real stall sign, name, or operator named; synthetic narrative.
+
+Dict carried across every artefact: home rail, `/hong-kong` hub grid, arc clock with the new 09:30 checkpoint on both locales; hub chapters 13→14; `/hk-type` chapter hint at 第十四章/fourteenth. e2e floors bumped to 14; test pins bumped to 28 literals × 2 locales. Arc document gains the 09:30 section between 07:30 and 12:00 — the ordering is real ferry-commute order.
+
+**Honest boundaries.** Mock fixture; the island's own venues are not named and any readers wanting to go there should plan themselves. The chapter intentionally doesn't pretend to be a travel guide — it is a story about the decision to take the ferry east.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.

@@ -51,7 +51,7 @@ export default async function HongKongHubPage() {
         <HkArcTimeline copy={{ title: hub.clockTitle, hint: hub.clockHint, entries: hub.clock }} />
       </Container>
 
-      {/* Thirteen chapter cards */}
+      {/* Fourteen chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">
         <h2 className="text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">{hub.chaptersTitle}</h2>
         <HkSeriesProgress cards={chapters} copy={dict.home.hkProgress} />
