@@ -43944,3 +43944,14 @@ Dict carries ten chapters across all artefacts; `hkSeries` Home rail, `/guides` 
 **Honest boundaries.** Mock fixture only; live plane unchanged. The 冰室 timeline is Honoured as lore, not history — sources vary, what is in the chapter is cooked Traditional-HK narrative constructed in the demo style, with no proprietary claims beyond the usual story logic. The arc clock now says "十章" while the series writing order differs (written as D1093 → D1120) — reading order follows the day, not the merge order.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/handbook/page.tsx` (reading-order line), `apps/web/src/lib/hk-cantonese-daily.test.ts` (untouched, unchanged), this ledger entry.
+## 1121. D1121 — the /handbook mobile CTA e2e stops tapping the header: the failing lane points at /search scoped to main
+
+**Why.** CI on D1119 (run 43596141810) failed in the e2e lane on mobile: `page.locator('a[href="/search"]').first()` matched the header's icon-only search button (present on the Fold/mobile header before the hero CTA in the DOM). The click never reached it (`element is not visible` → 60 s timeout → `waitForURL` never saw /search). Required lane went red, exactly the kind of path where "it passed locally" is not a defence, because the CI mobile viewport differs from the desktop project that was exercised here.
+
+**The unit.** `tests/e2e/specs/consumer/handbook.spec.ts` — the CTA test scopes to `main a[href="/search"]`, which is the hero CTA body itself; the h1 landing-host viewport fold and the mobile Hamilton ordering issue are absorbed honestly. No production code changed: the page itself is fine; the assertion target was wrong.
+
+**Observed.** D1119 shows failure on this one test (retry ×2) — everything else green: contract-drift, security, lint-type. Desktop passed all arms. Local desktop reruns cannot promise mobile; the CI lane on this push is the witness for the mobile case.
+
+**Honest boundaries.** This unit does not attempt to re-trigger CI green by reordering anything else; it changes only where the click lands. The sibling test (renders sections, jump hrefs) still points at `a[href="/hk-type"]` scoped site-wide — mobile hasn't failed on it and we don't fix problems that don't exist; if it fails next, THE fix will follow the same pattern.
+
+- readers: `tests/e2e/specs/consumer/handbook.spec.ts`, this ledger entry.

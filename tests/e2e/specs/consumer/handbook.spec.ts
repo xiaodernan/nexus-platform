@@ -29,7 +29,9 @@ test('the handbook renders the tour, the nine sections and their anchor links', 
 
 test('the handbook hero CTA lands on the SearchBox', async ({ page }) => {
   await page.goto('/handbook');
-  await page.locator('a[href="/search"]').first().click();
+  // Scope to the main landmark: the header carries its own icon-only /search button, which
+  // on the mobile viewport intercepts every role-query and forces the first click to time out.
+  await page.locator('main a[href="/search"]').first().click();
   await page.waitForURL('**/search**', { waitUntil: 'domcontentloaded' });
   await expect(page).toHaveURL(/\/search/);
 });
