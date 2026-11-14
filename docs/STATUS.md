@@ -43758,3 +43758,14 @@ tokens, no new code paths for slf-serve.
 **Honest boundaries.** Mock-plane fixture, flagged `demo: true`, opened with the same honest disclaimer as chapters one to five. The fish market scene is Hong Kong-coded fiction — these shops and people do not exist outside the fixture file or the Hong Kong imagination this iteration is earning from.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
+## 1107. D1107 — the six chapters take their final places: /hong-kong mega rail, /guides listing, /hong-kong hub page — six of six, Traditional Traditional, honest mock plane
+
+**Why.** The new fish-market chapter made the HK story six. The home rail told five, the /hk-type quiz chips showed five, and the /hong-kong hub page listed six — three ArteFacts, three drifts.
+
+**The unit.** `dict.hkSeries` (home rail) directly lists HK chapter cards — now six entries with labels `香港三餐的血脈 / 燒味 / 早茶 / 廟街 / 茶餐廳 / 天光魚市`. `dict.hkType.chapters` (the quiz start-screen menu) extended to return six rows. `dict.home.hkHub.chaptersTitle` now reflects `六章反覆走完一個香港 / Six chapters through one Hong Kong`. Tests read the truth — `home-series-rail.test.ts` and `hk-type.test.ts` follow the line. The fixtures carry the chapters with consistent names, hints are Roman chapter numerals in en and Traditional characters in zh.
+
+**Verified.** web suite **325/325**; census PASS over **1130 literals** in the charged blocks (union of the two HK carriers); console-i18n PASS (every CJK ideograph still under a dict key, never inline); `next build` clean; `tsc --noEmit` clean. e2e for /hong-kong still pending as a separate unit.
+
+**Honest boundaries.** Still mock-plane. Live mode must carry a platform-side Singapore crew for the fish-market chapter to render there — the platform seed fixture needs a new row, which this unit does not own.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.

@@ -872,13 +872,14 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '五章反覆走完一個 HK',
+      title: '六章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
         { slug: 'hk-dim-sum-chronicle', label: '早茶：竹籠與陳皮茶香', kicker: '第三章' },
         { slug: 'hk-temple-street-chronicle', label: '廟街：宵夜成的一座廟', kicker: '第四章' },
         { slug: 'hk-cha-chaan-teng-chronicle', label: '茶餐廳：歸於日常', kicker: '第五章' },
+        { slug: 'hk-fish-market-chronicle', label: '天光魚市：凌晨四點半的香港', kicker: '第六章' },
       ],
     },
     hkHub: {
@@ -1139,13 +1140,14 @@ const zhHK: Dict = {
     eyebrow: '香港系列 · 互動篇章',
     title: '你係邊一個 HK？',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用八條問題找出你屬於哪一種香港人。',
-    seriesLabel: '五章香港系列指南',
+    seriesLabel: '六章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
       { href: '/guides/hk-dim-sum-chronicle', title: '早茶：竹籠與陳皮茶香', hint: '第三章' },
       { href: '/guides/hk-temple-street-chronicle', title: '廟街：宵夜成的一座廟', hint: '第四章' },
       { href: '/guides/hk-cha-chaan-teng-chronicle', title: '茶餐廳：歸於日常', hint: '第五章' },
+      { href: '/guides/hk-fish-market-chronicle', title: '天光魚市：凌晨四點半的香港', hint: '第六章' },
     ],
     start: '開始',
     progress: (current, total) => `第 ${current} / ${total} 問`,
@@ -1892,13 +1894,14 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in five chapters',
+      title: 'One HK in six chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
         { slug: 'hk-dim-sum-chronicle', label: 'Yum Cha: Steam and Aged Pu-erh', kicker: 'Chapter III' },
         { slug: 'hk-temple-street-chronicle', label: 'Temple Street: The Night Temple', kicker: 'Chapter IV' },
         { slug: 'hk-cha-chaan-teng-chronicle', label: 'The Cha Chaan Teng: Where the City Eats', kicker: 'Chapter V' },
+        { slug: 'hk-fish-market-chronicle', label: 'The Four-Thirty Fish Market', kicker: 'Chapter VI' },
       ],
     },
     hkHub: {
@@ -2159,13 +2162,14 @@ const en: Dict = {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'Five HK chapters',
+    seriesLabel: 'Six HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
       { href: '/guides/hk-dim-sum-chronicle', title: 'Yum Cha: Steam and Aged Pu-erh', hint: 'Chapter three' },
       { href: '/guides/hk-temple-street-chronicle', title: 'Temple Street: The Night Market', hint: 'Chapter four' },
       { href: '/guides/hk-cha-chaan-teng-chronicle', title: 'The Cha Chaan Teng: Where the City Eats', hint: 'Chapter five' },
+      { href: '/guides/hk-fish-market-chronicle', title: 'The Four-Thirty Fish Market', hint: 'Chapter six' },
     ],
     start: 'Start',
     progress: (current, total) => `Question ${current} / ${total}`,
