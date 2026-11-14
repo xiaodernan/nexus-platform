@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Icon } from '@nexus/ui';
 
 import { CHAPTER_READ_KEY, markChapter, readChapters } from '@/lib/chapter-read';
+import { romanOf } from '@/lib/roman-numeral';
 
 export interface HkSeriesProgressCard {
   slug: string;
@@ -30,6 +31,8 @@ export interface HkSeriesProgressCopy {
 
 const formatDone = (template: string, read: number, total: number): string =>
   template.replaceAll('{read}', String(read)).replaceAll('{total}', String(total));
+
+/** The print-annual number on each chapter card — 1-based, Roman, ≤ 3999 (src/lib/roman-numeral.ts). */
 
 export const STORAGE_KEY = CHAPTER_READ_KEY;
 
@@ -102,7 +105,7 @@ export function HkSeriesProgress({
       </div>
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => {
+        {cards.map((card, index) => {
           const isRead = ready && readSet.has(card.slug);
           return (
             <li key={card.slug}>
@@ -116,6 +119,13 @@ export function HkSeriesProgress({
                   className="pointer-events-none absolute inset-y-0 left-0 w-[3px]"
                   style={{ background: 'var(--nexus-ai-gradient)' }}
                 />
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -bottom-4 -right-1 select-none font-semibold leading-none tracking-tight"
+                  style={{ color: 'rgb(var(--nexus-accent-rgb) / 0.09)', fontSize: '6.5rem' }}
+                >
+                  {romanOf(index + 1)}
+                </span>
                 {isRead ? (
                   <span className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-ink" role="img" aria-label={copy.mark}>
                     <Icon name="check" size={13} />

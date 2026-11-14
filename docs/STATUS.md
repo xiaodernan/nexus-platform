@@ -44393,3 +44393,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the hall, the rites, the lottery drawer, the alloy doors are narrative constructions. No real temple, no registered almsgiver, no landmark photo is claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1163. D1163 — every chapter card wears its Roman badge: XLIV, silently, behind the ink
+
+**Why.** The hub listed forty-four chapters as structured rows; the XLII–XLIV Sunday-cycle arc earned a print-annual register of its own. Ornament, not semantics — and no prose, no locale drift, no script risk (ASCII Roman numerals, zero meta on the link target, never a focus stop).
+
+**The unit.** `apps/web/src/lib/roman-numeral.ts` — bounded 1–3999 romanOf with an honest decimal fallback outside the classical range; `HkSeriesProgress` mounts an aria-hidden, pointer-events-none, ~9%-opacity numeral (XLII … XLIV, MMMCMXCIX) at the card's lower-right corner behind the existing gradient rail and check badge; four pins in `tests/lib/hk-series-numeral.test.ts` (walked known values, boundary fallbacks, decoration-only mounting assertion, map-index order). SSR evidence: the built `/hong-kong.html` renders all 44 cards with the numeral present (`-bottom-4` ×44; `XLIV` at the last card's stub). 46→47 test files, 346→350 tests. census unchanged (1665 literals, 0 simplified). verify_all transiently reported one failing reader in this session — reran twice, both clean (70 PASS / 0 FAIL / UNCHECKED 2; NO OFFENDER); the single FAIL was a local-plane reader racing the 4010 port I had just closed; recorded here rather than papered over.
+
+**Honest boundaries.** The numeral is a display badge, not a data contract: kicker text (dict-carried) remains the numbered truth; display order follows `cards.map` exactly; a real time-of-day logic change still travels through the dict. No motion added (respects `prefers-reduced-motion` by omission), no colour beyond the existing accent token.
+
+- readers: `apps/web/src/lib/roman-numeral.ts`, `apps/web/src/components/hk-series-progress.tsx`, `apps/web/src/lib/hk-series-numeral.test.ts`, SSR `/hong-kong.html`, this ledger entry.

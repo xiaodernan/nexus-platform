@@ -1,15 +1,15 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1161",
-  "milestone_full": "香港系列篇四十四章 · 00:30→22:45 · WORLD_ROADMAP Layer F 續 — 觀音借香火",
+  "milestone": "D1163",
+  "milestone_full": "羅馬章節徽章降臨 · 後台 verify_all 一次瞬時 FAIL 已排查並排除（70 PASS · 0 FAIL ×2）",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
     "HK series: forty-four Traditional chapters — 00:30→22:45 full day arc · 88-chip clock both locales",
-    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order — 88 slots, bilingual",
+    "/hong-kong: every chapter card wears its Roman badge (XLII · XLIII · XLIV …) — D1163",
     "Edition XLIV — 星期天的觀音借 (17:30) · Layer F traces the Sunday door by door",
-    "WORLD_ROADMAP Layer F: XLII 維園 (09:00) · XLIII 霍普韋爾 (13:00) · XLIV 觀音借 (17:30) — the congregation, the table, the incense",
+    "Edition XLIII — 霍普韋爾的外傭午餐 (13:00) · Edition XLII — 維園的外國傭工 (09:00) · Layer F opens the Sunday cycle",
     "D1160: wkapi.pro measured — only whole-request cache; replay cache whitespace-folded",
     "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1665 clean"
   ],
