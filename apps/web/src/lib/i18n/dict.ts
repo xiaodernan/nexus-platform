@@ -77,6 +77,9 @@ export interface Dict {
       searchCtaBody: string;
       searchHref: string;
       searchHrefLabel: string;
+      /** D1118: eyebrow badges that had previously leaked English into the zh plane. */
+      quizBadge: string;
+      realSearchBadge: string;
       /** D1115: 每日一句 — the Cantonese-of-the-day pool, picked by the HK date's FNV hash. */
       cantonese: {
         eyebrow: string;
@@ -94,11 +97,12 @@ export interface Dict {
       placeholder: string;
       entries: string[];
     };
-    /** D1114: the /hong-kong mega hub's local-first reading progress strip. `done` is a template with {read}/{total} slots because functions cannot cross the server→client island boundary. */
+    /** D1118: mixed-locale fixes — badges that used to leak English into the zh plane. */
     hkProgress: {
       done: string;
       reset: string;
       mark: string;
+      readCta: string;
     };
     /** One sentence under the tagline line underlining the sourcing discipline. */
     sourceNote: string;
@@ -928,6 +932,7 @@ const zhHK: Dict = {
       done: '已讀 {read} ／ 共 {total} 章',
       reset: '重設',
       mark: '已讀',
+      readCta: '讀章節',
     },
     hkHub: {
       eyebrow: '香港系列 · 完整篇章',
@@ -939,6 +944,8 @@ const zhHK: Dict = {
       quizCta: '去 /hk-type 試自己',
       searchCta: '找一家沙田茶餐廳',
       searchCtaBody: '用關鍵字去這座城市搜一次——下一頓吃飯就在那兒。',
+      quizBadge: '測驗',
+      realSearchBadge: '真·搜尋',
       searchHref: '/search?q=沙田%20下午茶',
       searchHrefLabel: '沙田 下午茶',
       cantonese: {
@@ -1999,6 +2006,7 @@ const en: Dict = {
       done: '{read} of {total} chapters read',
       reset: 'Reset marks',
       mark: 'Read',
+      readCta: 'READ THE CHAPTER',
     },
     hkHub: {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
@@ -2010,6 +2018,8 @@ const en: Dict = {
       quizCta: 'Try /hk-type',
       searchCta: 'Search a Sha Tin tea house',
       searchCtaBody: 'Type it and actually eat it — your next meal is one tap away.',
+      quizBadge: 'QUIZ',
+      realSearchBadge: 'REAL SEARCH',
       searchHref: '/search?q=Sha%20Tin%20afternoon',
       searchHrefLabel: 'Sha Tin afternoon tea',
       cantonese: {

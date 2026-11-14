@@ -28,6 +28,7 @@ export interface HkSeriesProgressCopy {
   done: string;
   reset: string;
   mark: string;
+  readCta: string;
 }
 
 const STORAGE_KEY = 'nexus.hk-series.read';
@@ -147,7 +148,7 @@ export function HkSeriesProgress({
                   </span>
                 </span>
                 <span className="relative inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wide text-accent">
-                  Read the chapter
+                  {copy.readCta}
                   <Icon name="arrowRight" size={12} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </span>
               </Link>

@@ -55,7 +55,7 @@ export default async function HongKongHubPage() {
           <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full" style={{ background: 'var(--nexus-ai-gradient)', opacity: 0.18, filter: 'blur(36px)' }} />
           <div className="relative flex flex-col items-start gap-5 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-3">
-              <span className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">QUIZ</span>
+              <span className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">{hub.quizBadge}</span>
               <h2 id="hub-quiz" className="text-2xl font-semibold leading-tight tracking-tight text-ink-strong sm:text-3xl">
                 {hub.quizCtaTitle}
               </h2>
@@ -74,7 +74,7 @@ export default async function HongKongHubPage() {
         {/* The search taster */}
         <section aria-labelledby="hub-search" className="rounded-2xl border border-line bg-surface p-6">
           <div className="flex flex-col items-start gap-3">
-            <span className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">REAL SEARCH</span>
+            <span className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">{hub.realSearchBadge}</span>
             <h2 id="hub-search" className="text-lg font-semibold tracking-tight text-ink-strong">
               {hub.searchCta}
             </h2>

@@ -42,6 +42,11 @@ describe('D1114 HK series reading-progress island', () => {
     const dict = read(DICT);
     expect(dict).toContain("reset: '重設'");
     expect(dict).toContain("mark: '已讀'");
+    expect(dict).toContain("readCta: '讀章節'");
+    expect(dict).toContain("readCta: 'READ THE CHAPTER'");
+    expect(dict).toContain("quizBadge: '測驗'");
+    expect(dict).toContain("quizBadge: 'QUIZ'");
+    expect(dict).toContain("realSearchBadge: 'REAL SEARCH'");
     expect(dict).toContain("done: '已讀 {read} ／ 共 {total} 章'");
     expect(dict).toContain("done: '{read} of {total} chapters read'");
     expect(dict).toContain("reset: 'Reset marks'");
