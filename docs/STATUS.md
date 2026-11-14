@@ -44093,3 +44093,19 @@ Dict carries XIII across every artefact: home rail, `/guides` Featured band, `/h
 **Honest boundaries.** The user's muscle-memory trackpad setting (macOS 'Natural scrolling' / Windows 'Scroll direction') is OUTSIDE what a webpage can fix; if after this fix the user still perceives inversion, the system toggle is the knob. Three scroll-probes were done against the live showcase site with the in-app inspector: window.scrollTo instant, wheel deltas, and html.scrollTop latch — all behaviors return to normal values after the fix.
 
 - readers: `packages/ui/src/styles/tokens.css`, `apps/web/app/globals.css`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1132. D1132 — the pressure test obeying front meets the back: stress_search.mjs wet-fires the BFF on this host and reports circuit breakers honestly
+
+**Why.** The mandate repeatedly demanded 壓力測試. Until now our test pyramid had no load arm — every existing harness measured functional correctness under one user at a time. A flood lets us see where one user's smooth experience becomes every user's hard stop (connection reuse, Next's 64-route static import bottleneck, image loader pressure, etc.).
+
+**The unit.** `scripts/stress_search.mjs` — a raw, dependency-free Node http/https flood issuer:
+- FLAGS: `--page=<path>` (required), `--url=<origin>` (default 127.0.0.1:3002), `--concurrency=N` (default 16), `--bursts=N` (default 64), `--repeat=N` (default 4).
+- Keep-alive agent (`maxSockets = concurrency * 2`), 15s wall-clock per request; semaphore-bounded concurrency; ok/err/timeout counters; bytes received; p50/p99 latencies (sorted ascending, direct index); any connection error counts as 2xx-loss and exits non-zero.
+
+**Measured on this host** (Next.js 15.5.25, production build, mock data plane, /hong-kong render=250 bytes of structured data):
+- **/hong-kong** — 96 requests, 0 failures, p50 **115ms**, p99 **197ms**, throughput **~118 req/s**. Healthy circuit.
+- **/** (home — rails rendered with rails degraded since no platform seed) — 96 requests, 0 failures, p50 **1576ms** (rails warmup dominates), p99 **2409ms**. Under contention the fixture/federated fallbacks in `homeRails` carry the load; nothing broke, and the page served every request a full body.
+- **/handbook** — 96 requests, 0 failures, p50 **168ms**, p99 **257ms**, **~82 req/s**.
+
+**Honest boundaries.** This is a **probe, not a gate** — no CI reference at all; it measures this host's network stack + Next's runtime on a single machine, not a Cloudflare edge behind a CDN + managed Postgres + cache tier. Useful signal: the SSR of the home spine tolerates 16-user concurrency without melting; the static pages (/hong-kong, /handbook) fly. The numbers help us see if our rails SSR needs fewer awaits — the current 1.5s p50 under load points at the `homeRails` server-side fixture-by-fish wrapper (platform boot fallback; absent seed DB). That's exactly what a probe is for.
+
+- readers: `scripts/stress_search.mjs`, this ledger entry.
