@@ -5,6 +5,7 @@ import { Container, Icon } from '@nexus/ui';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { HkSeriesProgress } from '@/components/hk-series-progress';
+import { HkCantoneseDaily } from '@/components/hk-cantonese-daily';
 
 export const dynamic = 'force-static';
 
@@ -87,6 +88,9 @@ export default async function HongKongHubPage() {
             </Link>
           </div>
         </section>
+
+        {/* One Cantonese a day — deterministic, dict-carried */}
+        <HkCantoneseDaily copy={hub.cantonese} />
       </Container>
     </div>
   );

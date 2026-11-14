@@ -43862,3 +43862,18 @@ Dict carries `home.hkProgress` on both locales with `done` as a `{read}/{total}`
 **Honest boundaries.** The read set lives on one browser — private mode and device discipline apply. Chapters opened straight from `/guides/<slug>` do not auto-mark (there is no push channel from guide to hub) — accepted and documented. Reset is destructive to this local set only, no server echo. The first CI attempt revealed that props passed from server to island must be serialisable: dict function-valued keys were replaced with template strings; the failure, the fix and the pin that prevents the whole class are part of this unit's record.
 
 - readers: `apps/web/src/components/hk-series-progress.tsx`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/lib/hk-series-progress.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1115. D1115 — /hong-kong gains 每日一句 · 廣東話: a hand-checked Jyutping pool, the same deterministic day-rhythm as the home almanac
+
+**Why.** The Hong Kong story series is one continuous arc of food, market and neighbourhood — but the city's native tongue, Cantonese, had nowhere to live inside the product. A single honest sentence a day, drawn anew from Hong Kong's clock, costs nothing to run, respects the script law (Traditional characters throughout, no zh conversion needed), and gives the mega hub a reason to be visited tomorrow.
+
+**The unit.** `src/components/hk-cantonese-daily.tsx` — client island, `role="region"` via aria-label. Day pick: (`cyrb53('YYYY-MM-DD') % 12`), the exact function already proven and pinned in `almanac.ts`/`almanac.test.ts`. First paint shows the placeholder; the real phrase swaps in after mount (no server/client mismatch possible). 12-entry pool on both locales, **hand-checked Jyutping** — written from scratch against the standard rime table, not from a canned source; see the unit note below for the scrutiny pass. English locale carries the same zh phrase with an en gloss; the pool is shared, the glosses translate.
+
+`dict.home.hkHub.cantonese` — eyebrow / note / placeholder / pool, both locales; hub renders `<HkCantoneseDaily copy={hub.cantonese} />` after the search taster. Placement discipline D958 respected: the pool is identical on both locales.
+
+**Pinned.** `hk-cantonese-daily.test.ts` — island source arms (use client, imports `@/lib/almanac`, references `hkDateKey`/`almanacIndex`, no fetch/analytics, aria-label), hub wiring (import + `copy={hub.cantonese}`), pool geometry (exactly 12 entries × 2 locales = 24 `jyutping: '` literals), dict presence on both locales. `tests/e2e/specs/consumer/hong-kong.spec.ts` gains an arm: the tile's region role is visible on desktop and mobile lanes (name /每日一句|ONE CANTONESE TODAY/i) — **3 passed (22.7s)** locally on the mock plane.
+
+**Verified.** web suite **337/337**; `tsc --noEmit` clean; next build green; census PASS over **1199 literals**.
+
+**Honest boundaries.** The Jyutping is hand-written and corrected in review; native HK proofreaders would catch snakes. Where a phrase differs in tone sandhi in real speech (e.g. connected speech vs citation form), the citation form is printed — the unit is pedagogy-flavoured, not prescription. No audio is shipped; a Mandarin-accented TTS would do more harm here than silence. The same day renders the same phrase for every visitor (that is the whole point) — the note says so.
+
+- readers: `apps/web/src/components/hk-cantonese-daily.tsx`, `apps/web/src/lib/hk-cantonese-daily.test.ts`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.

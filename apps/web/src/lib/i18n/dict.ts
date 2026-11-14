@@ -77,6 +77,13 @@ export interface Dict {
       searchCtaBody: string;
       searchHref: string;
       searchHrefLabel: string;
+      /** D1115: 每日一句 — the Cantonese-of-the-day pool, picked by the HK date's FNV hash. */
+      cantonese: {
+        eyebrow: string;
+        note: string;
+        placeholder: string;
+        pool: Array<{ phrase: string; jyutping: string; gloss: string }>;
+      };
     };
     /** D1099: the HK story series rail — four chapters presented as a single literary thread on home. */
     hkSeries: { kicker: string; title: string; cards: Array<{ slug: string; label: string; kicker: string }> };
@@ -933,6 +940,25 @@ const zhHK: Dict = {
       searchCtaBody: '用關鍵字去這座城市搜一次——下一頓吃飯就在那兒。',
       searchHref: '/search?q=沙田%20下午茶',
       searchHrefLabel: '沙田 下午茶',
+      cantonese: {
+        eyebrow: '每日一句 · 廣東話',
+        note: '按香港時間的今日日期推算；一句就得。',
+        placeholder: '正在想今日講邊句…',
+        pool: [
+          { phrase: '慢慢來，唔使急', jyutping: 'maan6 maan6 loi4, m4 sai2 gap1', gloss: 'You can take your time — the tea is no better for hurrying.' },
+          { phrase: '有冇推介？', jyutping: 'jau5 mou5 teoi1 gaai3', gloss: 'Got a recommendation? The local way to ask.' },
+          { phrase: '唔該，請問', jyutping: 'm4 goi1, ceng2 man6', gloss: 'Excuse me — may I ask something?' },
+          { phrase: '貴唔貴呀？', jyutping: 'gwai3 m4 gwai3 aa3', gloss: 'How much? The only bargaining opener you need.' },
+          { phrase: '真係抵食', jyutping: 'zan1 hai6 dai2 sik6', gloss: 'Genuinely worth the price — the quiet verdict of queuing locals.' },
+          { phrase: '走先喇！', jyutping: 'zaau2 sin1 laa3', gloss: 'Heading off now — the Hong Kong goodbye.' },
+          { phrase: '唔好意思，等一陣', jyutping: 'm4 hou2 ji3 si1, dang2 jat1 zan6', gloss: 'Sorry — one moment.' },
+          { phrase: '唔係攪笑！', jyutping: 'm4 hai6 gaau2 siu3', gloss: 'I am not joking — the honest intensifier.' },
+          { phrase: '歡迎光臨', jyutping: 'fun1 jing4 gwong1 lam4', gloss: 'To your custom, welcome — the greeting over every threshold.' },
+          { phrase: '尋日見呢', jyutping: 'cam4 jat6 gin3 ne1', gloss: 'See you tomorrow — the friendly close of the day.' },
+          { phrase: '多謝你啦', jyutping: 'do1 ze6 nei5 laa3', gloss: 'Thank you kindly — warmer than a receipt.' },
+          { phrase: '等一陣先', jyutping: 'dang2 jat1 zan6 sin1', gloss: 'Hold on a second — the working phrase of every kitchen.' },
+        ],
+      },
     },
     districtsLabel: '熱門地區',
     districtChips: [
@@ -1983,6 +2009,25 @@ const en: Dict = {
       searchCtaBody: 'Type it and actually eat it — your next meal is one tap away.',
       searchHref: '/search?q=Sha%20Tin%20afternoon',
       searchHrefLabel: 'Sha Tin afternoon tea',
+      cantonese: {
+        eyebrow: 'ONE CANTONESE TODAY',
+        note: 'Drawn fresh from the Hong Kong clock — one sentence, one day.',
+        placeholder: 'Deciding which phrase today…',
+        pool: [
+          { phrase: '慢慢來，唔使急', jyutping: 'maan6 maan6 loi4, m4 sai2 gap1', gloss: 'You can take your time — the tea is no better for hurrying.' },
+          { phrase: '有冇推介？', jyutping: 'jau5 mou5 teoi1 gaai3', gloss: 'Got a recommendation? The local way to ask.' },
+          { phrase: '唔該，請問', jyutping: 'm4 goi1, ceng2 man6', gloss: 'Excuse me — may I ask something?' },
+          { phrase: '貴唔貴呀？', jyutping: 'gwai3 m4 gwai3 aa3', gloss: 'How much? The only bargaining opener you need.' },
+          { phrase: '真係抵食', jyutping: 'zan1 hai6 dai2 sik6', gloss: 'Genuinely worth the price — the quiet verdict of queuing locals.' },
+          { phrase: '走先喇！', jyutping: 'zaau2 sin1 laa3', gloss: 'Heading off now — the Hong Kong goodbye.' },
+          { phrase: '唔好意思，等一陣', jyutping: 'm4 hou2 ji3 si1, dang2 jat1 zan6', gloss: 'Sorry — one moment.' },
+          { phrase: '唔係攪笑！', jyutping: 'm4 hai6 gaau2 siu3', gloss: 'I am not joking — the honest intensifier.' },
+          { phrase: '歡迎光臨', jyutping: 'fun1 jing4 gwong1 lam4', gloss: 'To your custom, welcome — the greeting over every threshold.' },
+          { phrase: '尋日見呢', jyutping: 'cam4 jat6 gin3 ne1', gloss: 'See you tomorrow — the friendly close of the day.' },
+          { phrase: '多謝你啦', jyutping: 'do1 ze6 nei5 laa3', gloss: 'Thank you kindly — warmer than a receipt.' },
+          { phrase: '等一陣先', jyutping: 'dang2 jat1 zan6 sin1', gloss: 'Hold on a second — the working phrase of every kitchen.' },
+        ],
+      },
     },
     districtsLabel: 'Hot districts',
     districtChips: [

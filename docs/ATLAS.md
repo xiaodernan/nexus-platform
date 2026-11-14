@@ -102,6 +102,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/offering-detail-wire.test.ts` | D1089: 5 arms pin §4 wire → OfferingDetail projection, null-on-missing merchant, §20 availability discipline |
 | `apps/web/src/lib/almanac.ts` | D1112: cyrb53 (FNV-1a→53bit) + `hkDateKey` (HKT ISO date) + `almanacIndex` (bounded mod) — the deterministic daily pick |
 | `apps/web/src/components/hk-daily-almanac.tsx` | D1112: the 今日食運 island — placeholder-first paint, then the HK-date pick, no telemetry |
+| `apps/web/src/components/hk-cantonese-daily.tsx` | D1115: the Cantonese-of-the-day tile — deterministic pick via the almanac layer, Traditional-HK phrases with hand-checked Jyutping |
+| `apps/web/src/lib/hk-cantonese-daily.test.ts` | D1115: the tile's source pins, dict-pool geometry and hub wiring |
 | `apps/web/src/components/hk-series-progress.tsx` | D1114: the local-first HK-chapter reading strip — progressbar + mark/reset, storage-bound |
 | `apps/web/src/lib/hk-series-progress.test.ts` | D1114: the strip's source pins + dict-copy pins + hub-wiring pin |
 | `apps/web/src/lib/mock/seed.ts` | D1111: the eighth HK chapter (hk-fruit-market-chronicle, 果欄) |

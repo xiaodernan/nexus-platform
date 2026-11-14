@@ -8,6 +8,11 @@ import { test, expect } from '../../lib/fixture.js';
  *  3. the quiz teaser links into /hk-type and the search taster does so too.
  */
 
+test('the Cantonese-of-the-day tile renders on the mega hub', async ({ page }) => {
+  await page.goto('/hong-kong');
+  await expect(page.getByRole('region', { name: /每日一句|ONE CANTONESE TODAY/i }).first()).toBeVisible();
+});
+
 test('marking a chapter read fills the local-first progress bar', async ({ page }) => {
   await page.goto('/hong-kong');
   const bar = page.getByRole('progressbar').first();
