@@ -61,6 +61,8 @@ export interface Dict {
     /** §8 district chips row beneath the examples label — tasteful quickjumps. */
     districtsLabel: string;
     districtChips: { district: string; q: string; label: string }[];
+    /** One sentence under the tagline line underlining the sourcing discipline. */
+    sourceNote: string;
     rails: Record<
       'popular_near_you' | 'for_you' | 'trending' | 'recommended' | 'recently_viewed',
       RailsCopy
@@ -770,6 +772,7 @@ const zhHK: Dict = {
     subtitle: '講出你的條件——地區、預算、時間、口味——NEXUS 會理解需求、搜索真實商戶並解釋每個推薦。',
     searchLabel: '你想要什麼？',
     freshnessLine: '· 香港 · 真實商家 · 有據可查',
+    sourceNote: '我們不冒充商家；每一個數字都對應一條可追溯的事實。沒有來源的資訊不會出現在這頁。',
     searchPlaceholder: '例如：幫我找沙田適合約會的餐廳，預算 500，安靜一點',
     submit: '開始搜索',
     examplesLabel: '試試這些',
@@ -1550,6 +1553,7 @@ const en: Dict = {
       'Describe the plan — area, budget, time, taste — and NEXUS understands, searches real listings and explains every result.',
     searchLabel: 'What are you looking for?',
     freshnessLine: '· Hong Kong · Real merchants · Every number sourced',
+    sourceNote: 'We do not impersonate merchants; every number traces to a fact. A page without sources says so instead of guessing.',
     searchPlaceholder: 'e.g. date-friendly restaurants in Sha Tin, budget 500, quiet',
     submit: 'Search',
     examplesLabel: 'Try one of these',

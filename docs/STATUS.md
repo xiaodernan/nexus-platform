@@ -43292,3 +43292,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** The line is decorative and supplies scope intent ("we are local, and sources matter") — it is not a sync of how many live rows are in the platform; there is no live counter. The glyph-separator approach (`·`) mirrors the footer's brand pattern.
 
 - readers: `apps/web/app/page.tsx`, this ledger entry.
+## 1070. D1070 — a sourcing-honesty sentence lands beneath the small-caps line: "we do not impersonate merchants; every number traces to a fact..."
+
+**Why.** The home hero now carries four registers (the eyebrow methodology pill, the oversized display, the subtitle, and a single row of small-caps scope intent) — and one more row to make the promise visible: the platform will not invent a rating, a price or an hour; we'd rather say "no source" than guess. HK consumers can feel the pressure of "how do I know this is real?" without anyone having to ask it.
+
+**The unit.** `apps/web/app/page.tsx` — a second `<p>` directly beneath the D1069 small-caps line, styled `text-2xs leading-relaxed text-ink-faint`. Dict carries zh: `我們不冒充商家；每一個數字都對應一條可追溯的事實。沒有來源的資訊不會出現在這頁。` and en: `We do not impersonate merchants; every number traces to a fact. A page without sources says so instead of guessing.` — exactly one sentence in each locale. No new tokens.
+
+**Verified.** `tsc --noEmit` clean; vitest 291/291; zh-HK census PASS — 940 literals; `next build` green; web suite unchanged in shape.
+
+**Honest boundaries.** The line is a prose claim, not a runtime check — it does not prove any rendered number on the page traces to a fact. The platform already does runtime source-checking on the `/m/[slug]` pathway; this line is the promise that if that check fails or isn't wired, the page prints "no source available", never a fabricated number. The wording deliberately mirrors the seed/fact backbone's discipline: if a number shows up, something traceable stands behind it.
+
+- readers: `apps/web/app/page.tsx`, this ledger entry.
