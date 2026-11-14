@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the twenty-two chapters (D1093 → D1143)
+document is the continuity plan for that world-layer: how the twenty-three chapters (D1093 → D1146)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,13 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 13:30 — 洗碗阿姨的第二幕 (the auntie on the dish pit) · chapter XXIII
+**Every plate on every table comes from a woman whose hands you will never meet.** At 13:30, after
+the lunch rush and before the afternoon slump, she is where the city's choreography happens off the
+clock. *What the product serves here:* the post-lunch hollow window where nobody wants to decide —
+search "茶餐廳 下午茶" makes one tap of the decision. *Interlock:* between 12:00 siu mei and 16:00
+the Central Bourse bell, the city passes through her clean hands to 16:00's verdict.
 
 ### 08:30 — 校巴的秘密班機 (the school bus) · chapter XXII
 **Every parent in Hong Kong knows a bus that never appears on any map.** At 08:30, the school-bus

@@ -1205,4 +1205,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-dishwash-auntie-chronicle', title: '下午一點半：洗碗阿姨的第二幕（香港系列 · 第二十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：跟着廚房師傅，由污水聲一步一步看進洗碗間——香港每張餐枱背後看不見的人。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午一點半。茶餐廳安靜了下來——裡面只有煲嘰、碟碗互撞、熱水奔流的聲音。洗碗阿姨（合成敘事，非真實人物）把橡膠手套刷了一遍，把最後一碗滑膠浮升起來，落停箱上，輕力拍兩下：一切都乾淨了。整座城市的中餐習慣保留着，不過 nobody 知道，她每天都在用手掌給這座城市寫中篇小說。' },
+      { type: 'heading', text: '一、「煲嘰」的簿記' },
+      { type: 'paragraph', text: '午餐高峰已經退了，阿姨先把九米長的後台清空——瓷碗、碟、筷子、茶壺，清洗分三格：熱水、泡沫、乾淨水。每一只碗她都有一個第一眼的感覺——崩了一格的青花瓷手一拿就是八十二歲的舊友鄰居，她會原手放回自己櫥櫃，不再入店。這種堅守不是受訓，是她自己額外規範的——這間真的不會再出現崩口碗。' },
+      { type: 'cards', title: '洗碗間可聽', items: [] },
+      { type: 'heading', text: '二、她認得所有碟' },
+      { type: 'paragraph', text: '哪一只碟會淘菜、哪一只碟會上蟹粉魚蛋、哪一只小碗是給香港長者的龜苓膏用的——阿姨閉着眼睛也認得。住宅樓換了三個公司，她還是留在同一間茶餐廳。每一天下班前，她會在盆沿寫「今日兩個豬臟百葉五碟」——老闆知道這就是老主題問卷：明天午餐會勤；同事彼此默許，不問原因。' },
+      { type: 'cards', title: '洗碗間可數', items: [] },
+      { type: 'heading', text: '三、收工的節拍' },
+      { type: 'paragraph', text: '三點五十分，電箱熱過一段時間，阿姨緩步推開傷口布。她會把風筒對準入盆，把每件漬衣晒到亮。洗手間是她休息的椅子：杯水、小食、口香糖、紙巾——這間小小的空間是城市中最安靜、最溫暖的一小盆。三點五十八分，她會把所有東西重新歸位——這間茶餐廳就用一個人開始了第二天。' },
+      { type: 'cards', title: '洗碗間可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「茶餐廳 下午茶」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1144",
-  "milestone_full": "香港系列二十二章 · 00:30→22:45 · /daily 每日儀式頁登場",
+  "milestone": "D1146",
+  "milestone_full": "香港系列篇二十三章 · 00:30→22:45 · /daily 每日儀式 · LangGraph 引擎",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: twenty-two Traditional chapters — 00:30→22:45 full day arc",
-    "/daily: the daily ritual page — almanac + Cantonese phrase + one chapter per date hash + copy-the-card island",
-    "/hong-kong: twenty-two-checkpoint arc clock — chronological, both locales",
+    "HK series: twenty-three Traditional chapters — 00:30→22:45 full day arc",
+    "/hong-kong: twenty-three-checkpoint arc clock — chronological, both locales",
+    "Edition XXIII — 洗碗阿姨的第二幕, the 13:30 dish-pit custody story",
+    "/daily: the daily ritual page — almanac + Cantonese phrase + one chapter by date hash + copy-the-card",
     "D1142: LangGraph opt-in engine — parallel fan-out of independent reads",
-    "D1140: Spring Cloud edge rate limiter shares ONE Redis bucket across processes",
-    "/handbook: complete bilingual manual · quiz tutorial · newcomer strip"
+    "D1140: Spring Cloud edge rate limiter shares ONE Redis bucket across processes"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

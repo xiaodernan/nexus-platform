@@ -44245,3 +44245,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **The unit.** The manual's daily section (id `daily`) gains a fourth paragraph in both locales: the zh copy explains /daily (three pillars + 章進度 → hash-picked chapter + copy the daily card), the EN copy explains the same for the English reader. No sections added, no reordering; the quiz/canonical census counts stay flat.
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+## 1146. D1146 — chapter XXIII natives the 13:30 slot: 洗碗阿姨的第二幕 — the plate-return custody chain from lunch to the Bourse
+
+**Why.** 誰看到了下午一點半的茶餐廳？忙了三個頓、一堆碟子後，阿姨才是午間的節點。香港系列缺少這環剛好是「別人看得到但不知道是誰」的人。
+
+**The unit.** `DEMO_GUIDES` gains `hk-dishwash-auntie-chronicle` — 「下午一點半：洗碗阿姨的第二幕（香港系列 · 第二十三章）」。Three heading cards（一、「煲嘰」的簿記 · 二、她認得所有碟 · 三、收工的節拍）, Traditional HK script, 合成敘事 framing, cards with empty items, 後記 + SearchBox pointer（「茶餐廳 下午茶」）。Both locales carry the chapter; arc clock gains 13:30 between siu mei and the Bourse bell (46 chips across both locales); hk-type link list; handbook reading order re-sorted to twenty-three chapters on both locales; e2e floors ≥23.
+
+**Honest boundaries.** Synthetic fixture; the dish-washing routine and the "崩口碗" honour rule are narrative constructions, not sourced from any operator. Nobody's kitchen is claimed; the plate classification is a fiction of tidiness.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
