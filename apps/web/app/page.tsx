@@ -73,6 +73,7 @@ export default async function HomePage(props: {
               {dict.home.title}
             </h1>
             <p className="mt-3 max-w-prose text-base leading-relaxed text-ink-muted sm:text-lg">{dict.home.subtitle}</p>
+            <p className="mt-2 text-2xs font-medium uppercase tracking-[0.18em] text-ink-faint">{dict.home.freshnessLine}</p>
           </Reveal>
 
           <Reveal delay={0.06} className="w-full max-w-3xl">

@@ -55,6 +55,7 @@ export interface Dict {
     /** The search field's accessible name — a question, not an example. */
     searchLabel: string;
     searchPlaceholder: string;
+    freshnessLine: string;
     submit: string;
     examplesLabel: string;
     /** §8 district chips row beneath the examples label — tasteful quickjumps. */
@@ -768,6 +769,7 @@ const zhHK: Dict = {
     title: '想說就去。',
     subtitle: '講出你的條件——地區、預算、時間、口味——NEXUS 會理解需求、搜索真實商戶並解釋每個推薦。',
     searchLabel: '你想要什麼？',
+    freshnessLine: '· 香港 · 真實商家 · 有據可查',
     searchPlaceholder: '例如：幫我找沙田適合約會的餐廳，預算 500，安靜一點',
     submit: '開始搜索',
     examplesLabel: '試試這些',
@@ -1547,6 +1549,7 @@ const en: Dict = {
     subtitle:
       'Describe the plan — area, budget, time, taste — and NEXUS understands, searches real listings and explains every result.',
     searchLabel: 'What are you looking for?',
+    freshnessLine: '· Hong Kong · Real merchants · Every number sourced',
     searchPlaceholder: 'e.g. date-friendly restaurants in Sha Tin, budget 500, quiet',
     submit: 'Search',
     examplesLabel: 'Try one of these',

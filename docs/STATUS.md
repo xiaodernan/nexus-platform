@@ -43281,3 +43281,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** Districts are static curation; they do not re-rank by platform events, weather, or foot traffic — that belongs to a "live districts" panel reading from the seeded plane and it has no home yet. The six are fixed curation — a future pass with Hong Kong consumers' actual search logs could promote/demote entries; the dict carries the six `districtChips` as a named array so re-ordering is a dict edit.
 
 - readers: `apps/web/app/page.tsx`, this ledger entry.
+## 1069. D1069 — the home hero gains a fourth line of type under the tagline: a tight-tracked small-caps statement of "honest data + Hong Kong" — tasteful typographic accent, one line
+
+**Why.** A marketplace homepage carries five registers in the first fold: eyebrow (named AI-native), display headline, subtitle, the search field, prompt chips. The after-the-question elaborations were missing — a one-line scope+honesty pledge anchors the page's authority before the user touches the field. Yelp and OpenRice both do the equivalent with a coverage tagline.
+
+**The unit.** `apps/web/src/app/page.tsx` — one `<p>` underneath the subtitle, styled `text-2xs font-medium uppercase tracking-[0.18em] text-ink-faint`: `dict.home.freshnessLine`. Dict carries zh `· 香港 · 真實商家 · 有據可查` and en `· Hong Kong · Real merchants · Every number sourced`. No new tokens; same rule class already in the eyebrow (`uppercase tracking-wide`), tighter to `tracking-[0.18em]` for the editorial print feel.
+
+**Verified.** web unchanged 291/291; `tsc --noEmit` clean; `next build` green; zh-HK census PASS.
+
+**Honest boundaries.** The line is decorative and supplies scope intent ("we are local, and sources matter") — it is not a sync of how many live rows are in the platform; there is no live counter. The glyph-separator approach (`·`) mirrors the footer's brand pattern.
+
+- readers: `apps/web/app/page.tsx`, this ledger entry.

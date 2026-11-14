@@ -79,6 +79,6 @@ export function adminNavItems(locale: string): ConsoleNavItem[] {
     { href: '/admin/reservations', label: nav.adminReservations, icon: 'calendar' },
     { href: '/admin/ai', label: nav.ai, icon: 'ai' },
     { href: '/admin/search', label: nav.search, icon: 'search' },
-    { href: '/admin/system', label: nav.system, icon: 'shield' },
+    { href: '/admin/system', label: nav.system, icon: 'info' },
   ];
 }
