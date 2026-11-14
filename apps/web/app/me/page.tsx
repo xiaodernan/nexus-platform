@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge, Container, EmptyState, Icon } from '@nexus/ui';
 
-import { CardGrid } from '@/components/cards';
+import { MeFavoritesGrid } from '@/components/me-favorites-grid';
 import { LocaleDemoBadge } from '@/components/locale-badges';
 import { MeReadAll } from '@/components/me-read-all';
 import { ReadFailure, SignInRequired, SourceStamp } from '@/components/console/console-parts';
@@ -215,7 +215,22 @@ export default async function MePage() {
               </div>
             ) : savedCards.length > 0 ? (
               <>
-                <CardGrid cards={savedCards.map((favorite) => favorite.card!)} locale={locale} className="mt-4" />
+                <MeFavoritesGrid
+                  rows={savedCards.map((favorite) => ({
+                    favoriteId: favorite.id,
+                    subjectType: favorite.subjectType,
+                    subjectId: favorite.subjectId,
+                    card: favorite.card as NonNullable<typeof favorite.card>,
+                  }))}
+                  locale={locale}
+                  labels={{
+                    unsave: dict.me.favoritesUnsave,
+                    unsaveBusy: dict.me.favoritesUnsaveBusy,
+                    unsaveDone: dict.me.favoritesUnsaveDone,
+                    unsaveFailed: dict.me.favoritesUnsaveFailed,
+                  }}
+                  className="mt-4"
+                />
                 {unsavedCount > 0 ? (
                   <p className="mt-2 text-2xs text-ink-faint">{dict.me.favoritesNote}</p>
                 ) : null}

@@ -102,6 +102,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `tests/e2e/specs/consumer/me.spec.ts` | D1080: 2 arms — anonymous stop (no session, no hub sections) + signed-in hub (501-or-ok gates, skips honestly without a live stack) |
 | `apps/web/src/lib/merchant-card-cache.test.ts` | D1079: 4 arms — tag/TTL wiring, anonymous-fetch contract, failure propagation, consumer source-pin |
 | `apps/web/src/components/me-read-all.tsx` | D1076: the consumer inbox read-all door — POSTs §123 `notifications/read-all` via the BFF; envelope-honest failure print; `router.refresh()` on success |
+| `apps/web/src/components/me-favorites-grid.tsx` | D1085: the favorites grid + unsave door — DELETE /api/nexus/platform/me/favorites/{type}/{id}, optimistic list filter, envelope-honest failure |
 | `apps/web/src/lib/me-page.test.ts` | D1075: 5 structural pins — force-dynamic + sign-in stop, §3/§123 endpoints only, EntityCard path, dict both locales (HK script), chrome links |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |

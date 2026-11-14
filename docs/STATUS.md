@@ -43469,3 +43469,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** One probe run ≈ 26 calls; provider-side variance is visible between arms and runs. The numbers above are dated provider reports, not a promise about future API behavior on this relay; `cache_probe.py` reproduces them on demand (opt-in, env-gated, never CI). `NEXUS_PREFIX_CONTRACT` frozen head is *not* applied to the tiny-system control arm — it is applied at pipeline call sites, which the probe's `contract bursts` arm mirrors.
 
 - readers: `apps/ai/cache_probe.py`, this ledger entry.
+## 1085. D1085 — the saved-merchant grid gains the unsave door: heart tap → DELETE §3 `/api/v1/me/favorites/{type}/{id}` via the BFF, router.refresh(), honest demo-mode refusal
+
+**Why.** `/me` showed saved merchants beautifully but left the person with no way to *unsave* from the page — a favourites list you can't curate is a hoard, not a collection. The platform has had `DELETE /api/v1/me/favorites/{type}/{id}` since §3 (type pinned to `merchant|offering|collection|guide`, id = subject id, D51 answered 404 for absent rows) — the door existed; the UI didn't.
+
+**The unit.** `apps/web/src/components/me-favorites-grid.tsx` — client island swapping CardGrid on the hub: same EntityCardView render path with `rank`, same trust rules; the only new element is a per-card `favorite` action (heart) labelled 取消收藏 / Unsave. A tap fires `DELETE /api/nexus/platform/me/favorites/{type}/{id}` through the BFF; success filters the card out optimistically + `router.refresh()`; failure renders the §1 envelope code inline (demo plane answers 501 `data_mode_mock` — printed, not dressed as success); when every card is gone the island collapses to one `已全部取消收藏` status line. Dict gains `favoritesUnsave{Busy,Done,Failed}` both locales (HK Traditional script).
+
+**Verified.** `me-page.test.ts` gains the unsave pin (island wiring + dict both locales) plus updated favorites-grid pin (was `<CardGrid`, now the island) — **312/312** web; `tsc --noEmit` clean; zh-HK census PASS over 1003 literals; `next build` green; `/me` 2.03 kB.
+
+**Honest boundaries.** Only merchant subjects unsave from the grid (the hydration is merchant-only by platform availability, D1074/D1081); non-merchant saves keep showing the existing stated limit note. Optimistic removal is reconciled by the server re-read (`router.refresh()`), not trusted — a failed DELETE leaves the card in place with the envelope code printed. No bulk unsave (platform door is per-subject by design).
+
+- readers: `apps/web/src/components/me-favorites-grid.tsx`, this ledger entry.

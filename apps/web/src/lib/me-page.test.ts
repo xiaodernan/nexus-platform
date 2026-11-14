@@ -53,7 +53,8 @@ describe('D1075 consumer account hub', () => {
 
   it('renders favorites through EntityCard and states the subject-type limit honestly', () => {
     const page = read(PAGE);
-    expect(page).toContain('<CardGrid');
+    // The favorites grid is an island (unsave door since D1085) — it renders EntityCardView rows.
+    expect(page).toContain('<MeFavoritesGrid');
     expect(page).toContain('dict.me.favoritesNote');
   });
 
@@ -97,5 +98,19 @@ describe('D1075 consumer account hub', () => {
     expect(dict).toContain("preferencesTitle: '我的排序訊號'");
     expect(dict).toContain("preferencesTitle: 'My ranking signals'");
     expect(dict).toContain("preferencesSource: {");
+  });
+
+  it('the favorites grid carries the unsave door onto the documented DELETE route', () => {
+    const island = read('apps/web/src/components/me-favorites-grid.tsx');
+    expect(island.startsWith("'use client';")).toBe(true);
+    expect(island).toContain('/api/nexus/platform/me/favorites/');
+    expect(island).toContain("method: 'DELETE'");
+    expect(island).toContain('router.refresh()');
+    expect(island).toContain('onAction={() => unsave(row)}');
+    const page = read('apps/web/app/me/page.tsx');
+    expect(page).toContain('<MeFavoritesGrid');
+    const dict = read(DICT);
+    expect(dict).toContain("favoritesUnsave: '取消收藏'");
+    expect(dict).toContain("favoritesUnsave: 'Unsave'");
   });
 });

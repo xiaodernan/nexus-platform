@@ -742,6 +742,10 @@ export interface Dict {
     favoritesEmptyText: string;
     favoritesNote: string;
     favoritesManage: string;
+    favoritesUnsave: string;
+    favoritesUnsaveBusy: string;
+    favoritesUnsaveDone: string;
+    favoritesUnsaveFailed: string;
     savedSearchesTitle: string;
     savedSearchesRerun: string;
     notificationsTitle: string;
@@ -1577,6 +1581,10 @@ const zhHK: Dict = {
     favoritesEmptyText: '在搜尋結果點一下愛心，保存的商戶會留在這裡',
     favoritesNote: '現階段只能預覽「商戶」類型的收藏——平台還未公開其他類型的單頁讀取',
     favoritesManage: '去搜尋更多',
+    favoritesUnsave: '取消收藏',
+    favoritesUnsaveBusy: '取消中…',
+    favoritesUnsaveDone: '已全部取消收藏',
+    favoritesUnsaveFailed: '取消失敗',
     savedSearchesTitle: '我的搜尋',
     savedSearchesRerun: '再搜尋',
     notificationsTitle: '提醒',
@@ -2426,6 +2434,10 @@ const en: Dict = {
     favoritesEmptyText: 'Tap the heart on any search result; saved merchants live here',
     favoritesNote: 'Only merchant saves preview as cards today — the platform has no public read for other subject types yet',
     favoritesManage: 'Find more places',
+    favoritesUnsave: 'Unsave',
+    favoritesUnsaveBusy: 'Unsaving…',
+    favoritesUnsaveDone: 'All saved places removed',
+    favoritesUnsaveFailed: 'Could not unsave',
     savedSearchesTitle: 'My searches',
     savedSearchesRerun: 'Run again',
     notificationsTitle: 'Inbox',
