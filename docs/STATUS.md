@@ -43955,3 +43955,27 @@ Dict carries ten chapters across all artefacts; `hkSeries` Home rail, `/guides` 
 **Honest boundaries.** This unit does not attempt to re-trigger CI green by reordering anything else; it changes only where the click lands. The sibling test (renders sections, jump hrefs) still points at `a[href="/hk-type"]` scoped site-wide — mobile hasn't failed on it and we don't fix problems that don't exist; if it fails next, THE fix will follow the same pattern.
 
 - readers: `tests/e2e/specs/consumer/handbook.spec.ts`, this ledger entry.
+## 1122. D1122 — the home page grows first-run onboarding: a five-anchor strip that vanishes for good once you dismiss it
+
+**Why.** "送新用户**快速上手**教程" was a standing ask. A hero full of search, rails and chips is full of possible doors — and the first session owes a new reader a tiny guided tour across four real product doors: SearchBox → the HK series → the quiz → the handbook. Not a modal, not a baby-dumper carousel — a discountable ribbon, one click each, never again after dismissal.
+
+**The unit.** `src/components/newcomer-tour.tsx` — client island, `role="region"`, placeholder-first paint (nothing renders until hydrate). Dismiss → `localStorage['nexus.newcomer-tour.off']='1'`, after which the strip never returns, even after cache clears are not guessed by product heuristics; the visitor chooses by tapping "我知道了". Four dict-carried anchors (`/search`「先打句話」/ `/hong-kong`「讀香港系列」/ `/hk-type`「自測係邊個」/ `/handbook`「翻閱說明書」); English mirror in place. Sits between hero and the almanac — the first thing a returning regular sees once and dismisses forever.
+
+Pinned. `newcomer-tour.test.ts` — source arms (island has no fetch; localStorage key literal present), home wiring (strip renders above the almanac, after the hero), both-locales dict copy, and both anchors for all four hrefs present in both blocks. web suite **343/343** (+3); `tsc` clean; census PASS over **1302 literals**; build green.
+
+**Honest boundaries.** Dismissal is local to one browser: a new device/incognito resurfaces the strip, which is the right behaviour — a first-time visitor deserves one tour, not a nag or never-show-again determinism. The CTA call-outs lead to real routes and never fake consensus; nothing here is a mode gate.
+
+- readers: `apps/web/src/components/newcomer-tour.tsx`, `apps/web/app/page.tsx`, `apps/web/src/lib/newcomer-tour.test.ts`, this ledger entry.
+## 1123. D1123 — chapter XI lands: 車仔麵 is the standing night-cart after 糖水, the loudest five minutes of the Temple Street ark
+
+**Why.** The arc arc ended at 22:30 with tong sui — the full stop. But Hong Kong's night never sleeps early enough for the plain stop; it needs one more predictable stove. Chapter XI （車仔麵） is that chapter: 22:45, standing eaters, six compartments, one white pot of broth — the final reference lens for every night this month.
+
+**The unit.** `DEMO_GUIDES` gains `hk-cart-noodles-chronicle` — 「車仔麵：一桶會預告的夜」. Three heading cards: 一、車仔檔的六格小鍋 (the six-compartment wire frame — 牛腩清湯 at the centre, 墨魚湯續加·咖喱魚蛋 left), 二、來車仔的人 (the taxi man finishing his last meter, the band rehearsing a last song, the clearing crew from the stall next door), 三、為什麼車仔麵是香港的 (the prototype of the HK midnight: standing, no table, no ceremony, an endless reheating). Cards throughout; standard 後記 disclaimer + demo flags. No real stall or operator named; synthetic narrative by fixture marker.
+
+Dict threads chapter XI across all artefacts; e2e floor 10 → 11; the handbook's reading-order adds 「22:45 車仔麵（第十一章）」after 糖水 in both locales; the Day-Arc document gains the 22:45 segment and the intro now counts eleven chapters.
+
+**Verified on this host.** Verified before push: web suite **343/343**; census PASS; `next build` green; tsc clean. The consumer e2e floors were updated in the same commit so CI exercises the new count; verify_all re-run was green on this host.
+
+**Honest boundaries.** Mock fixture only; live plane unchanged. The cast is invented; no stall, broth, or business-hours claim is real. The arc doc's next closing chapter beyond XI is queued — the eleven-count is the current ceiling; there is no chapter XI+ published yet.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.

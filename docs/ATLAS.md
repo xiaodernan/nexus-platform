@@ -106,6 +106,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/hk-cantonese-daily.test.ts` | D1115: the tile's source pins, dict-pool geometry and hub wiring |
 | `apps/web/src/components/hk-series-progress.tsx` | D1114: the local-first HK-chapter reading strip — progressbar + mark/reset, storage-bound |
 | `apps/web/src/lib/hk-series-progress.test.ts` | D1114: the strip's source pins + dict-copy pins + hub-wiring pin |
+| `apps/web/src/lib/mock/seed.ts` | D1123: the eleventh HK chapter (hk-cart-noodles-chronicle, 車仔麵) |
 | `apps/web/src/lib/mock/seed.ts` | D1120: the tenth HK chapter (hk-bing-sat-chronicle, 冰室) |
 | `apps/web/src/lib/mock/seed.ts` | D1116: the ninth HK chapter (hk-tongsui-chronicle, 糖水) — the arc's dessert close |
 | `apps/web/src/lib/mock/seed.ts` | D1111: the eighth HK chapter (hk-fruit-market-chronicle, 果欄) |
@@ -113,6 +114,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1106: the fish-market chapter (hk-fish-market-chronicle) |
 | `apps/web/src/lib/i18n/dict.ts` | D1107: the HK series consolidates in home rail / quiz chips / hub page |
 | `tests/e2e/specs/consumer/hong-kong.spec.ts` | D1110: 1 arm — the /hong-kong mega hub e2e: h1 + seven /guides chapter hrefs + quiz teaser + search taster |
+| `apps/web/src/components/newcomer-tour.tsx` | D1122: the home first-run strip — four doc-carried anchors, dismissible, plain telemetry-free |
+| `apps/web/src/lib/newcomer-tour.test.ts` | D1122: the strip's source pins + dict-copy pins |
 | `apps/web/app/handbook/page.tsx` | D1119: the in-product instruction manual — full feature tour + game tutorial + honesty contract |
 | `apps/web/src/lib/handbook.test.ts` | D1119: the manual's source pins + bilingual dict pins + footer wiring |
 | `tests/e2e/specs/consumer/handbook.spec.ts` | D1119: two arms — the page renders every section; the hero CTA lands on /search |
