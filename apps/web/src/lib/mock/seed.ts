@@ -1583,4 +1583,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-mumbai-curry-central-chronicle', title: '凌晨一點半：灣仔咖哩魚飯堂（香港系列 · 第四十一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：跟着灣仔的小咖哩魚飯堂熬煮到凌晨——香港印度人、排隊族、人生各種淚痕都在這一鍋咖哩裡。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：午夜十二點。灣仔阿昌（合成敘事，非真實人物）把土豆切成薄片；這是他的第一盤下鍋，之後才是洋蔥、番茄、咖喱、鹽、雞蛋。昨天都是煲底；今天是咖哩魚。' },
+      { type: 'heading', text: '一、咖哩的執著' },
+      { type: 'paragraph', text: '每日接近十二點，香港的灣仔有十幾座咖哩魚飯館，幾乎沒有人看得上，但總是坐得滿口。阿昌的咖哩魚不是火鍋式的——是鍋炒的：先把魚煎香，再把咖哩倒下去，蓋上鍋蓋，放十五分鐘。每一口都是所有印度人做菜的記憶，不消失，只是繼續。' },
+      { type: 'cards', title: '咖哩魚飯堂可見', items: [] },
+      { type: 'heading', text: '二、半夜的族人' },
+      { type: 'paragraph', text: '半夜十二點，到灣仔吃咖哩魚飯的香港人有三種：印巴裔的初級經理人（他們下班打卡來；嘴裡繼續在講數學）、興趣廣汎的大學生（他們沒有辦法對自己買的香飯說不買）、新渡海客（他們每天深夜到灣仔看那一張牌匾）。阿昌對所有人都一視同仁，不會因為語言疏遠，他會以同一個咖哩對待每個人。' },
+      { type: 'cards', title: '咖哩魚飯堂可數', items: [] },
+      { type: 'heading', text: '三、熬煮的城市' },
+      { type: 'paragraph', text: '阿昌今晚要下四碗咖喱魚雞蛋、兩碗咖哩魚土豆。他一個一個把十八種香料一層一層撒進碗裡；等全部人把碗喝完，整條灣仔就更濃了。如果今天沒人能夜宵，明天的太陽要把灣仔煮得再濃一次——灣仔的夜生活就專注吃這一碗。' },
+      { type: 'cards', title: '咖哩魚飯堂可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、口味、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「咖哩魚 灣仔」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

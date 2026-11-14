@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the forty chapters (D1093 → D1156)
+document is the continuity plan for that world-layer: how the forty-one chapters (D1093 → D1157)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,14 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 01:30 — 灣仔咖哩魚飯堂 (the Mumbai curry house at half-past-one) · chapter XLI
+**The smell of curry at 01:30 is the memory-the city keeps under no sign and no wall.** At 01:30,
+the curry house in Wan Chai does the city's final business for the night — none of which is
+registered by any night-watch anyone would call a night-watch. *What the product serves here:* the
+one strike at the hour the city remembers best; the rail knows which table has the last of the
+cheese. *Interlock:* between 01:00 tower cleaner and 02:00 congee, the city considers what it gave
+away at midnight.
 
 ### 10:30 — 北漂作家的香港筆記 (a Beijing writer in Hong Kong) · chapter XXXVIII
 **Every northern migrant comes south for the same reason and leaves for the same reason.** At

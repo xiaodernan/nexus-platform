@@ -44344,3 +44344,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the Beijing-writer's presence in the café, the language frequency in the wet market, and the Filipino cleaner's exact shift-end dialogue are narrative constructions. No real police log, no real bank application, no real school — none claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1157. D1157 — chapter XLI lands the 1:30 slot: 灣仔咖哩魚飯堂 — the night's only remaining light
+
+**Why.** Layer E's last open slot. The substrate-language arc completes its first full pass: the Beijing writer, the Teochew wet market, the Filipina cleaner, and now the Mumbai curry house that closes the Hong Kong night. Every chapter here is one language this city carries under no flag.
+
+**The unit.** `DEMO_GUIDES` gains `hk-mumbai-curry-central-chronicle` — 「凌晨一點半：灣仔咖哩魚飯堂（香港系列 · 第四十一章）」. Three heading cards（一、咖哩的執著 · 二、半夜的族人 · 三、熬煮的城市）, Traditional HK script, 合成敘事 framing, 後記. Both locales carry the chapter; the arc clock gains 01:30 between the tower cleaner and congee; hk-type link list; handbook reading order re-sorted to forty-one on both locales; e2e floors ≥41; census stays clean; ARC doc gained an interlock entry.
+
+**Honest boundaries.** Synthetic fixture; the curry rice ratios, the five types of curry customer, and the smell of 01:30 nothing else wakes matter for this narrative only. No real chef, no real shop, no real menu — none claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
