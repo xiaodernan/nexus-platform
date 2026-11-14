@@ -43451,3 +43451,21 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** Text-level, not pixel-level — the visual suite owns baselines. zh-HK default locale assumption, same as every other consumer spec (CI serves the same shell).
 
 - readers: `tests/e2e/specs/consumer/signin.spec.ts`, this ledger entry.
+## 1084. D1084 — the live cache probe's complete 2026-11-14 measurement: identical 5/6 at 100% cached; the relay wraps requests in a ~4.5k-token hidden system prompt; non-stream direct-JSON reporting is structurally absent
+
+**Why.** The operator asked why the dashboard shows a low cache hit rate with non-stream calls while streaming looks better. D1073 fixed the probe's own `json_object`-without-`json`-word 400. Re-running it now, completely:
+
+**Measured (gpt-6-sol, temperature 0, SSE envelope with `stream_options.include_usage=true`):**
+- identical bursts (same query ×6): call 1 0%, calls 2–6 **100%** — 5/6 report 120–137 of ~120–137 prompt tokens cached
+- diverse bursts (different queries, ~108–129 prompt tokens): **6/6 report 0%** — below the provider's ~1024-token cache floor, as designed (D1050's premise)
+- tiny-system bursts (the adapter's 14-token default system line, no json hint): call 1 `prompt=4 cached=0`; calls 2–3 `prompt=4588` / `prompt=4560` — the relay itself injects ~4.5k hidden prompt tokens server-side; call 3 measured **3600/4560 = 78.9% cached** (the hidden prefix warms after a few calls)
+- contract bursts (D1050 frozen head, same 6 diverse queries twice): **7 of 12 calls report cached=100%** (calls 4,6,7,8,10,12), 5 report 0 — provider-side variance, not caller-side
+
+**Findings.**
+1. wkapi.pro wraps outbound requests with a very large (~4.5k token) hidden server-side prefix; identical small requests ARE cache-served once warm (78.9% measured). The floor that D1050 targets still governs the small intent-prefix (~440 tokens) case, which is why the diverse arm correctly reads 0%.
+2. The SSE envelope (D1044, default since D1044) surfaces `usage.prompt_tokens_details.cached_tokens` on nearly every call; direct-JSON reports intermittently nothing. The operator's "non-stream shows a low hit rate and streaming shows a higher one" is the envelope, not the workload — and the hit rate the dashboard shows is dominated by reporting, not by directive misses.
+3. The identical-burst 5/6 at 100% today is the cache working as designed for repeat-intent traffic — the exact opposite of the operator's observed dashboard.
+
+**Honest boundaries.** One probe run ≈ 26 calls; provider-side variance is visible between arms and runs. The numbers above are dated provider reports, not a promise about future API behavior on this relay; `cache_probe.py` reproduces them on demand (opt-in, env-gated, never CI). `NEXUS_PREFIX_CONTRACT` frozen head is *not* applied to the tiny-system control arm — it is applied at pipeline call sites, which the probe's `contract bursts` arm mirrors.
+
+- readers: `apps/ai/cache_probe.py`, this ledger entry.
