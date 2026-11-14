@@ -44146,3 +44146,15 @@ Dict consolidates every lede to **十六章**, every kicker to **第十六章**;
 **Honest boundaries.** Same as every synthetic chapter — no real vendor, price, timetable or ferry line is claimed; the prose is stylized Hong Kong seafront fiction-grade on purpose. The clock is now chronologically ordered; before D1135 its entries were grouped by unit-order, after D1135 they are grouped by time-of-day, which is the only honest ordering for the "one Hong Kong day" premise.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1136. D1136 — chapter XVII joins the dawn rail: 鹹光燒餅 — the 03:30 checkpoint sparks, and the arc runs 02:00 → 23:00 fully chronological
+
+**Why.** The arc clock tail was still 02:00 →
+03:10 fruit market → 04:15 → 04:30 — a leap from late night to early morning. The missing seam is the 3 a.m. bakery, the city's first licensed hour — the slot where the congee hits the pot and the night cart still idles. Chapter XVII puts the seam into the map: 03:30 is the hinge.
+
+**The unit.** `DEMO_GUIDES` gains `hk-bakery-dawn-chronicle` — 「鹹光燒餅：凌晨三點的第十七章」. Three heading cards: 一、燒餅出爐 (the first whole pot), 二、三腳大刺蝟 (the cast), 三、一座城醒過來 (the city's key turning in the lock). Cards with empty items; mock fixture. Traditional-script only across the new block (union scan **0 residual Simplified**; exclude 台面/面 = the page word).
+
+Dict carries seventeen chapters everywhere; the home rail, /guides Featured band, /hk-type start, /hong-kong grid and arc clock each carry the seventeenth; the handbook reading-order lists the 17-in-sequence path; the e2e floors and the token-time chips catch up to seventeen. Clock is monotonically chronological across both locales.
+
+**Honest boundaries.** Synthetic fixture track. No operator, no address, no real prices; the bakery is fictional and stands for an archetype that historically never had a recognisable sign anyway.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
