@@ -100,6 +100,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/console-consumer.ts` | D1081: +`mePreferencesRead` — §33 preference rows for /me |
 | `services/platform/src/main/java/com/nexus/catalog/OfferingDetailController.java` | D1089: the public offering detail read — same projection the menu serves, merchant identity from primary location, cacheable, active-only |
 | `apps/web/src/lib/offering-detail-wire.test.ts` | D1089: 5 arms pin §4 wire → OfferingDetail projection, null-on-missing merchant, §20 availability discipline |
+| `apps/web/app/hong-kong/page.tsx` | D1105: the /hong-kong mega hub — hero + 6 chapter cards + quiz teaser + search taster |
 | `apps/web/src/components/hk-quiz.tsx` | D1095: the /hk-type client island — idle/playing/result arc, deterministic archetype scoring, zero telemetry |
 | `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |
 | `apps/web/app/hk-type/page.tsx` | D1095: /hk-type server shell — chapter chips, dot-grid backdrop, static rendering |

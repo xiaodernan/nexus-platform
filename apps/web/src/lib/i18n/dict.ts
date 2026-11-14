@@ -64,6 +64,20 @@ export interface Dict {
     /** §8 district chips row beneath the examples label — tasteful quickjumps. */
     districtsLabel: string;
     districtChips: { district: string; q: string; label: string }[];
+    /** D1105: the /hong-kong mega hub — the HK story series consolidated. */
+    hkHub: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      chaptersTitle: string;
+      quizCtaTitle: string;
+      quizCtaBody: string;
+      quizCta: string;
+      searchCta: string;
+      searchCtaBody: string;
+      searchHref: string;
+      searchHrefLabel: string;
+    };
     /** D1099: the HK story series rail — four chapters presented as a single literary thread on home. */
     hkSeries: { kicker: string; title: string; cards: Array<{ slug: string; label: string; kicker: string }> };
     /** One sentence under the tagline line underlining the sourcing discipline. */
@@ -866,6 +880,19 @@ const zhHK: Dict = {
         { slug: 'hk-temple-street-chronicle', label: '廟街：宵夜成的一座廟', kicker: '第四章' },
         { slug: 'hk-cha-chaan-teng-chronicle', label: '茶餐廳：歸於日常', kicker: '第五章' },
       ],
+    },
+    hkHub: {
+      eyebrow: '香港系列 · 完整篇章',
+      title: '香港的三碗飯',
+      intro: '從凌晨五點的魚檔到廟街散場——本系列為香港人的早餐、午飯與宵夜寫下了一頁頁，每一章都是這座城市的一個縮影。',
+      chaptersTitle: '六章反覆走完一個香港',
+      quizCtaTitle: '你係邊一個 HK？',
+      quizCtaBody: '10 道問題，找出你在香港的最近似的人格——從常餐店長到廟街解籤婆婆。',
+      quizCta: '去 /hk-type 試自己',
+      searchCta: '找一家沙田茶餐廳',
+      searchCtaBody: '用關鍵字去這座城市搜一次——下一頓吃飯就在那兒。',
+      searchHref: '/search?q=沙田%20下午茶',
+      searchHrefLabel: '沙田 下午茶',
     },
     districtsLabel: '熱門地區',
     districtChips: [
@@ -1873,6 +1900,19 @@ const en: Dict = {
         { slug: 'hk-temple-street-chronicle', label: 'Temple Street: The Night Temple', kicker: 'Chapter IV' },
         { slug: 'hk-cha-chaan-teng-chronicle', label: 'The Cha Chaan Teng: Where the City Eats', kicker: 'Chapter V' },
       ],
+    },
+    hkHub: {
+      eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
+      title: 'Six meals of one Hong Kong',
+      intro: 'From the 4:30 a.m. fish market to the last bowl on Temple Street — a chapter-by-chapter narrative of a city.',
+      chaptersTitle: 'Six chapters through one Hong Kong',
+      quizCtaTitle: 'Which HK are you?',
+      quizCtaBody: 'Ten questions — from Cha Chaan Teng manager to the fate-teller on Temple Street.',
+      quizCta: 'Try /hk-type',
+      searchCta: 'Search a Sha Tin tea house',
+      searchCtaBody: 'Type it and actually eat it — your next meal is one tap away.',
+      searchHref: '/search?q=Sha%20Tin%20afternoon',
+      searchHrefLabel: 'Sha Tin afternoon tea',
     },
     districtsLabel: 'Hot districts',
     districtChips: [

@@ -43718,3 +43718,32 @@ the mock plane.
 **Honest boundaries.** The quiz is still playful, not psychometric. The tie-break `cha_chaan_teng` order plays to the all-A-runner's deterministic landing — a deliberate continuity across chapter-V additions. Chapter V's cha chaan teng identity opens no new behavioral paths; every archetype score delta is still +2 per question.
 
 - readers: `apps/web/src/components/hk-quiz.tsx`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hk-type.spec.ts`, this ledger entry.
+## 1105. D1105 — the /hong-kong mega hub: the Hong Kong series becomes a single, read-in-one-sitting, "show me everything" page
+
+**Why.** The Hong Kong story series now spreads across multiple routes (five chapters, the home
+rail, the `/hk-type` quiz, the footer). The reader still has to click around to get a holistic
+view — the fifth-floor corrective page adds it. We wanted a single diagram the eyes can scan
+once and then choose from, the way a magazine's table of contents makes sense of a lettered set.
+
+**The unit.** `apps/web/app/hong-kong/page.tsx` — a force-static server component against the
+mock plane. The page opens with the dot-grid backdrop + a kicker/headline row from `dict.home.hkHub`,
+then a responsive six-chapter grid of cards (Traditional HK card language: gradient accent edge,
+hover lift, small-caps chapter kicker + arrow). Below that, an accent-soft rounded-2xl quiz teaser
+with an accent-gradient radial glow on one corner, and a quietly styled "REAL SEARCH" search taster
+faded into the page's everyday typography. Everything routes to `/guides/<slug>`, `/hk-type`, or
+`/search?q=` — the existing routing. Non-mock mode falls back to an honest empty state if the
+demo plane is gone. Dict `home.hkHub` extends in both locales with Traditional HK script in zh.
+
+**Verified.** `/hong-kong` renders 200 in the dev plane; web suite **325/325**; census PASS over
+**1123 literals**; console-i18n PASS (the inline CJK label `沙田 下午茶` was promoted out of the
+JSX to `dict.home.hkHub.searchHrefLabel` in the same unit, after the i18n census redlined it);
+`next build` green; `tsc --noEmit` clean. No screenshots available (desktop window not visible);
+the structure was verified with a `:3001/catch-the-blocks` HTML dump (all chapters, kicker, quiz
+band visible) and the page's own e2e is expected in the next unit.
+
+**Honest boundaries.** Mock plane only — live mode falls back to an EmptyState component because
+the seed catalogue this chapter depends on is fixture-only today. The page does not cloak itself
+in live mode's absence; production visitors get an honest note, not a half-rendered page. No new
+tokens, no new code paths for slf-serve.
+
+- readers: `apps/web/app/hong-kong/page.tsx`, this ledger entry.
