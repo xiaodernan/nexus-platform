@@ -18,7 +18,9 @@
  */
 
 import { IS_MOCK } from './env';
-import { nexusGet } from './api/base';
+import { nexusAuthedGet, nexusGet } from './api/base';
+import { merchantDetailFrom, type WireMerchantProfile } from './platform-catalog';
+import { merchantToCard } from './adapters';
 import { mockHomeRails } from './mock';
 import type { EntityCard, GeoPoint, Intent, SearchResponse } from './types';
 
@@ -66,11 +68,29 @@ export async function loadRailCards(key: RailKey, request: RailsRequest): Promis
   if (IS_MOCK) return mockHomeRails(request.geo, request.signedIn)[key] ?? [];
   if (key === 'recently_viewed') {
     if (!request.signedIn) return [];
-    const page = await nexusGet<{ items: Array<{ card: EntityCard }> }>('platform', '/api/v1/me/favorites', {
-      searchParams: { limit: 6 },
-      authorization: null,
-    });
-    return page.items.map((entry) => entry.card);
+    // The platform serves bare rows, newest first — `[{ id, subject_type, subject_id, note,
+    // created_at }]`, never cards, and `/api/v1/me/favorites` requires the caller's session (§3).
+    // Hydration happens here, one authed read per *merchant* subject through the same projection the
+    // `/m/[slug]` page uses. Offering/collection/guide rows are not card-hydratable on the platform
+    // today (no public offering read door, no collection by id) and are *skipped, not guessed* —
+    // the rail would rather be short than lie about a card the platform never served.
+    const rows = await nexusAuthedGet<Array<{ subject_type: string; subject_id: string }>>(
+      'platform',
+      '/api/v1/me/favorites',
+      { searchParams: { limit: 6 } },
+    );
+    const hydrated = await Promise.allSettled(
+      (Array.isArray(rows) ? rows : [])
+        .filter((row) => row.subject_type === 'merchant')
+        .slice(0, 6)
+        .map(async (row) => merchantToCard(merchantDetailFrom(
+          await nexusAuthedGet<WireMerchantProfile>(
+            'platform',
+            `/api/v1/merchants/${encodeURIComponent(row.subject_id)}`,
+          ),
+        ))),
+    );
+    return hydrated.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
   }
   const def = RAIL_DEFS.find((entry) => entry.key === key);
   if (!def?.sort || !def.limit) return [];

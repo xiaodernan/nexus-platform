@@ -23,9 +23,10 @@ import type { EntityCard } from '@nexus/ui/trust/types';
  */
 
 const get = vi.hoisted(() => vi.fn());
+const authedGet = vi.hoisted(() => vi.fn());
 
 vi.mock('./env', async (importOriginal) => ({ ...(await importOriginal<typeof EnvModule>()), IS_MOCK: false }));
-vi.mock('./api/base', () => ({ nexusGet: get }));
+vi.mock('./api/base', () => ({ nexusGet: get, nexusAuthedGet: authedGet }));
 
 const { homeRails } = await import('./data');
 
@@ -34,15 +35,74 @@ function card(id: string): EntityCard {
   return { id } as unknown as EntityCard;
 }
 
+/**
+ * A minimal-but-valid wire merchant profile (the shape `merchantDetailFrom` projects). Required
+ * fields only; the rail test needs a card out the other end, not the full captured 2026-09-22 row.
+ */
+const wireProfile = {
+  card_type: 'merchant',
+  id: '91a39914-ca22-5d36-b65c-a9197d53d1ec',
+  slug: 'm-1',
+  title: '测试熟食档',
+  subtitle: 'Cha Chaan Teng · Sha Tin',
+  description: null,
+  image: null,
+  price: { amount: '88.00', currency: 'HKD', model: 'per_person' },
+  rating: { value: 4.5, count: 12 },
+  open: { is_open: true, as_of: '2026-11-13T12:00:00Z', source_fact_id: 'fact-hours' },
+  facts: [
+    {
+      fact_id: 'fact-hours',
+      subject_type: 'merchant',
+      subject_id: '91a39914-ca22-5d36-b65c-a9197d53d1ec',
+      attribute: 'opening_hours',
+      value: { zones: [{ weekday: 2, opens: '09:00', closes: '22:00' }], closed_weekday: null, data_origin: 'seed' },
+      source: 'merchant',
+      confidence: 1,
+      observed_at: '2026-11-12T09:00:00Z',
+      expires_at: null,
+      stale: false,
+    },
+  ],
+  flags: { sponsored: false, demo: true, unverified: true },
+  district: 'Sha Tin',
+  city: 'Hong Kong',
+  category: 'Cha Chaan Teng',
+  categories: [{ category_id: 'c1', slug: 'cha-chaan-teng', name: 'Cha Chaan Teng', name_zh: '茶餐廳', kind: 'merchant', parent_slug: null, parent_name: null }],
+  price_band: '$',
+  contact: null,
+  images: [],
+  locations: [
+    {
+      location_id: 'loc-1',
+      label: null,
+      address_line1: '1/F Test Plaza',
+      address_line2: null,
+      district: 'Sha Tin',
+      city: 'Hong Kong',
+      geo: { lat: 22.38, lng: 114.19 },
+      mtr: null,
+      is_primary: true,
+    },
+  ],
+  business_hours: [],
+  top_offerings: [],
+  review_summary: null,
+};
+
 const request = { geo: { lat: 22.2817, lng: 114.1585 }, locale: 'zh-HK' };
 
 beforeEach(() => {
   get.mockReset();
+  authedGet.mockReset();
 });
 
 describe('homeRails — a page with a stated reason, never a crash', () => {
   it('degrades on all five failing instead of throwing', async () => {
     get.mockRejectedValue(new Error('upstream_unreachable'));
+    // The favourites rail reads the *authed* platform plane, so its rejection lives behind a
+    // different double — a signed-in all-fail is still a real, renderable state.
+    authedGet.mockRejectedValue(new Error('upstream_unreachable'));
 
     const result = await homeRails({ ...request, signedIn: true });
 
@@ -55,7 +115,8 @@ describe('homeRails — a page with a stated reason, never a crash', () => {
       recommended: [],
       recently_viewed: [],
     });
-    expect(get).toHaveBeenCalledTimes(5);
+    expect(get).toHaveBeenCalledTimes(4);
+    expect(authedGet).toHaveBeenCalledTimes(1);
   });
 
   it('degrades on four of five, the worst an anonymous viewer can reach', async () => {
@@ -67,6 +128,7 @@ describe('homeRails — a page with a stated reason, never a crash', () => {
     expect(result.degradedReason).toBe('4 of 5 rails unavailable');
     // The favourites rail is never asked for an anonymous viewer: asking it can only 401 (§155).
     expect(get).toHaveBeenCalledTimes(4);
+    expect(authedGet).not.toHaveBeenCalled();
     expect(get.mock.calls.every(([target]) => target === 'ai')).toBe(true);
   });
 
@@ -92,8 +154,12 @@ describe('homeRails — a page with a stated reason, never a crash', () => {
       .mockResolvedValueOnce({ items: [card('near')] })
       .mockResolvedValueOnce({ items: [card('rating')] })
       .mockResolvedValueOnce({ items: [card('trending')] })
-      .mockResolvedValueOnce({ items: [card('cheap')] })
-      .mockResolvedValueOnce({ items: [{ card: card('favourite') }] });
+      .mockResolvedValueOnce({ items: [card('cheap')] });
+    // The platform serves bare favourite rows (§3), never cards; the rail hydrates one read per
+    // merchant subject through the same projection /m/[slug] uses.
+    authedGet
+      .mockResolvedValueOnce([{ subject_type: 'merchant', subject_id: 'm-1' }])
+      .mockResolvedValueOnce(wireProfile);
 
     const result = await homeRails({ ...request, signedIn: true });
 
@@ -103,6 +169,8 @@ describe('homeRails — a page with a stated reason, never a crash', () => {
     expect(result.data.for_you).toEqual([card('rating')]);
     expect(result.data.trending).toEqual([card('trending')]);
     expect(result.data.recommended).toEqual([card('cheap')]);
-    expect(result.data.recently_viewed).toEqual([card('favourite')]);
+    expect(result.data.recently_viewed).toHaveLength(1);
+    expect(result.data.recently_viewed[0]?.id).toBe('91a39914-ca22-5d36-b65c-a9197d53d1ec');
+    expect(authedGet).toHaveBeenCalledTimes(2);
   });
 });
