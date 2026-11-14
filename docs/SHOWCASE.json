@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1129",
-  "milestone_full": "香港系列十三章 + 使用說明書 + 新手上路 + arcade arc 時鐘 + 獅子山暮夜",
+  "milestone": "D1132",
+  "milestone_full": "香港系列十三章 + 簡明說明書 + 壓力測試 96/96 綠",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "4f5eafa",
   "features": [
-    "HK series: thirteen Traditional-script chapters, dawn→dessert→dusk→dawn",
+    "HK series: thirteen Traditional-script chapters, dawn→dusk→dawn loop",
     "/hong-kong: twelve-checkpoints arc clock (03:10 → 02:00) + horizon strip",
-    "Today: 今日食運 daily almanac · 每日一句 Cantonese-of-the-day",
-    "/handbook: complete bilingual manual · quiz tutorial",
-    "/hk-type: ten questions, five archetypes, zero telemetry",
-    "Spring Cloud: eureka, gateway, config-server, bus-lite, insight, events"
+    "今日食運 daily almanac · 每日一句 Cantonese-of-the-day",
+    "/handbook: complete bilingual manual · quiz tutorial · newcomer strip",
+    "scroll-behavior:smooth removed — the reader owns the scroll again",
+    "LLM cache probe runs weekly from CI on neutral IPs (D1130)"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }
