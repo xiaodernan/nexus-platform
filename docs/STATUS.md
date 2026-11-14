@@ -43480,3 +43480,19 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** Only merchant subjects unsave from the grid (the hydration is merchant-only by platform availability, D1074/D1081); non-merchant saves keep showing the existing stated limit note. Optimistic removal is reconciled by the server re-read (`router.refresh()`), not trusted — a failed DELETE leaves the card in place with the envelope code printed. No bulk unsave (platform door is per-subject by design).
 
 - readers: `apps/web/src/components/me-favorites-grid.tsx`, this ledger entry.
+## 1086. D1086 — the intent-extraction contract holds live under this relay today: 5/5 cases parse contract JSON under `gpt-6-sol`, ≈$0.015 total
+
+**Why.** `eval_live_intent.py` exists for exactly one property: the model behind the §7.1 pipeline is still the model after a release/proxy upgrade — silent rot would otherwise ship with a green CI (CI mocks the provider). After the wkapi.pro relay intermittently blackholed connections earlier this afternoon, re-checking the contract live against today's relay was the correct verification, not a formality.
+
+**Measured (2026-11-14, gpt-6-sol, temperature 0, `INTENT_EXTRACT_SYSTEM` + `json_object`):**
+- `budget-ramen` — intent `discover_merchant`, category `ramen`, ~$0.00245
+- `location-sushi` — intent `discover_merchant`, category `sushi`, location `鰂魚涌`, ~$0.00278
+- `reserve-1105` — intent `reserve`, ~$0.00182
+- `compare-100` — intent `compare`, ~$0.00623
+- `unknown-never-guesses` — intent `unknown`, ~$0.00175
+
+**Result.** `RESULT: PASS — 5/5 contract case(s) answered parseable contract JSON under the configured provider` (§7.1 shape, incl. the honest-`unknown` case). Total cost this run ≈ **$0.01503**.
+
+**Honest boundaries.** A single-run, five-case snapshot on one provider day; it is not a stability certificate. Worth re-running after any relay/model change. Never CI by design; `NEXUS_LLM_*` env-gated; cost of one run is a few cents and it must stay that way (the day it stops being cheap is the day it stops being routine).
+
+- readers: `apps/ai/eval_live_intent.py`, this ledger entry.
