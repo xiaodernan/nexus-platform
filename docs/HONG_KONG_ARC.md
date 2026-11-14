@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the twenty-six chapters (D1093 → D1149)
+document is the continuity plan for that world-layer: how the twenty-eight chapters (D1093 → D1151)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,21 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 11:00 — 報館放送 (the newspaper wrapper) · chapter XXVII
+**The papers that wake this city come out under one steady hand.** At 11:00, two hours after the
+breakfast establishments open, the wrapper machines at the pressyard fold everything that will be
+in breakfasts, on the tram, on the kitchen table of every auntie in Hong Kong. *What the product
+serves here:* search "報紙 早報" — one tap to know what the whole city will know. *Interlock:* the
+10:00 fishball taste-test happens two hours before the first headline hits the wrapper; the 12:00
+siu mei queue happens with the paper already sitting on the counter.
+
+### 15:00 — 九龍公園的雀籠房 (the pigeon coop) · chapter XXVIII
+**The oldest hobby in the neighbourhood is a password.** At 15:00, the pigeon keepers' ritual
+commences — the drawer opens, the bird watch is on. *What the product serves here:* nobody asks the
+product for a park walk at 15:00, but the rail meets the reader exactly where the keepers nod to
+each other. *Interlock:* between 13:30 rice-pit and 16:00 Bourse bell, the city returns to its quiet
+— the pigeon coop at three is where the neighbourhood slows to a full stop.
 
 ### 02:30 — 最後一鍋糖水 (the last tong sui urn) · chapter XXV
 **The night's sweetness ends in one urn.** At 02:30, before the congee line and long after the fish

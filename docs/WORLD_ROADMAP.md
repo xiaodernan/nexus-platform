@@ -15,8 +15,8 @@ What remains unclaimed in a classic HK day: the hours when the city changes shif
 | 24 — **landed D1148** | 01:00 | 塔樓清潔工 | hk-night-cleaner-chronicle | The city is cleaned by the people who never get to see it awake |
 | 25 — **landed D1149** | 02:30 | 最後一鍋糖水 | hk-last-tong-sui-urn-chronicle | The last urn of tong sui going cold — the night's sweetness ending |
 | 26 — **landed D1149** | 10:00 | 魚蛋檔 | hk-fishball-stall-chronicle | The first fish balls of the day from the same ladles, same fire |
-| 27 | 11:00 | 報館放送：早報印好了 | hk-newspaper-wrapper-chronicle | The newsstand that still sees the day before everyone else |
-| 28 | 15:00 | 九龍公園的雀籠房 | hk-pigeon-coop-chronicle | The pigeon keepers of Kowloon Park — the Saturday body |
+| 27 — **landed D1151** | 11:00 | 報館放送：早報印好了 | hk-newspaper-wrapper-chronicle | The newsstand that still sees the day before everyone else |
+| 28 — **landed D1151** | 15:00 | 九龍公園的雀籠房 | hk-pigeon-coop-chronicle | The pigeon keepers of Kowloon Park — the Saturday body |
 | 29 | 17:00 | 太古城的一身風雨候車亭 | hk-typhoon-shelter-chronicle | Bus shelter that becomes a typhoon shelter for ten minutes every afternoon |
 | 30 | 20:00 | 粥府的長枱 | hk-soup-kitchen-communal-chronicle | The long table in the communal soup kitchen on Temple Street |
 | 31 | 21:30 | 屋邨電梯口的紙箱 | hk-estate-cardboard-chronicle | The cardboard man outside the lift lobby who sorts the whole night |

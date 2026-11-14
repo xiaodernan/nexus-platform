@@ -44290,3 +44290,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** The embedded tutorial is one line by design — the full booklet still lives at `/handbook`; the chrome door is a signpost, not a fork of the manual. No new routes; no e2e changes; no telemetry of any kind.
 
 - readers: `apps/web/src/components/site-chrome.tsx`, `apps/web/src/components/hk-quiz.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+## 1151. D1151 — chapters XXVII and XXVIII land together: 11:00 報館放送 and 15:00 九龍公園的雀籠房
+
+**Why.** WORLD_ROADMAP rows 27/28 — two scenes the series kept threatening to tell: the pressyard that prints the city's first glance, and Hong Kong's most secretive hobby on a Wednesday afternoon.
+
+**The unit.** `DEMO_GUIDES` gains two fixtures: `hk-newspaper-wrapper-chronicle` — 「早上十一點：報館放送（香港系列 · 第二十七章）」, and `hk-pigeon-coop-chronicle` — 「下午三點：九龍公園的雀籠房（香港系列 · 第二十八章）」. Traditional HK script throughout (census 1521 literals, 0 simplified; 台/面 exclusions only); empty cards; 後記 + SearchBox pointers（「報紙 早報」/「雀 比賽」）。Both locales carry both chapters; the arc clock gains 11:00 and 15:00 between siu mei/dish-pit and the Bourse (56 chips across both locales); hk-type link list; handbook reading order re-sorted to twenty-eight on both locales; e2e floors ≥28; WORLD_ROADMAP rows 27/28 marked landed; ARC doc gained two interlock entries.
+
+**Honest boundaries.** Synthetic fixtures; the pressyard routine, the roost-flight race, and the "九尾雀號上次失去" are narrative constructions. No real operator, bird, paper, price, or address — none of which we claim anywhere.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
