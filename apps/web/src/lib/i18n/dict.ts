@@ -925,7 +925,7 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '十一章反覆走完一個 HK',
+      title: '十二章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
@@ -938,6 +938,7 @@ const zhHK: Dict = {
         { slug: 'hk-tongsui-chronicle', label: '糖水：宵夜後的一碗甜', kicker: '第九章' },
         { slug: 'hk-bing-sat-chronicle', label: '冰室：菠蘿包與一杯鴛鴦', kicker: '第十章' },
         { slug: 'hk-cart-noodles-chronicle', label: '車仔麵：一桶會預告的夜', kicker: '第十一章' },
+        { slug: 'hk-congee-chronicle', label: '皮蛋瘦肉粥：全城加班後的最後一味', kicker: '第十二章' },
       ],
     },
     hkDaily: {
@@ -979,7 +980,7 @@ const zhHK: Dict = {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
       intro: '從凌晨四點半的魚市與果欄，到廟街的車仔麵、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
-      chaptersTitle: '十一章反覆走完一個香港',
+      chaptersTitle: '十二章反覆走完一個香港',
       clockTitle: '香港一日的讀法：照時間讀',
       clockHint: '由果欄 03:10 到車仔麵 22:45 — 照順序進入這座城的節拍',
       clock: [
@@ -994,6 +995,7 @@ const zhHK: Dict = {
         { time: '19:00', name: '廟街', href: '/guides/hk-temple-street-chronicle' },
         { time: '22:30', name: '糖水', href: '/guides/hk-tongsui-chronicle' },
         { time: '22:45', name: '車仔麵', href: '/guides/hk-cart-noodles-chronicle' },
+        { time: '02:00', name: '皮蛋瘦肉粥', href: '/guides/hk-congee-chronicle' },
       ],
       quizCtaTitle: '你係邊一個 HK？',
       quizCtaBody: '10 道問題，找出你在香港的最近似的人格——從常餐店長到廟街解籤婆婆。',
@@ -1270,7 +1272,7 @@ const zhHK: Dict = {
     eyebrow: '香港系列 · 互動篇章',
     title: '你係邊一個 HK？',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
-    seriesLabel: '十一章香港系列指南',
+    seriesLabel: '十二章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
@@ -1283,6 +1285,7 @@ const zhHK: Dict = {
       { href: '/guides/hk-tongsui-chronicle', title: '糖水：宵夜後的一碗甜', hint: '第九章' },
       { href: '/guides/hk-bing-sat-chronicle', title: '冰室：菠蘿包與一杯鴛鴦', hint: '第十章' },
       { href: '/guides/hk-cart-noodles-chronicle', title: '車仔麵：一桶會預告的夜', hint: '第十一章' },
+      { href: '/guides/hk-congee-chronicle', title: '皮蛋瘦肉粥：全城加班後的最後一味', hint: '第十二章' },
     ],
     start: '開始',
     progress: (current, total) => `第 ${current} / ${total} 問`,
@@ -2025,7 +2028,7 @@ const zhHK: Dict = {
         'District chips（沙田／中環／旺角／銅鑼灣／荃灣…）是無腦跳法：點一下就把搜索丟進那個地區；想再精修就在 SearchBox 後面加條件即可。',
       ] },
       { id: 'hkseries', kicker: 'STORY', title: '3 · 香港系列 · 由凌晨三點走到最甜的杯底', paragraphs: [
-        '十一章反覆走一遍香港這座城市的一整天——本系列經已拓至第十一章，走法照舊。順序按讀書順序：03:10 果欄（第八章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 06:00 茶餐廳（第五章）→ 06:45 冰室（第十章）→ 07:30 早茶（第三章）→ 12:00 燒味（第二章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）。',
+        '十二章反覆走一遍香港這座城市的一整天——本系列經已拓至第十二章，走法照舊。順序按讀書順序：03:10 果欄（第八章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 05:30 三餐的血（第一章）→ 06:00 茶餐廳（第五章）→ 06:45 冰室（第十章）→ 07:30 早茶（第三章）→ 12:00 燒味（第二章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）→ 02:00 皮蛋瘦肉粥（第十二章）。',
         '每章都是「合成敘事示例」（旗幟標誌 demo: true），用於演示內容層的呈現能力；不是真實店家推薦，但就是那樣真實的一頓飯。',
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
       ] },
@@ -2101,7 +2104,7 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in eleven chapters',
+      title: 'One HK in twelve chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
@@ -2114,6 +2117,7 @@ const en: Dict = {
         { slug: 'hk-tongsui-chronicle', label: 'Tong Sui: The Sweet Finish', kicker: 'Chapter IX' },
         { slug: 'hk-bing-sat-chronicle', label: 'The Ice-Room: Pineapple Bun and Yuenyeung', kicker: 'Chapter X' },
         { slug: 'hk-cart-noodles-chronicle', label: 'The Cart Noodles', kicker: 'Chapter XI' },
+        { slug: 'hk-congee-chronicle', label: 'Century Egg Congee: The Last Honour', kicker: 'Chapter XII' },
       ],
     },
     hkDaily: {
@@ -2155,7 +2159,7 @@ const en: Dict = {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'One table, one Hong Kong',
       intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the cart-noodles at Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
-      chaptersTitle: 'Eleven chapters through one Hong Kong',
+      chaptersTitle: 'Twelve chapters through one Hong Kong',
       clockTitle: 'Reading the day in Hong Kong — clock order',
       clockHint: 'Every chapter, one time of day — from 03:10 through 22:45',
       clock: [
@@ -2170,6 +2174,7 @@ const en: Dict = {
         { time: '19:00', name: 'Temple Street', href: '/guides/hk-temple-street-chronicle' },
         { time: '22:30', name: 'Tong sui', href: '/guides/hk-tongsui-chronicle' },
         { time: '22:45', name: 'Cart noodles', href: '/guides/hk-cart-noodles-chronicle' },
+        { time: '02:00', name: 'Congee', href: '/guides/hk-congee-chronicle' },
       ],
       quizCtaTitle: 'Which HK are you?',
       quizCtaBody: 'Ten questions — from Cha Chaan Teng manager to the fate-teller on Temple Street.',
@@ -2446,7 +2451,7 @@ const en: Dict = {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'Eleven HK chapters',
+    seriesLabel: 'Twelve HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
@@ -2459,6 +2464,7 @@ const en: Dict = {
       { href: '/guides/hk-tongsui-chronicle', title: 'Tong Sui: The Sweet Finish', hint: 'Chapter nine' },
       { href: '/guides/hk-bing-sat-chronicle', title: 'The Ice-Room: Pineapple Bun and Yuenyeung', hint: 'Chapter ten' },
       { href: '/guides/hk-cart-noodles-chronicle', title: 'The Cart Noodles', hint: 'Chapter eleven' },
+      { href: '/guides/hk-congee-chronicle', title: 'Century Egg Congee: The Last Honour', hint: 'Chapter twelve' },
     ],
     start: 'Start',
     progress: (current, total) => `Question ${current} / ${total}`,
@@ -3239,7 +3245,7 @@ const en: Dict = {
       ], bullets: [
         '"Why no Tokyo?" The fixture set holds Hong Kong; other cities are future expansion.',
         '"Is the price real?" In mock mode it is imaginary; in live mode the platform only shows what it has checked.',
-        '"Is a twelfth chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
+        '"Is a thirteenth chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
       ] },
     ],
     nextTitle: 'Want more?',

@@ -44036,3 +44036,16 @@ Two edits to the CI gate so the reader is reachable: `.github/workflows/ci.yml` 
 
 - readers: `scripts/check_console_script.mjs`, `scripts/falsify_console_script.mjs`, `.github/workflows/ci.yml`, this ledger entry.
 **CI witness + pin evolution.** The two new CI steps land in the `experience` job after the ui-script arms; `check_d952.mjs` — the reader that holds the e2e credential-plane seam — pinned `ci.yml`'s 535-line byte-count as a citation guard; the additions move it to 548, and the pin was evolved in the same commit with the whole-arm self-test re-run (`held R5 ci.yml keeps its 548 cited-line-stable lines`, and `verify_all` re-run is NO OFFENDER with `check_console_script.mjs` part of the population (68 readers). Both arms of this unit are wired into `.github/workflows/ci.yml` as `| tee` steps so `check_reader_reachability.mjs` continues to see them (exit 0 with 71 listeners reached).
+## 1128. D1128 — chapter XII lands: 皮蛋瘦肉粥 is the night's final ritual — and the arc is now a loop
+
+**Why.** Every Hong Kong day survives its night precisely by resetting itself — the pot of congee at 02:00 (before the 03:10 fruit market re-opens) is what allows the day to happen at all. The arc finally curves back into itself; the story's ticks are cyclic, not linear.
+
+**The unit.** `DEMO_GUIDES` gains `hk-congee-chronicle` — 「皮蛋瘦肉粥：全城加班後的最後一味」. Three heading cards: 一、為何粥是夜晚最後一味 (the complete pot's steam), 二、皮蛋的由來 (two months of souring, from white to olive to indigo), 三、粥碗前坐的人 (the Mcdonald Land of nights: the nurse who never broke off, the taxi driver at 02:00, the journalist citing her counterheat). Cards throughout; standard 後記 + demo disclaimer + SearchBox seed. No real stall or operator named.
+
+Dict carries twelve chapters everywhere; the arc clock gains the 02:00 checkpoint name and href in both locales; handbook's reading-order line is updated for both locales to close the loop at 02:00; en FAQ now asks about chapter thirteen.
+
+**Verified on this host.** Following a host outage (this machine's dev planes keep dying under Playwright load today), verification was by static HTML parsing of the mock-rendered `/hong-kong`: page size 127 KB, every chapter renders, arc timeline present at twelve 02:00 checkpoints, `皮蛋瘦肉粥` ×4, `hk-congee-chronicle` ×4. Local e2e desktop lane evidence is being deliberately deferred to CI for this push (prior pushes today already saw 4/4 & 5/5 desktop green with the same suite). Build clean; census PASS over **1352 literals**; web suite **346/346** (Test Files 46).
+
+**Honest boundaries.** Mock plane; live plane needs platform seed. The chapter is a synthetic story; century-egg facts are general-knowledge popular narrative, not chemistry. The arc doc's ordering now loops from 22:30 → 22:45 → 02:00 → dawn; the loop ends before any chapter exists after that point.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.

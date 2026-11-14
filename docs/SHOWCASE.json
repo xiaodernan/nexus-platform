@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1127",
-  "milestone_full": "Hong Kong 十一章 + 一條時鐘線 (11→11 timeline strip)",
+  "milestone": "D1128",
+  "milestone_full": "香港系列十二章 + 使用說明書 + 新手上路 + arcade arc 時鐘",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "4f5eafa",
   "features": [
-    "HK series: eleven Traditional-script chapters, dawn→dessert→cart",
-    "/hong-kong: eleven-clock reading strip (03:10 → 22:45), tap to chalk",
-    ".nexus-horizon: HK arc as a pure-art sky strip on the mega-hub hero",
+    "HK series: twelve Traditional-script chapters, dawn→dessert→02:00 congee",
+    "/hong-kong: twelve-checkpoints arc clock (03:10 → 02:00) — tap to chalk",
     "今日食運 daily almanac (FNV-1a, Hong Kong clock)",
     "每日一句 Cantonese-of-the-day, hand-checked Jyutping",
-    "/handbook + newcomer strip: five-anchor first-run tour · 9-64-arm census gate"
+    "/handbook + newcomer strip: five-anchor first-run tour",
+    "Spring Cloud: eureka, gateway, config-server, bus-lite, insight, events"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

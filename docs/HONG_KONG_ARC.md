@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the eleven chapters (D1093 → D1123)
+document is the continuity plan for that world-layer: how the twelve chapters (D1093 → D1128)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -113,6 +113,13 @@ taxi pulls in. The people who arrive here at 22:45 are not arguing about dinner 
 more — they are asking for hot broth against the night's edge. *What the product
 serves here:* search "廟街 車仔麵" — one tap; the cart is still steaming. *Interlock:*
 Temple Street's postscript — the quieter the city gets, the louder the ladle.
+
+### 02:00 — 皮蛋瘦肉粥 (the century-egg congee) · chapter XII
+**The loop closes onto itself.** The 02:00 candle burns a little longer at the avenue past
+Temple Street; the tong sui urn went cold at 01:00, and the siu mei platform closed
+hours ago — now there is only this: silk-thin meat, edible egg, rice that has made
+peace with itself. *What the product serves here:* search "油麻地 皮蛋粥" — one tap; the
+night clock resets. *Interlock:* the dawn economy; the day ends by restarting itself.
 
 ## What this arc demands of the product
 
