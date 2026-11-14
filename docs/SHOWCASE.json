@@ -1,15 +1,15 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1123",
-  "milestone_full": "香港系列十一章 + 內建使用說明書 + 新手上路條",
+  "milestone": "D1124",
+  "milestone_full": "香港系列十一章 + 閱讀時鐘（03:10 → 22:45）",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
-  "updated_at_commit": "current-master",
+  "updated_at_commit": "46ba505",
   "features": [
     "HK series: eleven Traditional-script chapters, dawn→dessert→cart",
+    "/hong-kong: eleven-clock reading strip (03:10 → 22:45), tap to chalk",
     "今日食運 daily almanac (FNV-1a, Hong Kong clock)",
     "每日一句 Cantonese-of-the-day, hand-checked Jyutping",
-    "/hk-type: ten questions, five archetypes, zero telemetry",
     "/handbook + newcomer strip: five-anchor first-run tour",
     "Spring Cloud: eureka, gateway, config-server, bus-lite, insight, events"
   ],
