@@ -43628,3 +43628,14 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** The chapter lives entirely in the demo plane (`lib/mock/seed.ts`) — it will not publish in live mode until the platform seed carries one row for it. The descriptions skip framing language; it is teaching literary HK, as requested by the mandate's "entries of massive content". Temple-street tax-load honesty: no real merchants named; `flags.demo = true` on every block.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
+## 1098. D1098 — the /hk-type quiz gains an e2e spine: the only consumer interactive in the product, proven playable in CI
+
+**Why.** D1095's interactive piece shipped without an e2e spec — the product's first interactive surface in this series and the only consumer game with a score. The house pattern is the signin/me spines: pin that the surface loads, the start button works, the progressbar renders, the determinism end-to-end, and the result screen renders the correct archetype link.
+
+**The unit.** `tests/e2e/specs/consumer/hk-type.spec.ts` — single test, desktop, drives `/hk-type` end-to-end: the start screen renders the headline; clicking 開始 enters question phase; a real `[role="progressbar"]` element mounts; eight clicks of option A walk the quiz to the deterministic `yum_cha` archetype (all-A is the canonical tie-break fixture); the result lands with the 「茶樓早茶」 heading and the《早茶：竹籠與陳皮茶香》 chapter link.
+
+**Run on this host.** `npx playwright test specs/consumer/hk-type.spec.ts --project=desktop` — **passed** (7.4s) with the dev server in mock mode. CI consumer lane will pick this up in every push touching files it covers — the e2e job is unpartitioned in this lane for /hk-type.
+
+**Honest boundaries.** One test on desktop — mobile-project iteration is a future unit; the counters are deterministic HK-Traditional copy-locked; the test asserts visible render text, not pixels (the visual suite owns those). The `^A ` locator ignores option text; the dict can be safely re-tuned without breaking the spec as long as option A wins.
+
+- readers: `tests/e2e/specs/consumer/hk-type.spec.ts`, this ledger entry.
