@@ -825,4 +825,23 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+  {
+    slug: 'hk-temple-street-chronicle', title: '廟街：宵夜成的一座廟（香港系列 · 第四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：跟著廟街的霓虹燈走完一刻，看一座城市如何每天晚上設香火、賣牛雜、掛起卜卦。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：黃昏七點以後，油麻地的廟街開始卸去白天的耐煩，換上兩排花燈。一側是燒味和水餃檔，一側是打小人、看相、解籤的婆婆；路中央是可移動的 stall ——塑膠椅子、還未命名的東西，盤推來推去，空氣裡塞滿一鍋薯粉湯。' },
+      { type: 'heading', text: '一、牌匾為何重' },
+      { type: 'paragraph', text: '廟街三字在招牌上，字義先於字形：廟——不是宗教分區，而是這座城認可「任何有生命的聲氣」都值得問一問；街——不是街道，而是這座城認可「任何一種聲氣」都要找個位置。招牌的每一筆都在向晚上投降。' },
+      { type: 'heading', text: '二、煲湯–霓虹–靈簽' },
+      { type: 'paragraph', text: '廟街三樣特立的生意：煲湯檔、霓虹燈裝潢店、打小人的婆婆。煲湯檔的老闆是幾兄弟，他們不用燈箱，直接用生意對話；霓虹燈裝的店主帶著箱子示人以字體排位；打小人的婆婆一雙手即認出你夢裡的紅色——是睡著了還是醒著。' },
+      { type: 'cards', title: '廟街前後可去', items: [] },
+      { type: 'heading', text: '三、華爸撈起' },
+      { type: 'paragraph', text: '去廟街最熱的時候是營業時間半夜，人們各有為了今天那頓豐富的晚餐站穩腳，往地上看：陳皮、塘蓮根、粉麵、豆芽、蘿蔔——碗裡面一層層地摞疊起來。撈起的時候，竹筷子像會刻文字一樣深。' },
+      { type: 'cards', title: '廟街可食', items: [] },
+      { type: 'heading', text: '後記：你拿到的是甚麼' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、口味、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。廟街每天晚上都有人在重新寫下香港的方言，沒有人看過它完整，也沒有人覺得需要。趕時間的話，先去 SearchBox 搜「油麻地 宵夜」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

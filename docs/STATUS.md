@@ -43617,3 +43617,14 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** The footer was chosen specifically because `/me` already covered the strong-nav column; stacking two member links would have outpaced the brand discipline. The quiz remains force-static and unaccessed from the merchant/admin planes (intentional — it is a consumer curiosity).
 
 - readers: `apps/web/src/components/site-chrome.tsx`, this ledger entry.
+## 1097. D1097 — 「香港系列 · 第四章」：廟街 — a tide chapter for a city that never sleeps
+
+**Why.** The HK series chapters should cover the full arc Hong Kong citizens volunteer to their wallets each week — and every chapter so far stops at two set windows (meals, not drinks). Temple Street is the night-long market that ties the threads together: dai pai tong dinners, plastic chairs, fortune-telling grandmothers, and the bowls the HK-to-HK journey demands after a long day. One more chapter to complete the round of one full day in two daylight windows and one night seam.
+
+**The unit.** `DEMO_GUIDES` in `apps/web/src/lib/mock/seed.ts` gains `hk-temple-street-chronicle` — 「廟街：宵夜成的一座廟（香港系列 · 第四章）」. Six body blocks: 入夜的第一眼（油麻地霓虹分區樓換燈）→ 一、牌匾為何重（招牌書法義先於字形 · 任何聲氣都值得問一問）→ 二、煲湯–霓虹–靈簽（潮州人湯頭 · 霓虹燈招牌 · 打小人的婆婆）→ 三、華爸撈起（陳皮、塘蓮根、粉麵、蘿蔔的層疊 + 竹筷撈起的手勢）→ 後記：你拿到的是甚麼合成敘事宣告 — 《 SearchBox 搜索「油麻地 宵夜」 》 — the same honest reader CTA as the previous chapters.
+
+**Verified.** The dev server returns HTTP 200 for `/guides/hk-temple-street-chronicle` (slug ×4 in the streamed HTML); web suite **323/323**; `tsc --noEmit` clean; union-table scan reports **1 flagged `面`** under the pre-existing Traditional exclusion (桌面/上面). Found and fixed a third instance of the same insertion-class defect (a dangling `,` in the array literal) and re-ran the build — **GREEN**.
+
+**Honest boundaries.** The chapter lives entirely in the demo plane (`lib/mock/seed.ts`) — it will not publish in live mode until the platform seed carries one row for it. The descriptions skip framing language; it is teaching literary HK, as requested by the mandate's "entries of massive content". Temple-street tax-load honesty: no real merchants named; `flags.demo = true` on every block.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
