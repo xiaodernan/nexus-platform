@@ -25,8 +25,28 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from functools import lru_cache
 
 __all__ = ["cue_positions", "cue_in", "longest_cue"]
+
+
+@lru_cache(maxsize=512)
+def _compiled_latin(cue: str) -> re.Pattern[str]:
+    """Memoised regex for a Latin cue.
+
+    `cue_positions` is called for every cue on every sentence the pipeline reads; the
+    regex string itself is a function of the cue alone and the same construction takes most
+    of the wall time on a long utterance. This one table cache gives that back without
+    touching the grammar: byte-for-byte identical pattern, just compiled once per cue.
+    """
+    words = r"\s".join(re.escape(w) for w in re.split(r"\s+", cue.lower()))
+    return re.compile(rf"(?<![a-z]){words}(?:es|s)?(?![a-z])")
+
+
+@lru_cache(maxsize=512)
+def _compiled_cjk(cue: str) -> re.Pattern[str]:
+    """Memoised regex for a CJK cue — Chinese has no word boundaries, so the escape\n    is the only transformation."""
+    return re.compile(re.escape(cue))
 
 
 def cue_positions(cue: str, text: str, low: str) -> list[int]:
@@ -39,10 +59,8 @@ def cue_positions(cue: str, text: str, low: str) -> list[int]:
         # D538: a space inside the cue reads as ANY whitespace, so a cue whose own words
         # the user punctuated - "make a, table" - still reads across the clause separator
         # the normalizer writes where the comma was.
-        words = r"\s".join(re.escape(w) for w in re.split(r"\s+", cue.lower()))
-        pattern = rf"(?<![a-z]){words}(?:es|s)?(?![a-z])"
-        return [m.start() for m in re.finditer(pattern, low)]
-    return [m.start() for m in re.finditer(re.escape(cue), text)]
+        return [m.start() for m in _compiled_latin(cue).finditer(low)]
+    return [m.start() for m in _compiled_cjk(cue).finditer(text)]
 
 
 def cue_in(cue: str, text: str, low: str) -> bool:
