@@ -731,6 +731,8 @@ export interface Dict {
     preferencesSource: Record<'declared' | 'inferred' | 'explicit_feedback' | 'transaction', string>;
     preferencesScope: Record<'session' | 'long_term', string>;
     preferencesConfidence: string;
+    /** Accessible label for the in-page jump chips (D1083). */
+    jumpNavLabel: string;
     statsFavorites: string;
     statsReservations: string;
     statsOrders: string;
@@ -1565,6 +1567,7 @@ const zhHK: Dict = {
       long_term: '長期',
     },
     preferencesConfidence: '信心',
+    jumpNavLabel: '跳到區塊',
     statsFavorites: '收藏',
     statsReservations: '訂位',
     statsOrders: '訂單',
@@ -2413,6 +2416,7 @@ const en: Dict = {
       long_term: 'Long-term',
     },
     preferencesConfidence: 'Confidence',
+    jumpNavLabel: 'Jump to',
     statsFavorites: 'Saved',
     statsReservations: 'Reservations',
     statsOrders: 'Orders',

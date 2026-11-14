@@ -167,11 +167,36 @@ export default async function MePage() {
         </div>
       </section>
 
+      {/* section jump rail — tasteful, mobile-scrollable, pure anchor links */}
+      <nav aria-label={dict.me.jumpNavLabel} className="mt-6 -mx-1 overflow-x-auto pb-1">
+        <ul className="flex min-w-max items-center gap-1.5 px-1">
+          {[
+            { href: '#me-favorites', label: dict.me.favoritesTitle },
+            { href: '#me-searches', label: dict.me.savedSearchesTitle },
+            ...(preferences.data && preferences.data.length > 0
+              ? [{ href: '#me-preferences', label: dict.me.preferencesTitle }]
+              : []),
+            { href: '#me-inbox', label: dict.me.notificationsTitle },
+            { href: '#me-reservations', label: dict.me.reservationsTitle },
+            { href: '#me-orders', label: dict.me.ordersTitle },
+          ].map((item) => (
+            <li key={item.href}>
+              <a
+                href={item.href}
+                className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-ink-muted transition-colors hover:border-accent hover:text-accent"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <div className="mt-8 grid gap-8 xl:grid-cols-[1.7fr_1fr]">
         {/* ------------------------------------------- left column */}
         <div className="flex min-w-0 flex-col gap-8">
           {/* favorites */}
-          <section aria-labelledby="me-favorites">
+          <section aria-labelledby="me-favorites" className="scroll-mt-20">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <div>
                 <h2 id="me-favorites" className="text-xl font-semibold tracking-tight text-ink-strong">
@@ -207,7 +232,7 @@ export default async function MePage() {
           </section>
 
           {/* saved searches */}
-          <section aria-labelledby="me-searches">
+          <section aria-labelledby="me-searches" className="scroll-mt-20">
             <div className="flex flex-wrap items-end justify-between gap-2">
               <h2 id="me-searches" className="text-xl font-semibold tracking-tight text-ink-strong">
                 {dict.me.savedSearchesTitle}
@@ -246,7 +271,7 @@ export default async function MePage() {
 
           {/* preference memory — §33: the ranker's window onto the person, and the person's view of it */}
           {preferences.data && preferences.data.length > 0 ? (
-            <section aria-labelledby="me-preferences">
+            <section aria-labelledby="me-preferences" className="scroll-mt-20">
               <h2 id="me-preferences" className="text-xl font-semibold tracking-tight text-ink-strong">
                 {dict.me.preferencesTitle}
               </h2>
@@ -284,7 +309,7 @@ export default async function MePage() {
         {/* ------------------------------------------- right rail */}
         <div className="flex min-w-0 flex-col gap-6 xl:sticky xl:top-20 xl:self-start">
           {/* inbox */}
-          <section aria-labelledby="me-inbox" className="rounded-2xl border border-line bg-surface p-5">
+          <section aria-labelledby="me-inbox" className="scroll-mt-20 rounded-2xl border border-line bg-surface p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 id="me-inbox" className="text-base font-semibold tracking-tight text-ink-strong">
                 {dict.me.notificationsTitle}
@@ -353,7 +378,7 @@ export default async function MePage() {
           </section>
 
           {/* reservations */}
-          <section aria-labelledby="me-reservations" className="rounded-2xl border border-line bg-surface p-5">
+          <section aria-labelledby="me-reservations" className="scroll-mt-20 rounded-2xl border border-line bg-surface p-5">
             <h2 id="me-reservations" className="text-base font-semibold tracking-tight text-ink-strong">
               {dict.me.reservationsTitle}
             </h2>
@@ -396,7 +421,7 @@ export default async function MePage() {
           </section>
 
           {/* orders */}
-          <section aria-labelledby="me-orders" className="rounded-2xl border border-line bg-surface p-5">
+          <section aria-labelledby="me-orders" className="scroll-mt-20 rounded-2xl border border-line bg-surface p-5">
             <h2 id="me-orders" className="text-base font-semibold tracking-tight text-ink-strong">
               {dict.me.ordersTitle}
             </h2>
