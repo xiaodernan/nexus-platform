@@ -87,6 +87,12 @@ export interface Dict {
       placeholder: string;
       entries: string[];
     };
+    /** D1114: the /hong-kong mega hub's local-first reading progress strip. `done` is a template with {read}/{total} slots because functions cannot cross the server→client island boundary. */
+    hkProgress: {
+      done: string;
+      reset: string;
+      mark: string;
+    };
     /** One sentence under the tagline line underlining the sourcing discipline. */
     sourceNote: string;
     rails: Record<
@@ -909,6 +915,11 @@ const zhHK: Dict = {
         '『留意』：上水豬潤粥，熱辣辣落肚',
         '『宜』：兩隻腸粉加常餐——雨天不需要傘',
       ],
+    },
+    hkProgress: {
+      done: '已讀 {read} ／ 共 {total} 章',
+      reset: '重設',
+      mark: '已讀',
     },
     hkHub: {
       eyebrow: '香港系列 · 完整篇章',
@@ -1954,6 +1965,11 @@ const en: Dict = {
         'Pork-offal congee at Sheung Shui — hot going in, quiet day after',
         'Two cheung fun and a set meal — enough rain-gear for any wet afternoon',
       ],
+    },
+    hkProgress: {
+      done: '{read} of {total} chapters read',
+      reset: 'Reset marks',
+      mark: 'Read',
     },
     hkHub: {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',

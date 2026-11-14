@@ -43845,3 +43845,20 @@ Dict carried: `home.hkDaily` on both locales; interface typed in the `home` bloc
 **Honest boundaries.** Cosmetic. The daily line is the same Today picked the Today sees — identical algorithm, identical day, identical pool. It is not personalization; it never influences the archetype. Non-HK dates (a user abroad picking zh-HK) still key off the HK zone by design — the product's clock is Hong Kong's clock, matching the series.
 
 - readers: `apps/web/src/components/hk-quiz.tsx`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.
+## 1114. D1114 — Hong Kong chapters can now be chalked as read: local-first progress strip on /hong-kong, no account needed, no byte leaves the device
+
+**Why.** Eight chapters is a promise. Readers walk the series in one visit or many; the product owes them a visible way to know where they got to. Every earlier progress feature on this plane asks for an account (orders, reservations, inbox); the HK series is editorial and ought to work for the anonymous-reader plane exactly as well as the signed-in one. Local-first is the honest model: fidelity without identity, no writes to any server, identical behaviour in mock and live deployments.
+
+**The unit.** `src/components/hk-series-progress.tsx` — a client island rendering the progress row (role=progressbar, aria-valuemin/max/now, aria-label from dict) and the chapter card grid itself. State: `localStorage['nexus.hk-series.read']` — JSON string array, corrupt/absent both read as `[]`, private-mode writes degrade silently to session-local badges. First paint renders zero badges; hydrate, then effect — no mismatch possible. Clicking a chapter card marks it; a small ✓ badge fades in on that card; the bar (gradient-fill, width-driven by `read/total`) grows; a reset link (only when readCount > 0) empties the set.
+
+Dict carries `home.hkProgress` on both locales with `done` as a `{read}/{total}` template string — **not** a function, because functions cannot cross the server→client island boundary. The build failure that forced this is captured in the honest boundary note below. `next build` prerenders the hub clean with the island in place.
+
+`app/hong-kong/page.tsx` renders `<HkSeriesProgress cards={chapters} copy={dict.home.hkProgress} />` in place of the inline `<ul>` grid; its own Link/Icon imports shrink accordingly.
+
+**Pinned.** `src/lib/hk-series-progress.test.ts` — island source descriptors (use client, STORAGE_KEY literal, `role="progressbar"`, `aria-valuenow={readCount}`, no-fetch/no-XHR/no-analytics), hub wiring (imports island, page no longer hand-contains the grid), both-locale dict copy including the Traditional-HK `已讀 {read} ／ 共 {total} 章`. `tests/e2e/specs/consumer/hong-kong.spec.ts` gains an arm: fresh context → 0/total → click first chapter → back → `aria-valuenow=1`. **2 passed (17.6s)** on the mock dev plane desktop project.
+
+**Verified.** web suite **334/334**; `tsc --noEmit` clean; census PASS over **1160 literals** (+3); next build green.
+
+**Honest boundaries.** The read set lives on one browser — private mode and device discipline apply. Chapters opened straight from `/guides/<slug>` do not auto-mark (there is no push channel from guide to hub) — accepted and documented. Reset is destructive to this local set only, no server echo. The first CI attempt revealed that props passed from server to island must be serialisable: dict function-valued keys were replaced with template strings; the failure, the fix and the pin that prevents the whole class are part of this unit's record.
+
+- readers: `apps/web/src/components/hk-series-progress.tsx`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/lib/hk-series-progress.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.

@@ -4,6 +4,7 @@ import { Container, Icon } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
+import { HkSeriesProgress } from '@/components/hk-series-progress';
 
 export const dynamic = 'force-static';
 
@@ -46,32 +47,7 @@ export default async function HongKongHubPage() {
       {/* Eight chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">
         <h2 className="text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">{hub.chaptersTitle}</h2>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {chapters.map((card) => (
-            <li key={card.slug}>
-              <Link
-                href={`/guides/${card.slug}`}
-                className="group relative flex h-full flex-col justify-between gap-5 overflow-hidden rounded-2xl border border-line bg-surface p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
-              >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 left-0 w-[3px]"
-                  style={{ background: 'var(--nexus-ai-gradient)' }}
-                />
-                <span className="relative flex flex-col gap-2">
-                  <span className="text-2xs font-medium uppercase tracking-wide text-ink-faint">{card.kicker}</span>
-                  <span className="text-balance text-lg font-semibold leading-snug tracking-tight text-ink-strong">
-                    {card.label}
-                  </span>
-                </span>
-                <span className="relative inline-flex items-center gap-1 text-2xs font-medium uppercase tracking-wide text-accent">
-                  Read the chapter
-                  <Icon name="arrowRight" size={12} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <HkSeriesProgress cards={chapters} copy={dict.home.hkProgress} />
 
         {/* The quiz teaser */}
         <section aria-labelledby="hub-quiz" className="relative mt-2 overflow-hidden rounded-2xl border border-accent-line bg-accent-soft p-6">

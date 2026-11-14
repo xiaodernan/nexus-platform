@@ -8,6 +8,18 @@ import { test, expect } from '../../lib/fixture.js';
  *  3. the quiz teaser links into /hk-type and the search taster does so too.
  */
 
+test('marking a chapter read fills the local-first progress bar', async ({ page }) => {
+  await page.goto('/hong-kong');
+  const bar = page.getByRole('progressbar').first();
+  await expect(bar).toHaveAttribute('aria-valuenow', '0');
+
+  await page.locator('a[href^="/guides/hk-"]').first().click();
+  await page.waitForURL('**/guides/hk-**', { waitUntil: 'domcontentloaded' });
+  await page.goBack();
+
+  await expect(page.getByRole('progressbar').first()).toHaveAttribute('aria-valuenow', '1');
+});
+
 test('the /hong-kong mega hub renders its identity, the eight chapters, the quiz teaser and the search taster', async ({ page }) => {
   await page.goto('/hong-kong');
 
