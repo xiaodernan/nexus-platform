@@ -4,6 +4,7 @@ import { Badge, Container, EmptyState, Icon } from '@nexus/ui';
 
 import { CardGrid } from '@/components/cards';
 import { LocaleDemoBadge } from '@/components/locale-badges';
+import { MeReadAll } from '@/components/me-read-all';
 import { ReadFailure, SignInRequired, SourceStamp } from '@/components/console/console-parts';
 import {
   meFavoritesRead,
@@ -250,11 +251,20 @@ export default async function MePage() {
               <h2 id="me-inbox" className="text-base font-semibold tracking-tight text-ink-strong">
                 {dict.me.notificationsTitle}
               </h2>
-              {inbox.data && inbox.data.unread > 0 ? (
-                <Badge tone="accent" size="sm">
-                  {dict.me.notificationsUnread(inbox.data.unread)}
-                </Badge>
-              ) : null}
+              <div className="flex items-center gap-2">
+                {inbox.data && inbox.data.unread > 0 ? (
+                  <Badge tone="accent" size="sm">
+                    {dict.me.notificationsUnread(inbox.data.unread)}
+                  </Badge>
+                ) : null}
+                {inbox.data?.rows.length ? (
+                  <MeReadAll
+                    label={dict.me.notificationsReadAll}
+                    doneLabel={dict.me.notificationsReadAllDone}
+                    busyLabel={dict.me.notificationsReadAllBusy}
+                  />
+                ) : null}
+              </div>
             </div>
             {inbox.status === 'failed' ? (
               <div className="mt-3">

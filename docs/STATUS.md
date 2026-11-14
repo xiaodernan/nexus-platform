@@ -43370,3 +43370,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** Read-only: no writes, no mark-read call, no favorite removal door is exposed yet — the inbox shows but cannot be cleared from this page. Live hydration is N+1 over ≤6 favorites. The mock seed's notification copy is partly Simplified-adjacent strings from pre-existing fixtures; the new dict block is the Traditional-script surface. Live timestamps render `計算於`-style stamps whose "已過期" bucket is expected on a stale seed (freshnessOf does not lie).
 
 - readers: `apps/web/app/me/page.tsx`, `apps/web/src/lib/console-consumer.ts`, `apps/web/app/me/loading.tsx`, `apps/web/src/lib/me-page.test.ts`, this ledger entry.
+## 1076. D1076 — the /me inbox gains the read-all door: `POST /api/v1/notifications/read-all` through the BFF, one press, envelope-honest
+
+**Why.** D1075 shipped the inbox as a read-only surface; the platform has had `POST /api/v1/notifications/read-all` (§123) since D-era, idempotent and tenant/cookie-scoped — the missing half was a button a consumer can press. Re-reading with unread dots forever is not a feature.
+
+**The unit.** `apps/web/src/components/me-read-all.tsx` — a client island posting to `/api/nexus/platform/notifications/read-all` (the BFF attaches the session cookie + tenant; the browser never sees a service origin). On success: `router.refresh()` + the button settles to the done label. On refusal: the §1 envelope code renders verbatim (demo plane answers `data_mode_mock` 501 — shown as-is, never dressed as success). Idempotent, so no confirm step; dict gains `notificationsReadAll{Busy,Done}` in both locales (HK Traditional script). The `me` page mounts it beside the unread badge, only when the inbox has rows; `me-page.test.ts` gains the sixth pin (island wiring + dict triple in both locales).
+
+**Verified.** web suite **304/304** (+1); `tsc --noEmit` clean; `next build` green (`/me` 2.33 kB); zh-HK census PASS over 982 literals. Not run: the live door (no seeded platform on this host); the mock plane serves `data_mode_mock` and the island prints it — which is the honest failure path this unit claims to pin.
+
+**Honest boundaries.** One door only: no per-row mark-read yet, no preferences UI, no email/push toggles (§123 preferences doors exist on the platform; a future unit can add them). In demo mode the button reports 501 verbatim by design — the fixture catalogue is deterministic and will not fake a cleared inbox.
+
+- readers: `apps/web/src/components/me-read-all.tsx`, this ledger entry.

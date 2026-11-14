@@ -74,4 +74,15 @@ describe('D1075 consumer account hub', () => {
     expect(chrome.match(/href="\/me"/g)?.length).toBe(1);
     expect(chrome.match(/href: '\/me'/g)?.length).toBe(1);
   });
+
+  it('the inbox carries a read-all door onto the documented §123 endpoint', () => {
+    const island = read('apps/web/src/components/me-read-all.tsx');
+    expect(island.startsWith("'use client';")).toBe(true);
+    expect(island).toContain("fetch('/api/nexus/platform/notifications/read-all'");
+    expect(island).toContain("method: 'POST'");
+    expect(island).toContain('router.refresh()');
+    const dict = read(DICT);
+    expect(dict).toContain("notificationsReadAll: '全部標記為已讀'");
+    expect(dict).toContain("notificationsReadAll: 'Mark all as read'");
+  });
 });

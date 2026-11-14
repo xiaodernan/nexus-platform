@@ -741,6 +741,9 @@ export interface Dict {
     notificationsUnread: (count: number) => string;
     notificationsEmptyTitle: string;
     notificationsEmptyText: string;
+    notificationsReadAll: string;
+    notificationsReadAllDone: string;
+    notificationsReadAllBusy: string;
     reservationsTitle: string;
     reservationsEmptyTitle: string;
     reservationsEmptyText: string;
@@ -1556,6 +1559,9 @@ const zhHK: Dict = {
     notificationsUnread: (count) => `${count} 條未讀`,
     notificationsEmptyTitle: '沒有未讀提醒',
     notificationsEmptyText: '訂位確認、價格下降、評論回覆，都會留在這裡',
+    notificationsReadAll: '全部標記為已讀',
+    notificationsReadAllDone: '已全部讀取',
+    notificationsReadAllBusy: '標記中…',
     reservationsTitle: '我的訂位',
     reservationsEmptyTitle: '近期沒有訂位',
     reservationsEmptyText: '在商戶頁按「訂位」，即可在這裡見到',
@@ -2382,6 +2388,9 @@ const en: Dict = {
     notificationsUnread: (count) => `${count} unread`,
     notificationsEmptyTitle: 'Nothing new',
     notificationsEmptyText: 'Booking confirmations, price drops and review replies land here',
+    notificationsReadAll: 'Mark all as read',
+    notificationsReadAllDone: 'All caught up',
+    notificationsReadAllBusy: 'Marking…',
     reservationsTitle: 'My reservations',
     reservationsEmptyTitle: 'No upcoming reservations',
     reservationsEmptyText: 'Book a table from any merchant page and it will show up here',
