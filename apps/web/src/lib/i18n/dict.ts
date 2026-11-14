@@ -165,6 +165,7 @@ export interface Dict {
     citations: (count: number) => string;
     runId: (id: string) => string;
     clear: string;
+    starters: { key: string; label: string; question: string }[];
     mockAnswer: (name: string) => string;
   };
   offering: {
@@ -867,6 +868,11 @@ const zhHK: Dict = {
     title: '問問這間商戶',
     hint: '由商戶知識庫回答；找不到答案時會轉交商戶團隊，不會猜測。',
     placeholder: '例如：週六晚上七點有位嗎？招牌菜是什麼？',
+    starters: [
+      { key: 'availability', label: '有無位', question: '週六晚上七點有位嗎？' },
+      { key: 'signature', label: '招牌菜', question: '招牌菜是什麼？' },
+      { key: 'hours', label: '幾點開', question: '幾點開到幾點？' },
+    ],
     submit: '送出問題',
     submitting: '正在回覆…',
     reading: '查閱商戶知識庫…',
@@ -1632,6 +1638,11 @@ const en: Dict = {
     title: 'Ask this merchant',
     hint: 'Answered from this merchant’s own knowledge base; when it cannot answer, the team takes over instead of guessing.',
     placeholder: 'e.g. Is there a table on Saturday at 7pm? What is the signature dish?',
+    starters: [
+      { key: 'availability', label: 'Availability', question: 'Is there a table on Saturday at 7pm?' },
+      { key: 'signature', label: 'Signature dish', question: 'What is the signature dish?' },
+      { key: 'hours', label: 'Opening hours', question: 'When do you open and close?' },
+    ],
     submit: 'Send question',
     submitting: 'Answering…',
     reading: 'Reading the merchant knowledge base…',

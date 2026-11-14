@@ -43259,3 +43259,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** The affordance is *direct* — no shortener means the recipient sees the canonical `/m/{slug}`. The WhatsApp draft carries the merchant's *name*, not a personalized line; the recipient does the personalization. The popover is not a `role="menu"` because it is not a menu of commands — it is a single action and a pair of channels. The share button does not attempt social cards or Open Graph. The button is not shown for a merchant with neither a `slug` nor a `name` — the normalization in `merchant-share.tsx` handles `undefined` safely, but a merchant with nothing to name is a fixture edge case (no share anchor for a scaffold).
 
 - readers: `apps/web/src/components/merchant-share.tsx`, `apps/web/src/components/merchant-view.tsx`, `apps/web/src/lib/merchant-share.test.ts`, this ledger entry.
+## 1067. D1067 — the ask-merchant widget hands out focus starters before the user types: three keys (availability / signature / hours), both locales, one shot
+
+**Why.** The ask widget is the one AI-driven entry point consumers have to the single merchant, and the placeholder text was asking them to invent the perfect question cold. HK consumers stare at that box for two paragraphs before realizing they can ask about Saturday capacity. Focus-typed starters lower the first-question friction without rewriting the widget's contract.
+
+**The unit.** `apps/web/src/components/ask-merchant.tsx` — the empty-state branch grows a chip row of the three focus starters; the dict carries zh (`有無位` / `招牌菜` / `幾點開`) and en (`Availability` / `Signature dish` / `Opening hours`) triples with the same keys (`availability` / `signature` / `hours`); starters seed the existing textarea via `setQuestion(starter.question)`; the chip row does not persist once turns exist, and clicking a chip focuses outside no widget state — the user owns the final question.
+
+**Verified.** `ask-starters.test.ts` — 2 arms (the dict triples in both locales + keys pinned, the component renders chips only in the empty-turn branch). zh-HK census PASS (919 literals). `tsc --noEmit` clean; `next build` green; 291/291 web tests green (+2 over D1066).
+
+**Honest boundaries.** The three starters were chosen to be the three most common friction points — availability, signature dish, opening hours — and not necessarily the most culturally populated; a future pass on real HK consumer telemetry can re-rank them without touching the component. The starters do not open the AI; seeded taps populate the box, user owns the send.
+
+- readers: `apps/web/src/components/ask-merchant.tsx`, `apps/web/src/lib/i18n/dict.ts` (zh/en `ask.starters`), `apps/web/src/lib/ask-starters.test.ts`, this ledger entry.

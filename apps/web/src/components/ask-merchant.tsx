@@ -300,7 +300,23 @@ export function AskMerchant({
             ))}
         </ol>
       ) : (
-        <p className="mt-3 text-sm text-ink-muted">{dict.ask.empty}</p>
+        <div className="mt-3">
+          <p className="text-sm text-ink-muted">{dict.ask.empty}</p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {dict.ask.starters.map((starter) => (
+              <li key={starter.key}>
+                <button
+                  type="button"
+                  onClick={() => setQuestion(starter.question)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3 py-1.5 text-xs text-ink-muted shadow-xs transition-colors hover:border-accent hover:text-accent"
+                >
+                  <Icon name="quote" size={12} className="shrink-0 text-ink-faint" />
+                  {starter.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <form onSubmit={submit} className="mt-4 flex flex-col gap-2">
