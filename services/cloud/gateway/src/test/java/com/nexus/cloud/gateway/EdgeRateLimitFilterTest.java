@@ -57,7 +57,7 @@ class EdgeRateLimitFilterTest {
      */
     @Test
     void anAdmittedAnswerCarriesLimitRemainingAndReset() {
-        EdgeRateLimitFilter filter = new EdgeRateLimitFilter(2, 0);
+        EdgeRateLimitFilter filter = new EdgeRateLimitFilter(2, 0, RedisTokenBucketLimiter.disabled());
         GatewayFilterChain chain = ex -> Mono.empty();
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.get("/api/v1/health")
@@ -72,7 +72,7 @@ class EdgeRateLimitFilterTest {
 
     @Test
     void theRefusedAnswerCarriesZeroRemainingAndSecondsUntilFull() {
-        EdgeRateLimitFilter filter = new EdgeRateLimitFilter(1, 1);
+        EdgeRateLimitFilter filter = new EdgeRateLimitFilter(1, 1, RedisTokenBucketLimiter.disabled());
         GatewayFilterChain chain = ex -> Mono.empty();
         InetSocketAddress me = new InetSocketAddress("203.0.113.51", 12345);
         // First call takes the only token; second is refused.
@@ -91,7 +91,7 @@ class EdgeRateLimitFilterTest {
 
     @Test
     void theActuatorExemptionSetsNoRateLimitHeadersAndPassesThrough() {
-        EdgeRateLimitFilter filter = new EdgeRateLimitFilter(1, 0);
+        EdgeRateLimitFilter filter = new EdgeRateLimitFilter(1, 0, RedisTokenBucketLimiter.disabled());
         AtomicBoolean called = new AtomicBoolean(false);
         GatewayFilterChain chain = ex -> { called.set(true); return Mono.empty(); };
         MockServerWebExchange exchange = MockServerWebExchange.from(

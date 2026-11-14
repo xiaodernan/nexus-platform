@@ -67,6 +67,23 @@ NEXUS_DISPATCHER_EUREKA_ENABLED=true NEXUS_EUREKA_URI=http://127.0.0.1:18761/eur
     java -jar services/cloud/dispatcher-service/target/app.jar --server.port=19561 --spring.profiles.active=dev,cloud
 ```
 
+## D1140 — the edge rate limiter can be ONE budget across every gateway process (opt-in)
+
+`NEXUS_GATEWAY_RATE_STORE=redis` swaps the per-process token bucket for one atomic `EVAL`
+(`HMGET`→`HSET`→`PEXPIRE`, single Redis thread) against `NEXUS_GATEWAY_RATE_PREFIX{clientKey}`
+(default `gw:ratelimit:`). Capacity/refill are the same `NEXUS_GATEWAY_RATE_BURST`/`_REPLENISH`
+envs; `NEXUS_REDIS_URI` points at the compose Redis (default `redis://127.0.0.1:6380/0`).
+Answers carry `X-RateLimit-Store: redis`; a Redis error or the 500ms timeout degrades to the
+per-process bucket with `X-RateLimit-Store: redis-fallback-local` — never fail-open, never a hung
+edge. Default is `inmemory`: existing planes change nothing until an operator arms it.
+`scripts/ratelimit_gateway_redis_smoke.sh` proves the shared budget across TWO gateway processes
+(third request from the same client key, served by the second process, is refused);
+`scripts/falsify_ratelimit_gateway_redis_smoke.sh` boots the same pair on the default store and requires
+the second process to ADMIT it — the smoke cannot be green by accident. Gate: `scripts/check_ratelimit_gateway_redis.mjs`
+(eight wiring claims + six corruption arms, self-tested in CI).
+
+D1140 is opt-in and off by default — the D850 local default stands.
+
 ## What each piece proves
 
 - **Eureka (`nexus-eureka`)** — the registry. Self-preservation OFF, eviction every 5s. Same artifact for every node; `instance-id` is port-suffixed so two nodes can co-exist. `NEXUS_EUREKA_PEER=true` and a comma-separated `NEXUS_EUREKA_ZONE` are the D858 opt-in that did NOT converge. **D894 found a shape that does:** an explicit `region=nexus` with one `availability-zones` entry per node, each naming a DIFFERENT zone whose `service-url` is the OTHER node's loopback URL, plus `register-with-eureka=false` on both server nodes so no self entries can be evicted. `scripts/eureka_ha_smoke.sh` boots that pair, asserts neither node logs an empty replica set, and registers one fixture into each node — each peer must then show the OTHER's instance as `UP` with `actionType=ADDED`. `scripts/falsify_eureka_ha_smoke.sh` removes the peer wiring and requires the same assertion to FAIL. Nothing in the default boot or compose profile turns this pair on.

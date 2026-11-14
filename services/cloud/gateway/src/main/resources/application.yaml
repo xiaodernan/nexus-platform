@@ -7,6 +7,14 @@ server:
 spring:
   application:
     name: nexus-gateway
+  autoconfigure:
+    # D1140: the shared rate-limit bucket manages its OWN reactive connection (NEXUS_REDIS_URI).
+    # Without these exclusions Spring Boot's Redis auto-config dials the default localhost:6379 —
+    # a foreign, authenticated Redis that is NOT this plane's — and its health indicator then
+    # reports DOWN, which no orchestrator should mistake for the gateway being down.
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisReactiveAutoConfiguration
   config:
     # Optional on purpose: the edge must serve traffic when the config server is down, and the smoke
     # run asserts the label changes when it is up. Fail-fast belongs to production overlays, not here.
@@ -92,6 +100,12 @@ nexus:
   edge:
     rate-limit-burst: ${NEXUS_GATEWAY_RATE_BURST:10}
     rate-limit-replenish: ${NEXUS_GATEWAY_RATE_REPLENISH:5}
+    # D1140: inmemory (default, per-process — the pre-D1140 behaviour) or redis (one shared
+    # atomic bucket across every gateway instance of this plane). The prefix below isolates
+    # the bucket keys; the smoke injects a throwaway prefix and cleans up after itself.
+    rate-limit-store: ${NEXUS_GATEWAY_RATE_STORE:inmemory}
+    rate-limit-prefix: ${NEXUS_GATEWAY_RATE_PREFIX:gw:ratelimit:}
+    redis-uri: ${NEXUS_REDIS_URI:redis://127.0.0.1:6380/0}
   gateway:
     # D1034: this edge joins the Bus-lite lane (D1024-D1026). Opt-in via
     # NEXUS_GATEWAY_BUS_ENABLED; default OFF — the edge never subscribes unless an

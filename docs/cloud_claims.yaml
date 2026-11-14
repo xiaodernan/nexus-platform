@@ -244,3 +244,10 @@
   gate: check_dispatcher_eureka_admin.mjs
   not_claimed: No claim the dispatcher's traffic is routed by name, that its operator plane is authenticated, or that the plane is composed for anything but this proof run on a throwaway container
   honesty_anchor: No auth / TLS / rate limiting for the admin and eureka surface
+- id: D1140
+  claim: The edge gateway's per-client token bucket has an opt-in shared Redis store (NEXUS_GATEWAY_RATE_STORE=redis): one atomic EVAL (HMGET/HSET/PEXPIRE under Redis's single thread) against NEXUS_GATEWAY_RATE_PREFIX{clientKey}, the same BURST/REPLENISH envs as the local path; default inmemory so no existing deployment changes behaviour; a Redis error or the 500ms timeout falls back to the per-process bucket with the honest wire label X-RateLimit-Store: redis-fallback-local
+  smoke: ratelimit_gateway_redis_smoke.sh
+  falsifier: falsify_ratelimit_gateway_redis_smoke.sh
+  gate: check_ratelimit_gateway_redis.mjs
+  not_claimed: Default stays inmemory; no cross-node correctness beyond Redis's single-thread serialization of the EVAL (no cluster, no sentinel); bucket keys carry a bounded TTL rather than persistence; no throughput number; the breaker/retry/Eureka wiring is untouched; the fallback is a degrade, never fail-open, never a hang
+  honesty_anchor: D1140 is opt-in and off by default — the D850 local default stands

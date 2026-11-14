@@ -9,7 +9,7 @@
  * CLOUD.md's honesty section. THIS reader judges that census:
  *
  *   1. restricted YAML grammar (no dependency, a malformed line reddens);
- *   2. every record has claim + smoke + gate + not_claimed + honesty_anchor, unique `D###` id;
+ *   2. every record has claim + smoke + gate + not_claimed + honesty_anchor, unique `D###` / `D####` id;
  *   3. every named script/reader EXISTS on disk and is invoked by CI, listed in CLOUD.md and ATLAS;
  *   4. every honesty_anchor really appears in CLOUD.md, and the honesty section still exists;
  *   5. REVERSE census: every `check_*.mjs` and every cloud `*.sh` named in CLOUD.md appears in
@@ -64,7 +64,7 @@ function parseClaims(text) {
     const numbered = i + 1;
     if (line.startsWith('- ')) {
       const m = /^- id:\s*(\S+)\s*$/.exec(line);
-      if (!m) { errors.push(`line ${numbered}: a record must start with "- id: D###"`); continue; }
+      if (!m) { errors.push(`line ${numbered}: a record must start with "- id: D###" / "- id: D####"`); continue; }
       cur = { id: m[1], keyOrder: new Set() };
       claims.push(cur);
       continue;
@@ -117,7 +117,7 @@ function judge(plane) {
 
   for (const c of claims) {
     const tag = c.id || '<no id>';
-    if (!/^D\d{3}$/.test(c.id ?? '')) offenders.push(`${tag}: id must look like D###`);
+    if (!/^D\d{3,4}$/.test(c.id ?? '')) offenders.push(`${tag}: id must look like D### or D####`);
     if (ids.has(c.id)) offenders.push(`${tag}: duplicate claim id`);
     ids.add(c.id);
     for (const key of REQUIRED) {

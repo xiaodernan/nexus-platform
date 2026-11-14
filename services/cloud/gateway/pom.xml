@@ -34,6 +34,13 @@
       <groupId>io.lettuce</groupId>
       <artifactId>lettuce-core</artifactId>
     </dependency>
+    <!-- D1140: the opt-in shared rate-limit bucket (NEXUS_GATEWAY_RATE_STORE=redis) is one
+         atomic EVAL on the same Redis the bus/dispatcher use. Reactive path only; the
+         default in-memory store opens no connection and needs no Redis. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
     <!-- D850: the CircuitBreaker gateway filter runs on resilience4j (the spring-cloud circuitbreaker
          implementation both rounds agree on for WebFlux). Without it the fallback URI is dead config. -->
     <dependency>

@@ -1,14 +1,14 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1139",
-  "milestone_full": "香港系列二十章 · 時鐘全天 02:00→22:45 · 新增 04:00 抹窗師傅",
+  "milestone": "D1140",
+  "milestone_full": "香港系列二十章 · 動態時鐘全天 · Edge 限流 redis 共享桶登場 (D1140)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: twenty Traditional chapters — 02:00→22:45 full day arc",
-    "/hong-kong: twenty-checkpoint arc clock — chronological, both locales",
-    "Edition XX — 抹窗師傅, the 04:00 rooftop watch above Central",
+    "HK series: twenty Traditional chapters - 02:00→22:45 full day arc",
+    "/hong-kong: twenty-checkpoint arc clock - chronological, both locales",
+    "D1140: Spring Cloud edge rate limiter now shares ONE Redis bucket across processes",
     "/handbook: complete bilingual manual · quiz tutorial · newcomer strip",
     "scroll-behavior:smooth removal - 12-chapter arc · 346/346 web suite",
     "LLM cache probe: identical burst 100% · contract prefix 100% · tiny 95.5%"
