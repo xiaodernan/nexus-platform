@@ -43381,3 +43381,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** One door only: no per-row mark-read yet, no preferences UI, no email/push toggles (§123 preferences doors exist on the platform; a future unit can add them). In demo mode the button reports 501 verbatim by design — the fixture catalogue is deterministic and will not fake a cleared inbox.
 
 - readers: `apps/web/src/components/me-read-all.tsx`, this ledger entry.
+## 1077. D1077 — /signin grows a two-panel desk: the brand promise (tagline display + three HK-local proofs) left, the working card right
+
+**Why.** The sign-in page was the last surface on the entry funnel that said nothing: wordmark above a card, scroll past it and it's gone. A consumer who lands from a shared link meets the product's own thesis here — the one page where "why trust you?" must be answered before a tap. The home hero carries scope lines; `/me` carries the identity panel; `/signin` carried neither.
+
+**The unit.** `apps/web/app/signin/page.tsx` — a responsive two-panel grid (`max-w-5xl`, `lg:` 2-column): the left panel is the quiet promise — accent-filled layers sigil, `dict.brand.tagline` as the display headline (`text-3xl→4xl`, tight leading), `dict.home.sourceNote` as a faint smallprint reusing the already-shipped honesty sentence, and `dict.signin.proofsTitle` + `proofs[]` (three named points, accent-soft check bullets): 香港本地優先 / 每個數字都有出處 / 一句話就能搜 (en parity). The right card keeps `SignInActions` byte-identical — same refusal states, same demo doors. Dict `signin` gains `proofsTitle` + `proofs: Array<{title, text}>` in both locales (HK Traditional script; en straight). Left panel wrapped in a soft radial accent glow (same palette as the console identity panel, D927 lineage); `overflow-x-clip` prevents glow overflow from stealing width on mobile.
+
+**Verified.** web suite **306/306** (+2: `signin-desk.test.ts`); zh-HK census PASS over 989 literals; `tsc --noEmit` clean; `next build` green (`/signin` 1.32 kB). Not verified pixel-wise this round: the local dev server exited silently before first compile finished on this host — composition, type, rhythm and copy are pinned by structural tests; the empty left column is `flex` (not `hidden`), so no mobile stack collapse and no h1 ever vanishes from the DOM.
+
+**Honest boundaries.** The proofs are copy, not runtime checks; the same discipline as the hero's scope lines — the page shows what the platform claims to do, the card refuses or grants honestly. No new tokens, no new endpoints, no new actions on the working card.
+
+- readers: `apps/web/app/signin/page.tsx`, this ledger entry.

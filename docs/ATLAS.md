@@ -94,6 +94,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/app/me/page.tsx` | D1075: the consumer account hub — six reads with independent fates, identity panel, counts strip, saved-merchant grid, inbox, reservations, orders |
 | `apps/web/app/me/loading.tsx` | D1075: `/me` streaming skeleton mirroring the hub layout; no new dict keys |
 | `apps/web/src/lib/console-consumer.ts` | D1075: consumer data plane — `/api/v1/me/**` + `/api/v1/notifications` reads, mock plane parity, `meSession()` identity rule |
+| `apps/web/src/lib/signin-desk.test.ts` | D1077: 2 structural pins — two-panel composition, dict proofs in both locales (HK Traditional script) |
 | `apps/web/src/components/me-read-all.tsx` | D1076: the consumer inbox read-all door — POSTs §123 `notifications/read-all` via the BFF; envelope-honest failure print; `router.refresh()` on success |
 | `apps/web/src/lib/me-page.test.ts` | D1075: 5 structural pins — force-dynamic + sign-in stop, §3/§123 endpoints only, EntityCard path, dict both locales (HK script), chrome links |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |

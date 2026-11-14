@@ -774,6 +774,9 @@ export interface Dict {
     signedOut: string;
     deniedTitle: string;
     deniedBody: string;
+    /** Left panel of the sign-in desk: three HK-local proof points (D1077). */
+    proofsTitle: string;
+    proofs: Array<{ title: string; text: string }>;
   };
   footer: {
     exploreTitle: string;
@@ -1601,6 +1604,12 @@ const zhHK: Dict = {
     signedOut: '已登出。',
     deniedTitle: '示例登入已被此環境關閉',
     deniedBody: '平台把 /api/v1/auth/demo 以 nexus.demo.login-enabled=false 關閉了。本頁只能用作說明；身份認證的正式流程還未上線。',
+    proofsTitle: '為什麼是香港本地',
+    proofs: [
+      { title: '香港本地優先', text: '沙田、中環、旺角——查詢、價格、營業狀態都按香港商戶的真實資訊呈現。' },
+      { title: '每個數字都有出處', text: '評分、價格、營業時間旁邊標明觀測時間與來源；沒有來源的資訊不會冒充事實。' },
+      { title: '一句話就能搜', text: '「幫我搵邊間好食啲」直接落結果，不需要逐個欄位填表。' },
+    ],
   },
   states: { loading: '加載中…', error: '加載失敗', empty: '暫無內容' },
   footer: {
@@ -2430,6 +2439,12 @@ const en: Dict = {
     signedOut: 'Signed out.',
     deniedTitle: 'The demo sign-in is disabled in this environment',
     deniedBody: 'The platform closed /api/v1/auth/demo with nexus.demo.login-enabled=false. This page is an explanation only; the real identity flow is not available yet.',
+    proofsTitle: 'Why Hong Kong first',
+    proofs: [
+      { title: 'Hong Kong first', text: 'Districts, prices and opening states are shown as the platform actually heard them from local merchants.' },
+      { title: 'Every number has a source', text: 'Ratings, prices and hours carry their observed-at stamp; a page with no sources says so.' },
+      { title: 'Ask in one line', text: '“someplace great for dim sum on Saturday” lands a considered answer, not a form.' },
+    ],
   },
   states: { loading: 'Loading…', error: 'Could not load', empty: 'Nothing here yet' },
   footer: {
