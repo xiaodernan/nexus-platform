@@ -1214,6 +1214,17 @@ export interface AdminEventRow {
   type: string | null;
 }
 
+export interface AdminEventPendingMessage {
+  /** Redis Stream entry id. */
+  id: string;
+  /** The consumer that was handed the message and has not acked it. */
+  consumer: string | null;
+  /** Milliseconds since the last delivery. */
+  idle_ms: number | null;
+  /** How many times this message was delivered. */
+  redeliveries: number | null;
+}
+
 export interface AdminEventGroup {
   name: string;
   /** In-flight deliveries waiting for acknowledgement. */
@@ -1234,6 +1245,7 @@ export interface AdminEvents {
   max_len: number | null;
   xlen: number | null;
   group: AdminEventGroup | null;
+  pending_detail: AdminEventPendingMessage[] | null;
   recent: AdminEventRow[] | null;
 }
 
@@ -1317,6 +1329,19 @@ export async function adminEventsRead(): Promise<ConsoleRead<AdminEvents>> {
     const record = recordOf(payload);
     if (!record) return failedRead({ source: path, errorCode: 'invalid_payload' });
     const group = recordOf(record.group);
+    const pendingDetail: AdminEventPendingMessage[] = [];
+    for (const raw of listOf(record.pending_detail)) {
+      const row = recordOf(raw);
+      if (!row) continue;
+      const id = str(row.id);
+      if (!id) continue;
+      pendingDetail.push({
+        id,
+        consumer: str(row.consumer),
+        idle_ms: intOf(row.idle_ms),
+        redeliveries: intOf(row.redeliveries),
+      });
+    }
     const recent: AdminEventRow[] = [];
     for (const raw of listOf(record.recent)) {
       const row = recordOf(raw);
@@ -1355,6 +1380,7 @@ export async function adminEventsRead(): Promise<ConsoleRead<AdminEvents>> {
             newest_pending_id: pickString(group, ['newest_pending_id', 'max']),
           }
         : null,
+      pending_detail: pendingDetail.length ? pendingDetail : null,
       recent,
     };
     return okRead({ data, origin: 'live', source: path, asOf: asOfOf(record), demo: false });
@@ -1592,6 +1618,10 @@ function demoAdminEvents(): AdminEvents {
       oldest_pending_id: '1718173100000-0',
       newest_pending_id: '1718173130000-0',
     },
+    pending_detail: [
+      { id: '1718173100000-0', consumer: 'worker-1', idle_ms: 125_000, redeliveries: 2 },
+      { id: '1718173090000-0', consumer: 'worker-1', idle_ms: 240_000, redeliveries: 3 },
+    ],
     recent: [
       { id: '1718173130000-0', template: 'reservation_confirmed',
         tenant_id: 'hong-kong', type: 'ReservationConfirmed' },

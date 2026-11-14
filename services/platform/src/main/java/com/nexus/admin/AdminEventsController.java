@@ -77,6 +77,7 @@ public class AdminEventsController {
             body.put("degraded_reason", null);
             body.put("xlen", null);
             body.put("group", null);
+            body.put("pending_detail", null);
             body.put("recent", null);
             return body;
         }
@@ -87,6 +88,7 @@ public class AdminEventsController {
             body.put("degraded_reason", "redis_unreachable");
             body.put("xlen", null);
             body.put("group", null);
+            body.put("pending_detail", null);
             body.put("recent", null);
             return body;
         }
@@ -99,11 +101,13 @@ public class AdminEventsController {
             body.put("degraded_reason", "xlen_failed:" + e.getClass().getSimpleName());
             body.put("xlen", null);
             body.put("group", null);
+            body.put("pending_detail", null);
             body.put("recent", null);
             return body;
         }
 
         body.put("group", groupState(sync));
+        body.put("pending_detail", pendingDetail(sync));
         body.put("recent", recent(sync));
         body.put("degraded", false);
         body.put("degraded_reason", null);
@@ -157,6 +161,27 @@ public class AdminEventsController {
         } catch (Exception e) {
             // The group only exists once the events-service has created it (or in dev: never).
             log.debug("admin events read — group {} unavailable: {}", groupName, e.getMessage());
+            return null;
+        }
+    }
+
+    private List<Map<String, Object>> pendingDetail(RedisCommands<String, String> sync) {
+        try {
+            io.lettuce.core.Range<String> range = io.lettuce.core.Range.unbounded();
+            List<io.lettuce.core.models.stream.PendingMessage> messages =
+                    sync.xpending(STREAM_KEY, groupName, range, Limit.from(10));
+            List<Map<String, Object>> out = new ArrayList<>(messages.size());
+            for (io.lettuce.core.models.stream.PendingMessage pending : messages) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("id", pending.getId());
+                row.put("consumer", pending.getConsumer());
+                row.put("idle_ms", pending.getMsSinceLastDelivery());
+                row.put("redeliveries", pending.getRedeliveryCount());
+                out.add(row);
+            }
+            return out;
+        } catch (Exception e) {
+            log.debug("admin events read — pending detail unavailable: {}", e.getMessage());
             return null;
         }
     }

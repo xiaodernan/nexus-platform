@@ -107,6 +107,22 @@ export default async function AdminSystemPage() {
                   {copy.eventsColumns.stream} · {events.source}
                   {events.group ? ` · ${events.group.name} (${events.group.consumers ?? 0} consumers, ${events.group.pending ?? 0} pending)` : null}
                 </p>
+                {Array.isArray(events.pending_detail) && events.pending_detail.length > 0 ? (
+                  <ConsoleTable
+                    caption={copy.pendingDetailTitle}
+                    className="mt-3"
+                    head={[copy.pendingColumns.id, copy.pendingColumns.consumer, copy.pendingColumns.idle, copy.pendingColumns.redeliveries]}
+                    rows={(events.pending_detail ?? []).map((ev) => [
+                      <span key="i" className="font-mono text-2xs">{ev.id}</span>,
+                      <span key="c" className="font-mono text-2xs text-ink-strong">{ev.consumer ?? '—'}</span>,
+                      <span key="m" className="font-mono text-2xs">{ev.idle_ms === null ? '—' : `${Math.round(ev.idle_ms / 1000)}s`}</span>,
+                      <span key="r" className="font-mono text-2xs">{ev.redeliveries ?? '—'}</span>,
+                    ])}
+                    empty={<EmptyState icon="clock" title={copy.pendingDetailEmpty} className="py-6" />}
+                  />
+                ) : events.group && events.group.pending === 0 ? (
+                  <p className="mt-3 text-sm text-ink-muted">{copy.pendingDetailEmpty}</p>
+                ) : null}
                 {Array.isArray(events.recent) && events.recent.length > 0 ? (
                   <ConsoleTable
                     caption={copy.eventsTitle}

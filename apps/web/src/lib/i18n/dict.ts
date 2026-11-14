@@ -699,6 +699,9 @@ export interface Dict {
         eventsDisabled: string;
         eventsDegraded: (reason: string) => string;
         eventsColumns: { stream: string; length: string; inFlight: string; backlogNote: string };
+        pendingDetailTitle: string;
+        pendingDetailEmpty: string;
+        pendingColumns: { id: string; consumer: string; idle: string; redeliveries: string };
       };
     };
   };
@@ -1458,6 +1461,9 @@ const zhHK: Dict = {
         eventsDisabled: '平台 `nexus.events.redis-stream-enabled=false`；事件橋接默認不掛載——設為 true 之後才會有事件。',
         eventsDegraded: (reason: string) => `事件流不可用：${reason}`,
         eventsColumns: { stream: 'Redis Stream', length: '隊列長度', inFlight: '在途消息 (pending)', backlogNote: '環形上限 = nexus.events.max-len（默認 1000）' },
+        pendingDetailTitle: '卡住的消息',
+        pendingDetailEmpty: '消費組沒有卡住的消息——pending = 0。',
+        pendingColumns: { id: 'Entry ID', consumer: '消費者', idle: '未確認空閒', redeliveries: '重投次數' },
       },
     },
   },
@@ -2214,6 +2220,9 @@ const en: Dict = {
         eventsDisabled: 'platform `nexus.events.redis-stream-enabled=false`; the bridge never mounts until set to true (default).',
         eventsDegraded: (reason: string) => `event stream unavailable: ${reason}`,
         eventsColumns: { stream: 'Redis stream', length: 'Length', inFlight: 'In-flight (pending)', backlogNote: 'ring cap = nexus.events.max-len (default 1000)' },
+        pendingDetailTitle: 'Stuck messages',
+        pendingDetailEmpty: 'No pending messages in the consumer group — pending = 0.',
+        pendingColumns: { id: 'Entry ID', consumer: 'Consumer', idle: 'Idle since', redeliveries: 'Redeliveries' },
       },
     },
   },
