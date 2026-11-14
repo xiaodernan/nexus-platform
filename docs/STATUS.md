@@ -43639,3 +43639,14 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** One test on desktop — mobile-project iteration is a future unit; the counters are deterministic HK-Traditional copy-locked; the test asserts visible render text, not pixels (the visual suite owns those). The `^A ` locator ignores option text; the dict can be safely re-tuned without breaking the spec as long as option A wins.
 
 - readers: `tests/e2e/specs/consumer/hk-type.spec.ts`, this ledger entry.
+## 1099. D1099 — the home page gains the Hong Kong series rail: four typographic chapter cards, mock-plane only, dict-driven
+
+**Why.** The HK story series now has four chapters; discoverability beyond `/guides` and the `/hk-type` quiz was zero. The home strip under the district chips is the most-read row on this site — putting the series there is the smallest action with the largest blast radius. Live mode hides it (guides there are live fixtures and must not render with the demo labels under IS_MOCK=true).
+
+**The unit.** `app/page.tsx` — a new `<section>` slotted between the hero CTA finale and the `rails` container, guarded by `{IS_MOCK ? ... : null}`: one kicker/title pair (`dict.home.hkSeries`, zh Traditional `四章反覆走完一個 HK` / en `One HK in four chapters`), then a responsive `grid-cols-2 md:grid-cols-4` of link cards — gradient accent edge (same `--nexus-ai-gradient` as the signin desk/other identity panels), hover lift, `accent-soft` border, chapter-kicker small-caps label and a trailing arrow, linking to `/guides/<slug>`. Dict `home` gains `hkSeries` (kicker, title, 4 cards `{slug, label, kicker}`) in both locales with Traditional HK script in zh （三餐 = three meals — HK walks this line verbatim).
+
+**Verified.** `home-series-rail.test.ts` — 2 arms: dict-driven, IS_MOCK-guarded, arrow-CTA hrefs correct, zero fixture slugs leaked into JSX source; dict pins Traditional-script zh and en parity. web suite **325/325**; census PASS over 1084 literals; `next build` green; `tsc --noEmit` clean. The build's Chunks bundle remains on the same order of the merchant/sections — no blowout; page weight unchanged.
+
+**Honest boundaries.** The rail is **mock-plane only** by design; in live mode the page cannot verify fixtures it does not have — a learn-block is removed rather than blindly shown. The cards container carries no aria-label — each link is readable by its text; the row is visual reinforcement. No new tokens.
+
+- readers: `apps/web/app/page.tsx`, `apps/web/src/lib/home-series-rail.test.ts`, this ledger entry.

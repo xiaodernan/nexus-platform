@@ -64,6 +64,8 @@ export interface Dict {
     /** §8 district chips row beneath the examples label — tasteful quickjumps. */
     districtsLabel: string;
     districtChips: { district: string; q: string; label: string }[];
+    /** D1099: the HK story series rail — four chapters presented as a single literary thread on home. */
+    hkSeries: { kicker: string; title: string; cards: Array<{ slug: string; label: string; kicker: string }> };
     /** One sentence under the tagline line underlining the sourcing discipline. */
     sourceNote: string;
     rails: Record<
@@ -848,6 +850,16 @@ const zhHK: Dict = {
     searchPlaceholder: '例如：幫我找沙田適合約會的餐廳，預算 500，安靜一點',
     submit: '開始搜索',
     examplesLabel: '試試這些',
+    hkSeries: {
+      kicker: '香港系列',
+      title: '四章反覆走完一個 HK',
+      cards: [
+        { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
+        { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
+        { slug: 'hk-dim-sum-chronicle', label: '早茶：竹籠與陳皮茶香', kicker: '第三章' },
+        { slug: 'hk-temple-street-chronicle', label: '廟街：宵夜成的一座廟', kicker: '第四章' },
+      ],
+    },
     districtsLabel: '熱門地區',
     districtChips: [
       { district: '沙田', q: '沙田 下午茶', label: '沙田 · 下午茶' },
@@ -1808,6 +1820,16 @@ const en: Dict = {
     searchPlaceholder: 'e.g. date-friendly restaurants in Sha Tin, budget 500, quiet',
     submit: 'Search',
     examplesLabel: 'Try one of these',
+    hkSeries: {
+      kicker: 'HK SERIES',
+      title: 'One HK in four chapters',
+      cards: [
+        { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
+        { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
+        { slug: 'hk-dim-sum-chronicle', label: 'Yum Cha: Steam and Aged Pu-erh', kicker: 'Chapter III' },
+        { slug: 'hk-temple-street-chronicle', label: 'Temple Street: The Night Temple', kicker: 'Chapter IV' },
+      ],
+    },
     districtsLabel: 'Hot districts',
     districtChips: [
       { district: 'Sha Tin', q: 'Sha Tin afternoon tea', label: 'Sha Tin · Afternoon tea' },

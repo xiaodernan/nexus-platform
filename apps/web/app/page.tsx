@@ -5,6 +5,7 @@ import { Container, Icon, Reveal } from '@nexus/ui';
 import { homeRails, type RailKey } from '@/lib/data';
 import type { EntityCard } from '@/lib/types';
 import { resolveGeo } from '@/lib/geo';
+import { IS_MOCK } from '@/lib/env';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { examplePrompts } from '@/lib/prompts';
@@ -119,6 +120,58 @@ export default async function HomePage(props: {
           </div>
         </Container>
       </section>
+
+      {IS_MOCK ? (
+        <section className="border-b border-line bg-canvas">
+          <Container size="shell" className="flex flex-col gap-4 py-8">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">
+                  {dict.home.hkSeries.kicker}
+                </p>
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">
+                  {dict.home.hkSeries.title}
+                </h2>
+              </div>
+              <Link
+                href="/guides"
+                className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+              >
+                {dict.nav.guides}
+                <Icon name="arrowRight" size={12} />
+              </Link>
+            </div>
+            <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {dict.home.hkSeries.cards.map((card) => (
+                <li key={card.slug}>
+                  <Link
+                    href={`/guides/${card.slug}`}
+                    className="group relative flex h-full flex-col justify-between gap-4 overflow-hidden rounded-2xl border border-line bg-surface p-4 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-y-0 left-0 w-[3px]"
+                      style={{ background: 'var(--nexus-ai-gradient)' }}
+                    />
+                    <span className="relative text-2xs font-medium uppercase tracking-wide text-ink-faint">
+                      {card.kicker}
+                    </span>
+                    <span className="relative text-balance text-sm font-semibold leading-snug text-ink-strong">
+                      {card.label}
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="relative self-end text-accent transition-transform duration-200 group-hover:translate-x-0.5"
+                    >
+                      <Icon name="arrowRight" size={16} />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+      ) : null}
 
       <Container size="shell" className="flex flex-col">
         {rails.degraded ? (

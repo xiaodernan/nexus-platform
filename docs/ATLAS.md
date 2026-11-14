@@ -104,6 +104,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |
 | `apps/web/app/hk-type/page.tsx` | D1095: /hk-type server shell — chapter chips, dot-grid backdrop, static rendering |
 | `tests/e2e/specs/consumer/hk-type.spec.ts` | D1098: 1 desktop arm — the /hk-type quiz start → progressbar → 8×A → deterministic yum_cha result |
+| `apps/web/src/lib/home-series-rail.test.ts` | D1099: 2 arms pin the home HK series rail — IS_MOCK guard, dict-driven hrefs, zero fixture slugs leaked |
 | `apps/web/src/lib/hero-texture.test.ts` | D1087: 2 arms pin the dot-grid + ghost glyph decor in the home hero |
 | `tests/e2e/specs/consumer/signin.spec.ts` | D1082: the /signin two-panel desk e2e — HK proof copy + display headline roles |
 | `apps/web/app/me/page.tsx` | D1083: in-page jump rail — HK-labeled anchor chips to each hub section |
