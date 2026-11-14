@@ -43747,3 +43747,14 @@ in live mode's absence; production visitors get an honest note, not a half-rende
 tokens, no new code paths for slf-serve.
 
 - readers: `apps/web/app/hong-kong/page.tsx`, this ledger entry.
+## 1106. D1106 — chapter six arrives: 「天光魚市：凌晨四點半的香港」, the chapter nobody else has written
+
+**Why.** Five chapters: siu mei at midnight, yum cha at dawn, cha chaan teng at lunch, dim sum for the ladies, temple street for the night. All of them depict HK through the *actually eaten* dish. None of them narrates where dishes come from. The Hong Kong that makes other chapters possible — the 4:30 a.m. flip of the flap, the crate of squid under the fluorescent, the tapioca vans on the road from Shenzhen — is the actual first city that HK eaters are awake in.
+
+**The unit.** `apps/web/src/lib/mock/seed.ts` — `DEMO_GUIDES` gains `hk-fish-market-chronicle` — 「天光魚市：凌晨四點半的香港（香港系列 · 第六章）」. Five body blocks: an opening paragraph at the jetty at 4:30, then three coloured heading cards (coloured because plain text is a different page), plus the standard closing disclaimer. Traditional HK Traditional script; vocabulary aligned to the earlier chapters so the language tonality matches.
+
+**Verified.** web suite **325/325**; census PASS — the fish market block reports **0 residual Simplified**; `tsc --noEmit` clean; `next build` green (recycled from the D1104/D1105 baseline). Dangling comma in the Guides array literal was caught and repaired in place (the same insertion-class defect that hit D1093/D1094). The dev server was restarted fresh and renders the chapter 200 OK.
+
+**Honest boundaries.** Mock-plane fixture, flagged `demo: true`, opened with the same honest disclaimer as chapters one to five. The fish market scene is Hong Kong-coded fiction — these shops and people do not exist outside the fixture file or the Hong Kong imagination this iteration is earning from.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
