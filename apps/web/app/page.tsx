@@ -94,6 +94,21 @@ export default async function HomePage(props: {
                 </li>
               ))}
             </ul>
+            <span className="mt-3 text-2xs font-medium uppercase tracking-wide text-ink-faint">{dict.home.districtsLabel}</span>
+            <ul className="flex flex-wrap gap-2">
+              {dict.home.districtChips.map((chip) => (
+                <li key={chip.district}>
+                  <Link
+                    href={`/search?q=${encodeURIComponent(chip.q)}`}
+                    aria-label={chip.label}
+                    className="inline-flex max-w-full items-center gap-1.5 truncate rounded-full border border-accent-line bg-accent-soft px-3.5 py-2 text-sm text-accent shadow-xs transition-colors hover:border-accent hover:bg-accent-soft hover:brightness-[0.98] hover:shadow-sm"
+                  >
+                    <Icon name="map" size={12} className="shrink-0 text-accent" />
+                    {chip.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </Container>
       </section>

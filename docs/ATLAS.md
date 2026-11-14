@@ -86,6 +86,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/merchant-share.test.ts` | D1066: 4 arms — island mounted once, two channels only, Traditional script in zh-HK, Esc/outside close |
 | `apps/web/src/lib/ask-starters.test.ts` | D1067: 2 arms pin dict triples (both locales) and the empty-turn-branch rendering rule |
 | `apps/web/src/components/ask-merchant.tsx` | D1067: the empty-state branch grows a chip row of three focus starters (availability / signature / hours), seeding the existing textarea — user owns the send |
+| `apps/web/app/page.tsx` | D1068: the home hero gains a second chip row — six hot districts (沙田/中環/旺角/尖沙咀/銅鑼灣/荃灣), each routing to a district+intent `/search?q=` |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |

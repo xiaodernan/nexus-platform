@@ -43270,3 +43270,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** The three starters were chosen to be the three most common friction points — availability, signature dish, opening hours — and not necessarily the most culturally populated; a future pass on real HK consumer telemetry can re-rank them without touching the component. The starters do not open the AI; seeded taps populate the box, user owns the send.
 
 - readers: `apps/web/src/components/ask-merchant.tsx`, `apps/web/src/lib/i18n/dict.ts` (zh/en `ask.starters`), `apps/web/src/lib/ask-starters.test.ts`, this ledger entry.
+## 1068. D1068 — the home hero grows a second chip row: six hot-district chips (沙田/中環/旺角/尖沙咀/銅鑼灣/荃灣), each routing to a district+intent query, same chip shape as the example prompts but accent-coloured
+
+**Why.** The hero's example-prompt row frames «what could I ask?» as a sentence. Hong Kong consumers also navigate by place — "where am I feeling tonight?" converts to a search sorted by intent far more often than typing from scratch does. Adding a place-keyed row beneath the prompt row turns the hero from "compose a query" into "jump by district".
+
+**The unit.** `apps/web/app/page.tsx` — beneath the existing example-prompt `<ul>`, a districts label (`dict.home.districtsLabel`) and a second `<ul>` of 6 chips, each `aria-label={chip.label}` carrying `/search?q=<encoded>`, `Icon name="map"`, accent-coloured chip (`accent-soft` bg / `accent-line` border / `text-accent` text). Dict carries zh (沙田·下午茶, 中環·酒吧, 旺角·抵食, 尖沙咀·海鮮, 銅鑼灣·咖啡, 荃灣·火鍋) and en symmetric pairs (Sha Tin / Central / Mong Kok / Tsim Sha Tsui / Causeway Bay / Tsuen Wan). No new service; no new endpoint; same `/search?q=` route every example prompt uses.
+
+**Verified.** `tsc --noEmit` clean; `next build` green; vitest 291/291 (unchanged); zh-HK census will confirm on the next `check_ui_script.mjs` sweep. Snapshot note: this is expected to move the `home` visual baseline (`tests/e2e/specs/visual/quality.spec.ts`); CI's snapshot verifier is the authority; a subsequent `--update-snapshots` commit may be required in this direction.
+
+**Honest boundaries.** Districts are static curation; they do not re-rank by platform events, weather, or foot traffic — that belongs to a "live districts" panel reading from the seeded plane and it has no home yet. The six are fixed curation — a future pass with Hong Kong consumers' actual search logs could promote/demote entries; the dict carries the six `districtChips` as a named array so re-ordering is a dict edit.
+
+- readers: `apps/web/app/page.tsx`, this ledger entry.
