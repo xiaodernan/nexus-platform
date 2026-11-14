@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1160",
-  "milestone_full": "LLM 快取實測：wkapi.pro 實為整條快取 · 重放快取白切空白（D1160）· 每週二 probe",
+  "milestone": "D1161",
+  "milestone_full": "香港系列篇四十四章 · 00:30→22:45 · WORLD_ROADMAP Layer F 續 — 觀音借香火",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: forty-three Traditional chapters — 00:30→22:45 full day arc · 86-chip clock both locales",
-    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order — 86 slots, bilingual",
-    "Edition XLIII — 霍普韋爾的外傭午餐 (13:00) · Layer F continues the Sunday cycle",
-    "D1160: wkapi.pro measured — only whole-request cache; replay cache keys now whitespace-folded (opt-in Redis D1047)",
-    "D1142: LangGraph engine · D1140: Redis shared token bucket · llm-cache-probe.yml weekly Tuesday",
-    "D1150: manual inside chrome · /daily daily ritual page · census 1656 clean"
+    "HK series: forty-four Traditional chapters — 00:30→22:45 full day arc · 88-chip clock both locales",
+    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order — 88 slots, bilingual",
+    "Edition XLIV — 星期天的觀音借 (17:30) · Layer F traces the Sunday door by door",
+    "WORLD_ROADMAP Layer F: XLII 維園 (09:00) · XLIII 霍普韋爾 (13:00) · XLIV 觀音借 (17:30) — the congregation, the table, the incense",
+    "D1160: wkapi.pro measured — only whole-request cache; replay cache whitespace-folded",
+    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1665 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

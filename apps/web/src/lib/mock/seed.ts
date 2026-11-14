@@ -1646,4 +1646,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-temple-circuit-sunday-chronicle', title: '下午五點半：星期天的觀音借（香港系列 · 第四十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：星期天的晚黃昏——灣仔的觀音借香煙繚繞、籤筒滿地、姐妹們把整個星期一的疲憊全部放下。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天，下午五點半。散了一頓長午餐之後，灣仔的觀音借（合成敘事，非真實商戶）是這座城的第二個肺。阿蘭（合成敘事，非真實人物）帶着上個星期沒抽的一支籤回到這裡；香爐裡的煙和她們的臉都很熟悉。這座借不是真的廟，於是她們才能在裡面大聲說話、大聲笑、大聲把這一星期的悲哀全部抖出來。' },
+      { type: 'heading', text: '一、三支香的禮儀' },
+      { type: 'paragraph', text: '阿蘭說：不要太多。三支香、三個願——第一支願丈夫的工廠平安，第二支願老家的媽媽安眠，第三支願明日醒來又能多一個自由的星期天。香灰黃澄澄地落在桌腳上；香味把整條灣仔的晚風慢慢煮透。擲筊的聲音響起來：啪、啪、啪——執事的大嬸看一眼就說：「這抽籤者，上次來是黃金周。」所有人笑了。' },
+      { type: 'cards', title: '觀音借可見', items: [] },
+      { type: 'heading', text: '二、籤詩與擲筊' },
+      { type: 'paragraph', text: '搖籤的杯子早已烏黑亮澤。阿珍抽了一支上籤，上面寫着「早日見親」；她把籤握在手心裡，眼睛直直地望向香爐。「這是許願的籤還是印在腦門上的前途？」她自己問自己。阿蘭笑說：「上籤就是上籤，不要三心兩意。」所有人一起笑；笑聲把星期天的暮色變成了一堂課：其實每個星期放下的，都是一個重一些的自己。' },
+      { type: 'cards', title: '觀音借可聽', items: [] },
+      { type: 'heading', text: '三、天色慢慢收下' },
+      { type: 'paragraph', text: '下午六點，藍紫色逐層壓進米黃的借門；門口的橙色爐和水塔的影子交織了起來；有人買一袋糖並把糖心全部染成墨綠。阿蘭合上她的筆記：「這裡是她們最後的一個中轉站——下一站，是星期一的早電梯。」她知道自己會在下一個星期天再回來；到時，這裡會給她三支香的時間和一種走向自己的方向。' },
+      { type: 'cards', title: '觀音借可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「觀音借 灣仔」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

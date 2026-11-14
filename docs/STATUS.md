@@ -44383,3 +44383,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** The provider's cache semantics are measured, not assumed: on this proxy the visible cache win lives in identical-request volume, so the fold's value is real but bounded; `reason` task class and temperature-0 gating remain untouched; the fold widens replay only over whitespace, never over content.
 
 - readers: `apps/ai/nexus_ai/api/llm_response_cache.py`, `apps/ai/tests/test_llm_response_cache.py`, `apps/ai/nexus_ai/models/prefix_contract.py`, `docs/AI.md`, this ledger entry.
+
+## 1161. D1161 — chapter XLIV lands the 17:30 slot: 下午五點半：星期天的觀音借 — Layer F at the temple vestibule
+
+**Why.** Layer F continues the Sunday no one owns. After 09:00 (the Victoria Park congregation) and 13:00 (the rooftop cafeteria), the afternoon turns inward: the incense yard at dusk. The temple circuit is the third room of the Sunday.
+
+**The unit.** `DEMO_GUIDES` gains `hk-temple-circuit-sunday-chronicle` — 「下午五點半：星期天的觀音借（香港系列 · 第四十四章）」. Three heading cards（一、三支香的禮儀 · 二、籤詩與擲筊 · 三、天色慢慢收下）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「觀音借 灣仔」）。Both locales carry the chapter; the arc clock gains 17:30 between the typhoon shelter and the Lion Rock (88 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-four on both locales; e2e floors ≥44; census 1665 literals clean (0 simplified); web 346/346.
+
+**Honest boundaries.** Synthetic fixture; the hall, the rites, the lottery drawer, the alloy doors are narrative constructions. No real temple, no registered almsgiver, no landmark photo is claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
