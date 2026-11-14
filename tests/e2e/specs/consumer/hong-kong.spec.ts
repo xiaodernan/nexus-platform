@@ -8,6 +8,11 @@ import { test, expect } from '../../lib/fixture.js';
  *  3. the quiz teaser links into /hk-type and the search taster does so too.
  */
 
+test('the mega hub renders its day-arc horizon band', async ({ page }) => {
+  await page.goto('/hong-kong');
+  await expect(page.locator('.nexus-horizon')).toHaveCount(1);
+});
+
 test('the arc clock renders all eleven chapters in chronological order', async ({ page }) => {
   await page.goto('/hong-kong');
   await expect(page.getByRole('heading', { name: /香港一日的讀法|Reading the day/i }).first()).toBeVisible();

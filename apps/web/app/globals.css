@@ -125,3 +125,44 @@
   border-radius: inherit;
   border: 1px solid rgb(var(--nexus-accent-rgb) / 0.28);
 }
+/* ---------- /hong-kong: the day-arc horizon strip (D1125) ----------
+   A silent "dawn → dinner" band for the mega-hub hero: gold dawn breaking on the left,
+   dimming through slate, settling ink-teal on the right; a faint constellation dusts the
+   dark half. No text, no interaction, no tracking — pure aria-hidden art. */
+.nexus-horizon {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 30px;
+  pointer-events: none;
+  border-top: 1px solid rgb(var(--nexus-line-rgb) / 0.6);
+  background:
+    radial-gradient(26rem 64px at 2% 120%, rgb(253 224 71 / 0.55), transparent 70%),
+    linear-gradient(90deg,
+      rgb(254 243 199) 0%,
+      rgb(253 230 138) 10%,
+      rgb(251 191 36) 18%,
+      rgb(245 245 244) 30%,
+      rgb(226 232 240) 44%,
+      rgb(100 116 139) 60%,
+      rgb(15 118 110 / 0.92) 74%,
+      rgb(13 32 48) 90%,
+      rgb(2 6 23) 100%);
+}
+.nexus-horizon::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 55%;
+  inset-inline-end: 0;
+  background-image:
+    radial-gradient(1.2px 1.2px at 22% 32%, rgb(255 255 255 / 0.95), transparent 100%),
+    radial-gradient(1px 1px at 46% 58%, rgb(255 255 255 / 0.8), transparent 100%),
+    radial-gradient(1.3px 1.3px at 66% 24%, rgb(255 255 255 / 0.82), transparent 100%),
+    radial-gradient(1px 1px at 79% 68%, rgb(255 255 255 / 0.7), transparent 100%),
+    radial-gradient(1.1px 1.1px at 90% 42%, rgb(255 255 255 / 0.6), transparent 100%);
+  opacity: 0.85;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexus-horizon { filter: saturate(0.8) brightness(0.95); }
+}

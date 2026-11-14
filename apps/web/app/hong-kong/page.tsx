@@ -37,7 +37,8 @@ export default async function HongKongHubPage() {
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-line bg-canvas">
         <div aria-hidden="true" className="nexus-dot-grid pointer-events-none absolute inset-0" />
-        <Container size="shell" className="relative flex flex-col gap-5 py-12 sm:py-16">
+        <div aria-hidden="true" className="nexus-horizon pointer-events-none" />
+        <Container size="shell" className="relative flex flex-col gap-5 py-12 pb-10 sm:py-16 sm:pb-12">
           <span className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">{hub.eyebrow}</span>
           <h1 className="max-w-[24ch] text-4xl font-semibold leading-[1.12] tracking-tight text-ink-strong sm:text-5xl">
             {hub.title}

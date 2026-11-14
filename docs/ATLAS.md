@@ -1,3 +1,4 @@
+| `apps/web/app/globals.css` | D1125: the `/hong-kong` hero motionless horizon strip — no copy, pure spatial hint |
 | `apps/web/src/components/hk-arc-timeline.tsx` | D1124: the /hong-kong eleven-checkpoint clock strip — reading-order in one glance |
 | `apps/web/src/lib/chapter-read.ts` | D1124: shared local-first read persistence for HK chapters (progress strip + clock strip) |
 | `apps/web/src/lib/hk-arc-timeline.test.ts` | D1124: the clock-strip's source pins + dict-pins |

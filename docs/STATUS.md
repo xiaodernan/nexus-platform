@@ -43994,3 +43994,16 @@ Dict gains `home.hkHub.clockTitle / clockHint / clock[]` on both locales; Tradit
 **Honest boundaries.** The arc timeline works entirely on the fixture plane's dict-carried chapter list — it does not re-sequence at runtime, does not compute durations, and its links point at `/guides/*` routes whose live-plane presence depends on the seeded platform (unchanged caveat as everywhere in the HK series). Tapping a checkpoint in local mode only chalks the read; no server-side read beacon is emitted.
 
 - readers: `apps/web/src/lib/chapter-read.ts`, `apps/web/src/components/hk-arc-timeline.tsx`, `apps/web/src/components/hk-series-progress.tsx`, `apps/web/app/hong-kong/page.tsx`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1125. D1125 — the mega hub hero grows a horizon: a silent dawn-to-night gradient band under the dot-grid, the arc rendered as sky
+
+**Why.** 前景講了足夠字（九章→十章→十一章），畫面卻仍然像一塊 плоский neutral board — hero needed one bone-structure improvement. The arc is a clock; a gradient rod answers what the clock means before the reader has read a single word — gold dawn → misty noon → teal evening pulse → atlas ink.
+
+**The unit.** `apps/web/app/globals.css` gains `.nexus-horizon` (+ `::after` constellation dust for the dark half, `prefers-reduced-motion` tame filter). `app/hong-kong/page.tsx` places the strip` bottom: 0` of the hero behind the hero content; hero content gains a little bottom padding so the copy never touches the paint. Pure art; no copy inside the band; announces nothing to assistive tech.
+
+`tests/e2e/specs/consumer/hong-kong.spec.ts` gains the arm `the mega hub renders its day-arc horizon band` — `.nexus-horizon` must exist exactly once per page.
+
+**Verified.** next build clean; mock-plane dev render: h1 + `.nexus-horizon` + 11 grid links + arc timeline verified on this host; e2e desktop **5/5 passed (26.6s)**.
+
+**Honest boundaries.** The horizon band is pure CSS art — no signal about the live plane or CI; its purpose is screen density, editorial depth and one unambiguous visual cue that the series is about a single day's arc. No accessibility impact.
+
+- readers: `apps/web/app/globals.css`, `apps/web/app/hong-kong/page.tsx`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
