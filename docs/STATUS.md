@@ -43931,3 +43931,16 @@ Pinned by `hk-series-progress.test.ts`: `readCta` on both locales, `quizBadge`/`
 **Honest boundaries.** The manual is text-first — no screenshots (the note inside tells readers screenshots lag ships); every claim about the current product stays true deliberately, but the next milestone that invalidates a line must regenerate it. The product world itself remains synthetic in demo; the handbook says so plainly on both locales.
 
 - readers: `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/handbook.test.ts`, `tests/e2e/specs/consumer/handbook.spec.ts`, `apps/web/src/components/site-chrome.tsx`, this ledger entry.
+## 1120. D1120 — the HK series closes its tenth chapter: 「冰室」 is the 60s coffee-shop holding room where the working week began
+
+**Why.** The day arc ends at temple street and tong sui; but between the 06:00 cha chaan teng and the 07:30 yum cha there is one more locked door from the 1960s — the 冰室. It is the next honest movement of the arc, not a bonus chapter: pineapple buns, yuanyang (tea-and-coffee) — the marriage of the two beverages the British never intended to meet, and it is a real thing survivors keep in their rotation.
+
+**The unit.** `DEMO_GUIDES` gains `hk-bing-sat-chronicle` — 「冰室：菠蘿包與一杯鴛鴦」. Three heading cards: 一、菠蘿包為什麼叫菠蘿 (the hand-drawn biscuit-lattice origin; two-stage high-protein dough), 二、「鴛鴦」與「雙蛋蜜」：自創詞的誕生 (the 4:6 tea-to-coffee ratio; the saucer of honey-glazed egg waiting underneath), 三、它對於新一代代表什麼 (the ice-room as the last licensed slow room in the city). Cards blocks throughout; standard 後記 + demo disclaimer + SearchBox seed. No real stall or operator named; all synthetic.
+
+Dict carries ten chapters across all artefacts; `hkSeries` Home rail, `/guides` featured band, `/hk-type` chapters, `/hong-kong` hub grid; the arc clock order was updated (06:45 冰室）; the handbook's reading-order line now includes it. The NSC/e2e pins moved to ten.
+
+**Verified on this host.** web suite **340/340**; `tsc --noEmit` clean; census PASS over **1292 literals**; `next build` clean; mock-plane render hub shows 10 chapter hrefs; e2e desktop 3/3 (25.0s total). `docs/SHOWCASE.json` bumped to milestone `D1120` and refreshed features (十章， /handbook, daily cards).
+
+**Honest boundaries.** Mock fixture only; live plane unchanged. The 冰室 timeline is Honoured as lore, not history — sources vary, what is in the chapter is cooked Traditional-HK narrative constructed in the demo style, with no proprietary claims beyond the usual story logic. The arc clock now says "十章" while the series writing order differs (written as D1093 → D1120) — reading order follows the day, not the merge order.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/handbook/page.tsx` (reading-order line), `apps/web/src/lib/hk-cantonese-daily.test.ts` (untouched, unchanged), this ledger entry.

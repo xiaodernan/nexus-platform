@@ -915,7 +915,7 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '九章反覆走完一個 HK',
+      title: '十章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
@@ -926,6 +926,7 @@ const zhHK: Dict = {
         { slug: 'hk-yu-huei-chronicle', label: '春花姨', kicker: '第七章' },
         { slug: 'hk-fruit-market-chronicle', label: '果欄：凌晨三點的卸貨', kicker: '第八章' },
         { slug: 'hk-tongsui-chronicle', label: '糖水：宵夜後的一碗甜', kicker: '第九章' },
+        { slug: 'hk-bing-sat-chronicle', label: '冰室：菠蘿包與一杯鴛鴦', kicker: '第十章' },
       ],
     },
     hkDaily: {
@@ -956,8 +957,8 @@ const zhHK: Dict = {
     hkHub: {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
-      intro: '從凌晨四點半的魚市與果欄，到廟街散場、抵埗一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
-      chaptersTitle: '九章反覆走完一個香港',
+      intro: '從凌晨四點半的魚市與果欄，到廟街散場、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
+      chaptersTitle: '十章反覆走完一個香港',
       quizCtaTitle: '你係邊一個 HK？',
       quizCtaBody: '10 道問題，找出你在香港的最近似的人格——從常餐店長到廟街解籤婆婆。',
       quizCta: '去 /hk-type 試自己',
@@ -965,7 +966,7 @@ const zhHK: Dict = {
       searchCtaBody: '用關鍵字去這座城市搜一次——下一頓吃飯就在那兒。',
       quizBadge: '測驗',
       realSearchBadge: '真·搜尋',
-      seriesLink: '香港九章',
+      seriesLink: '香港系列',
       searchHref: '/search?q=沙田%20下午茶',
       searchHrefLabel: '沙田 下午茶',
       cantonese: {
@@ -1233,7 +1234,7 @@ const zhHK: Dict = {
     eyebrow: '香港系列 · 互動篇章',
     title: '你係邊一個 HK？',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
-    seriesLabel: '九章香港系列指南',
+    seriesLabel: '十章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
@@ -1244,6 +1245,7 @@ const zhHK: Dict = {
       { href: '/guides/hk-yu-huei-chronicle', title: '春花姨', hint: '第七章' },
       { href: '/guides/hk-fruit-market-chronicle', title: '果欄：凌晨三點的卸貨', hint: '第八章' },
       { href: '/guides/hk-tongsui-chronicle', title: '糖水：宵夜後的一碗甜', hint: '第九章' },
+      { href: '/guides/hk-bing-sat-chronicle', title: '冰室：菠蘿包與一杯鴛鴦', hint: '第十章' },
     ],
     start: '開始',
     progress: (current, total) => `第 ${current} / ${total} 問`,
@@ -1962,7 +1964,7 @@ const zhHK: Dict = {
   handbook: {
     eyebrow: 'NEXUS · 簡明說明書',
     title: '玩盡 NEXUS，三分鐘讀完的完整說明書',
-    intro: '由首頁的 SearchBox 到九章香港系列、每日食運，再到 /me 帳戶 hub——這本手冊逐頁告訴你：每個功能是什麼、怎麼用、注意什麼。',
+    intro: '由首頁的 SearchBox 到香港系列、每日食運，再到 /me 帳戶 hub——這本手冊逐頁告訴你：每個功能是什麼、怎麼用、注意什麼。',
     cta: '立即試第一步',
     navTitle: '本手冊目錄',
     exampleLabel: '試試看：把下面這句打進 SearchBox',
@@ -1973,7 +1975,7 @@ const zhHK: Dict = {
       { title: '一句話入門', text: '搜尋任何你想吃的、做的、遇見的——「油麻地 魚蛋 抵食」或「廟街 宵夜」。' },
       { title: '看 AI 的理由', text: '每張推薦卡都會寫明為何推薦；每個數字都能追到事實。' },
       { title: '按你的口味收窄', text: '把條件說出來即得——「要有堂食座位」「預算 HK$200 內」「附近 15 分鐘步行」。' },
-      { title: '香港九章照單全收', text: '/hong-kong 九章放完這座城的一整天；讀過哪章，進度條會記住。' },
+      { title: '香港系列照單全收', text: '/hong-kong 把這座城的一整天放在卡片上；讀過哪章，進度條會記住。' },
       { title: '/me 收起你的最愛', text: '收藏店舖、偏好、預約和收件匣全在一頁；九成功能不登入也用得。' },
     ],
     sections: [
@@ -1985,8 +1987,8 @@ const zhHK: Dict = {
         '首頁的 rails（你附近熱門／為你推薦／熱門榜）由同一份本地事實聚合而來；登入之後，為你推薦才會反映你聲明過的偏好——這是為什麼「為你推薦」在登入前看起來像預設榜單。',
         'District chips（沙田／中環／旺角／銅鑼灣／荃灣…）是無腦跳法：點一下就把搜索丟進那個地區；想再精修就在 SearchBox 後面加條件即可。',
       ] },
-      { id: 'hkseries', kicker: 'STORY', title: '3 · 香港九章 · 由凌晨三點走到最甜的杯底', paragraphs: [
-        '九章反覆走一遍香港這座城市的一整天。順序按讀書順序：03:10 果欄（第八章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 06:00 茶餐廳（第五章）→ 07:30 早茶（第三章）→ 12:00 燒味（第二章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）。',
+      { id: 'hkseries', kicker: 'STORY', title: '3 · 香港系列 · 由凌晨三點走到最甜的杯底', paragraphs: [
+        '十章反覆走一遍香港這座城市的一整天——本系列經已拓至第十章，走法照舊。順序按讀書順序：03:10 果欄（第八章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 06:00 茶餐廳（第五章）→ 06:45 冰室（第十章）→ 07:30 早茶（第三章）→ 12:00 燒味（第二章）→ 19:00 廟街（第四章）→ 22:30 糖水（第九章）。',
         '每章都是「合成敘事示例」（旗幟標誌 demo: true），用於演示內容層的呈現能力；不是真實店家推薦，但就是那樣真實的一頓飯。',
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
       ] },
@@ -2001,7 +2003,7 @@ const zhHK: Dict = {
       { id: 'daily', kicker: 'RITUAL', title: '5 · 三個每日儀式：今日食運／每日一句／章節進度', paragraphs: [
         '今日食運：以香港時間今日的日期（HKT）走 FNV-1a 雜湊取一句籤評——同一日同一張卡；它是純粹好玩，不是建議。',
         '每日一句：十二條手工核對過的廣東話，附 jyutping 與英文註釋（可作為簡單的廣東話入門）。',
-        '章節進度：在目錄卡片上點一下即記錄；九章讀完，進度條就會滿了——地圖上每章會出現「已讀」徽章。',
+        '章節進度：在目錄卡片上點一下即記錄；十章讀完，進度條就會滿了——地圖上每章會出現「已讀」徽章。',
       ] },
       { id: 'me', kicker: 'ACCOUNT', title: '6 · 我的 /me：收藏、偏好、預約、收件匣', paragraphs: [
         '/me 是登入後的總部。六份讀取（檔案／收藏／預約／訂單／已儲存搜索／收件匣）各自呈現在同一頁；任何一份壞了就明說，不會沉默。',
@@ -2024,7 +2026,7 @@ const zhHK: Dict = {
       ], bullets: [
         '「為什麼我打不到東京的結果？」示例數據集僅有香港樣本；將來會拓更多城市。',
         '「商戶的價錢是真的嗎？」mock 模式是虛構；live 模式才有實時價錢。',
-        '「還有第十章嗎？」新章發佈進度寫進 STATUS.md（開發者賬本）；跟進九章的節奏就來 /hong-kong 看板更新。',
+        '「還有第十一章嗎？」這個系列永遠有下一章；發佈進度寫進 STATUS.md（開發者賬本），跟進系列節奏就來 /hong-kong 看板更新。',
       ] },
     ],
     nextTitle: '想要更多？',
@@ -2062,7 +2064,7 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in nine chapters',
+      title: 'One HK in ten chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
@@ -2073,6 +2075,7 @@ const en: Dict = {
         { slug: 'hk-yu-huei-chronicle', label: 'Auntie Chun Fa Yee', kicker: 'Chapter VII' },
         { slug: 'hk-fruit-market-chronicle', label: 'The Fruit Market', kicker: 'Chapter VIII' },
         { slug: 'hk-tongsui-chronicle', label: 'Tong Sui: The Sweet Finish', kicker: 'Chapter IX' },
+        { slug: 'hk-bing-sat-chronicle', label: 'The Ice-Room: Pineapple Bun and Yuenyeung', kicker: 'Chapter X' },
       ],
     },
     hkDaily: {
@@ -2103,8 +2106,8 @@ const en: Dict = {
     hkHub: {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'One table, one Hong Kong',
-      intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to Temple Street and the bowl of sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
-      chaptersTitle: 'Nine chapters through one Hong Kong',
+      intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
+      chaptersTitle: 'Ten chapters through one Hong Kong',
       quizCtaTitle: 'Which HK are you?',
       quizCtaBody: 'Ten questions — from Cha Chaan Teng manager to the fate-teller on Temple Street.',
       quizCta: 'Try /hk-type',
@@ -2380,7 +2383,7 @@ const en: Dict = {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
     title: 'Which Hong Kong are you?',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'Nine HK chapters',
+    seriesLabel: 'Ten HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
@@ -2391,6 +2394,7 @@ const en: Dict = {
       { href: '/guides/hk-yu-huei-chronicle', title: 'Auntie Chun Fa Yee', hint: 'Chapter seven' },
       { href: '/guides/hk-fruit-market-chronicle', title: 'The Fruit Market', hint: 'Chapter eight' },
       { href: '/guides/hk-tongsui-chronicle', title: 'Tong Sui: The Sweet Finish', hint: 'Chapter nine' },
+      { href: '/guides/hk-bing-sat-chronicle', title: 'The Ice-Room: Pineapple Bun and Yuenyeung', hint: 'Chapter ten' },
     ],
     start: 'Start',
     progress: (current, total) => `Question ${current} / ${total}`,
@@ -3132,8 +3136,8 @@ const en: Dict = {
         'The rails (popular near you / for you / trending) come from the same local fact set; the for-you rail only reflects your declared preferences after you sign in — before that it is honestly just the local leaderboard.',
         'District chips (Sha Tin / Central / Mong Kok / Causeway Bay / Tsuen Wan…) are the no-thinking jump: tap one, and the search is re-fired with the district preset — then refine from the SearchBox as usual.',
       ] },
-      { id: 'hkseries', kicker: 'STORY', title: '3 · The HK series — nine chapters, dawn to dessert', paragraphs: [
-        'Nine chapters walk through a whole Hong Kong day. In chronological reading order: Chapter 8 (fruit market, 03:10) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 5 (cha chaan teng, 06:00) → Chapter 3 (yum cha, 07:30) → Chapter 2 (siu mei, 12:00) → Chapter 4 (Temple Street, 19:00) → Chapter 9 (tong sui, 22:30).',
+      { id: 'hkseries', kicker: 'STORY', title: '3 · The HK series — ten chapters, dawn to dessert', paragraphs: [
+        'Nine chapters walk through a whole Hong Kong day. In chronological reading order: Chapter 8 (fruit market, 03:10) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 5 (cha chaan teng, 06:00) → Chapter 10 (the ice-room, 06:45) → Chapter 3 (yum cha, 07:30) → Chapter 2 (siu mei, 12:00) → Chapter 4 (Temple Street, 19:00) → Chapter 9 (tong sui, 22:30).',
         'Every chapter is a synthetic editorial fixture (flags: demo) built to demonstrate the content layer — not a real restaurant list, but very much a real day of appetite.',
         'The strip above the chapter grid on /hong-kong remembers which ones you read (localStorage only; a new device starts from zero).',
       ] },
@@ -3171,7 +3175,7 @@ const en: Dict = {
       ], bullets: [
         '"Why no Tokyo?" The fixture set holds Hong Kong; other cities are future expansion.',
         '"Is the price real?" In mock mode it is imaginary; in live mode the platform only shows what it has checked.',
-        '"Which chapter is next?" The series arc and its growth list live in STATUS.md (developer ledger); the reader-facing board is /hong-kong.',
+        '"Is an eleventh chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
       ] },
     ],
     nextTitle: 'Want more?',

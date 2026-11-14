@@ -45,7 +45,7 @@ export default async function HongKongHubPage() {
         </Container>
       </section>
 
-      {/* Nine chapter cards */}
+      {/* Ten chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">
         <h2 className="text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">{hub.chaptersTitle}</h2>
         <HkSeriesProgress cards={chapters} copy={dict.home.hkProgress} />

@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the nine chapters (D1093 → D1116)
+document is the continuity plan for that world-layer: how the ten chapters (D1093 → D1120)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -52,6 +52,14 @@ changes; the counter at cha chaan teng is where the city's workforce gets its fi
 calories. *What the product serves here:* search "常餐 油麻地" at 06:30; the fixture plane
 answers with a two-tap loop — search, rail, go. *Interlock:* the chapter sits exactly one
 street away from the wholesale dawn's time signature; the whole day is one street long.
+
+### 06:45 — 冰室 (the ice-room) · chapter X
+**The 06:45 jamb between the working world and the leisure melt.** A pineapple bun arrives
+wrapped in paper; the coffee-tea ratio is 4:6, the waiter's arithmetic is perfect; the radio
+still sings 1960s pop and the egg is glazed the way it was for your grandfather. *What the
+product serves here:* search "北角 冰室" or "西多士"; the rails answer with breakfast that
+never left. *Interlock:* the cha chaan teng opens the shift-worker's day, the ice-room slows
+the afternoon, yum cha polishes the tea.
 
 ### 07:30 — 早茶 (yum cha) · chapter III
 **The slow lane opens.** Pu-erh steam, bamboo baskets, the tea lady who refilled your cup

@@ -32,8 +32,8 @@ describe('D1099 HK series rail on the home page', () => {
 
   it('the dict carries the rail in both locales with Traditional script in zh', () => {
     const dict = read(DICT);
-    expect(dict).toContain("title: '九章反覆走完一個 HK'");
-    expect(dict).toContain("title: 'One HK in nine chapters'");
+    expect(dict).toContain("title: '十章反覆走完一個 HK'");
+    expect(dict).toContain("title: 'One HK in ten chapters'");
     expect(dict).toContain("label: '香港三餐的血脈'");
     expect(dict).toContain("kicker: '第一章'");
   });
