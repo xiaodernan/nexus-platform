@@ -43590,3 +43590,19 @@ Live cache probe (`apps/ai/cache_latency_probe.py`, env-gated, opt-in) landed al
 **Honest boundaries.** Both chapters are demo-plane fixtures in `lib/mock/seed.ts`; they do not render in live mode until platform-side seed carries the rows. Every chapter closes with the honest disclaimer + a reader-finder CTA. These are authored fictions with names and scenes of the demo catalogue; they are not editorial guidance and are flagged `flags.demo = true` on every block of content.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
+## 1095. D1095 — a new playable module: `/hk-type` — 「你係邊一個 HK？」 a Traditional-script archetype quiz carrying the HK chapters' Three Verbs beats
+
+**Why.** The product should not only tell HK stories; it should let a Hong Kong consumer play with it. The third interactive beat for the HK series: an 8-question quiz that scores three archetypes — `yum_cha` （茶樓早茶）, `siu_mei` （燒味師傅）, `cha_chaan_teng` （常餐店長） — each wired structurally to the chapter link. Answer honestly, walk away with your archetype, maybe a laugh, and a read. Zero telemetry, zero persistence, zero network calls — the same honesty contract the rest of the product earns.
+
+**The unit.**
+- `app/hk-type/page.tsx` — a `force-static` server component; chapters chips row (welcomes the reader into any of the three chapters), renders `<HkQuiz locale />` at the centre.
+- `src/components/hk-quiz.tsx` — a client island: three phases (idle → playing → result). Eight questions, three options, letters A/B/C, progress `aria-valuenow` bar, deterministic scoring (no rand, no shuffle), archetype tie-break order fixed at `cha_chaan_teng` → `yum_cha` → `siu_mei`; restart always resets cleanly. Result card: archetype title + blurb + the matching chapter CTA + clipboard share + restart; `prefers-reduced-motion` collapses the bar animation.
+- `src/lib/hk-type.test.ts` — 3 arms: force-static + island wiring (no `fetch(`/telemetry in island), three archetypes + progressbar + restart, and dict pins in both locales (Traditional HK script + the three guide hrefs).
+- `globals.css` gains `.nx-ghost-frame` — the same accent-radial-gradient + 1px accent ring recipe the console identity panel uses (one quiet accent wash + one hairline — no new tokens).
+- Dict `hkType` block, both locales — zh Traditional HK script everywhere （茶餐廳, 常餐, 街市, 普洱, 竹籠...）; en straight. The chapter chips source moved to dict too mid-unit after `check_console_i18n` reddened three inline CJK literals (`/hk-type` would have shipped the same class of defect the hero repair had).
+
+**Verified.** End-to-end browser walkthrough on this host: dev server renders `/hk-type` with the series chips （香港三餐的血脈, 燒味, 早茶） + the Traditional-script headline (`你係邊一個 HK？`). Eight clicks of option A → the deterministic result lands: 「茶樓早茶：你係人間禮儀的原型」 with the chapter-link 「閱讀《早茶：竹籠與陳皮茶香》」 and a hairline un-tracked「faithfully stored nowhere」honesty line. census PASS over 1069 literals; console-i18n PASS (inline-CJK migrated to dict); `/hk-type` 2.39 kB; web suite **323/323** (+3).
+
+**Honest boundaries.** The quiz is playful taste, not psychometrics — no claims measured on anyone. `scores` are never kept past the process boundary; the page stores nothing. The result link is a plain `<Link>` to a guide, unenforceable quality gate downstream. The three archetypes roughly mirror the three chapters, not the city. `/hktype.island` honour this honesty in the `noTracking` copy on the result card.
+
+- readers: `apps/web/app/hk-type/page.tsx`, `apps/web/src/components/hk-quiz.tsx`, this ledger entry.

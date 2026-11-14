@@ -100,6 +100,9 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/console-consumer.ts` | D1081: +`mePreferencesRead` — §33 preference rows for /me |
 | `services/platform/src/main/java/com/nexus/catalog/OfferingDetailController.java` | D1089: the public offering detail read — same projection the menu serves, merchant identity from primary location, cacheable, active-only |
 | `apps/web/src/lib/offering-detail-wire.test.ts` | D1089: 5 arms pin §4 wire → OfferingDetail projection, null-on-missing merchant, §20 availability discipline |
+| `apps/web/src/components/hk-quiz.tsx` | D1095: the /hk-type client island — idle/playing/result arc, deterministic archetype scoring, zero telemetry |
+| `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |
+| `apps/web/app/hk-type/page.tsx` | D1095: /hk-type server shell — chapter chips, dot-grid backdrop, static rendering |
 | `apps/web/src/lib/hero-texture.test.ts` | D1087: 2 arms pin the dot-grid + ghost glyph decor in the home hero |
 | `tests/e2e/specs/consumer/signin.spec.ts` | D1082: the /signin two-panel desk e2e — HK proof copy + display headline roles |
 | `apps/web/app/me/page.tsx` | D1083: in-page jump rail — HK-labeled anchor chips to each hub section |

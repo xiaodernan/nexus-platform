@@ -243,6 +243,25 @@ export interface Dict {
     publishedOn: (date: string) => string;
     updatedOn: (date: string) => string;
   };
+  /** /hk-type — the consumer archetype quiz (Hong Kong series). */
+  hkType: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    seriesLabel: string;
+    chapters: Array<{ href: string; title: string; hint: string }>;
+    start: string;
+    progress: (current: number, total: number) => string;
+    questionAria: string;
+    questions: Array<{ text: string; options: Array<{ label: string; scores: Partial<Record<'yum_cha' | 'siu_mei' | 'cha_chaan_teng', number>> }> }>;
+    results: Record<'yum_cha' | 'siu_mei' | 'cha_chaan_teng', { title: string; blurb: string; guideHref: string; guideTitle: string }>;
+    resultEyebrow: string;
+    copyShare: string;
+    shareCopied: string;
+    restart: string;
+    backToHome: string;
+    noTracking: string;
+  };
   /**
    * Operator consoles (§23 merchant workspace, §27 publish gate, §47 data ownership, §68 admin).
    * Appended as its own section: the consumer dictionary above stays untouched so the existing
@@ -1061,6 +1080,112 @@ const zhHK: Dict = {
     unreviewed: '尚未經人工審核',
     publishedOn: (date) => `發佈於 ${date}`,
     updatedOn: (date) => `更新於 ${date}`,
+  },
+  hkType: {
+    eyebrow: '香港系列 · 互動篇章',
+    title: '你係邊一個 HK？',
+    intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用八條問題找出你屬於哪一種香港人。',
+    seriesLabel: '三章香港系列指南',
+    chapters: [
+      { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
+      { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
+      { href: '/guides/hk-dim-sum-chronicle', title: '早茶：竹籠與陳皮茶香', hint: '第三章' },
+    ],
+    start: '開始',
+    progress: (current, total) => `第 ${current} / ${total} 問`,
+    questionAria: '三個選項，A、B、C',
+    questions: [
+      {
+        text: '早上七點的街上，你會先去哪裡？',
+        options: [
+          { label: '茶餐廳，吃一份常餐', scores: { cha_chaan_teng: 2 } },
+          { label: '茶樓，配兩籠點心和一壺普洱', scores: { yum_cha: 2 } },
+          { label: '街市，先看燒味檔的燈亮着沒', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: '常餐這個詞，對你來說是什麼？',
+        options: [
+          { label: '日日要食的那一份，無需理由', scores: { cha_chaan_teng: 2 } },
+          { label: '每次去茶樓，那一份枱禮', scores: { yum_cha: 2 } },
+          { label: '燒味檔六朝早上的第一道光', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: '你下班第一件事想做什麼？',
+        options: [
+          { label: '找間茶餐廳，坐一會兒看電影回放', scores: { cha_chaan_teng: 2 } },
+          { label: '午市街市，找師傅學燒味', scores: { siu_mei: 2 } },
+          { label: '茶樓，點一壺普洱聊一天', scores: { yum_cha: 2 } },
+        ],
+      },
+      {
+        text: '你想帶一個外國朋友去哪裡吃飯？',
+        options: [
+          { label: '茶樓，三樓的竹籠推車', scores: { yum_cha: 2 } },
+          { label: '街市，站着吃一碗燒鴨髀飯', scores: { siu_mei: 2 } },
+          { label: '茶餐廳，靠窗的位子看街口又亮又匆忙', scores: { cha_chaan_teng: 2 } },
+        ],
+      },
+      {
+        text: '你覺得「等食」是什麼？',
+        options: [
+          { label: '有書看，有人說笑，菜會到', scores: { yum_cha: 2 } },
+          { label: '火夠了，油脆了，終於輪到你', scores: { siu_mei: 2 } },
+          { label: '等位之間，常餐突然遞到', scores: { cha_chaan_teng: 2 } },
+        ],
+      },
+      {
+        text: '你收到信息，猶豫了一下，你會：',
+        options: [
+          { label: '先點菊花普洱，再慢慢回覆', scores: { yum_cha: 2 } },
+          { label: '先點常餐，吃完再答', scores: { cha_chaan_teng: 2 } },
+          { label: '感覺重點還沒看明白，多坐一會', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: '你的手提包裡永遠有什麼？',
+        options: [
+          { label: '一小包種籽，提醒自己悠然一下', scores: { yum_cha: 1, cha_chaan_teng: 1 } },
+          { label: '收據，紀錄一天對準一份常餐的客套', scores: { cha_chaan_teng: 2 } },
+          { label: '一疊餐巾紙，具備長時間等候的耐心', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: '凌晨三點，你會在做什麼？',
+        options: [
+          { label: '茶樓消夜，不限數量的蒸籠', scores: { yum_cha: 2 } },
+          { label: '常餐宵夜，對帳', scores: { cha_chaan_teng: 2 } },
+          { label: '街市巡邏，看燒味檔燈熄了沒', scores: { siu_mei: 2 } },
+        ],
+      },
+    ],
+    results: {
+      yum_cha: {
+        title: '茶樓早茶：你係人間禮儀的原型',
+        blurb: '你不追逐匆忙，寧肯多坐一會——普洱加菊花，炭火蒸氣推着手，每一籠都是一整個早晨。這股從容，就是茶樓的 DNA。',
+        guideHref: '/guides/hk-dim-sum-chronicle',
+        guideTitle: '閱讀《早茶：竹籠與陳皮茶香》',
+      },
+      siu_mei: {
+        title: '燒味師傅：燃燒之於沉默',
+        blurb: '你不愛波普，最在乎火候。蜜汁的顏色、炭缸的焦殼、八分鐘的那一瞬間——這就是你一生的堅持。',
+        guideHref: '/guides/hk-siu-mei-chronicle',
+        guideTitle: '閱讀《燒味：凌晨兩點的光與炭》',
+      },
+      cha_chaan_teng: {
+        title: '常餐店長：這座城的節奏',
+        blurb: '你不是大師，也不是職員——你是儀式本身。常餐一落枱，時間就對了；這座城市不缺店長，缺的是記得你的人。',
+        guideHref: '/guides/hk-food-chronicle',
+        guideTitle: '閱讀《香港三餐的血脈》',
+      },
+    },
+    resultEyebrow: '你的香港人格',
+    copyShare: '分享',
+    shareCopied: '已複製連結',
+    restart: '再玩一次',
+    backToHome: '回到首頁',
+    noTracking: '此頁面不保存你的答案；它只是香港系列的另一篇章。',
   },
   console: {
     merchantTitle: '商戶經營概覽',
@@ -1914,6 +2039,112 @@ const en: Dict = {
     unreviewed: 'Not checked by a human',
     publishedOn: (date) => `Published ${date}`,
     updatedOn: (date) => `Updated ${date}`,
+  },
+  hkType: {
+    eyebrow: 'Hong Kong Series · The Interactive Chapter',
+    title: 'Which Hong Kong are you?',
+    intro: 'Food is the one exam Hong Kong will give you without warning. Eight questions to find which Hong Kong you are.',
+    seriesLabel: 'Three HK chapters',
+    chapters: [
+      { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
+      { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
+      { href: '/guides/hk-dim-sum-chronicle', title: 'Yum Cha: Steam and Aged Pu-erh', hint: 'Chapter three' },
+    ],
+    start: 'Start',
+    progress: (current, total) => `Question ${current} / ${total}`,
+    questionAria: 'Three options, A through C',
+    questions: [
+      {
+        text: 'At seven in the morning, where are you?',
+        options: [
+          { label: 'A cha chaan teng, order the usual', scores: { cha_chaan_teng: 2 } },
+          { label: 'A yum cha house, two steam baskets and pu-erh', scores: { yum_cha: 2 } },
+          { label: "On the street, checking the siu mei fire's still lit", scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: 'What does "cha chaan teng" (常餐) mean to you?',
+        options: [
+          { label: 'The one you order every single day, without reason', scores: { cha_chaan_teng: 2 } },
+          { label: 'The etiquette you serve alongside the tea', scores: { yum_cha: 2 } },
+          { label: 'The fire that wakes the whole street, then winds down', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: 'After work, what do you want most?',
+        options: [
+          { label: 'A cha chaan teng, sit by the window, let the street blur', scores: { cha_chaan_teng: 2 } },
+          { label: 'The siu mei stall — watch them work the roaster', scores: { siu_mei: 2 } },
+          { label: 'One long pot of pu-erh at yum cha, on the ground floor', scores: { yum_cha: 2 } },
+        ],
+      },
+      {
+        text: 'Where would you feed a foreign friend first?',
+        options: [
+          { label: 'Yum cha — third floor, steam still climbing', scores: { yum_cha: 2 } },
+          { label: 'Siu mei on the street, eaten with the market crowd', scores: { siu_mei: 2 } },
+          { label: 'Cha chaan teng — by the window, watching the street wake up', scores: { cha_chaan_teng: 2 } },
+        ],
+      },
+      {
+        text: 'What does "the wait" mean, to you?',
+        options: [
+          { label: 'Something to read, someone to talk to, and the dish arrives', scores: { yum_cha: 2 } },
+          { label: "The fire is right, the skin is right — finally it's your turn", scores: { siu_mei: 2 } },
+          { label: 'Between the look and the first bite, the order arrives anyway', scores: { cha_chaan_teng: 2 } },
+        ],
+      },
+      {
+        text: 'A message arrives. You hesitate. You reach for:',
+        options: [
+          { label: 'Chrysanthemum pu-erh — the reply can wait one sip', scores: { yum_cha: 2 } },
+          { label: 'The cha chaan teng usual — answer after the plate arrives', scores: { cha_chaan_teng: 2 } },
+          { label: 'The siu mei fire — it is distracting and I love counting it', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: 'What is always in the bag over your shoulder?',
+        options: [
+          { label: 'A little seedy coin purse — for future luck', scores: { yum_cha: 1, cha_chaan_teng: 1 } },
+          { label: 'The receipt for my usual, to track time', scores: { cha_chaan_teng: 2 } },
+          { label: 'A packet of tissues — for the steam, not the spillover', scores: { siu_mei: 2 } },
+        ],
+      },
+      {
+        text: 'At three in the morning, you are:',
+        options: [
+          { label: 'Yum cha, no limits, no names on baskets', scores: { yum_cha: 2 } },
+          { label: 'Cha chaan teng — the books are closed for the day', scores: { cha_chaan_teng: 2 } },
+          { label: 'The last street patrol: is the roaster still lit?', scores: { siu_mei: 2 } },
+        ],
+      },
+    ],
+    results: {
+      yum_cha: {
+        title: 'Yum Cha: the original HK etiquette',
+        blurb: 'You do not chase the rush. You stay an extra minute for the pu-erh and chrysanthemum — and the whole city follows you out the door.',
+        guideHref: '/guides/hk-dim-sum-chronicle',
+        guideTitle: 'Read 早茶：竹籠與陳皮茶香',
+      },
+      siu_mei: {
+        title: 'Siu Mei: the fire is the point',
+        blurb: 'You do not chase speed. You chase eight perfect minutes — the sauce, the snap of the skin — a Hong Kong that never hurries, and never slips.',
+        guideHref: '/guides/hk-siu-mei-chronicle',
+        guideTitle: 'Read 燒味：凌晨兩點的光與炭',
+      },
+      cha_chaan_teng: {
+        title: 'Cha Chaan Teng: the city on time',
+        blurb: 'You are not a connoisseur or a staff member — you are the ritual. The cha chaan teng lands the moment ordered; the city owes you its breath.',
+        guideHref: '/guides/hk-food-chronicle',
+        guideTitle: 'Read 香港三餐的血脈',
+      },
+    },
+    resultEyebrow: 'Your Hong Kong archetype',
+    copyShare: 'Share',
+    shareCopied: 'Copied',
+    restart: 'Play again',
+    backToHome: 'Back home',
+    noTracking: 'No answers are stored — this is one chapter of the series, not a service.',
   },
   console: {
     merchantTitle: 'Merchant business overview',
