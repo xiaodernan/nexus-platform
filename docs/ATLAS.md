@@ -97,6 +97,7 @@ Infrastructure | `infra/docker-compose.yml`, `infra/db/migrations`, `infra/confi
 |---|---|---|
 | 3002 · 8090 · 8010 | web · platform · AI | `Makefile`, `README.md` |
 | 5433 · 6380 | Postgres · Redis (CI/dev) | `infra/docker-compose.yml` |
+| `apps/ai/Dockerfile` | D1065: 2-stage uv builder, `nexus/ai:dev` — the recipe the `full` profile never had; boot not claimed (host hygiene wiped the seeded plane) |
 | 18761 | `nexus-eureka` | `services/cloud/eureka-server/src/main/resources/application.yaml` |
 | 18888 | `nexus-config` | `services/cloud/config-server/src/main/resources/application.yaml` |
 | 18088 | `nexus-gateway` | `services/cloud/gateway/src/main/resources/application.yaml` |
