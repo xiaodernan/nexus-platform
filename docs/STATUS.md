@@ -43534,3 +43534,12 @@ Web side: `offeringBySlug` no longer casts the wire straight onto `OfferingDetai
 **Honest boundaries.** No e2e asserts `/o/*` in CI (live slug names aren't deterministic across seed runs); the platform-side integration is the contract-proof for the read, the mock-plane e2e remains the page proof for zh-HK rendering. Slug ambiguity inside one tenant resolves `active first, then popularity_score` — a caller that needs siblings asks the menu endpoint with the merchant id.
 
 - readers: `services/platform/src/main/java/com/nexus/catalog/OfferingDetailController.java`, `OfferingRepository.java`, `apps/web/src/lib/data.ts`, `apps/web/src/lib/platform-catalog.ts`, this ledger entry.
+## 1090. D1090 — gate repair (jsonb self-test red from one inserted finder): quality.sql citation lines moved with the insertion
+
+**Why.** D1089 inserted **OfferingRepository.findBySlugAny** ~13 lines above OfferingRepository.view(), shifting every later line down 13. The jsonb-reads census gate pins citations at exact file + line, and the pins flagged two `shape_answer` rows as stale: `catalog/OfferingRepository.java:270` (the `out.put("images"…)` line, cited for `offerings.images`) and `:273` (the `out.put("options"…)` line, cited for `offerings.options`). First verify_all after D1089: `FAIL 1 (check_jsonb_reads.mjs)`, `TOTAL PASS 67`.
+
+**The repair.** The quality.sql citations moved with the insertion, not the insertion with the citations: `:270 → :283` (images) and `:273 → :286` (options). No SQL, no code moved.
+
+**Verified.** `check_jsonb_reads.mjs` **PASS** (0 reasons to redden), `TOTAL PASS 67 · UNCHECKED 2 · NO OFFENDER` reconfirmed after the edit.
+
+- readers: `data/seed/quality.sql`, this ledger entry.

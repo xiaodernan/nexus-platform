@@ -3686,10 +3686,10 @@ INSERT INTO shape_answer VALUES
   'an ordered gallery, read whole and projected by position — the url/alt/credit content lives in the elements, '
   || 'which is D81''s census, not this one'),
  ('offerings', 'images', 'array-only', 'generate.py:268 lists the images column;'
-  || ' catalog/OfferingRepository.java:270, selected whole at :25',
+  || ' catalog/OfferingRepository.java:283, selected whole at :25',
   'the same gallery shape on the offering side'),
  ('offerings', 'options', 'array-only', 'generate.py:268 lists the options column;'
-  || ' catalog/OfferingRepository.java:273, selected whole at :25',
+  || ' catalog/OfferingRepository.java:286, selected whole at :25',
   'choice groups (name + values), so it is a list by design; 2,936 of 5,534 payloads are [] — an offering with no '
   || 'options, a real state and not an unreadable one. Named against the column, not the word: order_items.options '
   || 'is a different column, written by commerce/OrderRepository.java:78-84'),
