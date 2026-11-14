@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the twelve chapters (D1093 → D1128)
+document is the continuity plan for that world-layer: how the thirteen chapters (D1093 → D1129)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -87,6 +87,15 @@ open the morning for the working city, once to survive its 3 p.m. slump without 
 "今日有咩抵食" — the prompt exists to protect the room's quiet, not to break it. *Interlock:*
 this is the one hour when a push notification would be a sin; the product's restraint here
 is a feature, not a gap.
+
+### 17:58 — 獅子山 (the Lion Rock) · chapter XIII
+**The lamp is lit at 17:58.** The harbour blues are giving way to the first electric
+nudge gold against the shoals of every east-facing windowsill. The twelve chapters that
+came before are pages of one afternoon — and here, the skyline itself signs the bottom
+of the page. *What the product serves here:* search "維港 景觀" or "獅子山" — one tap;
+the entire arc crosses the horizon at dawn and the sky pays it back at dusk.
+*Interlock:* the Earth turning; the city converting cash flow into lighting schemes;
+the same humans under all that brightness, nominated for sleep at 23:30.
 
 ### 19:00 — 廟街 (Temple Street, the night temple) · chapter IV
 **The day's argument closes in a public room.** The night market is congestion, chess boards,

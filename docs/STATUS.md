@@ -44049,3 +44049,16 @@ Dict carries twelve chapters everywhere; the arc clock gains the 02:00 checkpoin
 **Honest boundaries.** Mock plane; live plane needs platform seed. The chapter is a synthetic story; century-egg facts are general-knowledge popular narrative, not chemistry. The arc doc's ordering now loops from 22:30 → 22:45 → 02:00 → dawn; the loop ends before any chapter exists after that point.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1129. D1129 — the arc pays back at dusk: chapter XIII （獅子山， 17:58) signs the skyline into the story
+
+**Why.** The arc crosses the horizon at dawn in ink-gold, and dusk returns it in electric blue — the skyline exchange promised at 17:58 in every Hong Kong office tower. Twelve chapters were about food and table; the thirteenth is the city itself as signatory. The arc doc reached its last tension: it was all beginning, all middle, all loop — it was missing its dusk.
+
+**The unit.** `DEMO_GUIDES` gains `hk-lion-rock-chronicle` — 「獅子山：17:58 的第一粒燈」. Three heading cards: 一、獅子山：一座城的印章 (the rock as the city's signature), 二、17:58 的第一粒燈 (the dusk-swap: harbour's first electric window glows before the stores), 三、看城市背光的方式 (the grid seen from above as the day's final arrangement). Standard 後記 + demo disclaimer + SearchBox seed. Synthetic narration, no operators named; Lion Rock Tourist Association does not appear, and Lion Rock does not ask for them either.
+
+Dict carries XIII across every artefact: home rail, `/guides` Featured band, `/hk-type` chapters, `/hong-kong` hub grid + clock checkpoint `17:58`. Arc document: section inserted between `15:30` and `19:00`; intro now runs `D1093 → D1129`.
+
+**Verified on this host.** web suite **346/346**; `tsc` clean; census PASS over **1361 literals** (+9 Simplified-detector offsets absorbed); `next build` green; dev-plane mock render hub 200; **playwright desktop 5/5 passed (30.4s)**.
+
+**Honest boundaries.** Mock fixture only; the Lion Rock Tourist Association is a real entity ignored here; every detail is synthetic narrative; the jyutping of no Cantonese phrase here needed widening. The circadian frame (17:58 → dawn loop) means the arc doc now reads 03:10 → 02:00 → dawn → dusk → 02:00 → the dawn again, same city, same arc, same ten years from today — that is the point, and that was the finding.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
