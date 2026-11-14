@@ -43834,3 +43834,14 @@ Dict carried: `home.hkDaily` on both locales; interface typed in the `home` bloc
 **Honest boundaries.** Cosmetic only — the card asserts nothing and gates nothing; it is a cold-start-safe gimmick, not a rule engine. It never touches /me, rails, fixtures, analytics or the wire. The zh entries lean on HK common food words; nothing is location-specific beyond text. The date is client-side (`useEffect`) to keep home cache-clean, so print and first paint show the placeholder, not the entry.
 
 - readers: `apps/web/src/lib/almanac.ts`, `apps/web/src/components/hk-daily-almanac.tsx`, `apps/web/app/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+## 1113. D1113 — the /hk-type quiz result wears the daily almanac: one Traditional-HK line under the archetype, deterministic, no new state
+
+**Why.** D1112 gave the home page a daily buy-in card, but the almanac only earned half its keep behind one screen. The quiz is the other half of the same world — the one place consumers dwell for ten questions; giving it the same deterministic flourish costs one pure import and closes the loop between the home rail, the series, and the result page.
+
+**The unit.** `hk-quiz.tsx` — the result branch imports `almanacIndex` + `hkDateKey` (dependency-free), reads `dict.home.hkDaily`, and renders a full-width soft accent line below the blurb: eyebrow 「今日食運」 + the picked Traditional entry, with a ticket icon. Computed straight inside the result render because that branch can only ever appear on the client — no server/client mismatch, no fetch, no persistence, no telemetry. Also the island's stale header comment ("eight questions, three archetypes… product tour of the three existing chapters") is corrected to ten questions, five archetypes, eight chapters — it had been lying since D1104.
+
+**Pinned by tests.** `hk-type.test.ts` gains source arms: island references `almanacIndex`, `hkDateKey`, and `dict.home.hkDaily`, alongside the existing no-fetch/no-XHR/no-analytics bars.
+
+**Honest boundaries.** Cosmetic. The daily line is the same Today picked the Today sees — identical algorithm, identical day, identical pool. It is not personalization; it never influences the archetype. Non-HK dates (a user abroad picking zh-HK) still key off the HK zone by design — the product's clock is Hong Kong's clock, matching the series.
+
+- readers: `apps/web/src/components/hk-quiz.tsx`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.

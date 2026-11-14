@@ -2,9 +2,9 @@
 
 /**
  * The /hk-type island — a third chapter of the Hong Kong story series, interactive this time:
- * eight questions, three archetypes derived from scoring, zero telemetry, zero persistence.
+ * ten questions, five archetypes derived from scoring, zero telemetry, zero persistence.
  *
- * The page is a product tour of the three existing chapters and of the product's ability to
+ * The page is a product tour of the eight chapters and of the product's ability to
  * carry a whole HK voice — not a psychological assessment. Every answer option exists for the
  * laugh, not the profile.
  */
@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Icon } from '@nexus/ui';
 import { getDict } from '@/lib/i18n';
+import { almanacIndex, hkDateKey } from '@/lib/almanac';
 
 type Archetype = 'yum_cha' | 'siu_mei' | 'cha_chaan_teng' | 'temple_street' | 'cha_chaan';
 type Phase = 'idle' | 'playing' | 'result';
@@ -140,6 +141,13 @@ export function HkQuiz({ locale }: { locale: string }) {
     );
   }
 
+  // The daily pick is a pure function of the HK date — computed straight in the result branch,
+  // which only ever renders on the client (phase transitions follow a tap), so there is no
+  // server/client mismatch to guard.
+  const daily = dict.home.hkDaily;
+  const dailyIdx = phase === 'result' ? almanacIndex(hkDateKey(), daily.entries.length) : null;
+  const dailyLine: string | null = dailyIdx === null ? null : daily.entries[dailyIdx] ?? null;
+
   const guideHref = result.guideHref;
   return (
     <section className="relative mx-auto flex max-w-2xl flex-col gap-6 rounded-2xl border border-line bg-surface p-6 shadow-md">
@@ -149,6 +157,12 @@ export function HkQuiz({ locale }: { locale: string }) {
         {result.title}
       </h2>
       <p className="max-w-prose text-base leading-relaxed text-ink-muted">{result.blurb}</p>
+      {dailyLine ? (
+        <p className="flex items-start gap-2 rounded-lg border border-accent-line bg-accent-soft px-3 py-2 text-xs leading-relaxed text-accent">
+          <Icon name="ticket" size={12} className="mt-0.5 shrink-0" />
+          <span><span className="font-semibold uppercase tracking-wide">{daily.eyebrow}</span>{' · '}{dailyLine}</span>
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <Link
           href={guideHref}

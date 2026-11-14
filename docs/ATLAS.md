@@ -108,7 +108,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/i18n/dict.ts` | D1107: the HK series consolidates in home rail / quiz chips / hub page |
 | `tests/e2e/specs/consumer/hong-kong.spec.ts` | D1110: 1 arm — the /hong-kong mega hub e2e: h1 + seven /guides chapter hrefs + quiz teaser + search taster |
 | `apps/web/app/hong-kong/page.tsx` | D1109: unconditionally rendered, dict-driven editorial across all deployments |
-| `apps/web/src/components/hk-quiz.tsx` | D1095: the /hk-type client island — idle/playing/result arc, deterministic archetype scoring, zero telemetry |
+| `apps/web/src/components/hk-quiz.tsx` | D1113: the result branch now renders the daily HK ticket line |
 | `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |
 | `apps/web/app/hk-type/page.tsx` | D1095: /hk-type server shell — chapter chips, dot-grid backdrop, static rendering |
 | `tests/e2e/specs/consumer/hk-type.spec.ts` | D1098: 1 desktop arm — the /hk-type quiz start → progressbar → 8×A → deterministic yum_cha result |

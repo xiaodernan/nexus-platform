@@ -30,6 +30,10 @@ describe('D1095 /hk-type archetype quiz', () => {
     expect(island).not.toContain('XMLHttpRequest');
     expect(island).not.toContain('analytics');
     expect(island).toContain('navigator.clipboard');
+    // D1113: the quiz result wears the same deterministic HK-date almanac as the home page.
+    expect(island).toContain('almanacIndex');
+    expect(island).toContain('hkDateKey');
+    expect(island).toContain('dict.home.hkDaily');
   });
 
   it('the island has three archetypes with deterministic scoring and a restart', () => {
