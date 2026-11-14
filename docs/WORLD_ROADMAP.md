@@ -17,9 +17,9 @@ What remains unclaimed in a classic HK day: the hours when the city changes shif
 | 26 — **landed D1149** | 10:00 | 魚蛋檔 | hk-fishball-stall-chronicle | The first fish balls of the day from the same ladles, same fire |
 | 27 — **landed D1151** | 11:00 | 報館放送：早報印好了 | hk-newspaper-wrapper-chronicle | The newsstand that still sees the day before everyone else |
 | 28 — **landed D1151** | 15:00 | 九龍公園的雀籠房 | hk-pigeon-coop-chronicle | The pigeon keepers of Kowloon Park — the Saturday body |
-| 29 | 17:00 | 太古城的一身風雨候車亭 | hk-typhoon-shelter-chronicle | Bus shelter that becomes a typhoon shelter for ten minutes every afternoon |
-| 30 | 20:00 | 粥府的長枱 | hk-soup-kitchen-communal-chronicle | The long table in the communal soup kitchen on Temple Street |
-| 31 | 21:30 | 屋邨電梯口的紙箱 | hk-estate-cardboard-chronicle | The cardboard man outside the lift lobby who sorts the whole night |
+| 29 — **landed D1152** | 17:00 | 太古城候車亭 | hk-typhoon-shelter-chronicle | Bus shelter that becomes a typhoon shelter for ten minutes every afternoon |
+| 30 — **landed D1152** | 20:00 | 粥府的長枱 | hk-soup-kitchen-communal-chronicle | The long table in the communal soup kitchen on Temple Street |
+| 31 — **landed D1152** | 21:30 | 屋邨電梯口的紙箱老伯 | hk-estate-cardboard-chronicle | The cardboard man outside the lift lobby who sorts the whole night |
 | 32 | 23:00 | 麥當勞得來速的深夜排隊 | hk-drive-thru-midnight-chronicle | The midnight drive-through queue that never stops, never rushes |
 | 33 | 00:00 | 紙包饮品・自动贩卖机 | hk-vending-machine-chronicle | The one machine in the estate that sells a drink nobody wants |
 

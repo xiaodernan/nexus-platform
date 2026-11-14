@@ -44299,3 +44299,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixtures; the pressyard routine, the roost-flight race, and the "九尾雀號上次失去" are narrative constructions. No real operator, bird, paper, price, or address — none of which we claim anywhere.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.
+## 1152. D1152 — chapters XXIX + XXX + XXXI land together: 17:00 太古城候車亭一身風雨 · 20:00 粥府的長枱 · 21:30 屋邨電梯口的紙箱老伯
+
+**Why.** WORLD_ROADMAP rows 29/30/31 — the final three rows of the 11-chapter Layer-C "start here" table the roadmap opened with. The 17:00 shelter is the one piece of comfort in the wet commute; the 20:00 communal table is the last warmth of the day; the 21:30 cardboard elder is the night shift nobody notices but everybody gets to eat.
+
+**The unit.** `DEMO_GUIDES` gains three fixtures: `hk-typhoon-shelter-chronicle` — 「下午五點：太古城候車亭的一身風雨（香港系列 · 第二十九章）」, `hk-soup-kitchen-communal-chronicle` — 「晚上八點：粥府的長枱（香港系列 · 第三十章）」, `hk-estate-cardboard-chronicle` — 「晚上九點半：屋邨電梯口的紙箱老伯（香港系列 · 第三十一章）」. Traditional HK script throughout (census 1548 literals, 0 simplified; 台/面 only). Every locale carries all three; arc clock gains 17:00, 20:00, 21:30 in chronological slots (62 chips across both locales); hk-type link list; handbook reading order re-sorted to thirty-one on both locales; e2e floors ≥31; WORLD_ROADMAP rows 29/30/31 marked landed; ARC doc gained three entries.
+
+**Honest boundaries.** Synthetic fixtures; the shelter's physical geometry, the communal table's etiquette, and the cardboard elder's legal authority to fold neighbours' trash are narrative constructions. No real operator, no real person, no price, no address, no policy.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.

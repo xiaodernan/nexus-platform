@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the twenty-eight chapters (D1093 → D1151)
+document is the continuity plan for that world-layer: how the thirty-one chapters (D1093 → D1152)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,28 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 17:00 — 太古城候車亭 (the typhoon shelter) · chapter XXIX
+**Between the rain stopping and the Bourse door slamming shut, there is a five-metre-wide refuge.**
+At 17:00, the shelter at Tai Koo City is full of people who should be somewhere else — and the
+product nobody needs at 17:00 is still one bus ride away. *What the product serves here:* the one
+real escape at the worst hour; the rail holds the warm seat next to the wet one. *Interlock:* the
+15:00 pigeon coop teaches stillness — the 17:00 shelter puts it into a bus ride; the 16:00 Bourse
+bell rings while they all stand — every one of them sodden.
+
+### 20:00 — 粥府的長枱 (the communal tong sui night) · chapter XXX
+**Nobody eats alone at this table.** At 20:00, the Temple Street communal table fills under the
+useless stars of the humid kitchen — every mouthful serves this city's cheapest-beloved salaryman.
+*What the product serves here:* the cheapest meal in the district, served communally; the product
+is not a rating but a blessing. *Interlock:* the 19:00 Temple Street chapter people are all at a
+neighboring table when the bowls are emptied; the night shift clock is the same for every table.
+
+### 21:30 — 屋邨電梯口的紙箱老伯 (the cardboard elder) · chapter XXXI
+**The last person on the estate keeps feeding the estate.** At 21:30, the cardboard elder outside
+the lift-lobby does the night's last sorting — the recyclables that let the city burn by tomorrow.
+*What the product serves here:* a night worker nobody pays for at 21:30 — save one tap, the rail
+knows where he goes. *Interlock:* the 22:30 pipipi-chaiyun chapter wakes when the last cardboard
+goes to the cage; the night, kept fed, happens at the cardboard elder's hands.
 
 ### 11:00 — 報館放送 (the newspaper wrapper) · chapter XXVII
 **The papers that wake this city come out under one steady hand.** At 11:00, two hours after the
