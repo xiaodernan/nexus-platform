@@ -4,15 +4,14 @@ import { Container, Icon } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
-import { IS_MOCK } from '@/lib/env';
 
 export const dynamic = 'force-static';
 
 /**
  * `/hong-kong` — the mega-hub of the Hong Kong story series. Every chapter of the series
  * is listed with inline pointers into the guides pages, plus the quiz chapter and the
- * one ready tap into the seed search. This is the largest single editorial artefact in
- * the product — mock-plane only by design (live mode will get its own seeded pass).
+ * one ready tap into the seed search. The content is dict-driven and works in any
+ * data mode — the demo catalogue and the live plane both use the same copy.
  */
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,13 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HongKongHubPage() {
   const locale = await currentLocale();
   const dict = getDict(locale);
-  if (!IS_MOCK) {
-    return (
-      <Container size="prose" className="flex flex-col gap-4 py-16">
-        <p className="text-sm text-ink-muted">{dict.states.empty}</p>
-      </Container>
-    );
-  }
   const chapters = dict.home.hkSeries.cards;
   const hub = dict.home.hkHub;
 
@@ -51,7 +43,7 @@ export default async function HongKongHubPage() {
         </Container>
       </section>
 
-      {/* Six chapter cards */}
+      {/* Seven chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">
         <h2 className="text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">{hub.chaptersTitle}</h2>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

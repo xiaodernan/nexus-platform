@@ -43780,3 +43780,14 @@ Dict consolidates the HK series across all three artefacts to seven chapters, ca
 **Honest boundaries.** Mock-plane fixture only — the Chun Fa Yee universe is not a real person nor a named stall. The Traditional script HK authenticity sacrifices some literary byte count for accuracy with the census bar — the chapter is written plain, not lyrical, so it does not wander into over-scripting Traditional which star-deconstructs Hong Kong into fantasy. The fish-market chapter and the Chun Fa Yee chapter lean on each other — same 4:30 a.m. clock — but are independent narratives.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
+## 1109. D1109 — /hong-kong mega hub now renders on every deployment
+
+**Why.** D1105 shipped the hub behind `IS_MOCK`; live deployments got an empty state. The page content is fully dict-carried, so the guard was cargo-keeping: the page has no runtime fixture dependency. Removing the guard costs zero tokens and makes the hub reachable everywhere with zero secrets passed.
+
+**The unit.** `app/hong-kong/page.tsx` — controller clause removed; `IS_MOCK` import dropped; the doc comment rewritten to say exactly what this is (dict-driven editorial, not a mock). Critical note: `dict.home.hkHub` is also shortened to read `香港的四碗飯` / `香港的四碗飯` — never mind, it stays `香港的四碗飯`, four meals
+
+**Verified.** web suite **325/325**; `tsc --noEmit` clean; `next build` green; console-i18n PASS (every CJK word remains under a dict key); census unchanged. The e2e lane carries no automation for this page in this commit — live rendering requires the host platform plane, which this host cannot keep running long enough to e2e-test against an instance of it.
+
+**Honest boundaries.** The page renders on every deployment — that is the scope. What the page *cannot* fix: the chapters themselves live behind the mock fixture plane, and in live mode `/guides/hk-*` still lands on whatever the platform seed catalogue holds. The hub becoming visible doesn't turn the guides live — it is an honest pointer map, not magic. The user sees the cover, but the content is still what the platform delivers.
+
+- readers: `apps/web/app/hong-kong/page.tsx`, this ledger entry.
