@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1148",
-  "milestone_full": "香港系列篇二十四章 · 00:30→22:45 · /daily · WORLD_ROADMAP",
+  "milestone": "D1149",
+  "milestone_full": "香港系列篇二十六章 · 00:30→22:45 · /daily · WORLD_ROADMAP",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: twenty-four Traditional chapters — 00:30→22:45 full day arc · 48-chip clock both locales",
+    "HK series: twenty-six Traditional chapters — 00:30→22:45 full day arc · 52-chip clock both locales",
     "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order",
-    "Edition XXIV — 塔樓清潔工, the 01:00 tower-block patrol nobody photographs",
+    "Edition XXV+XXVI — 最後一鍋糖水 (02:30) and 魚蛋檔 (10:00)",
     "/daily: the daily ritual page — almanac + Cantonese phrase + one chapter by date hash",
-    "WORLD_ROADMAP.md: six layers beyond the day-arc + three canonical arcs + ten next chapters",
-    "D1142: LangGraph opt-in engine · D1140: Redis shared token bucket · web 346/346 · census 1483 clean"
+    "WORLD_ROADMAP.md: six layers beyond the day-arc + three canonical arcs + chapters 27-33 mapped",
+    "D1142: LangGraph opt-in engine · D1140: Redis shared token bucket · web 346/346 · census 1501 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

@@ -44272,3 +44272,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the nineteen-storey patrol, the stair-model, and the "他們說這就是讀書" framing are narrative constructions with no real building or operator behind them. No address, no operator, no real estate claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+## 1149. D1149 — chapters XXV and XXVI land together: 02:30 最後一鍋糖水 and 10:00 魚蛋檔 — two more hours of the city that nobody photographs
+
+**Why.** WORLD_ROADMAP rows 25 and 26 — both are scenes the series kept threatening to tell: the night's last sweetness (the urn) and the commuter-hour fishball transaction (the ladle). Together, they fill two of the half-hour gaps Layer C calls out.
+
+**The unit.** `DEMO_GUIDES` gains two fixtures: `hk-last-tong-sui-urn-chronicle` — 「凌晨兩點半：最後一鍋糖水（香港系列 · 第二十五章）」, and `hk-fishball-stall-chronicle` — 「上午十點：魚蛋檔（香港系列 · 第二十六章）」. Three heading cards each; Traditional HK script throughout (census 1501 literals, 0 simplified; 台/面 only); empty cards; 後記 + SearchBox pointers（「糖水 最後一鍋」/「魚蛋 早上」）。Both locales carry both chapters; the arc clock gains 02:30 and 10:00 (52 chips across both locales); hk-type link list; handbook reading order re-sorted to twenty-six on both locales; e2e floors ≥26; ARC doc gained two interlock entries.
+
+**Honest boundaries.** Synthetic fixtures; the tong sui composition, the fishball series-log, and the 02:30 crowd quality are narrative constructions with no real vendor operator behind them. No shop, no stall-holder, no price claim anywhere.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/WORLD_ROADMAP.md`, `docs/ATLAS.md`, this ledger entry.

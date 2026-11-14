@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the twenty-four chapters (D1093 → D1148)
+document is the continuity plan for that world-layer: how the twenty-six chapters (D1093 → D1149)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 
@@ -16,6 +16,21 @@ stall, operator, price or address is claimed anywhere as real. The *arrangement*
 is how the city still works, from the wholesale markets outward to the dinner ticket.
 
 ## The full day, hour by hour
+
+### 02:30 — 最後一鍋糖水 (the last tong sui urn) · chapter XXV
+**The night's sweetness ends in one urn.** At 02:30, before the congee line and long after the fish
+market hush, the tong sui herbal stall lady holds the crowd of four kinds of people nobody else
+welcomes this late. *What the product serves here:* nobody searches for tong sui at 02:30; the
+product simply knows and has the stall ready — the city's last sweetness is the page waiting to be
+opened at the right hour. *Interlock:* the congee chapter (02:00) starts the day's wet belly; the
+01:00 chapter (tower cleaner) sweeps the silence; 02:30 closes the night's sweet threshold.
+
+### 10:00 — 魚蛋檔 (the fishball stall) · chapter XXVI
+**Nobody picks the fish ball by flavour; they pick it by the person holding the ladle.** Ten in
+the morning is the commuter hour's second wave — office workers needing one bite on the way to
+dinner meetings. *What the product serves here:* a search "魚蛋 早上" at 10:00 — the rail meets the
+reader before they ask. *Interlock:* the Cheung Chau passage (09:30) watches the island's last
+morning ferries; the 10:00 stall feeds the people leaving for the island's empty beaches.
 
 ### 01:00 — 塔樓清潔工 (the tower-block cleaner) · chapter XXIV
 **The city sleeps; she is on the stairs.** Between 00:30 last taxi and 02:00 congee, the tower block
