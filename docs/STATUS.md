@@ -43496,3 +43496,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** A single-run, five-case snapshot on one provider day; it is not a stability certificate. Worth re-running after any relay/model change. Never CI by design; `NEXUS_LLM_*` env-gated; cost of one run is a few cents and it must stay that way (the day it stops being cheap is the day it stops being routine).
 
 - readers: `apps/ai/eval_live_intent.py`, this ledger entry.
+## 1087. D1087 — the home hero gains print depth: a masked dot-grid behind the copy column + one ghost 「香港」 glyph, aria-hidden, zero copy, zero tokens
+
+**Why.** The hero was typographically strong but spatially flat — two radial glows over a clean surface, nothing underneath the `SearchBox`. Editorial print (a dot-grid seen on great covers) gives the hero its texture without a single word, a single token or a single endpoint change. The product is Hong Kong's; one giant Traditional glyph, ghosted to 5.5% ink, says it without saying.
+
+**The unit.** `apps/web/app/globals.css` gains two utilities: `.nexus-dot-grid` (radial-gradient dots in `--nexus-accent-rgb` at 0.14 · 22px rhythm · masked by a 62% radial mask concentrated behind the 62% 32% point with -webkit- prefix for Safari parity) and `.nexus-ghost-glyph` (`var(--nexus-font-display)`, `clamp(9rem → 22vw → 18rem)`, tracking-tight, `rgb(var(--nexus-accent-rgb) / 0.055)`, `user-select: none`). The hero in `app/page.tsx` renders `<div className="nexus-dot-grid ..." aria-hidden="true"/>` plus `<span className="nexus-ghost-glyph ... hidden xl:block">香港</span>` — screen readers never read either; the mask `transparent 78%` dissolves the pattern into chrome.
+
+**Verified.** `hero-texture.test.ts` — 2 arms (render present in page, utilities defined in CSS); web suite **314/314** (+2); `tsc --noEmit` clean; `next build` green. Visual suite unchanged (the hero region is above the fold; CI's visual baseline tolerates 2% diff — this print adds low-contrast mid-tone pixels only in a dedicated decor layer).
+
+**Honest boundaries.** A new layer — two stacked aria-hidden absolute layers + two ≤6%-opacity decorations; no interactivity, no hydration, no JS, zero influence on search behaviour. The ghost glyph is Traditional script (`香港`) — intentional: the brand's first city, printed as art, not as a string anyone copies.
+
+- readers: `apps/web/app/page.tsx`, `apps/web/app/globals.css`, this ledger entry.

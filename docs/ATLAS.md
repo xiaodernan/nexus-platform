@@ -97,6 +97,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/signin-desk.test.ts` | D1077: 2 structural pins — two-panel composition, dict proofs in both locales (HK Traditional script) |
 | `apps/web/src/lib/merchant-card-cache.ts` | D1079: unstable_cache(10 min, tag merchant-card) over the anonymous public merchant read |
 | `apps/web/src/lib/console-consumer.ts` | D1081: +`mePreferencesRead` — §33 preference rows for /me |
+| `apps/web/src/lib/hero-texture.test.ts` | D1087: 2 arms pin the dot-grid + ghost glyph decor in the home hero |
 | `tests/e2e/specs/consumer/signin.spec.ts` | D1082: the /signin two-panel desk e2e — HK proof copy + display headline roles |
 | `apps/web/app/me/page.tsx` | D1083: in-page jump rail — HK-labeled anchor chips to each hub section |
 | `tests/e2e/specs/consumer/me.spec.ts` | D1080: 2 arms — anonymous stop (no session, no hub sections) + signed-in hub (501-or-ok gates, skips honestly without a live stack) |

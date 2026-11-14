@@ -94,3 +94,20 @@
     backdrop-filter: blur(2px);
   }
 }
+
+/* ---------- home hero texture: dot-grid + ghost glyph (D1087) ---------- */
+.nexus-dot-grid {
+  background-image: radial-gradient(rgb(var(--nexus-accent-rgb) / 0.14) 1px, transparent 1.35px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(62% 58% at 62% 32%, black 22%, transparent 78%);
+  -webkit-mask-image: radial-gradient(62% 58% at 62% 32%, black 22%, transparent 78%);
+}
+.nexus-ghost-glyph {
+  font-family: var(--nexus-font-display);
+  font-weight: 800;
+  font-size: clamp(9rem, 22vw, 18rem);
+  line-height: 0.78;
+  letter-spacing: -0.04em;
+  color: rgb(var(--nexus-accent-rgb) / 0.055);
+  user-select: none;
+}
