@@ -43392,3 +43392,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** The proofs are copy, not runtime checks; the same discipline as the hero's scope lines — the page shows what the platform claims to do, the card refuses or grants honestly. No new tokens, no new endpoints, no new actions on the working card.
 
 - readers: `apps/web/app/signin/page.tsx`, this ledger entry.
+## 1078. D1078 — the demo fixture finally speaks Traditional script: `mock/seed.ts` converted Simplified→HK Traditional with the repo's own pair tables (+14 hand pairs)
+
+**Why.** The demo plane's `seed.ts` was written in mixed and Simplified Chinese （示例：订位已确认 / 合成数据 / 评价摘要 / 盐焗虾很稳定） — the first thing a Hong Kong reader of the *demo identity* sees. The zh-HK census (`check_ui_script.mjs`) deliberately does not charge the fixture carrier (matcher tests depend on its dual-script vocabulary), so the drift was invisible to every gate. D1066–D1077 kept making the Traditional-script promise everywhere except here — the untested gap was exactly where that promise is most visible.
+
+**The unit.** Four conversion passes with a before/after diff audited by eye: (1) the 237-pair union of `CANONICAL_FORMS` (canonical.py, simplified→traditional only, minus 台→臺/面→麵/嘅→的 exclusions) + (2) the 140-pair `_TRAD_SIMP_PAIRS` union — zero residuals by the repo's own detection set (`scan_seed.py` prints 0); (3) 12 hand-verified unambiguous pairs the repo tables do not carry （项/稳/条/后/挤/给/费/视/盐/拥/当/虾） — each occurrence eyeballed in context first （皇后/只不飾 etc. never in scope); (4) 11 more （验/据/组/练/辈/笼/够/着/认/进/软）. Plus `连接→連結`. Total ≈ 320 character conversions. The dual-script matcher vocabulary in `mock/index.ts` （帮/约会/安静…) is **untouched on purpose** — it exists so typed Traditional *and* Simplified both resolve; converting it would break §638's matcher-closure test. `simplified-twins.ts` / `stated-time.test.ts` / `vocabulary-spelling.test.ts` likewise intentionally Simplified.
+
+**Verified.** web suite **306/306** (no test pinned the fixture's strings); grep audit of every remaining candidate char returns only shared-script characters （台/黑/身/夜/跑/种/加 — Traditional-valid). Not claimed: completeness against a professional-grade reference set (no opencc in this environment) — the honest bound is "at least as Traditional as the repo's own census defines" plus hand-verified unambiguous pairs.
+
+**Honest boundaries.** Demo copy, not production speech; remaining mixed-script risks sit in `.workbuddy/memory` (the author's working notes, Simplified by design) and matcher carriers (Simplified by design). The 24h SN here means the seeded demo Ada shows zh-HK-fidelity fixture text on next fixture rebuild.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
