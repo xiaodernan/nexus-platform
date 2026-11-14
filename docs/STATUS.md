@@ -43341,3 +43341,14 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** This fixes the probe, not the provider. The tiny-system default (`You are the NEXUS assistant. Answer only from the data you are given.`) is ~14 tokens: even warm, a 14-token prefix cannot clear the provider's ~1024-token floor, so this arm will always read ~0% cached — that is the *point* of the arm (it is the control group). The fix matters because without it the probe crashed before reaching the D1050 prefix-contract arm.
 
 - readers: `apps/ai/cache_probe.py`, this ledger entry.
+## 1074. D1074 — the live favourites rail reads the documented contract: bare rows, session-required, hydrated in rails-stream
+
+**Why.** `rails-stream.ts` typed the live `recently_viewed` read as `{items: [{card}]}` and sent it with `authorization: null` — three lies in two lines: the platform (`GET /api/v1/me/favorites`) requires the caller's session cookie, returns a **bare array** (`[{id, subject_type, subject_id, note, created_at}]`, newest first), and the card projection the web can trust is `merchantDetailFrom` → `merchantToCard`, the same pair `/m/[slug]` uses. A live signed-in read would have `TypeError` — `page.items` is not a thing — swallowed by the §105 `allSettled` into an absent rail: silent, not degraded, invisible. The web never actually reached the branch (the page passes `signedIn: false`); the test doubles agreed with the lie, mocking `{items:[{card}]}`.
+
+**The unit.** `rails-stream.ts` — favorites read uses `nexusAuthedGet` (cookie forwarded, never logged), typed to bare rows; hydration runs one authed `/api/v1/merchants/{idOrSlug}` read per **merchant** subject through the same wire projection as the merchant page. Offering/collection/guide saves are **skipped, not guessed**: the platform has no public offering read door, and guessing a card from a bare row would violate §19. `home-rails-degrade.test.ts` now doubles two planes (`nexusGet` for AI rails, `nexusAuthedGet` for the platform); the signed-in-green arm pins two authed calls + one card materialising out of the wire fixture; the all-fail arm counts each plane separately; the anonymous arm pins that the authed plane is never touched.
+
+**Verified.** vitest **298/298** (degrade-pinned file 4/4); `tsc --noEmit` clean. Not run locally: the seeded plane (gone) — hydration correctness in CI relies on the same `merchantDetailFrom` coverage `platform-catalog.test.ts` holds.
+
+**Honest boundaries.** Hydration is N+1 by design and bounded at 6 favorites; caching the hydration across page loads is a separate unit. Until a platform read exists for a single offering or a collection by id, non-merchant saves cannot render as cards anywhere; the consumer surface (D1075) states that limit rather than hiding it.
+
+- readers: `apps/web/src/lib/rails-stream.ts`, `apps/web/src/lib/home-rails-degrade.test.ts`, this ledger entry.
