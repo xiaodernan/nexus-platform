@@ -91,6 +91,10 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/back-to-top.test.ts` | D1071: 3 arms pin mount-once, past-fold visibility, dict presence in both locales |
 | `apps/web/src/lib/search-box-suggestions.test.ts` | D1072: 4 arms pin the combobox/listbox ARIA contract, the empty+focus guard, Esc/dismiss, click-to-submit |
 | `apps/web/src/components/search-box.tsx` | D1072: SearchBox gains a popover flavour of the example prompts on empty+focus — the same two navigation paths as Enter |
+| `apps/web/app/me/page.tsx` | D1075: the consumer account hub — six reads with independent fates, identity panel, counts strip, saved-merchant grid, inbox, reservations, orders |
+| `apps/web/app/me/loading.tsx` | D1075: `/me` streaming skeleton mirroring the hub layout; no new dict keys |
+| `apps/web/src/lib/console-consumer.ts` | D1075: consumer data plane — `/api/v1/me/**` + `/api/v1/notifications` reads, mock plane parity, `meSession()` identity rule |
+| `apps/web/src/lib/me-page.test.ts` | D1075: 5 structural pins — force-dynamic + sign-in stop, §3/§123 endpoints only, EntityCard path, dict both locales (HK script), chrome links |
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |

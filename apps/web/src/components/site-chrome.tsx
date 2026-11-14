@@ -63,6 +63,13 @@ export function SiteHeader({ locale }: { locale: string }) {
           <Link href="/search" className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong">
             {dict.nav.search}
           </Link>
+          <Link
+            href="/me"
+            className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong"
+            aria-label={dict.nav.account}
+          >
+            {dict.nav.account}
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -100,6 +107,7 @@ export function SiteFooter({ locale }: { locale: string }) {
     { href: '/guides', label: dict.nav.guides },
     { href: '/collections', label: dict.nav.collections },
     { href: '/search', label: dict.nav.search },
+    { href: '/me', label: dict.nav.account },
   ];
   return (
     <footer className="mt-16 border-t border-line bg-surface">

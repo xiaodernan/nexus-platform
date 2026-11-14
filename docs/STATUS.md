@@ -43352,3 +43352,21 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** Hydration is N+1 by design and bounded at 6 favorites; caching the hydration across page loads is a separate unit. Until a platform read exists for a single offering or a collection by id, non-merchant saves cannot render as cards anywhere; the consumer surface (D1075) states that limit rather than hiding it.
 
 - readers: `apps/web/src/lib/rails-stream.ts`, `apps/web/src/lib/home-rails-degrade.test.ts`, this ledger entry.
+## 1075. D1075 — the consumer account hub `/me`: profile, saved merchants, inbox, reservations, orders, saved searches — one page, six reads, six fates
+
+**Why.** The platform has carried the whole `/api/v1/me/**` plane since §3 (profile, favorites, saved searches, orders, reservations, export, deletion) plus §123 in-app inbox — and the web had **no consumer surface for any of it**. The seed catalogue builds a whole demo consumer (Ada, 26 preference signals, favorites with cards, orders, notifications) that nobody could see. `dict.nav.account` ('我的'/'Account') existed in both locales with **zero references**. The mandate asks for modules users will love; this was the largest already-paid-for gap in the product.
+
+**The unit.** `apps/web/app/me/page.tsx` + `apps/web/src/lib/console-consumer.ts` + `apps/web/app/me/loading.tsx` + `me-page.test.ts` (5 structural pins) + dict `me` block (both locales) + nav rail + footer link. Server component, `force-dynamic`; `meSession()` mirrors the merchant-console identity rule (mock → demo identity; live → `/signin`'s cookie or `SignInRequired`, never a redirect, `/signin` stays the one place that sets a session). Reads (each with its own fate; a failure renders its §1 code in-section, never fixtures, never a silent zero):
+- profile — `GET /api/v1/me` (memberships, `preferences_summary.count` surfaces as 「已用於排序的偏好：N」; mock personalization.signals_used)
+- favorites — bare rows (§3), merchant subjects hydrated via `GET /api/v1/merchants/{idOrSlug}` → `merchantDetailFrom` → `merchantToCard`; non-merchant saves render beneath the grid with the stated limit (no public offering read door ⇒ `card: null`, never guessed)
+- reservations / orders — `GET /api/v1/me/reservations|orders`, newest first, money as wire `{amount,currency}`, status via localized dict records (`reservationStatus`/`orderStatus`)
+- saved searches — `GET /api/v1/me/saved-searches`, chips route to `/search?q=`
+- inbox — `GET /api/v1/notifications?limit=6` with `unread_count`; icon per template family; unread = accent dot, body payload titles from the platform's own `payload.title`
+
+Layout: identity panel with gradient rail + corner glow (merchant-hero language, D927 lineage), monogram avatar, membership chips, role/redirect-free; a 3-cell tabular-nums stat strip (crashes to '—' when a read fails — never a fake 0); 2/3 + 1/3 grid, right rail `xl:sticky top-20`; favorites through the shared `CardGrid` + `EntityCard` trust pipeline (unverified rating labels render as-is).
+
+**Verified.** web suite **303/303** (+5); `tsc --noEmit` clean; `next build` green (`/me` ƒ 1.75 kB); zh-HK census PASS over 979 literals; verify_all **68/0/2**; live-plane degradation walkthrough on this host: anonymous request in `DATA_MODE=live` renders the SignInRequired stop (as designed); mock plane renders the full hub (Ada, 3 saved merchants w/ cards, 1 unread notification, 2 orders, 1 reservation, counts strip all tabular). Screenshot not captured: the desktop window was not visible during verification — structure verified by accessibility tree + layout metrics instead (no horizontal overflow, no console errors, `main` fully populated).
+
+**Honest boundaries.** Read-only: no writes, no mark-read call, no favorite removal door is exposed yet — the inbox shows but cannot be cleared from this page. Live hydration is N+1 over ≤6 favorites. The mock seed's notification copy is partly Simplified-adjacent strings from pre-existing fixtures; the new dict block is the Traditional-script surface. Live timestamps render `計算於`-style stamps whose "已過期" bucket is expected on a stale seed (freshnessOf does not lie).
+
+- readers: `apps/web/app/me/page.tsx`, `apps/web/src/lib/console-consumer.ts`, `apps/web/app/me/loading.tsx`, `apps/web/src/lib/me-page.test.ts`, this ledger entry.

@@ -719,6 +719,37 @@ export interface Dict {
       };
     };
   };
+  /** /me — the consumer account hub. */
+  me: {
+    title: string;
+    intro: string;
+    eyebrow: string;
+    membershipsLabel: string;
+    preferencesSignals: (count: number) => string;
+    statsFavorites: string;
+    statsReservations: string;
+    statsOrders: string;
+    favoritesTitle: string;
+    favoritesIntro: string;
+    favoritesEmptyTitle: string;
+    favoritesEmptyText: string;
+    favoritesNote: string;
+    favoritesManage: string;
+    savedSearchesTitle: string;
+    savedSearchesRerun: string;
+    notificationsTitle: string;
+    notificationsUnread: (count: number) => string;
+    notificationsEmptyTitle: string;
+    notificationsEmptyText: string;
+    reservationsTitle: string;
+    reservationsEmptyTitle: string;
+    reservationsEmptyText: string;
+    ordersTitle: string;
+    ordersEmptyTitle: string;
+    ordersEmptyText: string;
+    orderStatus: Record<'pending_payment' | 'paid' | 'confirmed' | 'completed' | 'cancelled' | 'refunded', string>;
+    reservationStatus: Record<'requested' | 'confirmed' | 'seated' | 'completed' | 'cancelled' | 'no_show', string>;
+  };
   states: { loading: string; error: string; empty: string };
   /**
    * `/signin` — the local sign-in desk (§46/§48). Live mode had no route that sets the cookie the
@@ -1504,6 +1535,50 @@ const zhHK: Dict = {
       },
     },
   },
+  me: {
+    title: '我的',
+    intro: '檔案、收藏、訂位與提醒——一個頁面讀完你在平台上的全部',
+    eyebrow: '你的帳戶',
+    membershipsLabel: '你的身份',
+    preferencesSignals: (count) => `已用於排序的偏好：${count}`,
+    statsFavorites: '收藏',
+    statsReservations: '訂位',
+    statsOrders: '訂單',
+    favoritesTitle: '我的收藏',
+    favoritesIntro: '你保存的商戶，下次直接點開',
+    favoritesEmptyTitle: '還沒有收藏',
+    favoritesEmptyText: '在搜尋結果點一下愛心，保存的商戶會留在這裡',
+    favoritesNote: '現階段只能預覽「商戶」類型的收藏——平台還未公開其他類型的單頁讀取',
+    favoritesManage: '去搜尋更多',
+    savedSearchesTitle: '我的搜尋',
+    savedSearchesRerun: '再搜尋',
+    notificationsTitle: '提醒',
+    notificationsUnread: (count) => `${count} 條未讀`,
+    notificationsEmptyTitle: '沒有未讀提醒',
+    notificationsEmptyText: '訂位確認、價格下降、評論回覆，都會留在這裡',
+    reservationsTitle: '我的訂位',
+    reservationsEmptyTitle: '近期沒有訂位',
+    reservationsEmptyText: '在商戶頁按「訂位」，即可在這裡見到',
+    ordersTitle: '我的訂單',
+    ordersEmptyTitle: '還沒有訂單',
+    ordersEmptyText: '完成下單後可在這裡查看進度',
+    orderStatus: {
+      pending_payment: '待付款',
+      paid: '已付款',
+      confirmed: '已確認',
+      completed: '已完成',
+      cancelled: '已取消',
+      refunded: '已退款',
+    },
+    reservationStatus: {
+      requested: '已提交',
+      confirmed: '已確認',
+      seated: '已入座',
+      completed: '已完成',
+      cancelled: '已取消',
+      no_show: '未出席',
+    },
+  },
   signin: {
     title: '示例登入',
     intro: '本地演示用的登入口：選一個示例身份即可以該身份繼續瀏覽。真實環境需要完整的身份認證。',
@@ -2284,6 +2359,50 @@ const en: Dict = {
         pendingDetailEmpty: 'No pending messages in the consumer group — pending = 0.',
         pendingColumns: { id: 'Entry ID', consumer: 'Consumer', idle: 'Idle since', redeliveries: 'Redeliveries' },
       },
+    },
+  },
+  me: {
+    title: 'My account',
+    intro: 'Your profile, saves, bookings and inbox — one honest read of your page',
+    eyebrow: 'Your account',
+    membershipsLabel: 'Your roles',
+    preferencesSignals: (count) => `Preferences used by ranking: ${count}`,
+    statsFavorites: 'Saved',
+    statsReservations: 'Reservations',
+    statsOrders: 'Orders',
+    favoritesTitle: 'My saved merchants',
+    favoritesIntro: 'The places you kept — one tap from here the next time',
+    favoritesEmptyTitle: 'Nothing saved yet',
+    favoritesEmptyText: 'Tap the heart on any search result; saved merchants live here',
+    favoritesNote: 'Only merchant saves preview as cards today — the platform has no public read for other subject types yet',
+    favoritesManage: 'Find more places',
+    savedSearchesTitle: 'My searches',
+    savedSearchesRerun: 'Run again',
+    notificationsTitle: 'Inbox',
+    notificationsUnread: (count) => `${count} unread`,
+    notificationsEmptyTitle: 'Nothing new',
+    notificationsEmptyText: 'Booking confirmations, price drops and review replies land here',
+    reservationsTitle: 'My reservations',
+    reservationsEmptyTitle: 'No upcoming reservations',
+    reservationsEmptyText: 'Book a table from any merchant page and it will show up here',
+    ordersTitle: 'My orders',
+    ordersEmptyTitle: 'No orders yet',
+    ordersEmptyText: 'Once you check out, progress shows up here',
+    orderStatus: {
+      pending_payment: 'Pending payment',
+      paid: 'Paid',
+      confirmed: 'Confirmed',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      refunded: 'Refunded',
+    },
+    reservationStatus: {
+      requested: 'Requested',
+      confirmed: 'Confirmed',
+      seated: 'Seated',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      no_show: 'No-show',
     },
   },
   signin: {
