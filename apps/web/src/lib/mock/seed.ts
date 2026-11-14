@@ -1226,4 +1226,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-night-cleaner-chronicle', title: '凌晨一點：塔樓清潔工（香港系列 · 第二十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：跟着夜班清潔阿姨的手，由樓梯塔到天台——這座城每一層最早知道自己的事的人，其實不在任何一張名片上。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨一點。整個屋邨熄了燈，只有一盞樓梯燈一路燒到天台。阿環（合成敘事，非真實人物）把工作紙摺好，先擰開四樓的水龍頭，把一個空膠袋輕輕挂在欄杆上——這座城的清潔工作內容不在任何一張打卡鐘上，但每日早上七點十分，每一扇窗都會乾淨給你看。' },
+      { type: 'heading', text: '一、每一層的走廊燈' },
+      { type: 'paragraph', text: '阿環這棟樓的十九個樓層，有十一座樓梯燈會先壞，因為它們每天升降三百多次。她知道每一層：哪盞燈在凌晨一點才真的亮起、哪扇窗打開一半風會怎麼推門、哪一個電錶讀數比其他的多了三百個 kilo-watt。她不是維修員——她只是晚上在走廊走走：握住樓梯扶手聞一聞味道、數一數拖把、抬頭看一看天庭。有些老一輩的清潔工說這就是讀書：這座城的每一層都有它自己的脾氣。' },
+      { type: 'cards', title: '夜更可聽', items: [] },
+      { type: 'heading', text: '二、一個鐘的樓梯，一個鐘的秤' },
+      { type: 'paragraph', text: '從一樓拖到天台，來回三次，這座樓的空氣就是這樣每天更新。阿環不騎單車，不坐電梯——她用兩條腿認路：走廊左側鋪一張她自己的床單䨏臭，右側她會放一塊新炭排灰塵；有時後台二樓有人留下一份箱蛋飯，她不會動；但鄰居留下一份報紙，她每次都會摺好，第二天放在樓下的郵箱裡——哪怕她不認識這個人。她在用行動寫「這個城的人不必是一句話，也可以是一個習慣」。' },
+      { type: 'cards', title: '夜更可數', items: [] },
+      { type: 'heading', text: '三、天亮以前' },
+      { type: 'paragraph', text: '四點四十五分，阿環把最後一扇窗扇再推上，吸一口清新。這間做過百次、做過千次的夜班，她把血唞滑、把抹布擰乾、把源動的鈴聲讓位給下一班。六點整，她在樓下的花槽前停一下，看到天逐步白——她不會拍照，只把今天面前的景象記起：這座城仍然在，仍然被那些沒名片的人維持着。她的工卡上沒有「職位」——上面寫的是「塔樓」，這樣就夠了。' },
+      { type: 'cards', title: '夜更可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「塔樓 清潔」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

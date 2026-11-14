@@ -44263,3 +44263,12 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** A plan, not a shipment. No chapter in this file is claimed live; STATUS/ATLAS record it as plan. Until each D-milestone lands one row, it is exactly what it looks like: a well-organised walking skeleton.
 
 - readers: `docs/WORLD_ROADMAP.md`, this ledger entry.
+## 1148. D1148 — chapter XXIV lands the 01:00 slot: 塔樓清潔工 — the city's first pair of hands on the stairs
+
+**Why.** WORLD_ROADMAP Layer C row 24 — the hours nobody photographs. The Arc's night chapter (00:30 taxi) and the day chapter (02:00 congee) bracket this one; the tower block at 01:00 is the doorway through which the night changes shift, and nobody narrates it but us.
+
+**The unit.** `DEMO_GUIDES` gains `hk-night-cleaner-chronicle` — 「凌晨一點：塔樓清潔工（香港系列 · 第二十四章）」。Three heading cards（一、每一層的走廊燈 · 二、一個鐘的樓梯，一個鐘的秤 · 三、天亮以前）, Traditional HK script, 合成敘事 framing, 後記 + SearchBox pointer（「塔樓 清潔」）。Both locales carry the chapter; the arc clock gains 01:00 between 00:30 and 02:00 (48 chips across both locales); hk-type link list; handbook reading order re-sorted to twenty-four on both locales; e2e floors ≥24.
+
+**Honest boundaries.** Synthetic fixture; the nineteen-storey patrol, the stair-model, and the "他們說這就是讀書" framing are narrative constructions with no real building or operator behind them. No address, no operator, no real estate claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
