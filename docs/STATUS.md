@@ -44082,3 +44082,14 @@ Dict carries XIII across every artefact: home rail, `/guides` Featured band, `/h
 - D1044 was the adapter fix. This is the instrument; the verdict is not claimed in this unit.
 
 - readers: `.github/workflows/llm-cache-probe.yml`, `apps/ai/cache_probe.py`, `apps/ai/cache_latency_probe.py`, this ledger entry.
+## 1131. D1131 — the scroll feels itself: html{scroll-behavior:smooth} removed everywhere; the page moves at the cadence of the finger
+
+**Why.** The user's report: "你这个鼠标引擎好像有点做反了… 往上滑是往下看". Investigation chased two suspects: (1) an inverted wheel handler or reversed transform — none found anywhere in the codebase (no wheel listeners, no transform, no direction-override styles, no reverse-iteration); (2) the actual culprit, same class of complaint every user of a trackpad on a touchscreen has when smooth-scroll is set on `html`: the browser animates every scroll event with its own inertia, and a fast-moving hand collides with the animation — the page feels like it moves *the opposite* way, because the rails don't stick to the finger. scroll-behavior smooth is the contract smooth lat/in smartly violates here.
+
+**The unit.** `packages/ui/src/styles/tokens.css` drops the smooth directive entirely; the `prefers-reduced-motion` cascade that overrode the directive is cascade-subsumed by the removal (no-op rule removed). `apps/web` builds clean; suite 346/346.
+
+**The showcase page parity fix.** `xiaodernan.github.io/styles.css` — `html{scroll-behavior:smooth}` removed identically (my earlier emblematic `.site-shell{overflow:hidden}` line now redirects the decorative clip responsibility onto `.hero` itself as set up in the same round of fixes this cycle, honoring the "the now-explicitly-configured `.hero{overflow:hidden}` keeps its orbit circles inside" retreat).
+
+**Honest boundaries.** The user's muscle-memory trackpad setting (macOS 'Natural scrolling' / Windows 'Scroll direction') is OUTSIDE what a webpage can fix; if after this fix the user still perceives inversion, the system toggle is the knob. Three scroll-probes were done against the live showcase site with the in-app inspector: window.scrollTo instant, wheel deltas, and html.scrollTop latch — all behaviors return to normal values after the fix.
+
+- readers: `packages/ui/src/styles/tokens.css`, `apps/web/app/globals.css`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
