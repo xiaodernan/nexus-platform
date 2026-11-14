@@ -96,6 +96,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/console-consumer.ts` | D1075: consumer data plane — `/api/v1/me/**` + `/api/v1/notifications` reads, mock plane parity, `meSession()` identity rule |
 | `apps/web/src/lib/signin-desk.test.ts` | D1077: 2 structural pins — two-panel composition, dict proofs in both locales (HK Traditional script) |
 | `apps/web/src/lib/merchant-card-cache.ts` | D1079: unstable_cache(10 min, tag merchant-card) over the anonymous public merchant read |
+| `tests/e2e/specs/consumer/me.spec.ts` | D1080: 2 arms — anonymous stop (no session, no hub sections) + signed-in hub (501-or-ok gates, skips honestly without a live stack) |
 | `apps/web/src/lib/merchant-card-cache.test.ts` | D1079: 4 arms — tag/TTL wiring, anonymous-fetch contract, failure propagation, consumer source-pin |
 | `apps/web/src/components/me-read-all.tsx` | D1076: the consumer inbox read-all door — POSTs §123 `notifications/read-all` via the BFF; envelope-honest failure print; `router.refresh()` on success |
 | `apps/web/src/lib/me-page.test.ts` | D1075: 5 structural pins — force-dynamic + sign-in stop, §3/§123 endpoints only, EntityCard path, dict both locales (HK script), chrome links |

@@ -43414,3 +43414,16 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** The computed open-state inside a cached card may lag by up to 10 minutes (facts themselves carry `observed_at`; the card is a view, not a truth); the browser may show the same card until the TTL expires or a redeploy. Data Cache rows in production are per-host — horizontally scaled hosts each hold their own 10-minute copy; global busting requires a deploy boundary or the tag lever per host. Not measured on this host (no seeded platform): the exact count of eliminated reads; the logical bound is ≤1 hydration per merchant per TTL per host.
 
 - readers: `apps/web/src/lib/merchant-card-cache.ts`, this ledger entry.
+## 1080. D1080 — the consumer account hub gets an e2e spine: anonymous stop + signed-in hub (CI exercises the live door; this host skips it honestly)
+
+**Why.** D1075's `/me` shipped with structural vitest pins but no browser-level proof; the house pattern (`ask-merchant.spec.ts`) takes the same session door first. Without an e2e spine, a broken hydration (or a page that quietly renders the SignInRequired stop in live mode) would ship green.
+
+**The unit.** `tests/e2e/specs/consumer/me.spec.ts` — two tests on the `desktop` project:
+1. **anonymous stop** — no session; `/me` answers the sign-in stop (link to `/signin` visible) and never renders the hub sections (`我的收藏`, `提醒` both absent).
+2. **the hub** — `page.request.post('/api/nexus/auth', {role:'consumer'})`; if the door answers 501 (`data_mode_mock`) or ok (live 200), the full assertions run: an h1 with a non-empty display name; all five section headings (`我的收藏 / 我的搜尋 / 提醒 / 我的訂位 / 我的訂單`) render — the heading is the section's fate, independent of what the data plane answered; the favourites grid either shows `/m/` card links or the `還沒有收藏` empty state (both honest, one must hold); nav rail links `我的` (/me). If the door answers anything else (502/503/504 — no live stack on this host), the arm **skips with a stated reason** instead of failing — CI exercises it against the seeded plane (the same door `ask-merchant.spec.ts` uses).
+
+**Run on this host.** `npx playwright test specs/consumer/me.spec.ts --project=desktop` — anonymous arm **passed** (2.8s); signed-in arm **skipped** with the stated reason (`NEXT_PUBLIC_DATA_MODE=live` here proxies to a platform this host cannot boot; the door answered 502). The skip is local-only by construction; CI's live plane asserts the full path.
+
+**Honest boundaries.** No visual screenshot of `/me` landed in the e2e set — the visual suite owns pixel baselines; this spine owns wiring. The favourites-card-count assertion deliberately accepts both planes' truths rather than betting on seeded data volume.
+
+- readers: `tests/e2e/specs/consumer/me.spec.ts`, this ledger entry.
