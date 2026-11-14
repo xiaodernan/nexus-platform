@@ -36,12 +36,12 @@ def _env(name: str) -> str:
     return (os.environ.get(name) or "").strip()
 
 
-def _request(query: str, system: str, *, max_tokens: int = 64) -> LLMRequest:
+def _request(query: str, system: str, *, max_tokens: int = 64, json_hint: str | None = "json_object") -> LLMRequest:
     return LLMRequest(
         task_class="intent_extract",
         payload={"query": query, "context": {}},
         system=system,
-        json_hint="json_object",
+        json_hint=json_hint,
         max_tokens=max_tokens,
         temperature=0.0,
     )
@@ -114,7 +114,11 @@ async def main() -> int:
     await burst("identical bursts (warms then keeps the system prefix cached)", pool, identical)
     await burst("diverse bursts (the dashboard's worst case — every prefix differs after the system bytes)", pool, varied)
 
-    smalls = [_request("Say exactly: NEXUS-CACHE-PROBE-X", SMALL, max_tokens=16) for _ in range(3)]
+    # The adapter's production default system line is used for summary/chat; those
+    # paths never send json_hint, because the provider rejects json_object unless a
+    # message contains the word "json" (measured 400 on this relay). Mirroring the
+    # production shape keeps the cold gauge honest.
+    smalls = [_request("Say exactly: NEXUS-CACHE-PROBE-X", SMALL, max_tokens=16, json_hint=None) for _ in range(3)]
     await burst("tiny-system bursts (the default adapter system line — cold gauge for a prefix the app already uses)", pool, smalls)
 
     # D1050 — the frozen prefix contract arm: the SAME diverse queries, now riding a

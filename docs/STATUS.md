@@ -43325,3 +43325,19 @@ This is the reason §1044 already defaults to SSE. It is also the reason §1052 
 **Honest boundaries.** The popover is *only* a shortcut to the example prompts — no probability-ranked "what people are searching near you" *leaderboard*. Live-trending suggestion would require a backend signal the platform doesn't expose to this page today. The popover does not include the district chips because the hero row immediately above it is the same intent (the two would be the same product two times over). No new tokens; no new dict keys; no new API endpoints.
 
 - readers: `apps/web/src/components/search-box.tsx`, this ledger entry.
+## 1073. D1073 — the live cache probe's tiny-system arm stops hand-crushing the provider: production never sends `json_object` without the word "json", and the probe was
+
+**Why.** A 2026-11-14 live run of `apps/ai/cache_probe.py` died mid-flight with `HTTP 400: Response input messages must contain the word 'json' in some form to use 'json_object'`. The probe accepted `json_hint="json_object"` unconditionally — including for the tiny-system SMALL burst that was explicitly mimicking the production summary/chat default system line, which never sends `json_hint` at all (`nexus_ai/models/openai.py`, `req.json_hint` falsy ⇒ no `response_format`). On this relay, a `json_object` request whose messages lack the word `json` is refused with 400. So the probe itself was refusing to measure the very path the operator cares about.
+
+**First live measurements recorded on this host (2026-11-14, `gpt-6-sol`, identical re-issue shape):**
+- identical bursts: 6/6 calls in-flight, provider-reported `cached_tokens` non-zero on 2 of 6 (0.0%, 100.0%, 0.0%, 0.0%, 0.0%, 100.0%)
+- diverse bursts (the dashboard's worst case, ~110–130 prompt tokens — *below the ~1024-token floor*): 6/6 at 0.0% — expected, a prefix under the floor is billed in full
+- tiny-system arm: `HTTP 400` — the defect this unit fixes
+
+**The unit.** `apps/ai/cache_probe.py` — `_request` gains a `json_hint: str | None = "json_object"` keyword (existing callers unchanged); the SMALL (tiny-system cold gauge) burst now passes `json_hint=None`, matching the production summary/chat adapter byte shape. A comment pin at the call site explains the provider constraint.
+
+**Verified.** `ast.parse` clean; local offline run prints the expected `SKIP` without credentials; the live relay intermittently hangs from this host right now (two consecutive `uv run python cache_probe.py` invocations exited before printing — the relay, not the adapter); re-running the arm once the relay is responsive is the follow-through.
+
+**Honest boundaries.** This fixes the probe, not the provider. The tiny-system default (`You are the NEXUS assistant. Answer only from the data you are given.`) is ~14 tokens: even warm, a 14-token prefix cannot clear the provider's ~1024-token floor, so this arm will always read ~0% cached — that is the *point* of the arm (it is the control group). The fix matters because without it the probe crashed before reaching the D1050 prefix-contract arm.
+
+- readers: `apps/ai/cache_probe.py`, this ledger entry.
