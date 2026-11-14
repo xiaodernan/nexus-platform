@@ -44120,3 +44120,16 @@ Dict carried across every artefact: home rail, `/hong-kong` hub grid, arc clock 
 **Honest boundaries.** Mock fixture; the island's own venues are not named and any readers wanting to go there should plan themselves. The chapter intentionally doesn't pretend to be a travel guide — it is a story about the decision to take the ferry east.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
+## 1134. D1134 — chapter XV lands: 十八點半 — the city's exhale from office to MTR, the hinge between the working world and the evening
+
+**Why.** The HK arc loops dawn → dine → dusk → dawn. Into that arc sits one intersection every Hong Kong commuter knows without being told: the lift going down at 18:30, the rail car filled with quiet faces as the last call pitches over the Bay, the staircase out into the incense and fishballs. Chapter XIV sent the reader to the islands; chapter XV lands them on the bench in front of Central with the rest of the city, and knows exactly what they will do next.
+
+**The unit.** `DEMO_GUIDES` gains `hk-mtr-evening-chronicle` — 「十八點半：辦公室落到地鐵」. Three heading cards: 一、半張臉 (the silence of exit hour), 二、九龍塘點進油麻地 (the moment the train enters Mong Kok: the shift begins for the people the office-workers visit), 三、落站了，回家 (the last 50 metres between the MTR turnstile and the incense pot). Cards throughout; 後記 clause; SearchBox seed `油麻地 魚蛋`. Anonymous by construction; no neighbourhood question pinned.
+
+Dict carries fifteen chapters everywhere (rail, Featured band, `/hk-type`, `/hong-kong` grid + clock checkpoint 18:30 on both locales). Arc document inserts the 18:30 section between 17:58 Lion Rock and 19:00 Temple Street — the chronological faultline between the working city and the night. Showcase updates.
+
+**Verified on this host.** web suite **346/346**; `tsc --noEmit` clean; census PASS over **1379 literals**; build green; verify_all re-run NO OFFENDER; e2e floors bumped to 15.
+
+**Honest boundaries.** The chapter is about *the motion* from office to home, not about any one resident, office or MTR car; nothing in it is offered as news or record. The arc clock now shows 15 checkpoints; the Featured rail holds eleven (the most recent releases) — the rail check self-sizes by `cards.length` to match.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, this ledger entry.
