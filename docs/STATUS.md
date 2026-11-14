@@ -43403,3 +43403,14 @@ Layout: identity panel with gradient rail + corner glow (merchant-hero language,
 **Honest boundaries.** Demo copy, not production speech; remaining mixed-script risks sit in `.workbuddy/memory` (the author's working notes, Simplified by design) and matcher carriers (Simplified by design). The 24h SN here means the seeded demo Ada shows zh-HK-fidelity fixture text on next fixture rebuild.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, this ledger entry.
+## 1079. D1079 — the public merchant card becomes a cacheable artifact: `unstable_cache`, 10-minute TTL, anonymous read — twice fewer upstream calls per hub render
+
+**Why.** D1074/D1075 made the favourites hydration correct (anonymous `/api/v1/merchants/{idOrSlug}` per saved merchant) — and correct per *page view*. The merchant card is public, byte-stable, and caller-invariant: nothing user-specific travels in it, so one hydration per merchant every ten minutes is strictly as fresh as facts that carry their own `observed_at` stamps. The home rails and the `/me` hub were each re-projecting the same cards on literally every render — two identical JSON bodies for a fact whose lifecycle is `observed_at`/`expires_at`, not "this second".
+
+**The unit.** `apps/web/src/lib/merchant-card-cache.ts` — `loadMerchantCard` performs the anonymous read (no cookie, no authorization), applies `merchantDetailFrom` → `merchantToCard`; exports `getMerchantCard = unstable_cache(loadMerchantCard, ['merchant-card'], { revalidate: 600, tags: ['merchant-card'] })`. Both hydration consumers now flow through it: `rails-stream.ts` (the anonymous-to-signed-in `recently_viewed` rail) and `console-consumer.ts` (the `/me` favourites grid). Session partitioning stays absent deliberately; `revalidateTag('merchant-card')` is the documented bust lever.
+
+**Verified.** `merchant-card-cache.test.ts` — 4 arms: tag/TTL wiring, anonymous-fetch contract (no options on the fetch at all), upstream-failure propagation (no invented card), consumer source-pin (both consumers import the loader). `home-rails-degrade.test.ts` now mocks `next/cache` as identity and hydration via the public nexusGet chain (5 get calls, 1 authedGet); web suite **310/310**; `tsc --noEmit` clean; `next build` green.
+
+**Honest boundaries.** The computed open-state inside a cached card may lag by up to 10 minutes (facts themselves carry `observed_at`; the card is a view, not a truth); the browser may show the same card until the TTL expires or a redeploy. Data Cache rows in production are per-host — horizontally scaled hosts each hold their own 10-minute copy; global busting requires a deploy boundary or the tag lever per host. Not measured on this host (no seeded platform): the exact count of eliminated reads; the logical bound is ≤1 hydration per merchant per TTL per host.
+
+- readers: `apps/web/src/lib/merchant-card-cache.ts`, this ledger entry.

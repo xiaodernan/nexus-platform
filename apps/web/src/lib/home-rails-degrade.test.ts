@@ -27,6 +27,9 @@ const authedGet = vi.hoisted(() => vi.fn());
 
 vi.mock('./env', async (importOriginal) => ({ ...(await importOriginal<typeof EnvModule>()), IS_MOCK: false }));
 vi.mock('./api/base', () => ({ nexusGet: get, nexusAuthedGet: authedGet }));
+// The Data Cache would need a running Next server; in the unit plane the wrapper is identity, so the
+// hydration read is the same mocked nexusGet the rails go through.
+vi.mock('next/cache', () => ({ unstable_cache: (fn: (...args: unknown[]) => unknown) => fn }));
 
 const { homeRails } = await import('./data');
 
@@ -155,11 +158,10 @@ describe('homeRails — a page with a stated reason, never a crash', () => {
       .mockResolvedValueOnce({ items: [card('rating')] })
       .mockResolvedValueOnce({ items: [card('trending')] })
       .mockResolvedValueOnce({ items: [card('cheap')] });
-    // The platform serves bare favourite rows (§3), never cards; the rail hydrates one read per
-    // merchant subject through the same projection /m/[slug] uses.
-    authedGet
-      .mockResolvedValueOnce([{ subject_type: 'merchant', subject_id: 'm-1' }])
-      .mockResolvedValueOnce(wireProfile);
+    // The platform serves bare favourite rows (§3), never cards; the rail hydrates through the
+    // shared cached merchant-card loader (an anonymous public read, Data Cache 10 min).
+    authedGet.mockResolvedValueOnce([{ subject_type: 'merchant', subject_id: 'm-1' }]);
+    get.mockResolvedValueOnce(wireProfile);
 
     const result = await homeRails({ ...request, signedIn: true });
 
@@ -171,6 +173,7 @@ describe('homeRails — a page with a stated reason, never a crash', () => {
     expect(result.data.recommended).toEqual([card('cheap')]);
     expect(result.data.recently_viewed).toHaveLength(1);
     expect(result.data.recently_viewed[0]?.id).toBe('91a39914-ca22-5d36-b65c-a9197d53d1ec');
-    expect(authedGet).toHaveBeenCalledTimes(2);
+    expect(authedGet).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledTimes(5);
   });
 });

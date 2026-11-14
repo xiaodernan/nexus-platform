@@ -19,8 +19,7 @@
 
 import { IS_MOCK } from './env';
 import { nexusAuthedGet, nexusGet } from './api/base';
-import { merchantDetailFrom, type WireMerchantProfile } from './platform-catalog';
-import { merchantToCard } from './adapters';
+import { getMerchantCard } from './merchant-card-cache';
 import { mockHomeRails } from './mock';
 import type { EntityCard, GeoPoint, Intent, SearchResponse } from './types';
 
@@ -83,14 +82,12 @@ export async function loadRailCards(key: RailKey, request: RailsRequest): Promis
       (Array.isArray(rows) ? rows : [])
         .filter((row) => row.subject_type === 'merchant')
         .slice(0, 6)
-        .map(async (row) => merchantToCard(merchantDetailFrom(
-          await nexusAuthedGet<WireMerchantProfile>(
-            'platform',
-            `/api/v1/merchants/${encodeURIComponent(row.subject_id)}`,
-          ),
-        ))),
+        // Public read with a 10-minute cross-request Data Cache (merchant-card-cache.ts).
+        .map((row) => getMerchantCard(row.subject_id)),
     );
-    return hydrated.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+    return hydrated.flatMap((result) =>
+      result.status === 'fulfilled' && result.value ? [result.value] : [],
+    );
   }
   const def = RAIL_DEFS.find((entry) => entry.key === key);
   if (!def?.sort || !def.limit) return [];

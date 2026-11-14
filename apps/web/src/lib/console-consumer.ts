@@ -12,8 +12,7 @@
 
 import { IS_MOCK, SESSION_COOKIE } from './env';
 import { nexusAuthedGet } from './api/base';
-import { merchantDetailFrom, type WireMerchantProfile } from './platform-catalog';
-import { merchantToCard } from './adapters';
+import { getMerchantCard } from './merchant-card-cache';
 import { failedRead, okRead, type ConsoleRead } from './console-shared';
 import { mockMe } from './mock';
 import type { EntityCard } from '@nexus/ui/trust/types';
@@ -185,16 +184,15 @@ export async function meFavoritesRead(limit = 6): Promise<ConsoleRead<HydratedFa
     const list = Array.isArray(rows) ? rows : [];
     const hydrated = await Promise.allSettled(
       list.filter((row) => row.subject_type === 'merchant').map(async (row): Promise<HydratedFavorite> => {
-        const wire = await nexusAuthedGet<WireMerchantProfile>(
-          'platform',
-          `/api/v1/merchants/${encodeURIComponent(row.subject_id)}`,
-        );
+        // Public read with a 10-minute cross-request Data Cache (merchant-card-cache.ts) — the
+        // session cookie is deliberately absent; the card has no caller variance.
+        const card = await getMerchantCard(row.subject_id);
         return {
           id: row.id,
           subjectType: row.subject_type,
           subjectId: row.subject_id,
           createdAt: row.created_at,
-          card: merchantToCard(merchantDetailFrom(wire)),
+          card,
         };
       }),
     );
