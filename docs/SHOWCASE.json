@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1158",
-  "milestone_full": "香港系列篇四十二章 · 00:30→22:45 · WORLD_ROADMAP Layer F 開卷",
+  "milestone": "D1159",
+  "milestone_full": "香港系列篇四十三章 · 00:30→22:45 · WORLD_ROADMAP Layer F 續 — 星期天的天台午餐",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: forty-two Traditional chapters — 00:30→22:45 full day arc · 84-chip clock both locales",
-    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order — 84 slots, bilingual",
-    "Edition XLII — 維園的外國傭工 (09:00) · Layer F opens the Sunday cycle",
-    "WORLD_ROADMAP Layer E closes (substrate tongues), Layer D closes (outlying islands), Layer C closes (back streets), Layer F opens",
+    "HK series: forty-three Traditional chapters — 00:30→22:45 full day arc · 86-chip clock both locales",
+    "/hong-kong: the arc clock speaks 00:30→22:45 in chronological order — 86 slots, bilingual",
+    "Edition XLIII — 霍普韋爾的外傭午餐 (13:00) · Layer F continues the Sunday cycle",
+    "WORLD_ROADMAP Layer F opens the Sunday cycle; D1158 · D1159 together trace the day from 09:00 to 13:00 — Victoria Park to the rooftop cafeteria",
     "/daily: the daily ritual page — almanac + Cantonese phrase + one chapter by date hash",
-    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1647 clean"
+    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1656 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

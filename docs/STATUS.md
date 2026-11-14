@@ -44363,3 +44363,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the specific Sunday phrases, the Joy FM station alternative, and the taxi-driver dialogue are narrative constructions. No real park permit, no registered congregation count, no actual address for any named café — none claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1159. D1159 — chapter XLIII lands the 13:00 slot: 下午一點：霍普韋爾的外傭午餐 — the Sunday lift to the rooftop cafeteria
+
+**Why.** Layer F continues. The Sunday that doesn't belong to anyone: after the 09:00 congregation at Victoria Park, the conscience of the day argues at one above the city. The Hopewell ceiling cafeteria is Hong Kong's most generous lunch crowd — six chairs, six takeaway bags, and a sky people believe is theirs for one hour a week. The catalogue now holds that chapter.
+
+**The unit.** `DEMO_GUIDES` gains `hk-hopewell-sunday-lunch-chronicle` — 「下午一點：霍普韋爾的外傭午餐（香港系列 · 第四十三章）」. Three heading cards（一、午餐大堂的規則 · 二、天台的合影革命 · 三、分赴各處）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「霍普韋爾 菲律賓」）。Both locales carry the chapter; the arc clock gains 13:00 between Tung Chung and the dish pit (86 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-three on both locales; e2e floors ≥43; census 1656 literals clean (0 simplified); web 346/346.
+
+**Honest boundaries.** Synthetic fixture; the cafeteria, the prices, the queue, the photo circuit are narrative constructions. The building is a real landmark; no actual dining operator is named or represented.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

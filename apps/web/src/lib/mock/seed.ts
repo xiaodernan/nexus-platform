@@ -1625,4 +1625,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-hopewell-sunday-lunch-chronicle', title: '下午一點：霍普韋爾的外傭午餐（香港系列 · 第四十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：星期天的灣仔霍普韋爾中心——菲律賓姐妹和她們帶着的便當、互相交換的髮型和手機相片——香港星期天另一個擁抱了半個城的午后。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天，下午一點前的二十分鐘。灣仔的霍普韋爾中心（合成敘事，非真實商戶）兩架觀光升降機一起往上走——阿蘭（合成敘事，非真實人物）手上的紙袋裡裝着她自己做的餸：一盒芒果醬（她媽媽上個月從她的老家寄來的）和兩個咖喱角。這是她這個星期的第一頓像樣的午餐；也是她六個星期以來第一個沒有人監督的自由下午。' },
+      { type: 'heading', text: '一、午餐大堂的規則' },
+      { type: 'paragraph', text: '每張枱都是一場小型的餐廳開幕。大家會把各自的餸一盤盤排出來交換：你的炒飯換我的咖喱角；她的沙律換我唯一一盒芒果醬。餐碟是塑料的，茶壺是塑料的，叉子是塑料的——沒有人介意。這裡是香港星期天的廚房：每個人都有一個自己的位、每個人都可以說自己是自己的廚師。大堂的空氣裡有咖喱、椰奶、蒜蓉，也有一種只有星期天才會有的勇氣：叫一罐冰凍蒸餾水，然後說一句「辛苦了」，然後坐得直直的。' },
+      { type: 'cards', title: '霍普韋爾可見', items: [] },
+      { type: 'heading', text: '二、天台的合影革命' },
+      { type: 'paragraph', text: '下午一點半，合影時間。她們把手機串起來，輪流幫彼此照——六個人對着鏡頭用力地笑。星期天的太陽永遠往下斜，把黃昏一層一層壓在灣仔的建築上；海港、纜車線、樓頂的水塔，全都變成了她們鏡頭裡最便宜也最貴的風景。這是她們星期天的旅行紀念照——這星期、這個月、這整個合約年。阿蘭每次回想，都覺得她帶着這些照片，足以抵銷那些六天的疲勞——這是她私下叫自己「人生的年終獎」。' },
+      { type: 'cards', title: '霍普韋爾可聽', items: [] },
+      { type: 'heading', text: '三、分赴各處' },
+      { type: 'paragraph', text: '下午兩點，大堂的燈一盞盞慢下來。姐妹們各自散去：有人去灣仔星街，因為那裡的甜品是合同規定之外的幸福；有人去銅鑼灣，因為潮貨要趁星期一之前買齊；有人直接回北角的宿舍，把芒果醬分給第二天的早餐。阿蘭在回去的路上寫：『連天台都是她們的。』她沒有把任何一個商戶的名字寫進筆記——她知道的，只有這個屋頂、這束光、和她們說了哪一個字。' },
+      { type: 'cards', title: '霍普韋爾可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「霍普韋爾 菲律賓」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

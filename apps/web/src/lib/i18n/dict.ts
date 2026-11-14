@@ -969,7 +969,7 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '四十二章反覆走完一個 HK',
+      title: '四十三章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
@@ -1013,6 +1013,7 @@ const zhHK: Dict = {
         { slug: 'hk-filipino-central-chronicle', label: '深夜十點：中環寫字樓的菲律賓人', kicker: '第四十章' },
         { slug: 'hk-mumbai-curry-central-chronicle', label: '凌晨一點半：灣仔咖哩魚飯堂', kicker: '第四十一章' },
         { slug: 'hk-vic-park-sunday-chronicle', label: '星期天早上九點：維園的外國傭工', kicker: '第四十二章' },
+        { slug: 'hk-hopewell-sunday-lunch-chronicle', label: '下午一點：霍普韋爾的外傭午餐', kicker: '第四十三章' },
       ],
     },
     hkDaily: {
@@ -1054,7 +1055,7 @@ const zhHK: Dict = {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
       intro: '從凌晨四點半的魚市與果欄，到廟街的車仔麵、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
-      chaptersTitle: '四十二章反覆走完一個香港',
+      chaptersTitle: '四十三章反覆走完一個香港',
       clockTitle: '香港一日的讀法：照時間讀',
       clockHint: '由 00:30 的士站最後一客到 22:45 車仔麵 — 照順序讀這座城的一整天',
       clock: [
@@ -1085,6 +1086,7 @@ const zhHK: Dict = {
         { time: '11:30', name: '大澳——鹹魚棧', href: '/guides/hk-tai-o-chronicle' },
         { time: '12:00', name: '燒味', href: '/guides/hk-siu-mei-chronicle' },
         { time: '12:30', name: '東涌——機場的風', href: '/guides/hk-tung-chung-chronicle' },
+        { time: '13:00', name: '霍普韋爾的外傭午餐', href: '/guides/hk-hopewell-sunday-lunch-chronicle' },
         { time: '13:30', name: '洗碗阿姨的第二幕', href: '/guides/hk-dishwash-auntie-chronicle' },
         { time: '15:00', name: '九龍公園的雀籠房', href: '/guides/hk-pigeon-coop-chronicle' },
         { time: '16:00', name: '交易所鐘聲', href: '/guides/hk-central-bourse-chronicle' },
@@ -1378,7 +1380,7 @@ const zhHK: Dict = {
     title: '你係邊一個 HK？',
     howTo: '玩法：撳 A／B／C（或直接撳選項）；沒有啱錯之分——十題心情，一刻定型。',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
-    seriesLabel: '四十二章香港系列指南',
+    seriesLabel: '四十三章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
@@ -1422,6 +1424,7 @@ const zhHK: Dict = {
       { href: '/guides/hk-filipino-central-chronicle', title: '深夜十點：中環寫字樓的菲律賓人', hint: '第四十章' },
       { href: '/guides/hk-mumbai-curry-central-chronicle', title: '凌晨一點半：灣仔咖哩魚飯堂', hint: '第四十一章' },
       { href: '/guides/hk-vic-park-sunday-chronicle', title: '星期天早上九點：維園的外國傭工', hint: '第四十二章' },
+      { href: '/guides/hk-hopewell-sunday-lunch-chronicle', title: '下午一點：霍普韋爾的外傭午餐', hint: '第四十三章' },
     ],
     start: '開始',
     progress: (current, total) => `第 ${current} / ${total} 問`,
@@ -2164,7 +2167,7 @@ const zhHK: Dict = {
         'District chips（沙田／中環／旺角／銅鑼灣／荃灣…）是無腦跳法：點一下就把搜索丟進那個地區；想再精修就在 SearchBox 後面加條件即可。',
       ] },
       { id: 'hkseries', kicker: 'STORY', title: '3 · 香港系列 · 由凌晨三點走到最甜的杯底', paragraphs: [
-        '四十二章反覆走一遍香港這座城市的一整天——本系列經已拓至第四十二章。順序按讀書順序：00:30 的士站最後一客（第二十一章）→ 01:00 塔樓清潔工（第二十四章）→ 01:30 灣仔咖哩魚飯堂（第四十一章）→ 02:00 皮蛋瘦肉粥（第十二章）→ 02:30 最後一鍋糖水（第二十五章）→ 03:00 急症室入口（第十九章）→ 03:10 果欄（第八章）→ 03:30 鹹光燒餅（第十七章）→ 04:00 抹窗師傅（第二十章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 05:30 三餐的血（第一章）→ 06:00 茶餐廳（第五章）→ 06:30 鯉魚門（第十六章）→ 06:45 冰室（第十章）→ 07:00 隔水渡輪（第三十六章）→ 07:30 早茶（第三章）→ 08:30 校巴的秘密班機（第二十二章）→ 09:00 維園的外國傭工（第四十二章）→ 09:30 長洲（第十四章）→ 10:00 魚蛋檔（第二十六章）→ 10:30 北漂作家的香港筆記（第三十八章）→ 11:00 報館放送（第二十七章）→ 11:30 大澳——鹹魚棧（第三十七章）→ 12:00 燒味（第二章）→ 12:30 東涌——機場的風（第三十四章）→ 13:30 洗碗阿姨的第二幕（第二十三章）→ 15:00 九龍公園的雀籠房（第二十八章）→ 16:00 交易所鐘聲（第十八章）→ 16:30 坪洲——纜車鐵箱子（第三十五章）→ 17:00 太古城候車亭（第二十九章）→ 17:58 獅子山（第十三章）→ 18:00 潮州話．旺角菜市場（第三十九章）→ 18:30 寫字樓落到地鐵（第十五章）→ 19:00 廟街（第四章）→ 20:00 粥府的長枱（第三十章）→ 21:30 屋邨電梯口的紙箱老伯（第三十一章）→ 22:00 菲律賓中環（第四十章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）→ 23:00 麥當勞得來速（第三十二章）→ 00:00 紙包飲品販賣機（第三十三章）。',
+        '四十三章反覆走一遍香港這座城市的一整天——本系列經已拓至第四十三章。順序按讀書順序：00:30 的士站最後一客（第二十一章）→ 01:00 塔樓清潔工（第二十四章）→ 01:30 灣仔咖哩魚飯堂（第四十一章）→ 02:00 皮蛋瘦肉粥（第十二章）→ 02:30 最後一鍋糖水（第二十五章）→ 03:00 急症室入口（第十九章）→ 03:10 果欄（第八章）→ 03:30 鹹光燒餅（第十七章）→ 04:00 抹窗師傅（第二十章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 05:30 三餐的血（第一章）→ 06:00 茶餐廳（第五章）→ 06:30 鯉魚門（第十六章）→ 06:45 冰室（第十章）→ 07:00 隔水渡輪（第三十六章）→ 07:30 早茶（第三章）→ 08:30 校巴的秘密班機（第二十二章）→ 09:00 維園的外國傭工（第四十二章）→ 09:30 長洲（第十四章）→ 10:00 魚蛋檔（第二十六章）→ 10:30 北漂作家的香港筆記（第三十八章）→ 11:00 報館放送（第二十七章）→ 11:30 大澳——鹹魚棧（第三十七章）→ 12:00 燒味（第二章）→ 12:30 東涌——機場的風（第三十四章）→ 13:00 霍普韋爾的外傭午餐（第四十三章）→ 13:30 洗碗阿姨的第二幕（第二十三章）→ 15:00 九龍公園的雀籠房（第二十八章）→ 16:00 交易所鐘聲（第十八章）→ 16:30 坪洲——纜車鐵箱子（第三十五章）→ 17:00 太古城候車亭（第二十九章）→ 17:58 獅子山（第十三章）→ 18:00 潮州話．旺角菜市場（第三十九章）→ 18:30 寫字樓落到地鐵（第十五章）→ 19:00 廟街（第四章）→ 20:00 粥府的長枱（第三十章）→ 21:30 屋邨電梯口的紙箱老伯（第三十一章）→ 22:00 菲律賓中環（第四十章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）→ 23:00 麥當勞得來速（第三十二章）→ 00:00 紙包飲品販賣機（第三十三章）。',
         '每章都是「合成敘事示例」（旗幟標誌 demo: true），用於演示內容層的呈現能力；不是真實店家推薦，但就是那樣真實的一頓飯。',
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
       ] },
@@ -2260,7 +2263,7 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in forty-two chapters',
+      title: 'One HK in forty-three chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
@@ -2304,6 +2307,7 @@ const en: Dict = {
         { slug: 'hk-filipino-central-chronicle', label: 'A Cleaner in Central at Ten', kicker: 'Chapter XL' },
         { slug: 'hk-mumbai-curry-central-chronicle', label: 'The Mumbai Curry House at Half-Past-One', kicker: 'Chapter XLI' },
         { slug: 'hk-vic-park-sunday-chronicle', label: 'The Filipina at Victoria Park', kicker: 'Chapter XLII' },
+        { slug: 'hk-hopewell-sunday-lunch-chronicle', label: 'The Sunday Lunch Above the Hopewell', kicker: 'Chapter XLIII' },
       ],
     },
     hkDaily: {
@@ -2345,7 +2349,7 @@ const en: Dict = {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'One table, one Hong Kong',
       intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the cart-noodles at Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
-      chaptersTitle: 'Forty-two chapters through one Hong Kong',
+      chaptersTitle: 'Forty-three chapters through one Hong Kong',
       clockTitle: 'Reading the day in Hong Kong — clock order',
       clockHint: 'Every chapter, one time of day — from 00:30 through 22:45',
       clock: [
@@ -2376,6 +2380,7 @@ const en: Dict = {
         { time: '11:30', name: 'Tai O — the dried fish', href: '/guides/hk-tai-o-chronicle' },
         { time: '12:00', name: 'Siu mei', href: '/guides/hk-siu-mei-chronicle' },
         { time: '12:30', name: 'The Wind at the New Airport', href: '/guides/hk-tung-chung-chronicle' },
+        { time: '13:00', name: 'Sunday lunch above the Hopewell', href: '/guides/hk-hopewell-sunday-lunch-chronicle' },
         { time: '13:30', name: 'Auntie on the Dish Pit', href: '/guides/hk-dishwash-auntie-chronicle' },
         { time: '15:00', name: 'The Pigeon Coop', href: '/guides/hk-pigeon-coop-chronicle' },
         { time: '16:00', name: 'The Bourse Bell', href: '/guides/hk-central-bourse-chronicle' },
@@ -2669,7 +2674,7 @@ const en: Dict = {
     title: 'Which Hong Kong are you?',
     howTo: 'How to play: tap A / B / C or tap any option — there is no right or wrong; ten questions, one mood.',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'Forty-two HK chapters',
+    seriesLabel: 'Forty-three HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
@@ -2713,6 +2718,7 @@ const en: Dict = {
       { href: '/guides/hk-filipino-central-chronicle', title: 'A Cleaner in Central at Ten', hint: 'Chapter fortieth' },
       { href: '/guides/hk-mumbai-curry-central-chronicle', title: 'The Mumbai Curry House at Half-Past-One', hint: 'Chapter forty-first' },
       { href: '/guides/hk-vic-park-sunday-chronicle', title: 'The Filipina at Victoria Park', hint: 'Chapter forty-second' },
+      { href: '/guides/hk-hopewell-sunday-lunch-chronicle', title: 'The Sunday Lunch Above the Hopewell', hint: 'Chapter forty-third' },
     ],
     start: 'Start',
     progress: (current, total) => `Question ${current} / ${total}`,
@@ -3455,7 +3461,7 @@ const en: Dict = {
         'District chips (Sha Tin / Central / Mong Kok / Causeway Bay / Tsuen Wan…) are the no-thinking jump: tap one, and the search is re-fired with the district preset — then refine from the SearchBox as usual.',
       ] },
       { id: 'hkseries', kicker: 'STORY', title: '3 · The HK series — lifetime chapters across the whole day', paragraphs: [
-        'Forty-two chapters walk through a whole Hong Kong day. Newest: Chapter 42 (the Filipina at Victoria Park, 09:00). In chronological reading order: Chapter 21 (the last fare, 00:30) → Chapter 24 (the tower cleaner, 01:00) → Chapter 41 (the Mumbai curry house, 01:30) → Chapter 12 (congee, 02:00) → Chapter 25 (the last tong sui urn, 02:30) → Chapter 19 (the emergency triage, 03:00) → Chapter 8 (fruit market, 03:10) → Chapter 17 (the Dawn Bakery, 03:30) → Chapter 20 (the window cleaners, 04:00) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 1 (three meals, 05:30) → Chapter 5 (cha chaan teng, 06:00) → Chapter 16 (Lei Yue Mun, 06:30) → Chapter 10 (the ice-room, 06:45) → Chapter 36 (the old ferry, 07:00) → Chapter 3 (yum cha, 07:30) → Chapter 22 (the school bus, 08:30) → Chapter 42 (the Filipina at Victoria Park, 09:00) → Chapter 14 (Cheung Chau, 09:30) → Chapter 26 (the fishball stall, 10:00) → Chapter 38 (a Beijing writer in Hong Kong, 10:30) → Chapter 27 (the newspaper wrapper, 11:00) → Chapter 37 (Tai O and the dried fish, 11:30) → Chapter 2 (siu mei, 12:00) → Chapter 34 (the new airport wind, 12:30) → Chapter 23 (the auntie on the dish pit, 13:30) → Chapter 28 (the pigeon coop, 15:00) → Chapter 18 (the Central Bourse, 16:00) → Chapter 35 (Peng Chau and the cable-car, 16:30) → Chapter 29 (the typhoon shelter, 17:00) → Chapter 13 (the Lion Rock, 17:58) → Chapter 39 (the Teochew wet market, 18:00) → Chapter 15 (office to MTR, 18:30) → Chapter 4 (Temple Street, 19:00) → Chapter 30 (the communal long table, 20:00) → Chapter 31 (the cardboard elder, 21:30) → Chapter 40 (a cleaner in Central at ten, 22:00) → Chapter 9 (tong sui, 22:30) → Chapter 11 (cart noodles, 22:45) → Chapter 32 (the drive-thru, 23:00) → Chapter 33 (the vending machine, 00:00).',
+        'Forty-three chapters walk through a whole Hong Kong day. Newest: Chapter 43 (the Sunday lunch above the Hopewell, 13:00). In chronological reading order: Chapter 21 (the last fare, 00:30) → Chapter 24 (the tower cleaner, 01:00) → Chapter 41 (the Mumbai curry house, 01:30) → Chapter 12 (congee, 02:00) → Chapter 25 (the last tong sui urn, 02:30) → Chapter 19 (the emergency triage, 03:00) → Chapter 8 (fruit market, 03:10) → Chapter 17 (the Dawn Bakery, 03:30) → Chapter 20 (the window cleaners, 04:00) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 1 (three meals, 05:30) → Chapter 5 (cha chaan teng, 06:00) → Chapter 16 (Lei Yue Mun, 06:30) → Chapter 10 (the ice-room, 06:45) → Chapter 36 (the old ferry, 07:00) → Chapter 3 (yum cha, 07:30) → Chapter 22 (the school bus, 08:30) → Chapter 42 (the Filipina at Victoria Park, 09:00) → Chapter 14 (Cheung Chau, 09:30) → Chapter 26 (the fishball stall, 10:00) → Chapter 38 (a Beijing writer in Hong Kong, 10:30) → Chapter 27 (the newspaper wrapper, 11:00) → Chapter 37 (Tai O and the dried fish, 11:30) → Chapter 2 (siu mei, 12:00) → Chapter 34 (the new airport wind, 12:30) → Chapter 43 (the Sunday lunch above the Hopewell, 13:00) → Chapter 23 (the auntie on the dish pit, 13:30) → Chapter 28 (the pigeon coop, 15:00) → Chapter 18 (the Central Bourse, 16:00) → Chapter 35 (Peng Chau and the cable-car, 16:30) → Chapter 29 (the typhoon shelter, 17:00) → Chapter 13 (the Lion Rock, 17:58) → Chapter 39 (the Teochew wet market, 18:00) → Chapter 15 (office to MTR, 18:30) → Chapter 4 (Temple Street, 19:00) → Chapter 30 (the communal long table, 20:00) → Chapter 31 (the cardboard elder, 21:30) → Chapter 40 (a cleaner in Central at ten, 22:00) → Chapter 9 (tong sui, 22:30) → Chapter 11 (cart noodles, 22:45) → Chapter 32 (the drive-thru, 23:00) → Chapter 33 (the vending machine, 00:00).',
 
 
 
