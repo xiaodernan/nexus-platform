@@ -97,6 +97,27 @@ the admin cost dashboard and exposed as `cost_per_search`, `cost_per_conversatio
 Caching (§103): embeddings by content hash; LLM results only for idempotent read-only prompts, TTL ≤15m; **never** for
 price/inventory/availability.
 
+**Measured live probes (2026-11-14, GitHub Actions runners vs wkapi.pro/`gpt-6-sol`).**
+`.github/workflows/llm-cache-probe.yml` measures the provider directly — the provider refuses some egress IPs, so CI
+runners are the neutral observation point. Both probe runs (14:34Z `43604530153`, 20:57Z `43640023483`) agree on the
+shape of the proxy's behaviour:
+
+- repeated *identical* requests are served **wholesale** from cache (4/6 warm calls cached 100% in the 20:57Z probe; 2/6 cached in the 14:34Z A/B — the tail of call sequence cached 100% after warmup)
+- everything with a fixed head but *different* user turns never reports cached_tokens — no cross-request prefix reuse
+  observable at any prefix length (the ~17-token tiny arm and the ~2.4k-token contract arm behave identically)
+- a `cached_tokens` accounting quirk exists independently: the SSE envelope reports usage consistently (the
+  non-stream envelope does not) — D1044 made SSE the default for this reason, and V14 keeps "provider silent" distinct
+  from "provider said zero"
+- `llm_calls.cache_hit_rate` on this proxy is therefore dominated by identical-request volume. The deterministic,
+  provider-independent lever is the opt-in Redis replay cache (D1047, TTL `NEXUS_LLM_RESPONSE_CACHE_TTL_S`, temperature
+  0 only, whitespace-folded keys since D1160); increasing identical-request volume (prompt discipline, folding) is what
+  moves the number, not prefix engineering
+
+**D1160 (2026-11-14).** `apps/ai/nexus_ai/api/llm_response_cache.py` now whitespace-folds cached key material
+(`[\\s]+` → single space; ends trimmed; strings nested in dict/list payloads included; the provider request itself is
+never modified) so intents differing only in copy-paste whitespace replay against the same entry. Two pins in
+`tests/test_llm_response_cache.py`.
+
 ## 6. Evaluation gate (§71–§73, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §11)
 
 `suites` — **shipped and CI-gated now**: `intent_v1` (69 cases), `rag_faithfulness_v1` (25 cases, ≤2% hallucination

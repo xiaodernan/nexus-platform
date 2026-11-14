@@ -47,6 +47,26 @@ Measured against wkapi.pro after landing (2026-11-13, ``gpt-6-sol``, temperature
   deterministic arm; this contract is the prefix-cache arm and costs one cold read.
 * usage accounting on this proxy is approximate regardless of arm (identical bytes have
   reported varying prompt_tokens); the cached-vs-not signal is the stable one.
+
+Follow-up measurement (2026-11-14T20:57Z, GitHub Actions runner,
+``wkapi.pro/v1``/``gpt-6-sol``, run ``43640023483``, SSE envelope; compares with the
+2026-11-14T14:34Z probe ``43604530153``):
+
+* identical burst: warms after two cold calls, then 100% served from cache wholesale.
+* diverse burst: **no cross-request prefix reuse is observable at all** — the ~2.4k-token
+  frozen head never reports cached_tokens > 0 for different user turns; the frozen prefix
+  premise holds nothing on this relay.
+* tiny-system burst (the ~17-token adapter line, ~4.4k hidden relay prefix): one of three
+  identical calls reported 4425 prompt tokens, 4224 (95.5%) cached.
+* contract arm ≈ diverse arm: hits only when the exact same byte sequence repeats (call 8,
+  9, 11 of 12 reported cached = 100%).
+
+Conclusion: wkapi.pro replays whole-request cache only — it does not prefix-cache across
+different queries, however stable and however long the shared head. Keep the frozen head
+(no cost, and a genuine win on providers that do prefix-cache), but **measure the delta
+honestly**: on this proxy the deterministic arms are the replay cache (D1047/D1160) and any
+routing policy that increases identical-request volume; by its own dashboard shape, the
+"prefix arm" behaves as an exact arm.
 """
 
 from __future__ import annotations

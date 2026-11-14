@@ -176,3 +176,32 @@ async def test_router_lives_with_cache_down(monkeypatch):
     assert first.response.text == second.response.text
     assert adapter.calls == 2
     assert second.response.cache_hit is False
+
+
+def test_whitespace_folded_payloads_share_one_key(monkeypatch):
+    """D1160 — intents differing only in whitespace are one cached answer."""
+    client = _FakeRedis()
+    monkeypatch.setenv("NEXUS_LLM_RESPONSE_CACHE", "redis")
+    monkeypatch.setattr(cache, "_CLIENT", client)
+    monkeypatch.setattr(cache, "_CLIENT_TRIED", True)
+    req_ws = LLMRequest(task_class="summary", system="s",
+                        payload={"query": "奶茶\n   兩個人　去 旺角"}, temperature=0.0)
+    req_plain = LLMRequest(task_class="summary", system="s",
+                           payload={"query": "奶茶 兩個人 去 旺角"}, temperature=0.0)
+    assert cache.llm_cache_set(req_ws, ("fake",), _resp()) is True
+    replayed = cache.llm_cache_get(req_plain, ("fake",))
+    assert replayed is not None
+    assert replayed.text == "cached answer"
+
+
+def test_whitespace_fold_never_widens_to_content_changes(monkeypatch):
+    client = _FakeRedis()
+    monkeypatch.setenv("NEXUS_LLM_RESPONSE_CACHE", "redis")
+    monkeypatch.setattr(cache, "_CLIENT", client)
+    monkeypatch.setattr(cache, "_CLIENT_TRIED", True)
+    req_a = LLMRequest(task_class="summary", system="s",
+                       payload={"query": "奶茶 兩個人"}, temperature=0.0)
+    req_b = LLMRequest(task_class="summary", system="s",
+                       payload={"query": "奶茶 三個人"}, temperature=0.0)
+    cache.llm_cache_set(req_a, ("fake",), _resp())
+    assert cache.llm_cache_get(req_b, ("fake",)) is None

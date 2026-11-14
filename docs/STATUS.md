@@ -44373,3 +44373,13 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the cafeteria, the prices, the queue, the photo circuit are narrative constructions. The building is a real landmark; no actual dining operator is named or represented.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1160. D1160 — the replay cache learns the whitespace fold; the wkapi cache A/B lands where it really lives
+
+**Why.** The user's standing question — cache hit rate "low" — deserved a measured answer, not a story. Two fresh provider probes (2026-11-14T14:34Z run 43604530153, 2026-11-14T20:57Z run 43640023483, GitHub Actions runners, ``wkapi.pro/v1``, ``gpt-6-sol``) measured the proxy behaviour end to end: identical requests are served **wholesale** from cache; **no stable prefix, however long and byte-identical, is reused across different queries** — the D1050 contract arm behaves exactly like the no-contract arm. The dashboard's low diversity-arm number is the proxy's reality, not a code defect; the cache-worthy bytes are identical-request bytes. The remaining lever entirely inside this codebase is the Redis replay cache (D1047), and it was leaving exact-intent hits on the floor when copy-paste whitespace made the same question two different byte strings.
+
+**The unit.** `apps/ai/nexus_ai/api/llm_response_cache.py` whitespace-folds the cached key material only — every run of whitespace (`\s+`) collapses to one ASCII space and ends are trimmed, recursively over nested dict/list payload values (and `req.prompt` when set); the provider request itself is untouched. Two new pins in `tests/test_llm_response_cache.py` prove fold-equivalent requests replay and content-change requests never widen. `prefix_contract.py`'s measurement section carries the 2026-11-14 A/B verbatim. `docs/AI.md` gains a "Measured live probes" subsection so the operator does not re-derive this. 27 cache/prefix tests pass; ruff+mypy clean; census/verify_all untouched (no zh-HK change).
+
+**Honest boundaries.** The provider's cache semantics are measured, not assumed: on this proxy the visible cache win lives in identical-request volume, so the fold's value is real but bounded; `reason` task class and temperature-0 gating remain untouched; the fold widens replay only over whitespace, never over content.
+
+- readers: `apps/ai/nexus_ai/api/llm_response_cache.py`, `apps/ai/tests/test_llm_response_cache.py`, `apps/ai/nexus_ai/models/prefix_contract.py`, `docs/AI.md`, this ledger entry.

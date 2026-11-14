@@ -1,10 +1,14 @@
-"""An OPTIONAL, strictly-gated Redis cache for byte-identical temperature-0 LLM requests.
+"""An OPTIONAL, strictly-gated Redis cache for temperature-0 LLM requests.
 
 **Why this exists.** The provider-side prefix cache (D1036–D1044) saves *recompute* for a
-stable prefix — but a byte-identical request still pays a full network round trip and still
-reports the same token cost shape. Replaying the stored completion is a 100% cache hit by
-construction: same bytes in → the stored answer out, zero tokens, zero latency to the
-provider. The one domain this is safe in without thinking: `temperature == 0.0`.
+stable prefix on providers that actually prefix-cache — measured on wkapi.pro it does not
+(D1160: only exact-request wholesale caching happens there). Replaying the stored completion
+is a 100% cache hit by construction: same bytes in → the stored answer out, zero tokens,
+zero latency to the provider. The one domain this is safe in without thinking:
+`temperature == 0.0`.
+
+Two requests whose payload bytes are identical — or identical after the D1160 whitespace
+fold — are served the stored answer.
 
 **What is NOT cached.**
 - Any request with `temperature > 0.0` — nondeterministic by contract, never served stale.
@@ -21,7 +25,10 @@ provider. The one domain this is safe in without thinking: `temperature == 0.0`.
   model call still happens. The response never depends on Redis being up.
 - *Key.* `nexus:llm:response:<sha256>` over `{task_class, system, user_text, max_tokens,
   json_hint, subject_id, chain}` — `user_text` is the canonical `sort_keys` serialization the
-  adapter already uses (base.py), so the key covers every byte the provider would see.
+  adapter already uses (base.py) with a D1160 whitespace fold (query strings / nested payload
+  strings have every whitespace run collapsed to one ASCII space and ends trimmed; the request
+  itself is never modified), so near-identical intents typed with copy-paste whitespace share
+  one replay key.
 - *Value.* The stored body is `{text, finish_reason, provider, model, purpose, data}` —
   the replay returns a zero-token `LLMResponse` with `cache_hit=True` and `cost_usd=0.0`.
   The cost ledger sees a free call, which is the truth of what happened.
@@ -36,6 +43,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma: no cover - import-time hints only
@@ -75,11 +83,35 @@ def _client() -> Optional[Any]:
     return _CLIENT
 
 
+_WS = re.compile(r"\s+")
+
+
+def _fold_ws_str(text: str) -> str:
+    """Collapse every whitespace run (including U+3000) to a single ASCII space; trim ends.
+
+    Two requests that differ only in whitespace are the same intent for a
+    temperature-0 call — replaying the stored completion is honest. The fold is
+    key-material only: the request the provider sees is untouched.
+    """
+    return _WS.sub(" ", text).strip()
+
+
+def _fold_ws(value):  # noqa: ANN001 - recursive helper over JSON-ish structures
+    if isinstance(value, str):
+        return _fold_ws_str(value)
+    if isinstance(value, dict):
+        return {k: _fold_ws(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_fold_ws(v) for v in value]
+    return value
+
+
 def _user_text(req: "LLMRequest") -> str:
     if req.prompt:
-        return req.prompt
-    # same canonicalisation as HttpLLMAdapter._user_text — identical bytes for identical payloads
-    return json.dumps(req.payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        return _fold_ws_str(req.prompt)
+    # same canonicalisation as HttpLLMAdapter._user_text (sort_keys, compact separators),
+    # with the D1160 whitespace fold so near-identical intents share one replay key
+    return json.dumps(_fold_ws(req.payload), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _ttl_s() -> int:
