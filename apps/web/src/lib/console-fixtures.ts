@@ -7,7 +7,7 @@
  * Everything here is synthetic and `demo: true` (§109, §155): the numbers are deterministic
  * projections of the seed catalogue — the same ratings and prices the consumer pages already show
  * as demo data — multiplied by fixed constants. A revenue figure on this page is a projection of a
- * projection, which is exactly why the console stamps it `fixture:` and badges it 示例数据 instead
+ * projection, which is exactly why the console stamps it `fixture:` and badges it 示例數据 instead
  * of letting it look like a live `v_merchant_funnel` row.
  */
 
@@ -93,7 +93,7 @@ export function fixtureConversations(businessId: string, now: Date = new Date())
       merchant_slug: seed.slug,
       channel: 'in_app',
       mode: 'hybrid',
-      subject: seed.seats ? '周六晚上 6 位可以订吗？' : '想问店裡有现货吗？',
+      subject: seed.seats ? '周六晚上 6 位可以訂吗？' : '想問店裡有現貨吗？',
       status: 'handoff',
       last_message_at: iso(38),
       created_at: iso(95),
@@ -181,7 +181,7 @@ export function fixtureReviewQueue(now: Date = new Date()): ReviewQueueItem[] {
       id: 'demo-queue-coupon-1',
       kind: 'coupon',
       title: '週一至週三下午 9 折（示例草案）',
-      summary: '营销代理根据示例客流草案生成的优惠券；发布前必须有人类批准（§27），本条从未投放。',
+      summary: '營销代理根据示例客流草案生成的優惠券；發布前必須有人类批準（§27），本条从未投放。',
       actor: 'ai:marketing',
       merchant_name: '龍苑 Kitchen',
       generated_by_ai: true,
@@ -194,8 +194,8 @@ export function fixtureReviewQueue(now: Date = new Date()): ReviewQueueItem[] {
     {
       id: 'demo-queue-listing-1',
       kind: 'listing_change',
-      title: '双人晚市套餐 价格 398 → 388',
-      summary: '商户自己提交的改价（§47：资料由商户控制）；进入队列是因为价格事实会出现在比较与 SEO 页。',
+      title: '雙人晚市套餐 價格 398 → 388',
+      summary: '商戶自己提交的改價（§47：资料由商戶控制）；进入隊列是因為價格事實會出現在比較與 SEO 頁。',
       actor: 'merchant',
       merchant_name: '龍苑 Kitchen',
       generated_by_ai: false,
@@ -208,8 +208,8 @@ export function fixtureReviewQueue(now: Date = new Date()): ReviewQueueItem[] {
     {
       id: 'demo-queue-listing-2',
       kind: 'listing_change',
-      title: 'AI 导入菜单提案：新增 3 个商品',
-      summary: '§22 导入管道的提案（confidence 0.7–0.93）：解析自商户提供的示例网址，需商户与平台双重确认。',
+      title: 'AI 导入菜單提案：新增 3 個商品',
+      summary: '§22 导入管道的提案（confidence 0.7–0.93）：解析自商戶提供的示例網址，需商戶與平台雙重確認。',
       actor: 'ai:import',
       merchant_name: '洋紫荊咖啡',
       generated_by_ai: true,
@@ -222,8 +222,8 @@ export function fixtureReviewQueue(now: Date = new Date()): ReviewQueueItem[] {
     {
       id: 'demo-queue-listing-3',
       kind: 'listing_change',
-      title: '营业时间更新：週一改休',
-      summary: '示例：商户提交的营业时间变更，已通过人工审核但保留在队列里演示状态区分。',
+      title: '營業時間更新：週一改休',
+      summary: '示例：商戶提交的營業時間变更，已通過人工审核但保留在隊列里演示状态區分。',
       actor: 'merchant',
       merchant_name: '花瓣茶室',
       generated_by_ai: false,

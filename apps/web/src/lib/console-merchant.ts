@@ -213,7 +213,7 @@ function fixtureReservations(seed: SeedMerchant, now: Date): MerchantReservation
       party_size: 2,
       slot_start: at(3),
       status: 'requested',
-      notes: '安静角落位（示例备注）',
+      notes: '安靜角落位（示例備注）',
       created_at: iso(now, 45),
       contact: contact('Demo Chan', '+852 9000 0001'),
       price: { amount: '376.00', currency: seed.currency },
@@ -294,7 +294,7 @@ function fixtureThreadDetail(seed: SeedMerchant, threadId: string, now: Date): M
     {
       id: 'demo-msg-1',
       role: 'consumer',
-      content: seed.seats ? '周六晚上 6 位可以订吗？' : '想问店裡有现货吗？',
+      content: seed.seats ? '周六晚上 6 位可以訂吗？' : '想問店裡有現貨吗？',
       created_at: iso(now, 95),
       agent_run_id: null,
       fact_ids: [],
@@ -304,8 +304,8 @@ function fixtureThreadDetail(seed: SeedMerchant, threadId: string, now: Date): M
       id: 'demo-msg-2',
       role: 'assistant',
       content: seed.seats
-        ? '周六 19:00 有 5 个位，可预订 6 位以內。需要我帮你看其他时段吗？'
-        : '目前架上资料显示有货，实际库存以到店为准。',
+        ? '周六 19:00 有 5 個位，可預訂 6 位以內。需要我幫你看其他時段吗？'
+        : '目前架上资料顯示有貨，實際库存以到店為準。',
       created_at: iso(now, 94),
       agent_run_id: 'demo-run-1',
       fact_ids: [],
@@ -314,7 +314,7 @@ function fixtureThreadDetail(seed: SeedMerchant, threadId: string, now: Date): M
     {
       id: 'demo-msg-3',
       role: 'consumer',
-      content: '可以帮我留安静一点的角落位吗？另外可以带蛋糕吗？',
+      content: '可以幫我留安靜一點的角落位吗？另外可以帶蛋糕吗？',
       created_at: iso(now, 40),
       agent_run_id: null,
       fact_ids: [],
@@ -325,7 +325,7 @@ function fixtureThreadDetail(seed: SeedMerchant, threadId: string, now: Date): M
           {
             id: 'demo-msg-4',
             role: 'assistant',
-            content: '这个问题涉及店内政策，我不确定答案，已转交店员回复。',
+            content: '這個問題涉及店內政策，我不确定答案，已转交店員回複。',
             created_at: iso(now, 39),
             agent_run_id: 'demo-run-2',
             fact_ids: [],
@@ -388,7 +388,7 @@ function fixtureCampaigns(_seed: SeedMerchant, now: Date): MerchantCampaign[] {
       name: '週一至週三下午客流提升（AI 草案）',
       channel: 'in_app',
       status: 'draft',
-      body: '週一至週三 14:00–17:00 到店，出示本頁即可享 9 折（示例草案，尚未发布）。',
+      body: '週一至週三 14:00–17:00 到店，出示本頁即可享 9 折（示例草案，尚未發布）。',
       audience: '過去 90 天曾到店、且偏好下午時段的客人（示例分群）',
       provenance: { generated_by_ai: true, reviewed_by_human: false, actor: 'ai:marketing', generated_at: iso(now, 150) },
       approved_by: null,
@@ -413,10 +413,10 @@ function fixtureCampaigns(_seed: SeedMerchant, now: Date): MerchantCampaign[] {
     },
     {
       id: 'demo-campaign-3',
-      name: '雨天到店優惠（已由人類核准）',
+      name: '雨天到店優惠（已由人類核準）',
       channel: 'email',
       status: 'approved',
-      body: '下雨天到店出示本頁享 95 折（示例，已由人類核准但未發布）。',
+      body: '下雨天到店出示本頁享 95 折（示例，已由人類核準但未發布）。',
       audience: '全體訂閱者（示例）',
       provenance: { generated_by_ai: true, reviewed_by_human: true, actor: 'ai:marketing', generated_at: iso(now, 1_200) },
       approved_by: 'demo-owner',

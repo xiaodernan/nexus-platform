@@ -59,6 +59,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `services/platform/src/main/java/com/nexus/admin/AdminAiRepository.java` | D1045: `cacheTotals` / `cacheByModel` — the two SQL readers behind /admin/ai/cache; measured tokens only, tenant-scoped by the join |
 | `apps/web/src/lib/console-admin.ts` | D1045: `adminAiCacheRead()` + `AdminAiCache` / `AdminCacheModelRow` types + clamped `cacheHitRate` helper; demo fixture labelled like the rest of the console; `ADMIN_SOURCES.aiCache` pinned to the §9 route |
 | `apps/web/app/admin/ai/page.tsx` | D1045: new §"Cache accounting" section — totals cells (calls, cached tokens, hit rate, hit calls) + per-provider/model table, ReadFailure and SourceStamp honoured |
+| `apps/web/src/lib/console-fixtures.ts` | D1126: console fixture strings converted Simplified→Traditional; the admin plane obeys the HK script bar |
+| `apps/web/src/lib/console-merchant.ts` | D1126: merchant console fixture strings converted Simplified→Traditional |
 | `apps/web/src/lib/i18n/dict.ts` | D1045: zh + en copy for the cache section (`cacheTitle/cacheIntro/cacheEmpty/cacheColumns/cacheHitRateLabel`) |
 | `apps/web/src/lib/console-admin.test.ts` | D1045: `cacheHitRate` pins — null-never-NaN, [0,1] clamp, exact ratio |
 | `services/platform/src/main/java/com/nexus/admin/AdminEventsController.java` | D1059/D1064: the Redis Streams bridge read surface — `XLEN`/`XPENDING`/newest 10 stuck entries (`pending_detail`)/`XREVRANGE` against `nexus:events`; read-only; honest degraded shape on bridge-off or Redis-down; `RequiresPlatformRole` |

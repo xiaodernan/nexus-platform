@@ -44007,3 +44007,16 @@ Dict gains `home.hkHub.clockTitle / clockHint / clock[]` on both locales; Tradit
 **Honest boundaries.** The horizon band is pure CSS art — no signal about the live plane or CI; its purpose is screen density, editorial depth and one unambiguous visual cue that the series is about a single day's arc. No accessibility impact.
 
 - readers: `apps/web/app/globals.css`, `apps/web/app/hong-kong/page.tsx`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, this ledger entry.
+## 1126. D1126 — the console fixture plane gets the same Traditional-HK standard: 75 residual Simplified chars converted across the merchant dashboard fixtures and admin screens
+
+**Why.** The user's locale law is "everything in zh must be one script" — and the census only audits the four dict carriers + seed content. The console fixture plane (`console-fixtures.ts`, `console-merchant.ts`) silently carried Simplified Chinese into the merchant and admin dashboards. Three of those strings render in user-facing surfaces today.
+
+**The unit.** Pair-table sweep (`fix_console.py`, same union as the census's source tables) converted 29 + 44 + 1 chars across the two fixtures and a comment in `format.ts` (「未验证」→「未驗證」). One misconversion the table produced on the first pass — 平台→平臺 (the product standardized on 平台） — was reversed by hand as part of the same pass. Post-sweep scan of the three files shows 0 remaining Simplified except the excluded 平台 name.
+
+The fixturePlane content is not covered by HK Traditional census by design — this unit adds the missing manual check to the process trail: every future fixture edit gets the union scan before it lands (recorded in ATLAS).
+
+**Verified.** web suite **346/346** (clean migration — nothing pinned those strings); `tsc --noEmit` clean; `next build` clean; census unchanged (the four carriers untouched); no behavioural delta on the mock plane.
+
+**Honest boundaries.** The conversion is lexical, not editorial quality improvement: sentences like 礙手礙腳、加蔥 remain fixtures, and the merchant dashboard's bilingual seed/en mirror status (nl data + English comments) is untouched. The merchant console's fixture strings stay transitions rather than real content. This unit only restores Traditional script consistency and the product's two-locale promise.
+
+- readers: `apps/web/src/lib/console-fixtures.ts`, `apps/web/src/lib/console-merchant.ts`, `apps/web/src/lib/format.ts`, this ledger entry.

@@ -148,7 +148,7 @@ function toMinutes(hhmm: string): number | null {
 /**
  * Compute open/closed from `business_hours` — never guessed, and the result always names
  * the fact it came from so the renderer can prove provenance (spec §20, AGENT_CONTRACT §4).
- * Returns `null` when there is no hours data at all: the caller must then show 未验证.
+ * Returns `null` when there is no hours data at all: the caller must then show 未验證.
  */
 export function computeOpening(
   hours: BusinessHoursDay[] | null | undefined,
