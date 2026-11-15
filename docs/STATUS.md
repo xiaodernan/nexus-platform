@@ -44509,3 +44509,13 @@ point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, 
 **Honest boundaries.** Static, server-rendered, no network dependency, no interaction tracking. Every step is a real product surface that already exists — `/try` adds no ghost features, no dead buttons, no fake promises.
 
 - readers: `apps/web/app/try/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/components/site-chrome.tsx`, this ledger entry.
+
+## 1172. D1172 — chapter XLIX lands the 03:15 slot: 凌晨三點十五分：羅湖行李手車的第一班趟 — the border wakes first
+
+**Why.** Layer G continues with an hour almost nobody asks about. The border town has a dawn beat nobody writes — the trolleys that start rolling before customs opens, the key-carrying hands, the cooler-car guts. The series now names it.
+
+**The unit.** `DEMO_GUIDES` gains `hk-loohu-trolleys-chronicle` — 「凌晨三點十五分：羅湖行李手車的第一班趟（香港系列 · 第四十九章）」. Three heading cards（一、手車的祖先 · 二、凌晨的密語 · 三、早苗人們的翅膀）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「羅湖 行李手車」）。Both locales carry the chapter; the arc clock gains 03:15 between fruit market and the Dawn Bakery (98 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-nine on both locales; e2e floors ≥49; census 1766 literals clean (0 simplified); web 350/350; verify_all NO OFFENDER.
+
+**Honest boundaries.** Synthetic fixture; the trolleys, the clock, the station, the lady whose number is 梁麗 are narrative constructions. No real station staff, no documented procedure, no access rules is claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

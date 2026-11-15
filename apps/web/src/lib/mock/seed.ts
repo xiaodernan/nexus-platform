@@ -1751,4 +1751,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-loohu-trolleys-chronicle', title: '凌晨三點十五分：羅湖行李手車的第一班趟（香港系列 · 第四十九章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：羅湖口岸的鐵閘被打開之前——那架空手從深圳回到香港、把一家人留在身邊的行李手車。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨三點十五分。羅湖口岸（合成敘事，非真實人物與真實時刻——時刻與場景全部是敘事建構）——閘門照例是閉的，燈照例都是暗的。只有一個東西醒着：行李手車。牠很小、很低、很輕——但是這座城今天最先開始的東西。' },
+      { type: 'heading', text: '一、手車的祖先' },
+      { type: 'paragraph', text: '阿福（合成敘事，非真實人物）把牠們一輛輛推出來。每輛手車都是一塊鐵片加一條帶子加了一個 樸素的造化，牠們沒有國籍，只有責任。阿福說：「牠們每一輛都有一個主人——牠們的主人都是明天的手車。」' },
+      { type: 'cards', title: '羅湖可見', items: [] },
+      { type: 'heading', text: '二、凌晨的密語' },
+      { type: 'paragraph', text: '牠們不說話但是絕對聽得見。牠們知道三點十四分是鐵閘調整的時間，三點十五分是牠們出宮殿的時間，三點零七分是老接待員掃廁所的時間。阿福今天清早聽到一個家庭說：「We are home.」——牠不知道那是一家人說的還是一架手車說的。' },
+      { type: 'cards', title: '羅湖可聽', items: [] },
+      { type: 'heading', text: '三、早苗人們的翅膀' },
+      { type: 'paragraph', text: '凌晨三點十五分，阿福把最後一輛手車推進格子——啪，啪，啪。那輛車子的名字叫「梁麗」，牠會在黃昏把牠的第一批乘客推進香港。阿福對著牠說：「Lam, 等陣見。」牠照例不回應。牠從來不需要。' },
+      { type: 'cards', title: '羅湖可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「羅湖 行李手車」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
