@@ -44585,3 +44585,13 @@ does not invent a second event.
 **Honest boundaries.** Synthetic fixture; the factory, the workers, the orders, the歌詞 and the scissors are narrative constructions. No real guanxi, no proprietor is named, no operational claim about garment manufacturing is made.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1181. D1181 — chapter identity glyphs: 52 small marks, one per chapter
+
+**Why.** The chapter cards were visually identical except for Roman numeral and text. A reader skimming the series rail has no visual cue what each chapter is about — the kicker font is the only signal. Adding a small chapter-glyph to each card gives every chapter a recognisable visual accent.
+
+**The unit.** `apps/web/src/lib/chapter-icons.ts` exports a map `slug → IconName` (~50 explicit picks; unmapped slug renders no icon). `HkSeriesProgress` renders the glyph inline next to the kicker on every chapter card, deepening hierarchy without adding chrome or animation. Local-only, pure data, no new network, no new client island. tsc clean; web 354/354; verify_all NO OFFENDER; build passes.
+
+**Honest boundaries.** The glyph is purely decorative — the kicker text remains the source of truth for the chapter's name; the icon is purely an agent of recognition. No new asset files; no new fonts.
+
+- readers: `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/components/hk-series-progress.tsx`, this ledger entry.

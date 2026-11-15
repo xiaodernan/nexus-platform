@@ -14,6 +14,7 @@ import { Icon } from '@nexus/ui';
 
 import { CHAPTER_READ_KEY, markChapter, readChapters } from '@/lib/chapter-read';
 import { romanOf } from '@/lib/roman-numeral';
+import { chapterIcon } from '@/lib/chapter-icons';
 
 export interface HkSeriesProgressCard {
   slug: string;
@@ -132,7 +133,13 @@ export function HkSeriesProgress({
                   </span>
                 ) : null}
                 <span className="relative flex flex-col gap-2">
-                  <span className="text-2xs font-medium uppercase tracking-wide text-ink-faint">{card.kicker}</span>
+                  <span className="relative flex items-center gap-2 text-2xs font-medium uppercase tracking-wide text-ink-faint">
+                  {(() => {
+                    const icon = chapterIcon(card.slug);
+                    return icon ? <Icon name={icon} size={12} className="shrink-0 text-accent" /> : null;
+                  })()}
+                  {card.kicker}
+                </span>
                   <span className="text-balance text-lg font-semibold leading-snug tracking-tight text-ink-strong">
                     {card.label}
                   </span>
