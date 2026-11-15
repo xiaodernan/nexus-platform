@@ -44824,3 +44824,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：以深水埗北河街市作為真實錨點為背景，杜撰陳師傅、文錦渡進山、收貨員、常客的數字，多於一切 are narrative constructions；陳師傅與他的體力記帳簿純屬虛構；搜索「深水埗 北河街市」演示的是演示流的路徑。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1202. D1202 — The booklet’s REAL-HK strip now carries the source URL
+
+**Why.** A user who wants to fact-check the in-product manual should not have to guess where the numbers came from. The REAL-HK section already quoted MTR's published figures and a retrieve date; the missing half was the URL — so the reader had to leave the product and google the figure to see the page itself.
+
+**The unit.** `apps/web/src/lib/i18n/dict.ts` — the zh and en `id: 'realnumbers'` paragraphs now inline the exact canonical URL (`en.wikipedia.org/wiki/MTR_(Hong_Kong)`) plus the section anchor for the "Performance" or "Transit" region. Bench state: census 1967 literals clean (URL text is pure Latin, no Han decoding impact); web 371/371 unchanged.
+
+**Honest boundaries.** The source is Wikipedia (accessed 2026-11-15) — the figures are public-domain figures quoted verbatim with date and a caution about quarter-to-quarter drift. This is still not a live feed; the reader who wants live data should go straight to MTR's news release archive.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.

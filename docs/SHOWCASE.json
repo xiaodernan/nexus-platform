@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1201",
-  "milestone_full": "香港系列第六十三章 · 凌晨五點十五分：深水埗北河街市——運菜員的最後一趟 · Layer H 物流章 · 文錦渡菜車到菜市的黎明",
+  "milestone": "D1202",
+  "milestone_full": "說明書 REAL-HK 段嵌入 MTR (Hong Kong) URL 直連 — reader 能直達資料源",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: sixty-three Traditional chapters — 00:30→22:45 full day arc · 126-chip clock both locales",
+    "HK series: sixty-three Traditional chapters — 00:30→22:45 full day arc · 126-chip clock both locales · handbook REAL-HK now links the source Wikipedia page inline",
     "Edition LXIII — 凌晨五點十五分：深水埗北河街市——運菜員的最後一趟 (05:15) · Layer H logistics at border dawn",
     "Layer H opens: LXI 皇崗邊境 · LXII 羅湖夜市 · LXIII 深水埗北河街市 — Layer H arc doubling pace",
     "Spring Cloud sidecar: Eureka · Config · Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
     "WORLD_ROADMAP now lists all 60 landed (A–G landed; H–L specified); Layer H starts here in earnest",
     "D1192: REAL-HK handbook (`MTR` sourced figures) · D1193: pressure all-green · D1191: cloud re-port",
     "/hong-kong (63 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily",
-    "D1201: chapter LXIII · D1200: LXII 羅湖夜市 · D1199: LXI 皇崗夜班 · D1198: WORLD_ROADMAP aligned · D1193: memo + pressure"
+    "D1202: inline source URL in handbook REAL-HK · D1201: chapter LXIII · D1200: LXII 羅湖夜市 · D1199: LXI 皇崗夜班 · D1198: WORLD_ROADMAP aligned"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

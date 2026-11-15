@@ -2513,7 +2513,7 @@ const zhHK: Dict = {
       ] },
       { id: 'realnumbers', kicker: 'REAL-HK', title: '10 · 香港，一組真實刻度（不是演示數據）', paragraphs: [
         '香港系列寫食但香港是真的城市。下面這幾筆是公開來源的真實數字——不是本站演示資料，也不是坊間傳言。',
-        '資料來源：Wikipedia — MTR (Hong Kong)（網頁查閱，2026-11-15）。數字會隨時間變動；這不是維基百科的複述，是公開年報給出的量級感覺。',
+        '資料來源：Wikipedia — MTR (Hong Kong)（https://en.wikipedia.org/wiki/MTR_(Hong_Kong)，2026-11-15 網頁查閱）。數字會隨時間變動；這不是維基百科的複述，是公開年報給出的量級感覺——你想核對，打開連結與「Transit」段就會看到原文。',
       ], bullets: [
         '每日約 576 萬人次乘搭全港鐵路（港鐵公佈，2023 年 11 月，含城際與輕鐵；純城市鐵路約 482 萬人次）',
         '99 個重鐵站 + 68 個輕鐵站 + 1 個高鐵站（西九龍站點）',
@@ -4028,7 +4028,7 @@ const en: Dict = {
       ] },
       { id: 'realnumbers', kicker: 'REAL-HK', title: '10 · The city in numbers — not demo figures', paragraphs: [
         'The HK series chapters talk food, but Hong Kong is a real city. These figures come from public sources — not from the demo plane, not from folklore.',
-        'Source: Wikipedia — MTR (Hong Kong), accessed 2026-11-15. The numbers drift with time; this is not a Wikipedia mirror — it is the order of magnitude public annual data gives you.',
+        'Source: Wikipedia — MTR (Hong Kong) (https://en.wikipedia.org/wiki/MTR_(Hong_Kong), retrieved 2026-11-15). The numbers drift with time; this is not a Wikipedia mirror — it is the order of magnitude public annual reporting gives you; if you want the raw table, open the link and jump to the "Performance" section.',
       ], bullets: [
         '~5.76 million daily rail journeys (MTR published figures, November 2023, all rail modes; ~4.82 million on city metro lines alone)',
         '99 heavy-rail stations + 68 light-rail stops + 1 high-speed terminus (West Kowloon)',
