@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1195",
-  "milestone_full": "香港系列第五十八章 · 下午一點四十五分：青衣貨櫃碼頭的橋吊午休 · Layer G 西移 · 全網最大的貨櫃樞紐",
+  "milestone": "D1196",
+  "milestone_full": "香港系列第五十九章 · 下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分 · Layer G 東移 · 算盤、紙箱與暮色",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: fifty-eight Traditional chapters — 00:30→22:45 full day arc · 116-chip clock both locales",
-    "Edition LVIII — 下午一點四十五分：青衣貨櫃碼頭的橋吊午休 (13:45) · Layer G the container noon",
-    "Layer G full tract: LVIII 青衣橋吊午休 · LVII 大埔墟批發 · LVI 油麻地粵劇散場 · LV 落馬洲 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖行李手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
-    "D1193: mock rails memoised (/ SSR p50 2.63→1.71 s) · D1192: REAL-HK handbook (MTR figures sourced) · D1191: cloud plane re-port (24761/24889/24089/25445)",
+    "HK series: fifty-nine Traditional chapters — 00:30→22:45 full day arc · 118-chip clock both locales",
+    "Edition LIX — 下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分 (17:15) · Layer G east advances",
+    "Layer G full tract: LIX 元朗鞋舖 · LVIII 青衣橋吊午休 · LVII 大埔墟批發黎明 · LVI 油麻地粵劇 · LV 落馬洲 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘 · XLIX 羅湖 · XLVIII 萬象天地",
     "Spring Cloud sidecar: Eureka registry · Config Server · WebFlux Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
+    "D1193: mock rails memoised · / SSR p50 2.63→1.71 s · D1192: REAL-HK handbook (MTR figures sourced) · D1191: cloud re-port (24761/24889/24089/25445)",
     "/command demo operator desk · /stamp passport · /daily ritual · /hong-kong all · /handbook · /try walkthrough · /hk-type quiz",
-    "D1195: chapter LVIII · D1194: LVII · D1193: memo + pressure · D1188: e2e flake fix · D1187: LVI · D1186: LV"
+    "D1196: chapter LIX · D1195: LVIII 青衣 · D1194: LVII 大埔墟 · D1193: memo + pressure · D1188: e2e flake fix · D1187: LVI 油麻地"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

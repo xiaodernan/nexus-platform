@@ -1961,4 +1961,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-yuen-long-shoemaker-shop-chronicle', title: '下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分（香港系列 · 第五十九章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：下午五點十五分的元朗大馬路——鞋材批發店的日落、算盤與紙箱、元朗河邊隱隱的晚風。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午五點十五分。元朗大馬路『輝記鞋材店』（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——鐵閘半拉，紙箱疊得像一座小山。老闆娘周嬸（合成敘事，非真實人物）正在清算今天的進出貨單：進了十八箱牛皮、出了三箱止滑、一筆鞋面定金還沒收款。' },
+      { type: 'heading', text: '一、算盤的聲音' },
+      { type: 'paragraph', text: '周嬸不用計算機。她用算盤。每一聲『啪』，都是當天的總價被核對一遍。她說，算盤不只算錢，也算事——款項、皮質、工人、關係全擠在那幾顆珠子上面。進貨單上沒有一行是小事。' },
+      { type: 'cards', title: '輝記可見', items: [] },
+      { type: 'heading', text: '二、元朗的倉庫' },
+      { type: 'paragraph', text: '鞋材店的後門通著一個小倉庫。倉庫比想像中大——層層架子上擺著分區牌：止滑牛皮、印花布料、透氣網層。周嬸的丈夫跟夥計們通宵搬貨，他從不露面。他只負責一件事：把明天要出的貨疊到卡車門口。' },
+      { type: 'cards', title: '輝記可聽', items: [] },
+      { type: 'heading', text: '三、傍晚的收攤' },
+      { type: 'paragraph', text: '下午五點半，油燈亮了一盞。周嬸把今日清單寫在門板背面：『十八箱牛皮、三箱止滑、明天上午八點貨送到舖』。她把鐵閘半關上，向河邊走了一段路——頭頂是元朗的暮色，身旁是不知名的車聲。' },
+      { type: 'cards', title: '輝記可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「元朗 鞋材店」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

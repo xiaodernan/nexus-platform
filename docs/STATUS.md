@@ -44764,3 +44764,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：青衣貨櫃碼頭、阿昌、碼頭食堂、香港註冊船——全部是敘事建構，不指向真實又是 name 的港口管理員、真實港口運作規範或真實裝卸紀錄；搜索「青衣 貨櫃碼頭」演示的是演示流的路徑。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1196. D1196 — chapter LIX lands the 17:15 slot: 下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分
+
+**Why.** Layer G（東西兩岸）繼續向東推進：上水、元朗、乃至天水圍仍然是香港的版圖，港人一樣會在這裡買鞋材、送物斗、關閘。下午五點十五分是元朗大馬路的收工時分，輝記鞋材店的算盤聲不讓人睡午覺。這一章在城裡埋了一根「香港邊緣」的坐標。
+
+**The unit.** `DEMO_GUIDES` gains `hk-yuen-long-shoemaker-shop-chronicle` — 「下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分（香港系列 · 第五十九章）」。Three heading cards（一、算盤的聲音 · 二、元朗的倉庫 · 三、傍晚的收攤），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「元朗 鞋材店」）。Both locales carry the chapter; the arc clock gains 17:15 between the typhoon shelter and the temple circuit (118 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-nine on both locales; chapter-icons gains `'hk-yuen-long-shoemaker-shop-chronicle': 'store'`; e2e floors ≥59; census 1931 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 7s and the chapter renders end-to-end via /guides/hk-yuen-long-shoemaker-shop-chronicle clean.
+
+**Honest boundaries.** 合成敘事：元朗輝記鞋材店、老闆娘周嬸、她不露面的丈夫、元朗河邊——全部是敘事建構；SearchBox 搜「元朗 鞋材店」演示的是演示流的路徑；這是邊緣地帶的尾聲，不冒充真實商號。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
