@@ -44481,3 +44481,15 @@ cache is the cross-process arm). No ordering guarantee. The winner's answer is t
 point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, `reason`) never coalesce.
 
 - readers: `apps/ai/nexus_ai/models/inflight.py`, `apps/ai/nexus_ai/models/router.py`, `apps/ai/tests/test_inflight_coalesced.py`, `docs/AI.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1170. D1170 — chapter XLVIII lands the 15:30 slot: 下午三點半：萬象天地的設計師街 — and the hub teaches where you left off
+
+**Why.** Layer G continues. Deep-dive on the Shenzhen side: the Designer Street at MixC World is Hong Kong's Saturday afternoon arriving by train — three lattes, two currencies, one architecture book bag. The user gets another square metre of the world; the user also gets told — explicitly — which chapter they were reading, because a world with forty-eight chapters deserves a "pick up where you left off" affordance at the busiest door.
+
+**The unit.** (a) `DEMO_GUIDES` gains `hk-mixc-world-designer-chronicle` — 「下午三點半：萬象天地的設計師街（香港系列 · 第四十八章）」. Three heading cards（一、設計師的市場 · 二、兩種貨幣的講究 · 三、黃昏的設計與等）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「萬象天地 設計師街」）. Both locales carry the chapter; the arc clock gains 15:30 between the pigeon coop and the Bourse Bell (96 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to forty-eight on both locales; e2e floors ≥48; census 1721 literals clean (0 simplified); web 350/350; build passes; verify_all NO OFFENDER; SSR confirmed the new chips + filmstrip render.
+
+(b) New module `apps/web/src/components/hk-continue-reading.tsx` — a client island that reads `nexus.hk-series.read` (same `localStorage` key the progress bar and clock use) and offers exactly one of three states: **start** (zero read — "start from chapter one"), **continue** (some read — "pick up where you left off, go to the next chapter"), **done** (all read — "you finished every chapter"). Zero network, zero identity, full bilingual; en-US artifacts never enter the zh plane (`newHere` / `allRead` / tokenized `toGo` with `{n}` — the substitution happens client-side). Placed on `/hong-kong` directly below the arc clock. The CTA leads with an icon and a clear single-argument: where to go next.
+
+**Honest boundaries.** Synthetic fixture; MixC World is a real mall name but no tenant chain is described, no rent figure, no shopping advice is claimed — the demo framing (`flags: { demo: true }`) governs narrative invention, and the resonance point is Hang Son's own Saturday corner, nothing more.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/components/hk-continue-reading.tsx`, `apps/web/app/hong-kong/page.tsx`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

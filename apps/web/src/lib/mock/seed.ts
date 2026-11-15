@@ -1730,4 +1730,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-mixc-world-designer-chronicle', title: '下午三點半：萬象天地的設計師街（香港系列 · 第四十八章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：星期天下午三點半，深圳南山萬象天地設計師街——兩種貨幣、兩種口音、一個地方。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天的下午三點半。深圳南山的萬象天地（合成敘事，非真實商戶與真實時刻——時刻與街道全部是敘事建構）——沒有人需要展示任何證明。這裏的櫥窗不賣東西，賣的是風格：一家一家地、一本書地、一盞燈地。香港來的設計師阿然（合成敘事，非真實人物）抱着他自己當他媽媽的筆記本，在這裏啜飲着第三杯拿鐵。他的月薪兩邊寄：一半留給香港的房租，一半留給深圳的夢想。' },
+      { type: 'heading', text: '一、設計師的市場' },
+      { type: 'paragraph', text: '這裏沒有收銀員問「您需要我為您介紹嗎」——沒有人介紹；你站在每件作品前就是陳列到客人面前。阿然承認這些東西不是為了解決問題，而是為了解決「今天想買一個自己配得上的小東西」。他說，這算是最不壞的理由。' },
+      { type: 'cards', title: '萬象天地可見', items: [] },
+      { type: 'heading', text: '二、兩種貨幣的講究' },
+      { type: 'paragraph', text: '港幣貼着人民幣的價格牌：同時這裏有微妙的收付規則——有人先換好人民幣，有人直接刷港幣信用卡（系統自動按匯率折算），有人用香港的八達通 App 刷 QR Code。沒有人會因為你用了港幣付款而被拒絕——這裏的沉默解説師不需要介紹。' },
+      { type: 'cards', title: '萬象天地可聽', items: [] },
+      { type: 'heading', text: '三、黃昏的設計與等' },
+      { type: 'paragraph', text: '快四時，散步的人開始多起來：遊客、相機包、遛狗、還有穿着睡衣來散步的人——「四時的風向是這一句」。阿然合上筆記本，今天不買任何東西。他在盤算：明天星期六，這裏會再有一場相機的日出。' },
+      { type: 'cards', title: '萬象天地可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「萬象天地 設計師街」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

@@ -124,6 +124,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1164: the forty-fifth HK chapter (hk-last-queue-sunday-chronicle, 最後一間有排隊的餐廳) — Layer F closes the Sunday circuit, 21:00 |
 | `apps/web/src/lib/mock/seed.ts` | D1166: the forty-sixth HK chapter (hk-loohu-weekend-chronicle, 羅湖站的雙向貨幣) — Layer G opens, 14:30 |
 | `apps/web/src/lib/mock/seed.ts` | D1167: the forty-seventh HK chapter (hk-huanggang-crossing-crew-chronicle, 皇崗口岸的員工餐廳) — Layer G at mealtime, 19:15 |
+| `apps/web/src/lib/mock/seed.ts` | D1170: the forty-eighth HK chapter (hk-mixc-world-designer-chronicle, 萬象天地的設計師街) — Layer G in the afternoon, 15:30 |
 | `apps/web/src/lib/roman-numeral.ts` + `apps/web/src/components/hk-series-progress.tsx` | D1163: print-annual Roman numeral backdrop on every chapter card — bounded romanOf, ~9% accent opacity, purely decorative |
 | `apps/web/src/lib/mock/seed.ts` | D1157: the forty-first HK chapter (hk-mumbai-curry-central-chronicle, 灣仔咖哩魚飯堂) |
 | `apps/web/src/lib/mock/seed.ts` | D1156: the thirty-eighth, thirty-ninth and fortieth HK chapters (hk-beijing-writer-chronicle, 北漂作家; hk-teochew-markets-chronicle, 旺角菜市場; hk-filipino-central-chronicle, 菲律賓中環) — opens WORLD_ROADMAP Layer E |

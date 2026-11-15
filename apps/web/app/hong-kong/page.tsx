@@ -7,6 +7,7 @@ import { currentLocale } from '@/lib/i18n/server';
 import { HkSeriesProgress } from '@/components/hk-series-progress';
 import { HkCantoneseDaily } from '@/components/hk-cantonese-daily';
 import { HkArcTimeline } from '@/components/hk-arc-timeline';
+import { HkContinueReading } from '@/components/hk-continue-reading';
 
 export const dynamic = 'force-static';
 
@@ -51,7 +52,12 @@ export default async function HongKongHubPage() {
         <HkArcTimeline copy={{ title: hub.clockTitle, hint: hub.clockHint, entries: hub.clock }} />
       </Container>
 
-      {/* Forty-seven chapter cards */}
+      {/* Continue where you left off — localStorage-powered, zero network */}
+      <Container size="shell" className="pt-3">
+        <HkContinueReading copy={hub.continueReading} entries={hub.clock} />
+      </Container>
+
+      {/* Forty-eight chapter cards */}
       <Container size="shell" className="flex flex-col gap-6 py-10">
         <h2 className="text-xl font-semibold tracking-tight text-ink-strong sm:text-2xl">{hub.chaptersTitle}</h2>
         <HkSeriesProgress cards={chapters} copy={dict.home.hkProgress} />
