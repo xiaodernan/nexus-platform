@@ -2402,4 +2402,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-sham-shui-po-tuk-stall-late-night-chronicle', title: '晚上八點一刻：深水埗——財俊大廈士多——阿梅關舖的最後一燈（香港系列 · 第八十章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上八點一刻的深水埗——阿梅給士多放最後一個逐個關燈，與深水埗八點零一分的默契。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上八點一刻。財俊大廈（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——士多的燈一盞一盞地歸位，只剩走廊那一盞乾燈。' },
+      { type: 'heading', text: '一、黃昏的士多' },
+      { type: 'paragraph', text: '深水埗財俊大廈士多，做透了三十幾年。或比三十幾年——阿梅手上的這一疊單子只是最後一件事：把自己收檔的時刻記清楚。' },
+      { type: 'cards', title: '士多可見', items: [] },
+      { type: 'heading', text: '二、深水埗人的三十年' },
+      { type: 'paragraph', text: '阿梅就是在這裡長大的深水埗人。她店裡所有的麵、飯、麥盒、杯麵、汽水——全部是她親自試過、確定過、然後把價簽上去的。' },
+      { type: 'cards', title: '士多可聽', items: [] },
+      { type: 'heading', text: '三、最後一個客人' },
+      { type: 'paragraph', text: '晚上八點零一分，門前掛上「收檔」牌——過了就真的沒有人可以進來了。阿梅不急不躁，把今天剩下的東西逐張數進資料盒，燈才熄掉。' },
+      { type: 'cards', title: '士多可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「深水埗 士多」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

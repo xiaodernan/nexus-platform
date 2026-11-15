@@ -45184,3 +45184,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** The stall, Ahpo and the beef-offal dinners are 合成敘事 constructions; Temple Street is named as a Wan Chai landmark archetype, not any particular vendor. The sentence "Taiwanish" does not appear; nothing in this chapter maps to real cuisine data except the real Cantonese phrase 廟街. Nightlife continues because fiction does not wear out.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry. Showcase cadence: heavy milestone → sync + pages.yml dispatch + byte-verify.
+
+## 1223. D1223 — chapter LXXX （深水埗財俊大廈士多， 20:15） — the eighty-chapter world
+
+**Why.** Eighty is the natural milestone: the series crosses a comfortable 80 and `/hong-kong` becomes eighty chapters through one whole day — the reader can stop being a tourist here. The chapter's owner is Ah Mui, Sham Shui Po, thirty years at the same tuk-tuk stall, closing the shutters at 20:15 the way she always has.
+
+**The unit.** `DEMO_GUIDES` gains `hk-sham-shui-po-tuk-stall-late-night-chronicle`, 「晚上八點一刻：深水埗——財俊大廈士多——阿梅關舖的最後一燈（香港系列 · 第八十章）」. Traditional HK script, 合成敘事 framing, three heading cards （一、黃昏的士多 · 二、深水埗人的三十年 · 三、最後一個客人）, 後記 + SearchBox pointer （「深水埗 士多」）. Arc clock gains 20:15 between 粥府（20:00）與粵劇散場（20:30）— **160 chips across both locales**; handbook reading order updated to eighty; `chapter-icons` gains `'hk-sham-shui-po-tuk-stall-late-night-chronicle': 'navigation'`; e2e floors ≥80; `/world` copy 79→80 everywhere; the seven-layer partition test now asserts **12+16+16+15+8+7+6 = 80**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,245** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 15.8s · SSR curls both locales: chapter renders with 阿梅/士多 markers, `/hong-kong` carries the new chip and 第八十章， `/world` returns **80 distinct guide links in each arm**.
+
+**Honest boundaries.** The tuk-tuk (士多) is a real Hong Kong landmark archetype; the 財俊大廈 and Ah Mui are both synthetic; the 30-year career is dramaturgy. No real merchant is represented in this chapter; no real landmark sells or owes anything to this fiction. The world continues because the series is written for exactly the seventy-eight-and-beyond light.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
