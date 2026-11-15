@@ -44814,3 +44814,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：羅湖口岸以南、油條條爺、罐頭阿芳 —— 全部是敘事建構，不指向真實商舖或真實時刻。加之整個邊境一整天在這個時段根本沒有夜市，這完全是 Layer H 的一條房間線，不是恭維現實情況。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1201. D1201 — chapter LXIII lands the 05:15 slot: 凌晨五點十五分：深水埗北河街市——運菜員的最後一趟
+
+**Why.** Layer H（邊境章）introduces a new axis: logistics. 05:15 is the produce-haul hour that feeds the entire city; the trucks from Wenjindu ferry the day's vegetables into Sham Shui Po's main wholesale market; the trucks never stop from 02:00 to 06:30. This chapter puts the bread of the city at the very edge of the clock — when the border moves with the vegetable flow.
+
+**The unit.** `DEMO_GUIDES` gains `hk-sham-shui-po-north-river-market-chronicle` — 「凌晨五點十五分：深水埗北河街市——運菜員的最後一趟（香港系列 · 第六十三章）」。Three heading cards（一、運菜的黎明 · 二、搬菜的聲音 · 三、日出前的蔬菜車），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「深水埗 北河街市」）。Both locales carry the chapter; the arc clock gains 05:15 before the three-meals charge (126 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to sixty-three on both locales; chapter-icons gains `'hk-sham-shui-po-north-river-market-chronicle': 'sun'`; e2e floors ≥63; census 1967 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 9s; chapter renders end-to-end in /hong-kong + /guides/hk-sham-shui-po-north-river-market-chronicle clean.
+
+**Honest boundaries.** 合成敘事：以深水埗北河街市作為真實錨點為背景，杜撰陳師傅、文錦渡進山、收貨員、常客的數字，多於一切 are narrative constructions；陳師傅與他的體力記帳簿純屬虛構；搜索「深水埗 北河街市」演示的是演示流的路徑。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.

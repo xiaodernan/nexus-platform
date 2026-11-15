@@ -2045,4 +2045,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-sham-shui-po-north-river-market-chronicle', title: '凌晨五點十五分：深水埗北河街市——運菜員的最後一趟（香港系列 · 第六十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：凌晨五點十五分的深水埗北河街市——深港蔬菜的最後一汪、運菜車的最後一趟、尚未醒來的城市的胃。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨五點十五分。深水埗北河街市（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——蔬菜的卸載聲響徹整個街道。陳師傅（合成敘事，非真實人物）站在貨車旁，手裏的點鈔機還沒有關。' },
+      { type: 'heading', text: '一、運菜的黎明' },
+      { type: 'paragraph', text: '深水埗北河街市的每一夜，都是由可以看見浮亮的菜葉開始的。凌晨五點已經有三輛貨車從文錦渡進入香港。他們不算數量——他們只算今天市場願意收貨的量。' },
+      { type: 'cards', title: '北河街市可見', items: [] },
+      { type: 'heading', text: '二、搬菜的聲音' },
+      { type: 'paragraph', text: '陳師傅搬運一車菜的方式，是他幾十年來唯一會的事：站姿、肩膀的擺位、將箱子推上去的距離感——每一件事都經過他一次一次的重複。他的同事們說，他只講一句：「不要摔到」，別人不懂這句話有甚麼深意。' },
+      { type: 'cards', title: '北河街市可聽', items: [] },
+      { type: 'heading', text: '三、日出前的蔬菜車' },
+      { type: 'paragraph', text: '凌晨六點整，菜車全部運出門。最後一車出去的是芹菜——兩筐一筐的新鮮蔬菜——陳師傅站在他旁邊，他不知道自己為甚麼要留到現在。陽光一打下來，整個市場就看見了明天的事。' },
+      { type: 'cards', title: '北河街市可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「深水埗 北河街市」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
