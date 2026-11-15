@@ -58,4 +58,30 @@ describe('D1177 /stamp collection island', () => {
     expect(chrome).toContain('印章收集');
     expect(chrome).toContain('Passport stamps');
   });
+
+  it('dict carries the printable certificate blocks in both locales', () => {
+    const dict = read(DICT);
+    expect(dict).toContain("completeKicker: '終章獎 — 天下無雙'");
+    expect(dict).toContain("completeKicker: 'The final seal — THE COMPLETE PASSPORT'");
+    expect(dict).toContain("completeWax: '香港終日 · 七十八章讀竟'");
+    expect(dict).toContain("completeWax: 'Hong Kong — seventy-eight chapters, one pass'");
+    expect(dict).toContain("completeButton: '印一枚蠟印'");
+    expect(dict).toContain("completeButton: 'Print the wax seal'");
+    expect(dict).toContain('七十八章香港系列');
+    expect(dict).toContain('Seventy-eight chapters, seventy-eight stamps');
+    expect(dict).not.toContain('五十章香港系列');
+    expect(dict).not.toContain('Fifty chapters, fifty stamps');
+  });
+
+  it('the island renders the seal behind the allDone gate and SSR passes the HK date in', () => {
+    const src = read(COMPONENT);
+    expect(src).toContain('currentDate');
+    expect(src).toContain('window.print()');
+    expect(src).toContain('printable-root');
+    expect(src).toContain('id="stamp-certificate"');
+    const page = read(PAGE);
+    expect(page).toContain('currentDate={hkDate}');
+    expect(page).toContain('en-CA');
+    expect(page).toContain("timeZone: 'Asia/Shanghai'");
+  });
 });

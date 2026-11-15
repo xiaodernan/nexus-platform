@@ -19,12 +19,14 @@ export default async function StampCollectionPage() {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const clock = dict.home.hkHub.clock;
+  const hkDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' });
 
   return (
     <main className="mx-auto flex w-full max-w-shell flex-col px-4 sm:px-6 lg:px-8">
       <StampCollection
         copy={dict.home.stamp}
         entries={clock.map((entry) => ({ href: entry.href, label: entry.name, kicker: '' }))}
+        currentDate={hkDate}
       />
     </main>
   );

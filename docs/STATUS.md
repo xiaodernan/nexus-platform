@@ -45151,3 +45151,24 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** The quick rail covers every shipped surface — that is what "all functions" can honestly mean today. The chapter is 合成敘事； 九龍灣三家村 is a real district archetype, the scales, the mirror, the 98 士多 are all invented. The half-heaven scale is a fiction — 49 years of craft at the back of a Kowloon Bay shop, not gospel.
 
 - readers: `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1221. D1221 — /stamp endgame: a printable wax seal when you close the book
+
+**Why.** The mandate's game is a book the user does not finish forever — across the series every time the reader clears the last stamp, they should deserve a ceremony, not just "YOU FINISHED!" inline. The new endgame renders an inline-SVG wax seal, Traditional HK script (seventy-eight chapters), today's HK date, and a single "Print this seal" button — the certificate is a gift of the page, fired once a reader's local card crosses `allDone`.
+
+**The units.**
+
+1. **`apps/web/src/components/stamp-collection.tsx`** — `StampCopy` interface grows four leaves:
+   - zh: `completeKicker: '終章獎 — 天下無雙'` · `completeEmber: '七十八章，由凌晨第一鍋粥讀到二十三點的車仔麵——這就是你全本看過這座城市的證明。'` · `completeWax: '香港終日 · 七十八章讀竟'` · `completeButton: '印一枚蠟印'`
+   - en: `completeKicker: 'The final seal — THE COMPLETE PASSPORT'` · `completeEmber: 'Seventy-eight chapters, from the fish lorries before dawn to the last bowl of cart noodles at 23:00 — this is the proof you watched the whole city.'` · `completeWax: 'Hong Kong — seventy-eight chapters, one pass'` · `completeButton: 'Print the wax seal'`
+   - The island accepts `currentDate: string` from the page; the parent server component computes it with `new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' })` per request — no state, no cookie, no timing race.
+   - When `earned >= total`, the island renders `<section id="stamp-certificate" className="printable-root">` containing the inline SVG (double red-rim circles, dotted inner rim, 「章」 92px character art, HK-day caption at 10.5px mono, date 9px beneath) and a print-hidden "Print the wax seal" button. `@media print` in `app/globals.css` hides every ancestor and sibling of the seal — what the printer emits is the seal alone, on an uncluttered page.
+   - Stale 50-chapter copy was retired in the same change (`七十八章香港系列` / `Seventy-eight chapters, seventy-eight stamps` — and the pin count now matches today's `78` chapters).
+2. **Tests** — two new arms in `stamp-collection.test.ts`: dict pins (four en/zh leaves; 78-chapter count matched; stale 50-count asserted gone) and an island pin (currentDate prop, `window.print()` gate, `printable-root` class, HK-time taboola pass-through).
+3. **`app/stamp/page.tsx`** — server computes `hkDate` with Asia/Shanghai at request time; SSR is untouched apart from a prop. Print path via `window.print()`.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,227** literals · console-i18n 0 offenders · `verify_all` NO OFFENDER · mock build compiled 19.5s · SSR curls both locales: zh arm renders `每讀一章，就等於在護照上敲一個章印` + `七十八章香港系列`, en emits the mirror with `Seventy-eight chapters`; both arms hold the soup; the seal renders only post-hydration — it is the island's job to detect `earned >= total`, not the server's — so the SSR evidence stops at chrome and behaviour, not pixels.
+
+**Honest boundaries.** The wax seal is client-rendered by design — the server cannot forge a congratulatory artefact on a browser it has never talked to. Both arms: the print stylesheet is a minimal `visibility: hidden` DOM mark rule — the certificate stays a simple medium-weight inked rectangle and does not claim any real currency of certification. The HK date is wall-clock at request-time; there is no attestation that the reader read every chapter (there never was — `nexus.hk-series.read` is localStorage, self-reported). No image captured: the /stamp certificate genuinely renders only when the reader clicks through the last chapter — celebration markets nobody's eyes on the screen; you must perform the ritual to see the result.
+
+- readers: `apps/web/src/components/stamp-collection.tsx`, `apps/web/app/stamp/page.tsx`, `apps/web/app/globals.css`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/stamp-collection.test.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

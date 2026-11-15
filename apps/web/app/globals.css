@@ -166,3 +166,18 @@
 @media (prefers-reduced-motion: reduce) {
   .nexus-horizon { filter: saturate(0.8) brightness(0.95); }
 }
+
+/* D1221 — printing the stamp certificate shows only the seal, never the page chrome */
+@media print {
+  body > :not(#nexus-main) { visibility: hidden !important; }
+  #nexus-main * { visibility: hidden !important; }
+  #stamp-certificate, #stamp-certificate * { visibility: visible !important; }
+  .print-hidden { visibility: hidden !important; }
+  #stamp-certificate {
+    position: fixed !important;
+    inset: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}

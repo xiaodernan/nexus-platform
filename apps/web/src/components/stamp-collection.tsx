@@ -29,9 +29,13 @@ export interface StampCopy {
   doneBody: string;
   collected: string;
   unfinished: string;
+  completeKicker: string;
+  completeEmber: string;
+  completeWax: string;
+  completeButton: string;
 }
 
-export function StampCollection({ copy, entries }: { copy: StampCopy; entries: readonly StampEntry[] }) {
+export function StampCollection({ copy, entries, currentDate }: { copy: StampCopy; entries: readonly StampEntry[]; currentDate: string }) {
   const [read, setRead] = useState<readonly string[]>([]);
   const [ready, setReady] = useState(false);
 
@@ -120,11 +124,30 @@ export function StampCollection({ copy, entries }: { copy: StampCopy; entries: r
       </ul>
 
       {ready && allDone && (
-        <section aria-labelledby="stamp-done" className="rounded-2xl border border-accent-line bg-accent-soft p-6 text-center">
-          <h2 id="stamp-done" className="text-2xl font-semibold leading-tight tracking-tight text-ink-strong">
-            {copy.doneTitle}
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">{copy.doneBody}</p>
+        <section id="stamp-certificate" aria-labelledby="stamp-done" className="printable-root">
+          <section className="flex flex-col items-center gap-5 rounded-3xl border border-accent-line bg-accent-soft p-8 text-center">
+            <span className="text-2xs font-semibold uppercase tracking-[0.28em] text-accent">{copy.completeKicker}</span>
+            <svg viewBox="0 0 320 320" className="h-56 w-56 sm:h-72 sm:w-72" role="img" aria-label="Sealed full passport">
+              <circle cx="160" cy="160" r="150" fill="none" stroke="#b3232a" strokeWidth="10" />
+              <circle cx="160" cy="160" r="140" fill="none" stroke="#b3232a" strokeWidth="2" strokeDasharray="5 7" />
+              <circle cx="160" cy="160" r="124" fill="#fae8c8" stroke="#b3232a" strokeWidth="6" />
+              <text x="160" y="148" textAnchor="middle" fontSize="92" fill="#6b1a1a" fontFamily="serif" fontWeight="700">章</text>
+              <text x="160" y="181" textAnchor="middle" fontSize="10.5" fill="#6b1a1a" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace" letterSpacing="1">{copy.completeWax}</text>
+              <text x="160" y="201" textAnchor="middle" fontSize="9" fill="#6b1a1a" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace" opacity="0.72">{currentDate}</text>
+            </svg>
+            <p className="max-w-prose text-sm leading-relaxed text-ink-muted">{copy.completeEmber}</p>
+            <h2 id="stamp-done" className="text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-ink-strong sm:text-4xl">
+              {copy.doneTitle}
+            </h2>
+            <p className="max-w-prose text-sm leading-relaxed text-ink-muted">{copy.doneBody}</p>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="print-hidden inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              {copy.completeButton}
+            </button>
+          </section>
         </section>
       )}
     </section>
