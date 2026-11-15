@@ -153,6 +153,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1204: the sixty-fifth HK chapter (hk-man-kam-to-return-chronicle, 早上七點一刻・文錦渡口岸榕記米業——浩明第三班折返) — 07:15, Layer H the dawn return leg |
 | `apps/web/src/lib/mock/seed.ts` | D1205: the sixty-sixth HK chapter (hk-man-kam-to-morning-chronicle, 早上七點四十五分・文錦渡口岸榕記米業——浩明的早班米斗) — 07:45, Layer H the morning bucket |
 | `apps/web/src/lib/mock/seed.ts` | D1208: the sixty-seventh HK chapter (hk-man-kam-to-second-truck-chronicle, 早上八點一刻・文錦渡口岸榕記米業——浩明的第二輛米車) — 08:15, Layer H the second truck |
+| `apps/web/src/lib/mock/seed.ts` | D1209: the sixty-eighth HK chapter (hk-huanggang-return-coach-chronicle, 早上八點四十五分・皇崗口岸——返城班車的司機阿昌) — 08:45, Layer H the return coach |
 | `apps/web/src/lib/chapter-guides.test.ts` | D1185: the chapter-plane parity reader — 5 arms: ≥55 DEMO_GUIDES, unique slugs, every chapter resolves through mockGuide (the /guides read path), every series chapter carries 合成敘事 framing, mockGuides() decorates cards crash-free; D1186: arm 5 covers chapters LIV + LV |
 | `apps/web/src/lib/roman-numeral.ts` + `apps/web/src/components/hk-series-progress.tsx` | D1163: print-annual Roman numeral backdrop on every chapter card — bounded romanOf, ~9% accent opacity, purely decorative |
 | `apps/web/src/lib/mock/seed.ts` | D1157: the forty-first HK chapter (hk-mumbai-curry-central-chronicle, 灣仔咖哩魚飯堂) |

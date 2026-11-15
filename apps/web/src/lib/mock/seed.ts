@@ -2150,4 +2150,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-huanggang-return-coach-chronicle', title: '早上八點四十五分：皇崗口岸——返城班車的司機阿昌（香港系列 · 第六十八章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上八點四十五分的皇崗口岸——返深班車、候車長椅、阿昌的早班與關閘保安交班時刻。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點四十五分。皇崗口岸的返城班車停靠點（合成敘事，非真實口岸形態與真實班次——時刻與場景全部是敘事建構）——阿昌（合成敘事，非真實人物）按照牌照早上第四班，替滿院兒都是工廠鞋的人們開出關。' },
+      { type: 'heading', text: '一、阿昌的早班' },
+      { type: 'paragraph', text: '阿昌每天早上七點半接第一車，六點半收工。他說開最熟的是八點四十五分這一班：候車的工人大多穿同一家廠的膠鞋，一樣深藍色的工衣。' },
+      { type: 'cards', title: '口岸可見', items: [] },
+      { type: 'heading', text: '二、候車長椅上的兩個地方話' },
+      { type: 'paragraph', text: '候車長椅上的對話一半是粵語，一半是潮州話——今日最常講到的兩個話頭：哪一家的粥能以文火抵到關、哪一家的餸盤不會打翻（合成敘事中的合成對話，非真實商戶）。' },
+      { type: 'cards', title: '口岸可聽', items: [] },
+      { type: 'heading', text: '三、走的人與關閘' },
+      { type: 'paragraph', text: '保安核實身份之後，整個早班的人像一隻沿著弧線走的蟻隊。阿昌望住反光鏡，看著他們排好隊——這是他覺得自己今天的活兒還值得做的原因。' },
+      { type: 'cards', title: '口岸可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「皇崗 班車」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
