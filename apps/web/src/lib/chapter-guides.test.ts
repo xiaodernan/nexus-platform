@@ -15,7 +15,7 @@ import { DEMO_GUIDES } from './mock/seed';
 
 describe('HK series — every seeded chapter actually resolves', () => {
   it('DEMO_GUIDES holds at least fifty-four chapters, each with a unique slug', () => {
-    expect(DEMO_GUIDES.length).toBeGreaterThanOrEqual(57);
+    expect(DEMO_GUIDES.length).toBeGreaterThanOrEqual(58);
     const slugs = DEMO_GUIDES.map((g) => g.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
   });
@@ -33,7 +33,7 @@ describe('HK series — every seeded chapter actually resolves', () => {
 
   it('every HK-series chapter carries the synthetic-fixture framing sentence', () => {
     const series = DEMO_GUIDES.filter((g) => g.slug.startsWith('hk-') && g.category === 'activities');
-    expect(series.length).toBeGreaterThanOrEqual(57);
+    expect(series.length).toBeGreaterThanOrEqual(58);
     for (const guide of series) {
       const text = [guide.description, ...guide.body_blocks.map((b) => ('text' in b ? b.text : ''))].join(' ');
       expect(text, guide.slug).toContain('合成敘事');
@@ -49,7 +49,7 @@ describe('HK series — every seeded chapter actually resolves', () => {
     }
   });
 
-  it('chapters LIV, LV, LVI and LVII resolve and fragrance correctly', () => {
+  it('chapters LIV-LVIII resolve and fragrance correctly', () => {
     const l54 = mockGuide('hk-sham-shui-po-fabric-chronicle');
     expect(l54).not.toBeNull();
     expect(l54?.title).toContain('第五十四章');
@@ -73,5 +73,11 @@ describe('HK series — every seeded chapter actually resolves', () => {
     expect(l57?.title).toContain('第五十七章');
     expect(l57?.title).toContain('大埔墟');
     expect(l57?.flags.demo).toBe(true);
+
+    const l58 = mockGuide('hk-container-terminal-noon-chronicle');
+    expect(l58).not.toBeNull();
+    expect(l58?.title).toContain('第五十八章');
+    expect(l58?.title).toContain('青衣');
+    expect(l58?.flags.demo).toBe(true);
   });
 });

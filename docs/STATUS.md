@@ -44754,3 +44754,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：大埔墟農產品批發市場、婷婷、李大伯、秤上的算術——全部是敘事建構，不指向真實市場主管、真實糧商或真實關閘資料；搜索「大埔墟 批發市場」演示的是演示流的路徑。以真實錨點（大埔墟農產品批發市場是香港的真實機構）為骨，以合成人物與敘事為肉。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1195. D1195 — chapter LVIII lands the 13:45 slot: 下午一點四十五分：青衣貨櫃碼頭的橋吊午休
+
+**Why.** Layer G（東西兩岸）這一次來到港西的青衣貨櫃碼頭——全香港最大的貨櫃樞紐，1958 開始運作。一點四十五分是碼頭的午休時間：橋吊司機阿昌扳到中性、鐵皮棚裡的叉燒飯、等艙位的香港註冊船。港口的節奏仍舊與整個城市綁在一起——只是這次沒有誰告訴你，直到你路過才知道。
+
+**The unit.** `DEMO_GUIDES` gains `hk-container-terminal-noon-chronicle` — 「下午一點四十五分：青衣貨櫃碼頭的橋吊午休（香港系列 · 第五十八章）」。Three heading cards（一、鐵臂上的人 · 二、碼頭食堂的叉燒飯 · 三、下午兩點的嗶嗶聲），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「青衣 貨櫃碼頭」）。Both locales carry the chapter; the arc clock gains 13:45 between the dish-pit and the remnant rolls (116 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-eight on both locales; chapter-icons gains `'hk-container-terminal-noon-chronicle': 'layers'`; e2e floors ≥58; census 1922 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 10s and the chapter renders end-to-end via /guides/hk-container-terminal-noon-chronicle clean.
+
+**Honest boundaries.** 合成敘事：青衣貨櫃碼頭、阿昌、碼頭食堂、香港註冊船——全部是敘事建構，不指向真實又是 name 的港口管理員、真實港口運作規範或真實裝卸紀錄；搜索「青衣 貨櫃碼頭」演示的是演示流的路徑。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.

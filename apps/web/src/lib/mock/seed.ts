@@ -1940,4 +1940,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-container-terminal-noon-chronicle', title: '下午一點四十五分：青衣貨櫃碼頭的橋吊午休（香港系列 · 第五十八章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：下午一點四十五分的青衣貨櫃碼頭——橋吊司機的午餐、橋吊與集裝箱之間的靜默，與這個港口自渡輪年代延續的節奏。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午一點四十五分。青衣貨櫃碼頭（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——橋吊司機阿昌（合成敘事，非真實人物）把控制杆扳到中性位。海面的風吹進控制室，貨櫃一排一排整齊排好，像守著一個安靜的棋盤。' },
+      { type: 'heading', text: '一、鐵臂上的人' },
+      { type: 'paragraph', text: '阿昌是橋吊的司機，也可以理解為一座小島的管理員。他的視野哪裏都看得見——九龍半島褶皺的山頭、整個西北的兩公里通道、與遠方維多利亞港的藍灰天際線。他說，每放下一隻箱，就像在世界的棋盤上移了一步，只是他永遠不知道它下一步去了哪裏。' },
+      { type: 'cards', title: '青衣橋吊可見', items: [] },
+      { type: 'heading', text: '二、碼頭食堂的叉燒飯' },
+      { type: 'paragraph', text: '碼頭食堂在鐵欄後面的一間鐵皮棚。阿昌今天點的，還是叉燒飯——同菜、同規格，「因為把箱搬成一條龍，只有這一口飯可以吃完」。他吃得不慢，但更不會浪費時間。碼頭不等人，但一個人在海上的節奏，最終會在碼頭的餐枱上暴露。' },
+      { type: 'cards', title: '青衣碼頭可聽', items: [] },
+      { type: 'heading', text: '三、下午兩點的嗶嗶聲' },
+      { type: 'paragraph', text: '下午兩點整，閘口的卡車輪子再次響起——阿昌搖頭向東看。岸邊停著一艘香港註冊的貨船，港口管理員在核對艙位。他想起多年前的香港，駁船穿梭、舢舨刺青；今天是貨櫃，明天可能是更大的船。碼頭的日升月落他記得，但他不會提起。' },
+      { type: 'cards', title: '青衣碼頭可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「青衣 貨櫃碼頭」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
