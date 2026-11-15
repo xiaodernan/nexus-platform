@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { currentLocale } from '@/lib/i18n/server';
 import { getDict } from '@/lib/i18n';
-import { simulateJourneys, explainSnapshot } from '@/lib/user-journeys';
+import { simulateJourneys, simulateWeek, explainSnapshot } from '@/lib/user-journeys';
 import { Container, Icon } from '@nexus/ui';
 import Link from 'next/link';
 
@@ -31,6 +31,7 @@ export default async function InsightsPage() {
   const t = dict.insights;
   const hkDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' });
   const snap = simulateJourneys(hkDate, locale);
+  const week = simulateWeek(hkDate, locale);
   const band: Record<string, string> = { low: t.funnelLow, mid: t.funnelMid, high: t.funnelHigh };
 
   return (
@@ -110,6 +111,35 @@ export default async function InsightsPage() {
               );
             })}
           </div>
+        </section>
+
+        <section aria-labelledby="insights-week" className="mt-8 rounded-2xl border border-line bg-surface p-5">
+          <h2 id="insights-week" className="text-2xs font-semibold uppercase tracking-wide text-accent">
+            {t.weekTitle}
+          </h2>
+          <p className="mt-1 text-2xs leading-relaxed text-ink-faint">{t.weekHint}</p>
+          <div className="mt-4 grid grid-cols-7 gap-1 sm:gap-2" aria-hidden="true">
+            {week.points.map((p, i) => {
+              const prev = i > 0 ? week.points[i - 1]?.total ?? p.total : p.total;
+              const delta = p.total - prev;
+              const maxTotal = Math.max(...week.points.map((x) => x.total), 1);
+              const intensity = Math.round((p.total / maxTotal) * 100);
+              return (
+                <div key={p.date} className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-canvas p-2">
+                  <span className="text-[9px] uppercase text-ink-faint">{p.label}</span>
+                  <span className="font-mono text-xl font-semibold leading-none text-ink-strong">{p.total}</span>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                    <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(6, intensity)}%` }} />
+                  </div>
+                  <span className="text-[9px] font-mono text-ink-faint">{i === 0 ? '—' : delta === 0 ? '=' : delta > 0 ? `+${delta}` : `${delta}`}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-2xs leading-relaxed text-ink-muted">
+            <span className="font-mono text-ink-strong">×{week.weeklyTotal}</span>
+            {' · '}{t.nextTitle}: {week.advice}
+          </p>
         </section>
 
         <section aria-labelledby="insights-table" className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface">

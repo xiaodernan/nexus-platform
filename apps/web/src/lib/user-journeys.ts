@@ -102,6 +102,97 @@ export function simulateJourneys(dateKey: string, locale: 'zh-HK' | 'en'): Insig
 export const hourLabel = (hour: number, locale: 'zh-HK' | 'en'): string =>
   locale === 'zh-HK' ? `${String(hour).padStart(2, '0')}點` : `${String(hour).padStart(2, '0')}:00`;
 
+export interface WeekPoint {
+  date: string;
+  label: string;
+  total: number;
+  dropRate: number;
+  topProfile: string;
+}
+
+export interface WeekTrend {
+  points: WeekPoint[];
+  weeklyTotal: number;
+  slope: number;
+  advice: string;
+  adviceKind: 'rising' | 'cooling' | 'flat';
+}
+
+/** Shift an ISO `YYYY-MM-DD` key by `offset` days (noon UTC anchoring, HK has no DST). */
+const shiftDay = (dateKey: string, offset: number): string => {
+  const [y = 0, m = 1, d = 1] = dateKey.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d, 12));
+  t.setUTCDate(t.getUTCDate() + offset);
+  return t.toISOString().slice(0, 10);
+};
+
+const weekdayLabel = (dateKey: string, locale: 'zh-HK' | 'en'): string => {
+  const [y = 0, m = 1, d = 1] = dateKey.split('-').map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d, 12));
+  const localeTag = locale === 'zh-HK' ? 'zh-HK' : 'en-GB';
+  const wd = t.toLocaleDateString(localeTag, { weekday: 'short', timeZone: 'UTC' });
+  const mm = String(m).padStart(2, '0');
+  const dd = String(d).padStart(2, '0');
+  return locale === 'zh-HK' ? `${wd} · ${mm}/${dd}` : `${wd} · ${mm}/${dd}`;
+};
+
+/**
+ * Seven-day trend for the ghost replay — strictly what §9 asks the operator page to tell
+ * truth about: who arrived, whether fewer are leaving early, and the slope across the week.
+ * Deterministic from the HK date; replay-only, zero tracked bytes.
+ */
+export function simulateWeek(dateKey: string, locale: 'zh-HK' | 'en'): WeekTrend {
+  const zh = locale === 'zh-HK';
+  const points: WeekPoint[] = [];
+  let weeklyTotal = 0;
+
+  for (let offset = -6; offset <= 0; offset += 1) {
+    const dayKey = shiftDay(dateKey, offset);
+    const snap = simulateJourneys(dayKey, locale);
+    const dropAvg = snap.buckets.length > 0 ? Math.round(snap.buckets.reduce((acc, b) => acc + b.dropRate, 0) / snap.buckets.length) : 0;
+    const top = [...snap.buckets].sort((a, b) => b.count - a.count)[0];
+    points.push({
+      date: dayKey,
+      label: weekdayLabel(dayKey, locale),
+      total: snap.total,
+      dropRate: dropAvg,
+      topProfile: top?.profile ?? '',
+    });
+    weeklyTotal += snap.total;
+  }
+
+  // simple OLS slope over the seven day-totals (ghosts/day)
+  const ys = points.map((p) => p.total);
+  const xs = ys.map((_, i) => i);
+  const n = xs.length;
+  const sumX = xs.reduce((a, b) => a + b, 0);
+  const sumY = ys.reduce((a, b) => a + b, 0);
+  const sumXY = xs.reduce((acc, x, i) => acc + x * (ys[i] ?? 0), 0);
+  const sumXX = xs.reduce((acc, x) => acc + x * x, 0);
+  const slope = (n * sumXY - sumX * sumY) / Math.max(1, n * sumXX - sumX * sumX);
+  const adviseKind = slope > 0.5 ? 'rising' : slope < -0.5 ? 'cooling' : 'flat';
+
+  const advice = zh
+    ? adviseKind === 'rising'
+      ? '訪客在變多——但別先叫更多人進來，先把「首屏三十秒」修得讓人留得住，否則人只是路過。'
+      : adviseKind === 'cooling'
+        ? '訪客在流失——先修「進站三十秒內的去處指引」，新手最常在這裡離場；轉化不是第一步，留存才是。'
+        : '此週訪客平穩——適合把收藏與分享做重，讓常看的人常看，而不是逼更多人進來。'
+    : adviseKind === 'rising'
+      ? 'Footfall is climbing — don’t fix the funnel first, fix the first thirty seconds. More arrivals only help if the first screen holds attention.'
+      : adviseKind === 'cooling'
+        ? 'Footfall is cooling — the cheapest win is the “where to next” moment in the first thirty seconds; dwell beats reach here as well.'
+        : 'A quiet week — double down on bookmark and share loops; make the regulars regular, don’t buy more drive-by clicks.';
+
+  return {
+    points,
+    weeklyTotal,
+    slope: Math.round(slope * 100) / 100,
+    advice,
+    adviceKind: adviseKind,
+  };
+}
+
 export interface JourneyExplanation {
   headline: string;
   body: string;

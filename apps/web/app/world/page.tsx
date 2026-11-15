@@ -120,9 +120,9 @@ export default async function WorldPage() {
         <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-2xs text-ink-faint">
           <span>{t.footerNote}</span>
           <span className="flex flex-wrap items-center gap-4">
-            <Link href="/hong-kong" className="text-accent hover:underline">/hong-kong</Link>
-            <Link href="/handbook" className="text-accent hover:underline">/handbook</Link>
-            <Link href="/stamp" className="text-accent hover:underline">/stamp</Link>
+            <Link href="/hong-kong" title={t.atlasLinkHints.hongKong} className="text-accent hover:underline">/hong-kong</Link>
+            <Link href="/handbook" title={t.atlasLinkHints.handbook} className="text-accent hover:underline">/handbook</Link>
+            <Link href="/stamp" title={t.atlasLinkHints.stamp} className="text-accent hover:underline">/stamp</Link>
           </span>
         </footer>
       </Container>

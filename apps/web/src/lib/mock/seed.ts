@@ -2192,4 +2192,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-central-pier-star-ferry-midbay-chronicle', title: '早上九點四十五分：天星小輪——維港中間那三分鐘（香港系列 · 第七十章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上九點四十五分的維港中間——天星小輪第一號航段上的三分鐘、沒有人講話、水的聲音替所有人把門關上。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上九點四十五分。天星小輪中段（合成敘事，非真實商戶與真實商戶、真實班次——時刻與場景全部是敘事建構）——船頭對著維港的中間，這是這一班上最誠實的三分鐘。' },
+      { type: 'heading', text: '一、船與船中間的平靜' },
+      { type: 'paragraph', text: '維港中間三分鐘：遊客習慣在此打開相機；本地人閉上眼睛現場演練站位。沒有一個人開口。水的脾氣此刻替這一船人把門關上——不是世界拒絕說話，是世界終於肯聽。' },
+      { type: 'cards', title: '船艙可見', items: [] },
+      { type: 'heading', text: '二、怨念最大的那一秒' },
+      { type: 'paragraph', text: '準備靠岸時繩索擲過來的那一秒最吵——不是因為聲音，而是因為沒有聲音比它更安靜。漁船扭着腰逼出航道；觀光客把手機舉到肩膀高度。怨念最大的那三秒過了，全船深呼一口氣。' },
+      { type: 'cards', title: '船艙可聽', items: [] },
+      { type: 'heading', text: '三、關門前的回望' },
+      { type: 'paragraph', text: '靠岸那一刻，月台上伸出來一把拍醒掌——其實是候車員在拍螢幕。司機沒看後照鏡：維港不要求回頭，維港只要求記住掌心的方向。' },
+      { type: 'cards', title: '船艙可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「天星小輪 碼頭」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
