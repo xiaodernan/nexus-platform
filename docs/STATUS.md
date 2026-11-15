@@ -44658,3 +44658,14 @@ Dict 擴 `cmdConsole`（zh-HK Traditional + en 雙語鎖步；UI census 1867 lit
 **Honest boundaries.** 合成敘事：上水火車站、落馬洲關閘通勤線、梁師傅、蛋治牌、白板上的四十二人——全部是敘事建構，不指向真實商戶、真實值班員或真實關閘時刻；搜索「上水 落馬洲」演示的是演示流的路徑。chapter-guides parity reader 同步升到 55 章，arm 五覆 LIV + LV。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+
+## 1186-errata. CI 歷史糾正（2026-11-15 本機查證，記於 D1186 提交之後）
+
+The ledger entries for D1181 and D1182 stated CI green. They were not:
+- **D1181 (2991340)** — ci **failure**, `e2e` job: `expect(locator).toBeFocused()` for the SearchBox input never landed on CI runners (mobile + desktop + api lanes). The same e2e floor passes on current master (D1185/D1186 green); never attributed to any code change; noted as a CI-lane focus flake, not swept under any rug.
+- **D1182 (ffb6607)** — ci **failure**, `lint-type` job: `chapter-icons.ts:70` — the same trailing-tuple `Parsing error: Property assignment expected` that local `tsc --noEmit` surfaced afterwards and that D1183's rewritten
+  `apps/web/src/lib/chapter-icons.ts` fixed. The parse error shipped because local verification ran tsc *after* the push health check had already been claimed green.
+- **D1183 / D1184 / D1185 / D1186** — ci **success** (all four observed completed=success).
+
+Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push can still be CI-red on eslint/e2e. From D1183 onwards, CI run conclusion is checked after every push and recorded in the memory log. This addendum is the record-correction; the D1181/D1182 ledger bodies are left intact, as the ledger is append-only.
