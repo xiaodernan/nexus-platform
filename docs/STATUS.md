@@ -44834,3 +44834,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** The source is Wikipedia (accessed 2026-11-15) — the figures are public-domain figures quoted verbatim with date and a caution about quarter-to-quarter drift. This is still not a live feed; the reader who wants live data should go straight to MTR's news release archive.
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+
+## 1203. D1203 — chapter LXIV lands the 00:45 slot: 凌晨零點四十五分：文錦渡口岸「榕記米業」的跨境貨車司機浩明
+
+**Why.** Layer H now spans three frontiers — Lok Ma Chau (LXI), 羅湖 (LXII), 北河街市 (LXIII) — and this one is the freight gateway. 文錦渡口岸是廣東米與菜的主要過境關卡之一；凌晨零點四十五分，米車從文錦渡出航、浩明的黑夜與米行把香港的米桶蓋滿。從這一刻到關閘前的時段，才一直到 22:45。
+
+**The unit.** `DEMO_GUIDES` gains `hk-man-kam-to-driver-chronicle` — 「凌晨零點四十五分：文錦渡口岸『榕記米業』的跨境貨車司機浩明（香港系列 · 第六十四章）」。Three heading cards（一、車頭的水銀燈 · 二、車上的待命 · 三、第一班光線），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「文錦渡 榕記」）。Both locales carry the chapter; the arc clock gains 00:45 before the tower cleaner (128 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to sixty-four on both locales; chapter-icons gains `'hk-man-kam-to-driver-chronicle': 'navigation'`; e2e floors ≥64; census 1976 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 11s; chapter renders end-to-end via /guides/hk-man-kam-to-driver-chronicle clean.
+
+**Honest boundaries.** 合成敘事：文錦渡口岸、榕記米業、浩明、雙水銀燈——全部是敘事建構，不指向真實米行或真實關卡規範；搜索「文錦渡 榕記」演示的是演示流的路徑。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.

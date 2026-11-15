@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1202",
-  "milestone_full": "說明書 REAL-HK 段嵌入 MTR (Hong Kong) URL 直連 — reader 能直達資料源",
+  "milestone": "D1203",
+  "milestone_full": "香港系列第六十四章 · 凌晨零點四十五分：文錦渡口岸「榕記米業」的跨境貨車司機浩明 · Layer H跨境貨運 · 從中英文都是新章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: sixty-three Traditional chapters — 00:30→22:45 full day arc · 126-chip clock both locales · handbook REAL-HK now links the source Wikipedia page inline",
-    "Edition LXIII — 凌晨五點十五分：深水埗北河街市——運菜員的最後一趟 (05:15) · Layer H logistics at border dawn",
-    "Layer H opens: LXI 皇崗邊境 · LXII 羅湖夜市 · LXIII 深水埗北河街市 — Layer H arc doubling pace",
+    "HK series: sixty-four Traditional chapters — 00:30→22:45 full day arc · 128-chip clock both locales",
+    "Edition LXIV — 凌晨零點四十五分：文錦渡口岸「榕記米業」的跨境貨車司機浩明 (00:45) · Layer H cross-border freight",
+    "Layer H opens: 文錦渡貨運 · 皇崗夜班閘機 · 羅湖夜市 · 深水埗北河街市 — full border-economy cluster forms",
     "Spring Cloud sidecar: Eureka · Config · Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
-    "WORLD_ROADMAP now lists all 60 landed (A–G landed; H–L specified); Layer H starts here in earnest",
-    "D1192: REAL-HK handbook (`MTR` sourced figures) · D1193: pressure all-green · D1191: cloud re-port",
-    "/hong-kong (63 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily",
-    "D1202: inline source URL in handbook REAL-HK · D1201: chapter LXIII · D1200: LXII 羅湖夜市 · D1199: LXI 皇崗夜班 · D1198: WORLD_ROADMAP aligned"
+    "handbook REAL-HK: sourced MTR figures + inline source URL · memorable DM5 · D1193: pressure all-green · D1191: cloud re-port",
+    "Real pressure-track 2.63→1.71s · handbook ALL routes green · 128-chip arc · WORLD_ROADMAP aligned",
+    "/hong-kong (64 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily",
+    "D1203: chapter LXIV · D1202: inline source URL in handbook · D1201: LXIII 北河街市 · D1200: LXII 羅湖夜市 · D1199: LXI 皇崗"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

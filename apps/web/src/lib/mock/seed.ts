@@ -2066,4 +2066,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-man-kam-to-driver-chronicle', title: '凌晨零點四十五分：文錦渡口岸「榕記米業」的跨境貨車司機浩明（香港系列 · 第六十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：凌晨零點四十五分的文錦渡口岸——榕記米業跨境貨車司機的夜班、最後一車米、最後一車菜、與文錦渡口岸連夜的白熾燈光。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨零點四十五分。文錦渡口岸榕記米業的跨境貨車（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——車頭的水銀燈在水面上畫出一個白圈。司機浩明（合成敘事，非真實人物）正在點算今天的到貨單：一車米、三車菜乾、五車醬油。' },
+      { type: 'heading', text: '一、車頭的水銀燈' },
+      { type: 'paragraph', text: '浩明今年三十三，開跨境貨車已經第九個年頭。他最記得新加坡的碼頭，到處都是燈與塔吊。那時他覺得這一行是自由的。現在他每個晚上笑他自己，說自己誰也不屬於，但又很像屬於每個人。' },
+      { type: 'cards', title: '文錦渡可見', items: [] },
+      { type: 'heading', text: '二、車上的待命' },
+      { type: 'paragraph', text: '浩明的車有三個待命時段：到香港落錨、到文錦渡落貨、到白天上貨位。他要在前半夜把菜乾和米先卸下來，然後回到榕記再拿明天要卸的醬油抬進去。白天的人都叫他老虎，據說像。他沒有時間去執著叫甚麼。' },
+      { type: 'cards', title: '文錦渡可聽', items: [] },
+      { type: 'heading', text: '三、第一班光線' },
+      { type: 'paragraph', text: '凌晨四點整，第一班光線從文錦渡出來。浩明把車停在榕記倉庫門前，睡袋鋪在後車廂。貨單收在車頭，明日的副司機會再檢查一遍。這個夜是誰的都不是，也是所有人的——如果你凌晨去落貨場，你會遇到浩明，煙火的味道十七條街都聞得到。' },
+      { type: 'cards', title: '文錦渡可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「文錦渡 榕記」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
