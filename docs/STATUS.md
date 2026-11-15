@@ -44595,3 +44595,13 @@ does not invent a second event.
 **Honest boundaries.** The glyph is purely decorative — the kicker text remains the source of truth for the chapter's name; the icon is purely an agent of recognition. No new asset files; no new fonts.
 
 - readers: `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/components/hk-series-progress.tsx`, this ledger entry.
+
+## 1182. D1182 — chapter LIII lands the 08:00 slot: 早上八點：安樹堂的開診時間 — the morning examination room
+
+**Why.** Layer G （東西兩岸） continues with a per-layer piece by piece — the doctor who opens at exactly 08:00. The morning slot on the train at the moment of dental-visit hour: clinicians, needles, hope, and the Chinese word they don't want. A chapter nobody else would dare write.
+
+**The unit.** `DEMO_GUIDES` gains `hk-acu-clinic-opens-chronicle` — 「早上八點：安樹堂的開診時間（香港系列 · 第五十三章）」. Three heading cards（一、開診的來由 · 二、陰陽的對話 · 三、再見了，八點）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「安樹堂 針灸」）。Both locales carry the chapter; the arc clock gains 08:00 between yum cha and the school bus (106 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-three on both locales; e2e floors ≥53; census 1814 literals clean (0 simplified); web 354/354; verify_all NO OFFENDER.
+
+**Honest boundaries.** Synthetic fixture; the clinic, the doctor, the patient, the omens are narrative constructions. No real acupuncture practice is described; nothing is claimed about medical efficacy or safety.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `apps/web/src/lib/chapter-icons.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

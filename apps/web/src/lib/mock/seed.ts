@@ -1835,4 +1835,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-acu-clinic-opens-chronicle', title: '早上八點：安樹堂的開診時間（香港系列 · 第五十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：西營盤安樹堂中醫診所的早上八點——開診、搥背、新處方、相信與不相信。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點。西營盤安樹堂中醫診所（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——鐵閘拉開，吳醫師把他第一天買的問診簿翻開。桌上三件東西：一盞茶、一個頸椎保健枕頭、一本最新的說明書。' },
+      { type: 'heading', text: '一、開診的來由' },
+      { type: 'paragraph', text: '八點一刻，黃姨來了。她問的是肩膀的老骨頭。吳醫師的診斷很客氣——請坐一下，我先給你扎一扎。她不信西醫，這是附近人人都知道的，她只信針灸、她只信陰陽、她只信每天八點開始的安樹堂。' },
+      { type: 'cards', title: '安樹堂可見', items: [] },
+      { type: 'heading', text: '二、陰陽的對話' },
+      { type: 'paragraph', text: '陰陽的觀點其實很樸素：她的左手經脈有點塞。吳醫師沿著她的經脈慢慢推。他不說「治療」（他不愛用這個詞），他說：「我們只是幫你挪挪扣子。」她聽完之後很溫暖：「好吧，挪挪就是勝利。」' },
+      { type: 'cards', title: '安樹堂可聽', items: [] },
+      { type: 'heading', text: '三、再見了，八點' },
+      { type: 'paragraph', text: '八點三十分，門關上了一會兒。吳醫師再回到桌前練一個字——「誠」。他把這個字寫成整個早上。他關心這個城市那些比健康更靠近知識的人：有些人以為健康就是一切，有些人以為知識就是一切。他明天早上還會八點開診。' },
+      { type: 'cards', title: '安樹堂可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「安樹堂 針灸」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
