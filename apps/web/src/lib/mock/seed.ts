@@ -2255,4 +2255,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-wing-lei-street-analog-chronicle', title: '中午十一時四十五分：中環永利街——黃生的膠片修補室（香港系列 · 第七十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：中午十一點四十五分的永利街——黃生修補舊膠卷、拾級而上的字喃背影、慢手工在快城市裡的最後一個角落。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十一時四十五分。永利街（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——一條 Z 字樓梯把往事裝進袋子裡，人的腳步在這裡自發地慢下來。' },
+      { type: 'heading', text: '一、樓梯巷的追光' },
+      { type: 'paragraph', text: '黃生的修補室在樓梯的上三段——拾級而上看到的不是風景，是收膠卷的天光：十一時四十五分對中環來說是人最浮躁的時間，但走進這裡的人不在乎浮躁，他們在找一個證明：慢也是可以點燃的。' },
+      { type: 'cards', title: '永利街可見', items: [] },
+      { type: 'heading', text: '二、上一卷菲律賓 35mm' },
+      { type: 'paragraph', text: '客人的舊膠卷從菲律賓空運過來——老菲律賓人把自己的一生拍在三十年前的膠卷上，黃生把它救回來：斑點、裂縫、水痕、手滑的指紋，全在顯影槽裡討回聲望。（合成敘事中的合成場景）' },
+      { type: 'cards', title: '永利街可聽', items: [] },
+      { type: 'heading', text: '三、快時代裡的慢手工' },
+      { type: 'paragraph', text: '中午時分，永利街的慢不合時宜，但必要。黃生笑著說：「快的一天裡，總要留一間小房間給慢。」——這句話不會在任何廣告上出現，但在這裡，它真的有用。' },
+      { type: 'cards', title: '永利街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「永利街 膠片」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
