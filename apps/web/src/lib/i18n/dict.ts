@@ -53,6 +53,21 @@ export interface Dict {
     handbook: string;
     /** D1144: the /daily daily-ritual page link, shown in the footer. */
     daily: string;
+    /** D1163+: D-hint note for teaching tooltips on the main chrome. */
+    hints: {
+      search: string;
+      guides: string;
+      collections: string;
+      handbook: string;
+      me: string;
+      daily: string;
+      hkType: string;
+      hongKong: string;
+      quizCta: string;
+      searchCta: string;
+    };
+    /** The demo badge's accessible name. */
+    demoTitle: string;
     /** D1150: the newbie mini-manual in the header — visible teaching entrypoint. */
     newbie: string;
   };
@@ -938,6 +953,19 @@ const zhHK: Dict = {
     hkType: '香港人格',
     handbook: '說明書',
     daily: '今日',
+    demoTitle: '示例數據聲明',
+    hints: {
+      search: '一句話搵今天的主意——輸入預算、地區、心情，AI 理解後推薦',
+      guides: '所有香港系列章節按時間順序排列——從早餐到夜宵',
+      collections: '喺呢度切換城市、預算、時段，篩選出的食肆清單',
+      handbook: '產品完整教學：五步上手、SearchBox 用法、遊戲規則、/hk-type 玩法',
+      me: '收藏、偏好、預約、收件匣、閱讀進度——整個平台的個人入口',
+      daily: '今日食運、每日一句廣東話、今天的章節——一頁看盡今日儀式',
+      hkType: '三分鐘測出你的香港人格——結果可分享',
+      hongKong: '香港系列全部章節的總入口——由羅湖到皇崗，一路睇晒成個系列',
+      quizCta: '測試你的香港人格',
+      searchCta: '立即搜索今天的香港',
+    },
     newbie: '新手教學',
   },
   home: {
@@ -2243,6 +2271,19 @@ const en: Dict = {
     hkType: 'HK quiz',
     handbook: 'Handbook',
     daily: 'Daily',
+    demoTitle: 'Demo data notice',
+    hints: {
+      search: 'Say what you want — budget, district, mood — AI parses it and recommends',
+      guides: 'The full HK series in clock order — from breakfast to the last bowl',
+      collections: 'Filter by city, budget, time of day — the shortlist, audited',
+      handbook: 'The manual: five-step quickstart, SearchBox syntax, game rules, /hk-type',
+      me: 'Saved items, preferences, bookings, inbox, progress — your home inside the product',
+      daily: 'Today’s almanac, a Cantonese phrase and the chapter of the day — one page',
+      hkType: 'Three minutes to your HK archetype — shareable result',
+      hongKong: 'The full HK chapter series — Lok Ma Chau to Huanggang, one arc at a time',
+      quizCta: 'Test your HK archetype',
+      searchCta: 'Search today’s Hong Kong',
+    },
     newbie: 'How to play',
   },
   home: {

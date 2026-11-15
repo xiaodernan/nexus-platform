@@ -66,9 +66,10 @@ export default async function HongKongHubPage() {
                 {hub.quizCtaTitle}
               </h2>
               <p className="max-w-prose text-sm leading-relaxed text-ink-muted">{hub.quizCtaBody}</p>
-            </div>
-            <Link
+          </div>
+          <Link
               href="/hk-type"
+              title={dict.nav.hints.quizCta}
               className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover"
             >
               {hub.quizCta}
@@ -87,6 +88,7 @@ export default async function HongKongHubPage() {
             <p className="max-w-prose text-sm leading-relaxed text-ink-muted">{hub.searchCtaBody}</p>
             <Link
               href={hub.searchHref}
+              title={dict.nav.hints.searchCta}
               className="inline-flex items-center gap-2 rounded-md border border-line bg-surface px-4 py-2 text-sm font-medium text-accent transition-colors hover:border-accent"
             >
               {hub.searchHrefLabel}

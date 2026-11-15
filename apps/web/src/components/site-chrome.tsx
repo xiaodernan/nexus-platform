@@ -51,23 +51,30 @@ export function SiteHeader({ locale }: { locale: string }) {
               {directory.label}
             </Link>
           ) : null}
-          <Link href="/guides" className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong">
+          <Link
+            href="/guides"
+            title={dict.nav.hints.guides}
+            className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong"
+          >
             {dict.nav.guides}
           </Link>
           <Link
             href="/collections"
+            title={dict.nav.hints.collections}
             className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong"
           >
             {dict.nav.collections}
           </Link>
           <Link
             href="/search"
+            title={dict.nav.hints.search}
             className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong"
           >
             {dict.nav.search}
           </Link>
           <Link
             href="/handbook"
+            title={dict.nav.hints.handbook}
             className="rounded-full px-3 py-1.5 text-sm font-medium text-ink-strong hover:bg-accent hover:text-accent-ink"
             aria-label={dict.nav.newbie}
           >
@@ -75,6 +82,7 @@ export function SiteHeader({ locale }: { locale: string }) {
           </Link>
           <Link
             href="/me"
+            title={dict.nav.hints.me}
             className="rounded-full px-3 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink-strong"
             aria-label={dict.nav.account}
           >
@@ -86,6 +94,7 @@ export function SiteHeader({ locale }: { locale: string }) {
           <Link
             href="/handbook"
             aria-label={dict.nav.newbie}
+            title={dict.nav.hints.handbook}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-ink-muted transition-colors hover:border-accent hover:text-accent sm:hidden"
           >
             <Icon name="info" size={18} />
@@ -121,12 +130,14 @@ export function SiteFooter({ locale }: { locale: string }) {
   const directory = directoryLink(dict);
   const links = [
     ...(directory ? [directory] : []),
-    { href: '/guides', label: dict.nav.guides },
-    { href: '/collections', label: dict.nav.collections },
-    { href: '/search', label: dict.nav.search },
-    { href: '/me', label: dict.nav.account },
-    { href: '/hk-type', label: dict.nav.hkType },
-    { href: '/handbook', label: dict.nav.handbook },
+    { href: '/guides', label: dict.nav.guides, title: dict.nav.hints.guides },
+    { href: '/collections', label: dict.nav.collections, title: dict.nav.hints.collections },
+    { href: '/search', label: dict.nav.search, title: dict.nav.hints.search },
+    { href: '/me', label: dict.nav.account, title: dict.nav.hints.me },
+    { href: '/hk-type', label: dict.nav.hkType, title: dict.nav.hints.hkType },
+    { href: '/handbook', label: dict.nav.handbook, title: dict.nav.hints.handbook },
+    { href: '/daily', label: dict.nav.daily, title: dict.nav.hints.daily },
+    { href: '/hong-kong', label: dict.home.hkHub.seriesLink, title: dict.nav.hints.hongKong },
   ];
   return (
     <footer className="mt-16 border-t border-line bg-surface">
@@ -136,7 +147,7 @@ export function SiteFooter({ locale }: { locale: string }) {
           <ul className="flex flex-col gap-1.5">
             {links.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className="text-xs text-ink-muted hover:text-accent hover:underline">
+                <Link href={link.href} title={'title' in link ? link.title : undefined} className="text-xs text-ink-muted hover:text-accent hover:underline">
                   {link.label}
                 </Link>
               </li>

@@ -57,21 +57,22 @@ export function HkArcTimeline({ copy }: { copy: HkArcClockCopy }) {
         </h2>
         <span className="text-2xs font-medium leading-relaxed text-ink-muted">{copy.hint}</span>
       </div>
-      <ol className="grid grid-cols-6 gap-x-1 gap-y-4 px-5 pb-5 pt-3 sm:grid-cols-11 sm:gap-x-2">
+      <ol className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-5 pt-3 [scrollbar-width:thin]">
         {copy.entries.map((entry) => {
           const slug = slugFromGuideHref(entry.href);
           const isRead = ready && readSet.has(slug);
           return (
-            <li key={entry.href} className="flex min-w-0 flex-col items-center gap-1.5 text-center">
+            <li key={entry.href} className="flex w-40 shrink-0 snap-start flex-col items-center gap-1.5 rounded-xl border border-line bg-canvas p-2 text-center">
               <span className="relative flex h-3.5 w-3.5 items-center justify-center rounded-full ring-1 ring-inset ring-accent-line" style={{ background: 'var(--nexus-ai-gradient)' }} aria-hidden="true" />
               <span className="font-mono text-[10px] leading-none text-ink-faint">{entry.time}</span>
               <a
                 href={entry.href}
                 onClick={() => mark(entry.href)}
-                className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-[11px] font-semibold leading-snug text-ink-strong transition-colors hover:text-accent"
+                className="inline-flex items-center justify-center gap-1 rounded-md px-1 py-0.5 text-[11px] font-semibold leading-snug text-ink-strong transition-colors hover:text-accent"
+                style={{ minHeight: '2.6rem' }}
               >
                 {isRead ? <Icon name="check" size={10} className="shrink-0 text-accent" /> : null}
-                {entry.name}
+                <span className="line-clamp-2 text-center">{entry.name}</span>
               </a>
             </li>
           );

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1167",
-  "milestone_full": "香港系列篇四十七章 · 00:30→22:45 · WORLD_ROADMAP Layer G 續 — 皇崗口岸的晚上",
+  "milestone": "D1168",
+  "milestone_full": "教學列嵌入產品 · 94 滑動快門時鐘 · 全 locale title 覆蓋",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: forty-seven Traditional chapters — 00:30→22:45 full day arc · 94-chip clock both locales",
-    "Edition XLVII — 皇崗口岸的員工餐廳 (19:15) · Layer G at mealtime at the border",
-    "WORLD_ROADMAP Layer G: XLVI 羅湖站的雙向貨幣 (14:30) · XLVII 皇崗口岸的員工餐廳 (19:15) — the two crossings",
-    "D1165: the stampede — two gateways, one shared Redis token bucket, 2000 requests @128 in flight, store accounting closed",
-    "D1163: chapter cards wear print-annual Roman numerals · D1160: replay cache whitespace-folded",
-    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1692 clean"
+    "Teaching layer inside the chrome: every main CTA (search / guides / collections / handbook / me / daily / hk-type / hong-kong / quiz / searchCta) carries a native title tooltip — bilingual, one breath each",
+    "The 94-chip arc clock no longer squeezes: horizontal snap-scroll filmstrip with fixed-width chapter plates and line-clamp-2 names",
+    "Layer G opens: XLVI 羅湖站的雙向貨幣 (14:30) · XLVII 皇崗口岸的員工餐廳 (19:15) · XLVIII next — 96 clock chips both locales",
+    "D1165: the stampede — 2000 requests @128 in flight vs one shared Redis token bucket; per-store admit accounting closed; falsifier arm sharp",
+    "D1163: Roman chapter badges · D1160: prefix/probe measured; replay cache whitespace-folded",
+    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1703 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

@@ -44443,3 +44443,18 @@ Dict carries nineteen chapters everywhere; the arc clock re-sorted chronological
 **Honest boundaries.** Synthetic fixture; the eatery, the staff, the cashier and the rush are narrative constructions. No real border crossing is described; every claim is gated behind 合成敘事示例 framing and the `flags: { demo: true }` flag on the guide.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1168. D1168 — the teaching layer lands inside the product: native tooltip hints on every main CTA; the arc clock stops squeezing
+
+**Why.** The user re-reported them on the mandate: 「前端有很多不合理的地方 有很多字体的变形 歪曲 重叠 扭曲 实体块的互相重叠 挤压」和「主界面上做出各种按键和操作的附带教学说明会比较好」。The report pointed at the arc clock (94× chips squeezed into an 11-col grid — long CJK chapter names clipped/line-broken into each other) and the audit found every primary CTA had no teaching affordance at all.
+
+**The unit.** Two coordinated changes, both surgical:
+
+1. **The arc clock stops squeezing.** `HkArcTimeline` renders the 94-checkpoint strip as a **horizontal snap-scroll filmstrip** (`flex snap-x snap-mandatory overflow-x-auto`, fixed `w-40 shrink-0` chapter plates, `line-clamp-2` names) instead of the 11-col grid that crushed CJK names past one line. Names never collide or overflow; the user slides. The component keeps the same island/aria-labelledby/read-marks contract — only layout/overflow changes.
+2. **Every main CTA carries a teaching tooltip.** A new dict block `nav.hints` (both locales) provides short, honest, HK-Traditional / English hints for: search, guides, collections, handbook, me, daily, hkType, hongKong, quiz CTA, search CTA. They ride on `title={…}` attributes (with identical accessible labels) on: the header nav pills, the mobile info button, the footer link matrix (now including `/daily` and `/hong-kong`), the `/hong-kong` quiz CTA and search CTA. No new chrome, no popups, no motion — the hint is on the element the user is about to use.
+
+TypeScript: `tsc --noEmit` clean; web 350/350; census 1703 literals (0 simplified); verify_all NO OFFENDER; production build passes; SSR `/hong-kong.html` renders 47× arc chips and 16× `title=…`. The teaching hints are intentionally short — one breath — and the honest demo framing still applies.
+
+**Honest boundaries.** `title` tooltips are the platform-standard teaching affordance (keyboard accessible via focus ring, screen readers read the same string via `aria-label` where set); they are deliberately NOT a tour engine — the full new-user walkthrough remains `/handbook` (D1150) and the daily starter is `/daily` (D1144). Over-title everything is failure mode; curation over completeness. No locale-hint drift (zh strings verified census-clean as zh-HK Traditional).
+
+- readers: `apps/web/src/components/site-chrome.tsx`, `apps/web/src/components/hk-arc-timeline.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/hong-kong/page.tsx`, this ledger entry.
