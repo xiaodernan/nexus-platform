@@ -1037,6 +1037,16 @@ export interface Dict {
     disclaimer: string;
     fmtDwell: (sec: number) => string;
   };
+  /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
+  world: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    clockLabel: string;
+    countNote: string;
+    layers: Array<{ code: string; title: string; blurb: string }>;
+    footerNote: string;
+  };
 }
 
 const zhHK: Dict = {
@@ -2596,6 +2606,24 @@ const zhHK: Dict = {
     nextTitle: '營運者下一步',
     disclaimer: '合成示意：這頁沒有單一真實讀者的資料，全部出自一套確定性的重放程式。給營運者閱讀用，不是監控。',
     fmtDwell: (sec: number) => `${sec} 秒`,
+  },
+  /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
+  world: {
+    eyebrow: '全景地圖 · 讀一座城的一整天',
+    title: '把這座城的一整天攤在桌上',
+    intro: '這一頁不是列表，是一張攤開的世界圖：全系列六十八章，按時辰排成七層——凌晨前行、天光市場、早上集、午后街、薄暮收心、夜市樓長街、夜貓子與通風口。同一座城的一整天，一次讀完；每一格都可點進去。',
+    clockLabel: '時刻 — 章名 — 點即開',
+    countNote: '六十八個時辰格 — 全部是合成敘事示例，與真實商戶、真實人物全不相關。',
+    layers: [
+      { code: 'night', title: '壹 · 凌晨前行（00:00 – 03:30）', blurb: '販賣機亮著螢光、米車在閘前等著、城市醒得最早的人出閘入閘。這時出生的故事，全是低聲說的。' },
+      { code: 'dawn', title: '貳 · 天光市場（03:45 – 07:30）', blurb: '從羅湖夜市最後一口油條到早茶最後一籠蝦餃——市場全開，香港顧得上吃、沒時間談。' },
+      { code: 'morning', title: '參 · 早上集（07:45 – 12:00）', blurb: '米斗封住米面、阿昌的返城班車、維園的外傭、魚蛋檔的火光——晨集才是這座城真正的開始。' },
+      { code: 'afternoon', title: '肆 · 午后街（12:30 – 16:30）', blurb: '零頭布、雙向貨幣、雀籠房、設計師街——午后比早上更有脾氣，也更誠實。' },
+      { code: 'evening', title: '伍 · 薄暮收心（17:00 – 18:30）', blurb: '獅子山的影落到平地，觀音借的香依然轉——而薄暮時分，沒有誰真的收得了心。' },
+      { code: 'nightlife', title: '陸 · 夜市樓長街（19:00 – 21:00）', blurb: '廟街徹夜不撤，粥府的長枱，粵劇老倌一個一個亮相散場——這座城的夜不收攤，只收人。' },
+      { code: 'late', title: '柒 · 夜貓子與通風口（21:30 – 00:00）', blurb: '紙箱老伯、菲律賓中環、平利果皮批發、車仔麵——熬得最久的一批人；這座城的一整天，由他們收尾。' },
+    ],
+    footerNote: '每個章名都是可點的門。全系列合成敘事，與真實商戶、真實人物全不相關。',
   },
 };
 
@@ -4160,6 +4188,24 @@ const en: Dict = {
     nextTitle: 'Next optimisation this week',
     disclaimer: 'Synthetic replay only. Zero real reader data — this is the operator’s mirror, not surveillance.',
     fmtDwell: (sec: number) => `${sec}s`,
+  },
+  /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
+  world: {
+    eyebrow: 'THE WORLD ATLAS · ONE CITY, ONE DAY',
+    title: 'The whole day, laid flat on the table',
+    intro: 'Not a list — a map. All sixty-eight HK-series chapters, laid out in seven layers by the hour: night run, dawn market, morning market, afternoon street, dusk settling, night-market row, the stayers. Read the city from 00:00 to midnight in one go; every cell is a door you can walk through.',
+    clockLabel: 'Time — chapter — tap to open',
+    countNote: 'Sixty-eight chambers of one fictional city — synthetic from the first step to wherever the series goes next; no real merchant, no real person.',
+    layers: [
+      { code: 'night', title: 'I · Night run (00:00 – 03:30)', blurb: 'The vending machine hums, rice trucks wait at the gate, the city wakes through its earliest gates. The stories born here are whispered.' },
+      { code: 'dawn', title: 'II · The dawn markets (03:45 – 07:30)', blurb: 'From Luohui’s last youtiao to yum cha’s last har gau — the markets are fully open; Hong Kong can eat, but has no time to talk.' },
+      { code: 'morning', title: 'III · The morning market (07:45 – 12:00)', blurb: 'Rice-buckets sealed, Ah Cheong’s return coach, the Filipina in Victoria Park, the fishball-stall fire — the morning market is where the city actually begins.' },
+      { code: 'afternoon', title: 'IV · The afternoon street (12:30 – 16:30)', blurb: 'Fabric remnants, two-way currency, pigeon coops, designer streets — afternoon is more honest, and shows more temper.' },
+      { code: 'evening', title: 'V · Dusk settling (17:00 – 18:30)', blurb: 'Lion Rock’s shadow climbs down to the shops; the incense wheel still turns at the temples — and nobody here ever truly finishes.' },
+      { code: 'nightlife', title: 'VI · The night-market row (19:00 – 21:00)', blurb: 'Temple Street never disbands; the congee communal table; the opera shuffling out — the city’s nights don’t close, they dissipate.' },
+      { code: 'late', title: 'VII · The stayers (21:30 – 00:00)', blurb: 'The cardboard uncle under the lift, Filipina Central, Ping Li’s citrus grocery, cart noodles — the latest risers; the city’s day ends on their terms.' },
+    ],
+    footerNote: 'Every chapter name is a door. The whole series is synthetic fiction — no real merchant, no real person.',
   },
 };
 

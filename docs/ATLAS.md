@@ -104,6 +104,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/user-journeys.test.ts` | D1206: 9 arms — determinism, six-profile mirror, bilingual copy, date rollover |
 | `apps/web/src/components/locale-toggle.tsx` | D1207: the one-click zh ↔ en island — writes `nexus_locale`, reloads the document |
 | `apps/web/src/components/site-chrome.tsx` | D1207: header gains the locale switch before the theme toggle; every page honors the cookie per request |
+| `apps/web/app/world/page.tsx` | D1210: the `/world` world atlas — 68 arc chips read straight from dict, seven hour-layers, SSR per request, zero hand-duplication |
+| `apps/web/src/lib/world-atlas.test.ts` | D1210: 4 arms — SSR-no-island pin, partition totals (12+16+11+12+6+5+6 = 68), layer codes both locales, footer link |
 | `apps/web/src/components/command-console.tsx` | D1183: the passphrase-123 island — five panels (counters / top phrases / chapter heat / retention / next moves), all baked-in fixtures, disclaimed onscreen |
 | `apps/web/app/page.tsx` | D1068: the home hero gains a second chip row — six hot districts (沙田/中環/旺角/尖沙咀/銅鑼灣/荃灣), each routing to a district+intent `/search?q=` |
 | `apps/web/src/components/back-to-top.tsx` | D1071: the back-to-top island — passive scroll listener, visible only past the first viewport, reduced-motion honored |
