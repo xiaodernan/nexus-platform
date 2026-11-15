@@ -44527,3 +44527,10 @@ point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, 
 **The unit.** `dict` gains `home.railsDegraded(failed, total)` in zh-HK (Traditional) and en. `apps/web/app/page.tsx` renders the banner through it: a regex extracts `failed of total` from the upstream `degradedReason` when the shape is the known one, and falls back to the raw reason otherwise (honest — never silently drops a signal). Tests unchanged (`home-rails-degrade.test.ts` pins the upstream shape; `rails-degraded` was the only polluted consumer).
 
 - readers: `apps/web/app/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry. tsc clean; web 350/350; verify_all NO OFFENDER; census 1767 clean.
+
+## 1174. D1175 — the D-number the commit carried; the docs label the same unit D1173
+
+**Note for the ledger reader.** The same work shipped twice with two labels because I split docs-before-commit into two passes:
+the code change landed as `364d3b2` tagged `D1175` in its commit message; the docs ledger named it `D1173`. There is no
+behavioral difference — one unit, two names. The next milestone is `D1176`. This entry pins the offset so a later reader
+does not invent a second event.
