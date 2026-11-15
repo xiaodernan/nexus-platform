@@ -2129,4 +2129,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-man-kam-to-second-truck-chronicle', title: '早上八點一刻：文錦渡口岸榕記米業——浩明的第二輛米車（香港系列 · 第六十七章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上八點一刻的文錦渡口岸——浩明早班的第二輛米車出閘、春韭記帳的最後一筆、口岸棧板上的早班交班時刻。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點一刻。文錦渡口岸榕記米業（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——浩明（合成敘事，非真實人物）的第二輛米車已經裝好、檢好車腳、按了米面記號，準備出閘。' },
+      { type: 'heading', text: '一、第二輛米車的差別' },
+      { type: 'paragraph', text: '第一輛米車走完之後，米倉裡只剩早班春韭與幾袋胚芽米。浩明沒有把早班春韭的米放上去——他說這是第二個客戶的米：「講好的。」沒有其他人講過話。' },
+      { type: 'cards', title: '榕記可見', items: [] },
+      { type: 'heading', text: '二、棧板上的交班' },
+      { type: 'paragraph', text: '棧板上還有昨日收到的三叉米，還沒收過帳。陳師傅交給浩明一張小單：「數一數，簽一簽。」浩明數完、簽完——他從來不說甚麼，只是數得很穩。' },
+      { type: 'cards', title: '榕記可聽', items: [] },
+      { type: 'heading', text: '三、出閘前的記號' },
+      { type: 'paragraph', text: '出閘之前，他在米鬥的記號旁邊加了一枚小小的榕葉印記——那是他今年開始做的事情。記號是他的號碼；葉印記是他不會說的話。' },
+      { type: 'cards', title: '榕記可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「文錦渡 榕記」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

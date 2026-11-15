@@ -1,20 +1,20 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1207",
-  "milestone_full": "第九条落地 · /insights 營運掃描路由 + 全站一鍵中英文切換（nexus_locale cookie 於每個請求上解析）· LXVI 早班米斗",
+  "milestone": "D1208",
+  "milestone_full": "香港系列第六十七章 · 早上八點一刻：文錦渡口岸榕記米業——浩明的第二輛米車 · Layer H 貨運弧四個節拍 · 雙語一鍵全切換 + /insights 營運掃描",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: sixty-six Traditional chapters — 00:30→22:45 full day arc · 132-chip clock both locales",
-    "Edition LXVI — 早上七點四十五分：文錦渡口岸榕記米業——浩明的早班米斗 (07:45) · Layer H third beat of the freight arc",
-    "Layer H freight thread now 3-beats: LXIV (00:45 rice gate) → LXV (07:15 dawn return-leg) → LXVI (07:45 first rice-bucket)",
+    "HK series: sixty-seven Traditional chapters — 00:30→23:00 full day arc · 134-chip clock both locales",
+    "Edition LXVII — 早上八點一刻：文錦渡口岸榕記米業——浩明的第二輛米車 (08:15) · Layer H fourth beat of the freight arc",
+    "Layer H freight thread now 4-beats: LXIV (00:45 rice gate) → LXV (07:15 dawn return-leg) → LXVI (07:45 first rice-bucket) → LXVII (08:15 second truck)",
     "D1206 — /insights 營運掃描：deterministic ghost-reader replay from the HK date — 22 seeded readers · 24h ramp · six profiles · zero telemetry · robots noindex",
-    "D1207 — One-click zh ↔ en switch in the header (writes nexus_locale, reloads); every route now resolves the locale cookie per request — previously the eight force-static pages were locked to zh-HK at build time",
+    "D1207 — One-click zh ↔ en switch in the header (writes nexus_locale, reloads); every route resolves the locale cookie per request — previously the eight force-static pages were locked to zh-HK at build time",
     "Spring Cloud sidecar: Eureka · Config · Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
     "handbook REAL-HK: sourced MTR figures + inline Wikipedia source URL · D1192 adds URL; D1193: pressure all-green · D1191: cloud re-port (24761/24889/24089/25445)",
-    "/hong-kong (66 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily · /insights",
-    "D1207: one-click bilingual · D1206: /insights · D1205: chapter LXVI · D1204: LXV · D1203: LXIV 文錦渡 · D1202: inline URL · D1201: LXIII 北河街市 · D1199: LXI 皇崗"
+    "/hong-kong (67 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily · /insights",
+    "D1208: LXVII second truck · D1207: one-click bilingual · D1206: /insights · D1205: LXVI · D1204: LXV · D1203: LXIV · D1202: inline URL · D1201: LXIII · D1199: LXI"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data."
 }
