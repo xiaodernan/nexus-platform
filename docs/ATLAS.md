@@ -134,6 +134,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1179: the fifty-first HK chapter (hk-kwun-tong-newsboy-chronicle, 觀塘曙光報紙的分送員) — the dawn paper depot at 05:00 |
 | `apps/web/src/lib/mock/seed.ts` | D1180: the fifty-second HK chapter (hk-kowloon-bay-garment-chronicle, 九龍灣製衣廠的冚廠清晨) — the industrial dawn at 04:45 |
 | `apps/web/src/lib/mock/seed.ts` | D1182: the fifty-third HK chapter (hk-acu-clinic-opens-chronicle, 安樹堂的開診時間) — the acupuncture clinic opens at 08:00 |
+| `apps/web/src/lib/mock/seed.ts` | D1185: the fifty-fourth HK chapter (hk-sham-shui-po-fabric-chronicle, 深水埗『金源布莊』的零頭布) — 14:00, two in the afternoon on the Kowloon side; the remnant rolls and the city that never ends a fabric |
+| `apps/web/src/lib/chapter-guides.test.ts` | D1185: the chapter-plane parity reader — 5 arms: ≥54 DEMO_GUIDES, unique slugs, every chapter resolves through mockGuide (the /guides read path), every series chapter carries 合成敘事 framing, mockGuides() decorates cards crash-free |
 | `apps/web/src/lib/roman-numeral.ts` + `apps/web/src/components/hk-series-progress.tsx` | D1163: print-annual Roman numeral backdrop on every chapter card — bounded romanOf, ~9% accent opacity, purely decorative |
 | `apps/web/src/lib/mock/seed.ts` | D1157: the forty-first HK chapter (hk-mumbai-curry-central-chronicle, 灣仔咖哩魚飯堂) |
 | `apps/web/src/lib/mock/seed.ts` | D1156: the thirty-eighth, thirty-ninth and fortieth HK chapters (hk-beijing-writer-chronicle, 北漂作家; hk-teochew-markets-chronicle, 旺角菜市場; hk-filipino-central-chronicle, 菲律賓中環) — opens WORLD_ROADMAP Layer E |

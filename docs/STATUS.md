@@ -44636,3 +44636,15 @@ Dict 擴 `cmdConsole`（zh-HK Traditional + en 雙語鎖步；UI census 1867 lit
 **Honest boundaries.** 橋接不改變任何縱向滾動的方向——「往下滑就是往下看」本來就是 Windows 默認、也是 macOS 關閉自然捲動後的行為；頁面對軸號零干涉、零劫持（兩端即時放行）、對 touch 零干涉。橫條跳格間距由 snap 對齊決定，不是 easing。
 
 - readers: `packages/ui/src/trust/wheel-bridge.ts`, `packages/ui/src/trust/EntityCard.tsx`, `packages/ui/src/index.ts`, `apps/web/src/lib/rail-wheel-bridge.test.ts`, `apps/web/src/components/hk-arc-timeline.tsx`, `apps/web/src/lib/i18n/dict.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1185. D1185 — chapter LIV lands the 14:00 slot: 下午兩點：深水埗『金源布莊』的零頭布
+
+**Why.** Layer G（東西兩岸）繼續拓殖，輪到深水埗的布行。14:00 是董事黃昏與布莊換季之間的縫隙——整條布只賣給要求一件事的人：沒有人要的尾部，吳姐只賣「零頭」。這個章節拿掉「絕不落襯」的脾性，留下一角布：是城性格的縮影。系列走到 54 章，依然沒有收尾。
+
+**The unit.** `DEMO_GUIDES` gains `hk-sham-shui-po-fabric-chronicle` — 「下午兩點：深水埗『金源布莊』的零頭布（香港系列 · 第五十四章）」。Three heading cards（一、堆積如山的第二春 · 二、剪刀下的算術 · 三、四點四十分的盤點），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「深水埗 金源布莊」）。Both locales carry the chapter; the arc clock gains 14:00 between yum cha… no—between 13:30（洗碗阿姨）and 14:30（羅湖雙向貨幣）（108 chips across both locales）; hk-type link list gains it; handbook reading order re-sorted to fifty-four on both locales; chapter-icons gains `'hk-sham-shui-po-fabric-chronicle': 'layers'`; e2e floors ≥54; home-series-rail & hk-type dict pins move to fifty-four; census 1877 literals clean (0 simplified); web 371/371 (5 新增 parity pins); verify_all NO OFFENDER。
+
+**The parity reader.** 新讀者 `apps/web/src/lib/chapter-guides.test.ts` — 5 arms：≥54 章、slug 唯一、每章必須通過 `mockGuide`（/guides 真正的讀取路徑）resolve；每章 series fixture 必含 合成敘事 框架句；mockGuides() 修飾卡片必須不 crash。這個讀者是因為一個本機事故生出來的——見 honest boundaries；它保證「seed 編譯成功、但某篇章在 /guides 404」這件事不會無聲地溜過。
+
+**Honest boundaries.** 合成敘事：金源布莊、吳姐、每一件零頭、每一次開門關門、每一句「多少算多少」全部是敘事建構，不指向真實商戶、真實人物或真實價格；用戶應以 SearchBox 當作演示流路徑。本機事故實錄：工作機上的 `apps/web/.env.local`（gitignored 的開發者本機覆寫）設了 `NEXT_PUBLIC_DATA_MODE=live`，而 Next 把 `NEXT_PUBLIC_*` **在 build 時內聯**——本機能看到 /guides 全線軟 404 與 `/api/nexus/ai/ask` 502（找不到 platform 服務）。CI evidence 以 mock mode 構建，不受影響；修正方式僅為在本機用 `NEXT_PUBLIC_DATA_MODE=mock` 環境変数 rebuild 以目擊 mock 面——沒有動任何已提交文件。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

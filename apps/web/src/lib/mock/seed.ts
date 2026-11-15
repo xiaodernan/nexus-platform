@@ -1856,4 +1856,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-sham-shui-po-fabric-chronicle', title: '下午兩點：深水埗『金源布莊』的零頭布（香港系列 · 第五十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：深水埗金源布莊的下午——堆積如山的零頭布、不會賣整匹布的老闆娘、與一座布沒有終點的城。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午兩點。深水埗『金源布莊』（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——鐵閘半開，店裡只有一位吳姐（合成敘事，非真實人物）。布匹堆到天花板，唯獨不賣整匹——她只賣『零頭』。' },
+      { type: 'heading', text: '一、堆積如山的第二春' },
+      { type: 'paragraph', text: '吳姐的店不會出現在任何商場的名冊裡。她收市面買不到的布角：印花不全的、紋路斷掉的、整匹沒人要的尾部。她給每一角貼一張標籤——日期、來源、剩多少寸。她說，整匹布是城做的臉，零頭布才是它的性格。' },
+      { type: 'cards', title: '金源布莊可見', items: [] },
+      { type: 'heading', text: '二、剪刀下的算術' },
+      { type: 'paragraph', text: '下午兩點二十分，一位年輕媽媽推門進來，說要幫兒子做第一條褲。吳姐從一堆印花棉裡抽出一角：『夠你做一條短褲，再加一塊邊料。』布的價錢從來算不清——她目測：布的寬度、布的密度、布的命。客人問她一角賣多少，她說：『多少算多少——量到夠再算。』' },
+      { type: 'cards', title: '金源布莊可聽', items: [] },
+      { type: 'heading', text: '三、四點四十分的盤點' },
+      { type: 'paragraph', text: '下午四點四十分，吳姐把當日賣剩的布角疊好，寫一張單子：『零頭』。她從不寫『尾巴』——她說，布沒有終點，只有換季。她仍然六點關門；下一季的底布已經提前疊在櫃檯底下。下午的太陽照過來，正好夠她檢查每一件未賣出的布角。' },
+      { type: 'cards', title: '金源布莊可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「深水埗 金源布莊」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
