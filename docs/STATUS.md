@@ -44935,3 +44935,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** The atlas groups chapters purely by clock hour — it does not claim editorial truth about "layers of HK life"; the layer blurbs are atmosphere, deliberately synthetic-framed; `/world` is indexed like any marketing page but carries the same fixture disclaimers as the rest of the synthetic series; forcing `force-dynamic` here keeps per-request bilingual SSR byte-honest (the same choice shipped for the other eight D1207 pages; each of those routes answers <700 ms p50 under 32-concurrent load, measured D1209).
 
 - readers: `apps/web/app/world/page.tsx`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/components/site-chrome.tsx`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1210 · Addendum — contract-drift went red on D1210; root cause and the 午後 fix
+
+**Why this addendum exists.** The D1210 CI run reported `contract-drift: failure` while every lane on this host passed. The failing arm was `falsify_ui_script.mjs`: it teaches `lexicon.py` the plant pair `后→後`, mutates the carrier tree, and asserts the census reddens on exactly ONE injected literal — `RESULT: FAIL — 1 simplified character(s) in 1 literal(s)`. My zh world block had introduced `午后` (×3: intro / layer title / layer blurb), so the arm's count-of-one expectation saw more; two more draft occurrences were in `mock/seed.ts` chapter 29 (太古城候車亭) and the 霍普韋爾 description.
+
+**The fix.** All five `午后` occurrences rewritten to `午後` — the proper Traditional afternoon form and the one the lexicon pairs against bare `后`. Local re-run: `falsify_ui_script` **PASS (30/30)**; `check_ui_script` 0 simplified / 2,070 literals; web 384/384; `verify_all` NO OFFENDER. The D1210 CI contract-drift lane is re-armed by this commit. This is the same rule as `不相干`→`不相關`: the script census is a written-script law the falsifier enforces, and it cannot be argued down with "the host looks green".
+
+**Honest boundaries.** The failure mode was mine: zh copy that read fine to a human eye broke a machine's count. Every zh literal added — even a title-case layer name — must survive the arm where the tables are taught one pair at a time. The user-facing bytes this changes: the `/world` zh copy now reads 午後街; the e2e surface is unaffected (test file and chapter fixtures in seed read clean).
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/seed.ts`, `scripts/falsify_ui_script.mjs` (output captured), this addendum.
