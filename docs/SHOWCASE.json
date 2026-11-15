@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1217",
-  "milestone_full": "第七十五章 · 灣仔——擺押局——老黃生的中午開櫃（13:15）· /insights 深植「下一步優化措施」六型矩陣",
+  "milestone": "D1218",
+  "milestone_full": "第七十六章 · 柴灣——工業大廈——爐主阿九關爐的第五聲（16:45）· /world 新增七層跳轉導航",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: seventy-five Traditional chapters — 00:00→23:00 full day arc · 150-chip clock both locales",
-    "Edition LXXV — 下午一時一刻：灣仔——擺押局——老黃生的中午開櫃 (13:15) · the Hong Kong master pawnshop keeper who only lets one person pass through a day",
-    "D1217 — /insights 下一步優化措施矩陣：六種幽靈讀者（匆匆客/細讀生/漫遊者/瞎點黨/靜默離場/收藏家 × impatient glance/slow reader/window shopper/random tapper/silent bounce/bookmarker）→ 六個對應的 operator next-step 優化措施，中英雙語、列出行動、與鬼影型配對（/insights now delivers §九's full loop: 看數據→看趨勢→深優化）",
-    "handbook REAL-HK I/II/III/IV — MTR · Star Ferry · HKIA · Observatory (143 years, 1883-03-02) — every figure source-URL'd inline",
-    "/world atlas reads 75 chips (12+16+16+14+6+5+6 asserted) · seven-step handbook tour · D1212 — /insights seven-day trend panel · D1207 — one-click zh ↔ en everywhere · D1216 — LXXIV 飯盒時光",
-    "/hong-kong (75 chapters) · /stamp passport · /handbook (seven-step tour) · /hk-type quiz · /command 123 · /daily · /insights (six-archetype action matrix + 7-day OLS trend)",
-    "D1217: LXXV + insights action matrix · D1216: LXXIV · D1215: LXXIII + seven-step tour · D1214: LXXII + cache probe · D1213: LXXI + REAL-HK IV · D1212: LXX + weekly trend"
+    "HK series: seventy-six Traditional chapters — 00:00→23:00 full day arc · 152-chip clock both locales",
+    "Edition LXXVI — 下午四時四十五分：柴灣——工業大廈——爐主阿九關爐的第五聲 (16:45) · the closing ritual of a Chai Wan industrial bakery, fifth gong countdown, synthetic",
+    "/world atlas gains skip-to-layer nav row across the top of the page (7 hour-layer anchors, same dict entries, zh/en ridden by locale)",
+    "handbook REAL-HK I/II/III/IV — MTR · Star Ferry · HKIA · Observatory (143 years, 1883-03-02) — inline URLs",
+    "D1217 — /insights 下一步優化措施矩陣（six archetype → six next moves） · D1212 — seven-day OLS trend · D1216 — LXXIV · D1215 — LXXIII + seven-step tour · D1214 — LXXII + cache probe",
+    "/hong-kong (76 chapters) · /world (76 chips + 7 anchors) · /stamp passport · /handbook (seven-step tour) · /hk-type quiz · /command 123 · /daily · /insights",
+    "D1218: LXXVI + world nav · D1217: LXXV + action matrix · D1216: LXXIV · D1215: LXXIII + seven-step tour · D1214: LXXII + cache probe · D1213: LXXI + REAL-HK IV"
   ],
-  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. The Wan Chai pawnshop chapter is a synthetic construction — no pawn shop, keeper or customer depicted. All REAL-HK figures are public sources with URLs inline on the handbook page."
+  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

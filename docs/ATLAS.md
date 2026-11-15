@@ -112,6 +112,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1215: the seventy-third HK chapter (hk-wing-lei-street-analog-chronicle, 中午十一時四十五分・中環永利街——黃生的膠片修補室) — 11:45, the film-repair room |
 | `apps/web/src/lib/mock/seed.ts` | D1216: the seventy-fourth HK chapter (hk-central-mandarin-oriental-chef-chronicle, 中午十二時一刻・中環——文華東方酒店——陳總廚的飯盒時光) — 12:15, the Executive Chef's lunch-box hour |
 | `apps/web/src/lib/mock/seed.ts` | D1217: the seventy-fifth HK chapter (hk-wan-chai-pawnshop-chronicle, 下午一時一刻・灣仔——擺押局——老黃生的中午開櫃) — 13:15, the Wan Chai pawnshop |
+| `apps/web/src/lib/mock/seed.ts` | D1218: the seventy-sixth HK chapter (hk-chai-wan-oven-close-chronicle, 下午四時四十五分・柴灣——工業大廈——爐主阿九關爐的第五聲) — 16:45, the Chai Wan industrial building |
+| `apps/web/app/world/page.tsx` | D1218: skip-to-layer nav row on top of the atlas (7 hour-layer anchors, same dict entries) |
 | `apps/web/app/insights/page.tsx` | D1217: `/insights` gains the per-archetype action matrix (six ghosts → six next-step optimisation measures) |
 | `apps/web/src/lib/insights-actions.test.ts` | D1217: pins the action matrix parity across both locales |
 | `apps/web/app/world/page.tsx` | D1211: world atlas now reads 69 chips — the atlas partition test asserts 12+16+12+12+6+5+6 = 69, counts updated |

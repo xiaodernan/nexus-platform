@@ -2318,4 +2318,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-chai-wan-oven-close-chronicle', title: '下午四時四十五分：柴灣——工業大廈——爐主阿九關爐的第五聲（香港系列 · 第七十六章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：下午四時四十五分的柴灣工業大廈——爐主阿九依序關爐、最後一火剩的蛋撻、「工廠黃昏」的收工儀式。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午四時四十五分。柴灣工業大廈（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——爐主阿九依次由樓下倒數到最高層的爐口。' },
+      { type: 'heading', text: '一、關爐的第五聲' },
+      { type: 'paragraph', text: '關爐不是「下班打掣」，是「用手掌心感覺鐵的溫度」。阿九關完最後一個爐：「做一天的事，要能閉上眼睛笑。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '工業大廈可見', items: [] },
+      { type: 'heading', text: '二、樓底的老工客' },
+      { type: 'paragraph', text: '樓下是油站的送貨小販；賣五金、賣夾住的就在樓層上面：整楝樓都在等這一刻——是時候收工，柴灣工業大廈的黃昏也要關門。' },
+      { type: 'cards', title: '工業大廈可聽', items: [] },
+      { type: 'heading', text: '三、收工的五個蛋撻' },
+      { type: 'paragraph', text: '阿九留下最後五個蛋撻——每一個他親手烘焙，每一個的名字他都想過：第一爐、樓裡的五台、油站的、樓下的、自己的。他把它們放在最後一道托盤上，放得一個個都差不多，順序跟關爐的五聲一樣。' },
+      { type: 'cards', title: '工業大廈可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「柴灣 工業大廈」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

@@ -82,6 +82,19 @@ export default async function WorldPage() {
       </section>
 
       <Container size="shell" className="py-10">
+        <nav aria-label={t.clockLabel} className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
+          {t.layers.map((layer) => (
+            <a
+              key={layer.code}
+              href={`#world-layer-${layer.code}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-3 py-1.5 text-2xs font-medium text-ink-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              <span className="font-mono text-accent">{layer.code.toUpperCase()}</span>
+              <span className="hidden sm:inline">{layer.title}</span>
+            </a>
+          ))}
+        </nav>
+
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {t.layers.map((layer, idx) => {
             const chips = byLayer[idx] ?? [];
