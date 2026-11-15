@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1196",
-  "milestone_full": "香港系列第五十九章 · 下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分 · Layer G 東移 · 算盤、紙箱與暮色",
+  "milestone": "D1197",
+  "milestone_full": "香港系列第六十章 · 晚上十點十五分：旺角唐樓『平利果皮批發』的最後一舖 · Layer G tenement lanes · 全系列邁向六十章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: fifty-nine Traditional chapters — 00:30→22:45 full day arc · 118-chip clock both locales",
-    "Edition LIX — 下午五點十五分：元朗大馬路『輝記鞋材店』的收工時分 (17:15) · Layer G east advances",
-    "Layer G full tract: LIX 元朗鞋舖 · LVIII 青衣橋吊午休 · LVII 大埔墟批發黎明 · LVI 油麻地粵劇 · LV 落馬洲 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘 · XLIX 羅湖 · XLVIII 萬象天地",
-    "Spring Cloud sidecar: Eureka registry · Config Server · WebFlux Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
-    "D1193: mock rails memoised · / SSR p50 2.63→1.71 s · D1192: REAL-HK handbook (MTR figures sourced) · D1191: cloud re-port (24761/24889/24089/25445)",
-    "/command demo operator desk · /stamp passport · /daily ritual · /hong-kong all · /handbook · /try walkthrough · /hk-type quiz",
-    "D1196: chapter LIX · D1195: LVIII 青衣 · D1194: LVII 大埔墟 · D1193: memo + pressure · D1188: e2e flake fix · D1187: LVI 油麻地"
+    "HK series: sixty Traditional chapters — 00:30→22:45 full day arc · 120-chip clock both locales",
+    "Edition LX — 晚上十點十五分：旺角唐樓『平利果皮批發』的最後一舖 (22:15) · Layer G expands east along the tenement lanes",
+    "Layer G full tract: LX 旺角果皮 · LIX 元朗鞋材 · LVIII 青衣橋吊 · LVII 大埔墟批發黎明 · LVI 油麻地粵劇散場 · LV 落馬洲 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘 · XLIX 羅湖 · XLVIII 萬象天地",
+    "Spring Cloud sidecar: Eureka · Config · Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
+    "D1193: mock rails memoised · / SSR p50 2.63→1.71 s · D1192: REAL-HK handbook (`MTR` sourced figures) · D1191: cloud re-port (24761/24889/24089/25445)",
+    "/command demo operator desk · /stamp passport · /daily ritual · /handbook · /try walkthrough · /hk-type quiz · /hong-kong all · /daily",
+    "D1197: chapter LX · D1196: LIX 元朗鞋舖 · D1195: LVIII 青衣 · D1194: LVII 大埔墟 · D1193: memo + pressure · D1188: e2e flake fix"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

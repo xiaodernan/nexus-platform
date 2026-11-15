@@ -1982,4 +1982,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-mong-kok-ping-li-grocery-chronicle', title: '晚上十點十五分：旺角唐樓『平利果皮批發』的最後一舖（香港系列 · 第六十章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：晚上十點十五分的旺角唐樓——果皮批發店的黃昏、木梯與鹹蛋、與午夜油鹽糖醋之間的細火。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上十點十五分。旺角唐樓『平利果皮批發』（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——木梯吱吱作響，果皮堆疊成一座小山，鹹蛋的玻璃罐一排排貼在牆上。老闆陳先生（合成敘事，非真實人物）還沒關門，他今天要把『今日特賣』的膠貼撕下來。' },
+      { type: 'heading', text: '一、木梯與玻璃罐' },
+      { type: 'paragraph', text: '陳先生在旺角開了二十五年的果皮舖。他不懂行銷、不懂包裝——他只了解一件事：乾橘皮的功效。肺熱的病人塞一片橘皮、咽喉痛的人冲一杯陳皮水；他不是中醫師，但他比許多網紅更熟悉幾句『陳皮理氣健脾胃』。客人找他，往往不求快，求穩。' },
+      { type: 'cards', title: '平利可見', items: [] },
+      { type: 'heading', text: '二、鹹蛋的記錄本' },
+      { type: 'paragraph', text: '隔壁攤位是賣鹹蛋的老闆娘鄭嬸（合成敘事，非真實人物）。她今年賣最好的是雙色蛋。陳先生替她代記錄：賣了多少箱、寄給誰、還欠多少錢。他說，客人賒账的理由不用寫；他知道，這間唐樓的人拿到錢就止了。' },
+      { type: 'cards', title: '平利可聽', items: [] },
+      { type: 'heading', text: '三、午夜的最後一點' },
+      { type: 'paragraph', text: '下午十點半，平利快盤了。陳先生拿了一包陳皮送給陳太太——溫潤的綠色布袋，與一顆繭黃色的橘皮。他說，這包皮不值錢，但值得保存；『客人遺忘它的時候，才輪到它發光』。他把鐵閘半拉，唐樓的燈一盞盞熄了。' },
+      { type: 'cards', title: '平利可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「旺角 果皮」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

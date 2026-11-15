@@ -44774,3 +44774,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：元朗輝記鞋材店、老闆娘周嬸、她不露面的丈夫、元朗河邊——全部是敘事建構；SearchBox 搜「元朗 鞋材店」演示的是演示流的路徑；這是邊緣地帶的尾聲，不冒充真實商號。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1197. D1197 — chapter LX lands the 22:15 slot: 晚上十點十五分：旺角唐樓『平利果皮批發』的最後一舖
+
+**Why.** Layer G（東西兩岸）繼續向東拓殖：旺角唐樓的平利果皮批發、木梯與鹹蛋玻璃罐、下午十點十五分香港最後一間還沒關的小舖、陳先生說「客人遺忘它的時候，才輪到它發光」。五十萬人次人流的旺角，誰知道這些果皮在鍋裡煮著什麽湯。六十章圓滿。
+
+**The unit.** `DEMO_GUIDES` gains `hk-mong-kok-ping-li-grocery-chronicle` — 「晚上十點十五分：旺角唐樓『平利果皮批發』的最後一舖（香港系列 · 第六十章）」。Three heading cards（一、木梯與玻璃罐 · 二、鹹蛋的記錄本 · 三、午夜的最後一點），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「旺角 果皮」）。Both locales carry the chapter; the arc clock gains 22:15 between the tong sui store and the Philip's Cleaner page (120 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to sixty on both locales; chapter-icons gains `'hk-mong-kok-ping-li-grocery-chronicle': 'bookmark'`; e2e floors ≥60; census 1940 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 10s and the chapter renders end-to-end via /guides/hk-mong-kok-ping-li-grocery-chronicle clean.
+
+**Honest boundaries.** 合成敘事：旺角平利果皮批發、陳先生、鄭嬸、鹹蛋記事本——全部是敘事建構，不指向真實商號；搜索「旺角 果皮」演示的是演示流的路徑。這是本弧完成第六十章，圓滿不歇。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
