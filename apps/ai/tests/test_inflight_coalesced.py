@@ -11,7 +11,6 @@ import asyncio
 
 import pytest
 
-import nexus_ai.models.router as router_module
 from nexus_ai.models.base import LLMRequest, LLMResponse, TASK_MODEL_DEFAULTS
 from nexus_ai.models.router import CostMeter, ModelRouter
 
@@ -83,7 +82,7 @@ async def test_different_requests_never_share_a_cell(monkeypatch):
     reqs = [_req() for _ in range(2)] + [
         LLMRequest(task_class="summary", system="s", payload={"query": "bye"}, temperature=0.0)
     ]
-    results = await asyncio.gather(*(r.run(x, meter=CostMeter()) for x in reqs))
+    await asyncio.gather(*(r.run(x, meter=CostMeter()) for x in reqs))
     assert adapter.calls == 2  # two distinct byte strings
 
 
