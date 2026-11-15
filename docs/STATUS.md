@@ -44784,3 +44784,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：旺角平利果皮批發、陳先生、鄭嬸、鹹蛋記事本——全部是敘事建構，不指向真實商號；搜索「旺角 果皮」演示的是演示流的路徑。這是本弧完成第六十章，圓滿不歇。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1198. D1198 — WORLD_ROADMAP refresh — 23 chapters → 60 landed, alignment
+
+**Why.** After the LX push, the `docs/WORLD_ROADMAP.md` still said "D1146 — 23 chapters" and "/hong-kong holds sixty chips"-era old numbers; the roadmap was lying about the arc. Layer A through Layer G are all landed as of this session. The file now reflects reality: every chapter listed, every layer marked landed, and the next five layers (H-L) defined with concrete chapter-number slots, thesis, and slug targets. The arc-roadmap is the single source of truth for what is promised vs landed; it rots in ledger time constantly if nobody updates it, so it is now patched to close the loop on the LX milestone.
+
+**The unit.** `docs/WORLD_ROADMAP.md` — full rewrite with: `Status: the arc now stands at 60 chapters (D1197)`. All 60 chapters listed in chronological order. Layer A–G marked **landed**; Layers H–L defined with specific chapter ranges (61-73 / 74-84 / 85-96 / 97-108 / 109-120) and named thesis lines. Future writers have a complete map from "done" to "promised" without crossing chapter LX territory. Updated `SHOWCASE.json` features list to D1198.
+
+**Honest boundaries.** No new code shipped in this milestone (pure doc reconciliation). `verify_all` not run because the change does not touch readers. The five new layers are aspirational specifications, not completed work — they are the menu of what happens next in this arc chain.
+
+- readers: `docs/WORLD_ROADMAP.md`, `docs/SHOWCASE.json`, this ledger entry.

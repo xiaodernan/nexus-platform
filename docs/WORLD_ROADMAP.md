@@ -1,52 +1,45 @@
 # The World-Layer Roadmap — more infinite stories
 
-**Status:** active. Every chapter below is a textured promise, not a leak; each lands as a standalone `DEMO_GUIDES` fixture with three heading cards and a full HK Traditional narration. Dates are arc dates, not shipping dates.
+**Status:** the arc now stands at **60 chapters** (D1197). Everything below 60 has landed; everything above 60 is a textured promise, not a leak. Every chapter is a standalone `DEMO_GUIDES` fixture with three heading cards and full HK Traditional narration. Dates are arc dates, not shipping dates.
 
-## Where the arc stands today (D1146 — 23 chapters, 00:30 → 22:45)
+## Where the arc stands today (D1197 — 60 chapters, 00:30 → 22:45, anchored by 00:00)
 
-The day-arc is a single continuous breath: 00:30's last taxi → 02:00 congee → 03:00 triage → 03:10 fruit market → 03:30 dawn bakery → 04:00 window cleaners → 04:15 auntie at the jetty → 04:30 fish market → 05:30 the three meals → 06:00 cha chaan teng → 06:30 Lei Yue Mun → 06:45 the ice-room → 07:30 yum cha → 08:30 the school-bus secret timetable → 09:30 Cheung Chau → 12:00 siu mei → **13:30 the auntie on the dish pit** → 16:00 the bourse bell → 17:58 the Lion Rock → 18:30 office-to-MTR → 19:00 Temple Street → 22:30 tong sui → 22:45 cart noodles.
+The full arc is a continuous breath across the clock slots (in chronological order): 00:30 的士站最後一客（第二十一章）→ 01:00 塔樓清潔工（第二十四章）→ 01:30 灣仔咖哩魚飯堂（第四十一章）→ 02:00 皮蛋瘦肉粥（第十二章）→ 02:30 最後一鍋糖水（第二十五章）→ 03:00 急症室入口（第十九章）→ 03:10 果欄（第八章）→ 03:15 羅湖行李手車（第四十九章）→ 03:30 鹹光燒餅（第十七章）→ 04:00 抹窗師傅（第二十章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 04:45 九龍灣冚廠清晨（第五十二章）→ 05:00 觀塘『曙光報紙』的分送員（第五十一章）→ 05:30 三餐的血（第一章）→ 05:45 大埔墟農產品批發市場（第五十七章）→ 06:00 茶餐廳（第五章）→ 06:15 落馬洲通勤前哨（第五十五章）→ 06:30 鯉魚門（第十六章）→ 06:45 冰室（第十章）→ 07:00 隔水渡輪（第三十六章）→ 07:30 早茶（第三章）→ 08:00 安樹堂的開診時間（第五十三章）→ 08:30 校巴的秘密班機（第二十二章）→ 09:00 維園的外國傭工（第四十二章）→ 09:30 長洲（第十四章）→ 10:00 魚蛋檔（第二十六章）→ 10:30 北漂作家的香港筆記（第三十八章）→ 11:00 報館放送（第二十七章）→ 11:30 大澳——鹹魚棧（第三十七章）→ 12:00 燒味（第二章）→ 12:30 東涌——機場的風（第三十四章）→ 12:45 佐敦吉華餃麵店（第五十章）→ 13:00 霍普韋爾的外傭午餐（第四十三章）→ 13:30 洗碗阿姨的第二幕（第二十三章）→ 13:45 青衣貨櫃碼頭的橋吊午休（第五十八章）→ 14:00 深水埗零頭布（第五十四章）→ 14:30 羅湖站的雙向貨幣（第四十六章）→ 15:00 九龍公園的雀籠房（第二十八章）→ 15:30 萬象天地的設計師街（第四十八章）→ 16:00 交易所鐘聲（第十八章）→ 16:30 坪洲——纜車鐵箱子（第三十五章）→ 17:00 太古城候車亭（第二十九章）→ 17:15 元朗大馬路『輝記鞋材店』的收工時分（第五十九章）→ 17:30 星期天的觀音借（第四十四章）→ 17:58 獅子山（第十三章）→ 18:00 潮州話．旺角菜市場（第三十九章）→ 18:30 寫字樓落到地鐵（第十五章）→ 19:00 廟街（第四章）→ 19:15 皇崗口岸的員工餐廳（第四十七章）→ 20:00 粥府的長枱（第三十章）→ 20:30 粵劇散場宵夜（第五十六章）→ 21:00 星期天最後一間有排隊的餐廳（第四十五章）→ 21:30 屋邨電梯口的紙箱老伯（第三十一章）→ 22:00 菲律賓中環（第四十章）→ 22:15 平利果皮批發（第六十章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）→ 23:00 麥當勞得來速（第三十二章）→ 00:00 紙包飲品販賣機（第三十三章）。
 
-What remains unclaimed in a classic HK day: the hours when the city changes shift, and the places nobody photographs until they are gone.
+## What landed and what's claimed (the next step after LX)
 
-## The next ten chapters (start here)
+| Layer | Chapters | Status |
+|---|---|---|
+| **Layer A — the morning** | 8, 17, 34, 36, 20, 26, 16, 12, 25, 19, 21, 24, 1, 5, 34 → covered by 00:30–06:45 | 16 chapters, wall done |
+| **Layer B — the house-shift day** | 10, 22, 41, 33, 4, 18, 30, 28, 23, 44, 13, 15, 46, 56, 32, 29, 42, 6, 7, 35, 39, 57, 55, 53, 51, 37 | (claimed, all landed) |
+| **Layer C — the back streets** | 34, 46, 33, 25, 19, 8, 30, 44, 3, 28, 13, 15, 53, 51, 37 | landed — see 60-chapter arc above |
+| **Layer D — the echo** | 34, 35, 36, 37 — Lantau full arc: Tung Chung, Peng Chau, 交匯 | landed (chapters 34, 35, 36, 37) |
+| **Layer E — the languages** | 38, 39, 40 — 一位北漂作家的香港筆記, 潮州話．旺角菜市場, 菲律賓中環 | landed (chapters 38, 39, 40) |
+| **Layer F — the Sunday cycle** | 42, 43, 44, 39, 45, 56, 32, 29, 13, 30, 31, 24, 9, 11, 33 — two cities sharing one sun | 17 chapters (all) |
+| **Layer G — the outpost of the outpost** | 46, 47, 48, 49, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60 — 深圳邊界、橋吊、果皮、鞋材 | 14 chapters (all) |
 
-| # | Hour | Proposed title | Slug | Thesis |
-|---|---|---|---|---|
-| 24 — **landed D1148** | 01:00 | 塔樓清潔工 | hk-night-cleaner-chronicle | The city is cleaned by the people who never get to see it awake |
-| 25 — **landed D1149** | 02:30 | 最後一鍋糖水 | hk-last-tong-sui-urn-chronicle | The last urn of tong sui going cold — the night's sweetness ending |
-| 26 — **landed D1149** | 10:00 | 魚蛋檔 | hk-fishball-stall-chronicle | The first fish balls of the day from the same ladles, same fire |
-| 27 — **landed D1151** | 11:00 | 報館放送：早報印好了 | hk-newspaper-wrapper-chronicle | The newsstand that still sees the day before everyone else |
-| 28 — **landed D1151** | 15:00 | 九龍公園的雀籠房 | hk-pigeon-coop-chronicle | The pigeon keepers of Kowloon Park — the Saturday body |
-| 29 — **landed D1152** | 17:00 | 太古城候車亭 | hk-typhoon-shelter-chronicle | Bus shelter that becomes a typhoon shelter for ten minutes every afternoon |
-| 30 — **landed D1152** | 20:00 | 粥府的長枱 | hk-soup-kitchen-communal-chronicle | The long table in the communal soup kitchen on Temple Street |
-| 31 — **landed D1152** | 21:30 | 屋邨電梯口的紙箱老伯 | hk-estate-cardboard-chronicle | The cardboard man outside the lift lobby who sorts the whole night |
-| 32 — **landed D1153** | 23:00 | 麥當勞得來速的深夜排隊 | hk-drive-thru-midnight-chronicle | The midnight drive-through queue that never stops, never rushes |
-| 33 — **landed D1153** | 00:00 | 紙包飲品販賣機 | hk-vending-machine-chronicle | The one machine in the estate that sells a drink nobody wants |
-| 34 — **landed D1154** | 12:30 | 東涌——機場的風 | hk-tung-chung-chronicle | Tung Chung: the new airport shift, the clock that never stops |
-| 35 — **landed D1154** | 16:30 | 坪洲——纜車鐵箱子 | hk-peng-chau-chronicle | Peng Chau: the cable car and the island that stays itself |
+## The layers of the world we have not opened yet
 
-| 36 — **landed D1155** | 07:00 | 隔水渡輪 | hk-north-run-chronicle | The old ferry crossing at seven, the cheapest kindness the water keeps |
-| 37 — **landed D1155** | 11:30 | 大澳——鹹魚棧 | hk-tai-o-chronicle | The story about the still-unmodernised smell this city never let go |
+**Layer H — the border territory** (chapter 61–73): the Shenzhen side of the border seen through the HK lens — 皇崗關閘與皇崗口岸早班員工餐廳 — layered after LX; the second bindings: 皇崗以外的跨境路口，what the other side hums before dawn; the cross-border driver's day.
 
-## The layers beyond the day-arc (structural)
+**Layer I — the multilingual remix** (chapter 74–84): each chapter sees a chapter of the series from a different linguistic lens, not a new chapter added:
+- **潮語喇叭 chapter** — the Teochew merchants who've quietly watched 旺角菜市場 develop over decades;
+- **福建漳州 migration arc** — the window-shop receptions along 佐敦 and 尖沙咀 (already touched in 18/46/28);
+- **輕鐵的母語** — a Cantonese-only Lamma chapter: the locals don't switch to English, their Teochew is the terrain's breath.
 
-**Layer C — the back streets (every hour):** chapters 34–46 fill the remaining half-hours (00:45 / 01:30 / 02:30 / 07:00 / 10:30 / 14:30 / 15:30 / 20:30 / 21:00 / 23:30), each an ordinary Hong Kong where there is no camera but there is always a story.
+**Layer J — the "food market floor" trilogy** (chapter 85–96): chapter after chapter from one quayside: the fish-market car park's dawn, 土瓜湾's textile market 11:30 to 22:00, and 元朗 that long traffic only crosses at 19:15 — told in three voices.
 
-**Layer D — the echo /離島章** (chapters 34-35 landed; chapters 36-46 next: Lantau/outlying islands full sweep) (chapter 47–60): Lantau and the islands — Tung Chung at noon (the new airport shift), Peng Chau and the last cable-car machine room, Ma Wan after the third restaurant closes, the Yueng ken Tin Hau outskirts, Lamma's counterculture at dusk.
+**Layer K — the "small enough to see" arc** (chapter 97–108): every chapter is set in a single shop interior, told in one voice, for one hour: the 牙醫's autoclave; 觀塘's rail yard 5:00; a 高溫隱身房's last line of code at midnight.
 
-**Layer E — the languages** (chapter 61–72): the Mandarin shadow (一位北漂作家的香港筆記), a Teochew chapter in攏鳥巷， a Filipino-English chapter in Central, a Mumbaikar's curry-herring chapter at Wan Chai — each narrated in the substrate's own tongue, subtitled in HK Traditional for the HK reader, translated in English for the wider world.
+**Layer L — the return arc** (chapter 109–120): the city's departing children come back; revisits every landmark previously crossed — the same counter-opens, the same plates, same last fare, but never the same face. The arc's final question is what still remains.
 
-**Layer F — the Sunday cycle** (chapter 73–91): the Sunday that doesn't belong to anyone — the domestic workers' morning at Victoria Park (chapter 73), the helpers' free lunch at the Hopewell ceiling (74), the temple circuit (75), Chow Tai Fook wedding couples (76), the sheung-shui flower market at dawn on Sunday (77), the fishball match at Choi Hung (78), the roller-skating rink that is now glass (79), the last restaurant with a queue at 22:00 on Sunday (80), etc.
+## The pins that never move (for every future chapter)
 
-**Layer G — the outpost of the outpost** (chapter 92–108): 境外深圳 covered neither as China nor as Hong Kong — the Shenzhen side seen through the HK lens, the border shopkeeper, the double-currency memory, the second life of a weekend in the counter-flow queue.
-
-## The structural canon nobody else owns
-
-1. **The "trade-across-the-courtyard" arc** — three chapters linked by one shared supplier (say, a vegetable vendor in Yau Ma Tei): Chapter 110 「檔口的秤」→ Chapter 111 「貨van 的冬眠」→ Chapter 112 「一間收獲的廚房」 read in that order, each from a different protagonist.
-2. **The "one fridge, one family" novella in six chapters** (113–118) — one Hong Kong family, six chapters over six months, ending in a rent-ceiling dispute.
-3. **The "two cities at dawn" mirrored chapters** (119–124) — same hour, same scene, one in HK and one in Shenzhen; same protagonist, different city, ending with a gesture both share.
-4. **The "things that are gone" arc** (125–140) — each chapter honours one thing the city stopped doing: the last cassette shop, the last phone box, the last homemade-sesame-oil maker, the last newspaper delivery boy.
+- Every chapter is a `DEMO_GUIDES` entry: three heading cards, synthetic-fixture framing (`flags: { demo: true }`), HK Traditional script, bilingual, SearchBox pointer, 後記.
+- Every chapter carries rivets into `mock seed.ts`, `dict.ts` arc clock, `dict.ts` reading order, `dict.ts` hk-type link list, `chapter-icons.ts` glyph, e2e floors, `chapter-guides.test.ts` (LIV+ arm), ATLAS pins, STATUS/SHOWCASE led.
+- The arc clock: 120 chips (60 ch × 2 locales); order: time of day continuous 00:30 → 00:00.
+- The reader board `/hong-kong`, the onboarding `/try`, the completion `/stamp` — three faces of the same series.
 
 ## Governance note
 
-Every chapter here obeys the existing census contracts (HK Traditional script, `flags: { demo: true }`, synthetic narrative — no real operator claims), the reading-order interlock in `docs/HONG_KONG_ARC.md`, the bilingual handbook reading order, and the e2e catalogue floors. This file is the plan; execution is one chapter per milestone, however many D-days that takes.
+This file is the plan; execution is one chapter per milestone, whatever D-day it's at. Everything above 60 is a promise with a slug, a thesis, and a clock slot — not a vague aspiration. Update the "where the arc stands" row against every chapter that lands. Do not let this file rot.
