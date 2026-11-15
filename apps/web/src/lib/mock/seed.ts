@@ -2423,4 +2423,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-wong-tai-sin-temple-incense-chronicle', title: '晚上八點四十五分：黃大仙——黃大仙祠——黃先生來上香（香港系列 · 第八十一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上八點四十五分的黃大仙祠——黃先生每晚的一柱香與他三十年的黃大仙祠歸位。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上八點四十五分。黃大仙祠（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——每晚這一柱香，就是黃先生的時間的落點。' },
+      { type: 'heading', text: '一、每晚來上香' },
+      { type: 'paragraph', text: '黃先生不是虔誠的來人──他說自己做過黃大仙了六十幾年。廟方的人都知道這位老先生：每晚準時到，為自己買一柱香，然後回去。他說「只剩這一柱香了。」' },
+      { type: 'cards', title: '黃大仙祠可見', items: [] },
+      { type: 'heading', text: '二、香火的三十年' },
+      { type: 'paragraph', text: '這爐香幾十年不滅。廟方的人說：黃大仙的香爐一直有人守著——如果信、如果不信，來了的人總是會想一想。黃先生帶過來了三十年，帶出了自己的歸宿。' },
+      { type: 'cards', title: '黃大仙祠可聽', items: [] },
+      { type: 'heading', text: '三、給家的承諾' },
+      { type: 'paragraph', text: '黃先生的女兒早已長大，做過職員、做過畫家、做過阿叔的助手。女兒回黃大仙看爸爸的時候，他做了他會的一件事——點一柱香，替家人還三十年的願。' },
+      { type: 'cards', title: '黃大仙祠可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「黃大仙 黃大仙祠」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

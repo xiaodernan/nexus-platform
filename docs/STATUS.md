@@ -45212,3 +45212,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** Peak Tram numbers are Wikipedia-snapshot figures (retrieved 2026-11-15); they drift; the handbook tells the reader so and embeds the URL so a reader can verify. The Sixth-generation car count (210) is the article's specific claim; we don't know better. The booklet calls the line "a mechanical poem" deliberately — that is atmosphere, not fact; the numbers are fact. The article's infobox says "Began operation 30 May 1888" while the body says "opened for public service on 28 May 1888" — we quote the year, avoid the day. No vendor relationship is claimed for the article, only that it is Wikipedia.
 
 - readers: `apps/web/src/lib/i18n/dict.ts` (new REAL-HK V Peak Tram block, zh + en), this ledger entry.
+
+## 1225. D1225 — chapter LXXXI （黃大仙祠，20:45） — the incense arc’s first night
+
+**Why.** The eighty-first chapter opens a new beat in the night register — the temple’s quiet patience, Wong Tai Sin（黃大仙）, the city’s oldest bus-lit altar, where everyone from trucker to CFO stops at some point in their life.
+
+**The unit.** `DEMO_GUIDES` gains `hk-wong-tai-sin-temple-incense-chronicle`, 「晚上八點四十五分：黃大仙——黃大仙祠——黃先生來上香（香港系列 · 第八十一章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、每晚來上香 · 二、香火的三十年 · 三、給家的承諾）, 後記 + SearchBox pointer （「黃大仙 黃大仙祠」）. Arc clock gains 20:45 between 粵劇散場（20:30）與星期天最後一間有排隊的餐廳（21:00）— **162 chips across both locales**; handbook reading order updated to eighty-one; `chapter-icons` gains `'hk-wong-tai-sin-temple-incense-chronicle': 'navigation'`; e2e floors ≥81; `/world` copy 80→81 everywhere; the seven-layer partition test now asserts **12+16+16+15+8+8+6 = 81**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,263** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 10.9s · SSR curls both locales: chapter renders with 黃大仙祠/第八十一章 markers, `/hong-kong` carries the chip, `/world` returns **81 distinct guide links in each arm**.
+
+**Honest boundaries.** 黃大仙祠是真實的香港地標，實踐上「求必應」；但故事裡的人全部是合成：阿炳黃先生的三十年上香習慣、女兒最後回來的一柱香——這些都是敘事建構。No real merchant is featured.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
