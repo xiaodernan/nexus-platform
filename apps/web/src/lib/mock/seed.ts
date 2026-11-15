@@ -2213,4 +2213,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-mong-kok-flower-market-closeout-chronicle', title: '早上十點四十五分：旺角花墟——走花市的最後一站（香港系列 · 第七十一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上十點四十五分的通菜街花墟——散尾的零售、等賣不出的盆景打折、走街人最後一眼看的尾巴。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上十點四十五分。旺角花墟（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）。十點半之後，老花墟便開始清盤：一束一束的菊花把莖纏在一起，正在等一個說得出口的價錢。' },
+      { type: 'heading', text: '一、走尾的花市' },
+      { type: 'paragraph', text: '早上十點四十五分的花墟——這是這些花人一日中最不要面子、所以最坦白的時間。盆景檯面把語氣放低，切割打包的刀聲靜得只剩空氣。' },
+      { type: 'cards', title: '花墟可見', items: [] },
+      { type: 'heading', text: '二、走到最後的客人' },
+      { type: 'paragraph', text: '那些來得遲的人，與來得早的人買的是不同的東西。早來的是給年夜飯「配」的；晚來的是給自己「留」的——這兩種人都不會和攤販討價還價到底。' },
+      { type: 'cards', title: '花墟可聽', items: [] },
+      { type: 'heading', text: '三、關攤前的那一刀' },
+      { type: 'paragraph', text: '關攤前最後而為的，是把「無所謂了」四個字說出來的空氣。這一切都被切得俐落——早上十點四十五分，花墟用它的清盤價，給旺角一個「終於可以收」的理由。' },
+      { type: 'cards', title: '花墟可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「旺角 花墟」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

@@ -46,7 +46,7 @@ test('the /hong-kong mega hub renders its identity, the fifty-three chapters, th
   const chapterCards = page.locator('a[href^="/guides/hk-"]');
   await expect(chapterCards.first()).toBeVisible();
   const count = await chapterCards.count();
-  expect(count).toBeGreaterThanOrEqual(70);
+  expect(count).toBeGreaterThanOrEqual(71);
 
   // Quiz teaser: links to /hk-type.
   const quizLink = page.locator('a[href="/hk-type"]').first();

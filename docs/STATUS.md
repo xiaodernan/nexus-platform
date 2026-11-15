@@ -44982,3 +44982,25 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** The seven-day trend is still synthetic replay — it is a *sense of rhythm* engine, labelled as such on the page (`synthetic replay only`). No tracking bytes are recorded; the operator looking at /insights sees his own *possible* readers. The slope and the advice are heuristics with the author signing off on their say-so, not statistical guarantees — the panel labels itself as judgement, not surveillance. `/world` atlas remains clock-partitioned, not sociological. LXX is 合成敘事 (the mid-harbour silence is dramaturgy, not maritime record); no real merchant, stall or person appears anywhere.
 
 - readers: `apps/web/src/lib/user-journeys.ts`, `apps/web/src/lib/user-journeys.test.ts`, `apps/web/app/insights/page.tsx`, `apps/web/app/world/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1213. D1213 — handbook REAL-HK IV （香港天文台， sourced） + chapter LXXI （旺角花墟， 10:45） — the morning block closes
+
+**Why.** §九 now has four sourced blocks — transit, sea transit, aviation and the civic instrument that still counts the city's wind (formed 2 March 1883, one of the oldest public institutions left standing). And the narrative arc needs its first quiet block of the morning: the walk-out, not the crowd. Both land here.
+
+**The units.**
+
+1. **handbook REAL-HK IV** — new `observatory` section (kicker `REAL-HK`) in both locales, after REAL-HK III. Source: Wikipedia — Hong Kong Observatory (https://en.wikipedia.org/wiki/Hong_Kong_Observatory, retrieved 2026-11-16; URL inline in both blocks):
+   - 1883-03-02 formed, by Sir George Bowen (Governor 9); William Doberck first director, 24 years (longest serving);
+   - 1912 Royal Charter renamed Royal Observatory; 1997 handover renamed Hong Kong Observatory;
+   - 1883 building at 134A Nathan Road — a declared monument of Hong Kong since 1984; 1983 Centenary Building now the HQ;
+   - staff 315 (March 2018) · annual budget ~HK$381.4M (2019–20);
+   - current director Chan Pak-wai from March 2023; previous Shun Chi-ming 2011–2020.
+   zh carries Traditional script with inline URL; en is the mirror. SSR-verified both locales (zh block inline in zh; zh lens absent in en arm — zero cross-leak).
+2. **Chapter LXXI** — `DEMO_GUIDES` gains `hk-mong-kok-flower-market-closeout-chronicle`, 「早上十點四十五分：旺角花墟——走花市的最後一站（香港系列 · 第七十一章）」. Traditional HK script, 合成敘事 framing, three heading cards （一、走尾的花墟 · 二、走到最後的客人 · 三、關攤前的那一刀）, 後記 + SearchBox pointer （「旺角 花墟」）. Arc clock gains 10:45 between 北漂作家（10:30）與報館放送（11:00）— **142 chips across both locales**; handbook reading order updated to seventy-one; chapter-icons gains `'hk-mong-kok-flower-market-closeout-chronicle': 'navigation'`; e2e floors ≥71; `/world` copy 70→71 everywhere; the seven-layer partition test now asserts **12+16+14+12+6+5+6 = 71**.
+3. **ATLAS fix** — D1212's reference `see user-journeys.ts` failed the `check_atlas` path census; corrected to `see apps/web/src/lib/user-journeys.ts`. `verify_all` NO OFFENDER now stands restored.
+
+**Verification (host).** `tsc` clean · web **389/389** · census 0 simplified / **2,121** literals · console-i18n 0 offenders · `check_atlas` PASS (384 cited paths) · `verify_all` NO OFFENDER · mock build compiled 59s · SSR curls both locales: `/handbook` shows its own Observatory block; `/world` returns **71 distinct guide links in each arm**; `/guides/hk-mong-kok-flower-market-closeout-chronicle` renders; `/hong-kong` carries the chip and link.
+
+**Honest boundaries.** The Observatory figures are Wikipedia-snapshot figures (retrieved 2026-11-16) — staff count and budget frozen at the last public reporting round the article quotes (2018/2019–20), the article says growing pains change them; the handbook says numbers drift and gives the reader the inline URL. The chapter is 合成敘事：the 通菜街花墟 ground is named (like other real venues in the series), everything happening between the stalls, every person doing it, and the wholesale price motions — all synthetic. First director name `Doberck` spelled faithfully as sources render it. "declared monument of Hong Kong since 1984" — double-checked against the article: "The building is a declared monument of Hong Kong since 1984". No derivation happened that the article does not support.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

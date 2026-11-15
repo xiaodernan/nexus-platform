@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1212",
-  "milestone_full": "第七十章 · 天星小輪——維港中間那三分鐘（09:45）· /insights 七天趨勢面板 · 世界地圖切到 70 章",
+  "milestone": "D1213",
+  "milestone_full": "說明書 REAL-HK IV（香港天文台）· 第七十一章 · 旺角花墟——走花市的最後一站（10:45）· 世界地圖切到 71 章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: seventy Traditional chapters — 00:00→23:00 full day arc · 140-chip clock both locales",
-    "Edition LXX — 早上九點四十五分：天星小輪——維港中間那三分鐘 (09:45) · the harbour arc's second beat — the ferry sails to mid-harbour and stops talking",
-    "D1212 — /insights seven-day trend panel: OLS slope over the last 7 HK-dated replays (rising / cooling / flat), per-day drop-off, weekday cells, deterministic and bilingual",
-    "handbook REAL-HK I/II/III — MTR 245.3 km ~5.76M daily · Star Ferry (1888 · ~70k/day · ~26M/year) · HKIA (1998-07-06 · 2025 60.992M pax · 5.07M t) — every figure source-URL'd on the page",
-    "/world atlas reads 70 chips (12+16+13+12+6+5+6 asserted) · D1209 pressure re-run all 128-request routes 2xx · D1207 one-click zh ↔ en everywhere",
-    "D1206 — /insights 營運掃描 deterministic ghost-reader replay · /hong-kong (70 chapters) · /stamp passport · /handbook · /hk-type quiz · /command 123 · /daily",
-    "D1212: LXX + weekly trend · D1211: LXIX · D1210: /world · D1209: LXVIII + REAL-HK II · REAL-HK III HKIA · D1208: LXVII"
+    "HK series: seventy-one Traditional chapters — 00:00→23:00 full day arc · 142-chip clock both locales",
+    "Edition LXXI — 早上十點四十五分：旺角花墟——走花市的最後一站 (10:45) · the flower-market walk-out closes the morning block",
+    "handbook REAL-HK IV — 香港天文台 sourced: formed 1883-03-02 (Sir George Bowen) · Doberck first director 24y · 1912 Royal Charter · 1883 building a Hong Kong declared monument (1984) · 315 staff (2018) · ~HK$381.4M budget (2019–20) · current director Chan Pak-wai — Wikipedia, retrieved 2026-11-16 (inline URL in both locales)",
+    "handbook REAL-HK I/II/III — MTR (~5.76M daily, 245.3 km) · Star Ferry (1888 · ~70k/day · ~26M/yr) · HKIA (1998-07-06 · 2025 60.992M pax · 5.07M t) — every figure source-URL'd on the page",
+    "D1212 — /insights seven-day trend panel (OLS slope rising/cooling/flat) · D1210 — /world atlas · D1207 — one-click zh ↔ en everywhere · D1206 — /insights ghost-reader replay",
+    "/hong-kong (71 chapters) · /world (71 chips) · /stamp passport · /handbook (4 REAL-HK blocks) · /hk-type quiz · /command 123 · /daily · /insights",
+    "D1213: LXXI + REAL-HK IV · D1212: LXX + weekly trend · D1211: LXIX + REAL-HK III · D1210: /world · D1209: LXVIII + REAL-HK II · D1208: LXVII"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
