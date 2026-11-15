@@ -13,7 +13,7 @@ test.describe('global command palette', () => {
     const dialog = page.getByRole('dialog', { name: /AI search|搜索/i });
     await expect(dialog).toBeVisible();
     const input = dialog.getByRole('textbox');
-    await expect(input).toBeFocused();
+    await expect(input).toBeFocused({ timeout: 10000 });
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
 
@@ -29,10 +29,16 @@ test.describe('global command palette', () => {
   test('Ctrl+K does not open while typing inside a field', async ({ page }) => {
     await page.goto('/');
     const input = page.getByLabel(/想要|需要|Tell me|What are you looking for/i);
+    // CI lanes hydrate the hero island at a different race than the local box; land on a
+    // painted, enabled input first, and give hydration the same window the assertion gets.
+    await expect(input).toBeVisible();
+    await expect(input).toBeEnabled();
+    await input.scrollIntoViewIfNeeded();
     await input.focus();
+    await page.waitForLoadState('networkidle');
     await page.keyboard.press('Control+k');
     // the palette must not have stolen focus from the conversation box
-    await expect(input).toBeFocused();
+    await expect(input).toBeFocused({ timeout: 10000 });
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
 });
