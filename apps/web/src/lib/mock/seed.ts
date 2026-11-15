@@ -1919,4 +1919,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-taipo-wholesale-market-chronicle', title: '凌晨五點四十五分：大埔墟農產品批發市場（香港系列 · 第五十七章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：凌晨五點四十五分的大埔墟農產品批發市場——菜籃子在天光前裝滿整個城市的胃，香港最早聽見市場的城市邊緣。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨五點四十五分。大埔墟農產品批發市場（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——卡車已經在東閘口排隊三條街。市場的燈亮了，菜籃子一筐筐被搬進市場，肥大的體魄從肩膀到腳跟。' },
+      { type: 'heading', text: '一、東閘口的第一排卡車' },
+      { type: 'paragraph', text: '凌晨五點，從新界東部開來的第一排卡車報數。市場經理的女兒婷婷（合成敘事，非真實人物）站在閘口，對每台卡車的報關單蓋一個章——每個賭注都是買家的早飯。她不說一句話；只要說一聲『今天夠數』，整個市場就進入第二回合。' },
+      { type: 'cards', title: '大埔墟東閘可見', items: [] },
+      { type: 'heading', text: '二、秤上的算術' },
+      { type: 'paragraph', text: '李大伯（合成敘事，非真實人物）是市場裡的一個老秤手。他不先看蔬菜的葉子，只看秤上的數字。他說，葉子是給買家看的，數字是給大地看的，兩個都要誠實——缺一斤補一斤，多一斤也不行，『市場不賒刀刃』。' },
+      { type: 'cards', title: '大埔墟可聽', items: [] },
+      { type: 'heading', text: '三、六點整的開閘' },
+      { type: 'paragraph', text: '六點整，正式開市。蔬菜商、食店老闆、酒店廚房，一條條問到箱子裡。婷婷今天賣掉什麼？全場兩台最早出的菜心——被一家東涌酒店的廚師搶了。她沒有笑；她把一張票根遞到卡車司機的手裡：『下一趟，五點四十五分，準時。』' },
+      { type: 'cards', title: '大埔墟可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「大埔墟 批發市場」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

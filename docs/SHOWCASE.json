@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1193",
-  "milestone_full": "本機高壓實測：32 人並發 × 五頁全數 ALL GREEN；`/` 首頁 mock rails memo 後 p50 2.6s→1.7s（-35%）· p99 3.3s→2.3s",
+  "milestone": "D1194",
+  "milestone_full": "香港系列第五十七章 · 凌晨五點四十五分：大埔墟農產品批發市場 · Layer G 批發黎明 · 真實錨點 + 合成肌肉",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: fifty-six Traditional chapters — 00:30→22:45 full day arc · 112-chip clock both locales",
-    "Edition LVI — 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 (20:30) · Layer G continues",
-    "D1193: mock rails memoised — 32-concurrency pressure all-green; / SSR p50 2.63→1.71 s, p99 3.32→2.26 s (rails lattice clone)",
-    "Spring Cloud sidecar re-ported to free ports (24761/24889/24089/25445) — gates green incl. CI",
-    "D1192: handbook REAL-HK strip — MTR figures sourced & dated · D1190: zh eyebrow tracking collapse · D1189: truncation discipline",
-    "D1184: wheel bridge · D1183: /command demo console (123) · D1187: LVI · D1185: LIV · D1186: LV",
-    "/stamp passport game · /try walkthrough · /hong-kong · /daily ritual · /handbook · /hk-type"
+    "HK series: fifty-seven Traditional chapters — 00:30→22:45 full day arc · 114-chip clock both locales",
+    "Edition LVII — 凌晨五點四十五分：大埔墟農產品批發市場 (05:45) · Layer G the wholesale dawn",
+    "Layer G full tract: LVII 大埔墟批發黎明 · LVI 油麻地粵劇散場 · LV 落馬洲 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖行李手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
+    "D1193: mock rails memoised — 32-concurrency, all-green pressure run; / SSR p50 2.63→1.71 s",
+    "D1192: handbook REAL-HK — MTR figures sourced & dated · D1191: cloud re-port (24761/24889/24089/25445)",
+    "/command demo operator desk · /stamp passport · /hong-kong daily · /handbook · /daily ritual · /try",
+    "D1194: chapter LVII · D1193: memo + pressure · D1192: real MTR figures in handbook · D1191: cloud re-port · D1190/D1189: typography discipline"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

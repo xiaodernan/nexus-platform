@@ -44744,3 +44744,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 只在本機 mock 面上跑；不在 CI；實時平台走 platform/live demo 而不是 mock，壓力數字是給「首頁時段」做 sıgnal 的不是給 SLA 的。`/` 仍不快因為 dynamic SSR 有兩個根，但 cache 結果說明了一個可免費優化：**SSR 客戶端不重算 crops。** 下一項：platform 端 Edgerate/libraria 的 redis 反射。`mockHomeRails` 的 clone 對消費者 mutation 防守充足。
 
 - readers: `apps/web/src/lib/mock/index.ts`, this ledger entry.
+
+## 1194. D1194 — chapter LVII lands the 05:45 slot: 凌晨五點四十五分：大埔墟農產品批發市場
+
+**Why.** Layer G（東西兩岸）繼續拓殖，這一次來到新界東部的批發糧倉。凌晨五點四十五分，大埔墟市場是整個城市還沒睡醒就要生火的爐子。菜籃子裝進整個香港的早餐，天光前送到每一間茶餐廳、燒臘鋪、學校飯堂。以前沒有這一章對著香港人問自己『今天那一碗菜從哪裡來』。
+
+**The unit.** `DEMO_GUIDES` gains `hk-taipo-wholesale-market-chronicle` — 「凌晨五點四十五分：大埔墟農產品批發市場（香港系列 · 第五十七章）」。Three heading cards（一、東閘口的第一排卡車 · 二、秤上的算術 · 三、六點整的開閘），Traditional HK script，合成敘事示例 framing, 後記 + SearchBox pointer（「大埔墟 批發市場」）。Both locales carry the chapter; the arc clock gains 05:45 between the three-meals pick and the cha chaan teng (114 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-seven on both locales; chapter-icons gains `'hk-taipo-wholesale-market-chronicle': 'map'`; e2e floors ≥57; census 1913 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 8s and the chapter renders end-to-end via /guides/hk-taipo-wholesale-market-chronicle clean.
+
+**Honest boundaries.** 合成敘事：大埔墟農產品批發市場、婷婷、李大伯、秤上的算術——全部是敘事建構，不指向真實市場主管、真實糧商或真實關閘資料；搜索「大埔墟 批發市場」演示的是演示流的路徑。以真實錨點（大埔墟農產品批發市場是香港的真實機構）為骨，以合成人物與敘事為肉。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
