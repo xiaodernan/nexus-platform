@@ -110,6 +110,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1213: the seventy-first HK chapter (hk-mong-kok-flower-market-closeout-chronicle, 早上十點四十五分・旺角花墟——走花市的最後一站) — 10:45, the flower-market walk-out |
 | `apps/web/src/lib/mock/seed.ts` | D1214: the seventy-second HK chapter (hk-central-tram-ding-ding-chronicle, 早上十一點一刻・中環電車——老何的叮叮慢拍) — 11:15, the Tram arc opener |
 | `apps/web/src/lib/mock/seed.ts` | D1215: the seventy-third HK chapter (hk-wing-lei-street-analog-chronicle, 中午十一時四十五分・中環永利街——黃生的膠片修補室) — 11:45, the film-repair room |
+| `apps/web/src/lib/mock/seed.ts` | D1216: the seventy-fourth HK chapter (hk-central-mandarin-oriental-chef-chronicle, 中午十二時一刻・中環——文華東方酒店——陳總廚的飯盒時光) — 12:15, the Executive Chef's lunch-box hour |
 | `apps/web/app/world/page.tsx` | D1211: world atlas now reads 69 chips — the atlas partition test asserts 12+16+12+12+6+5+6 = 69, counts updated |
 | `apps/web/src/lib/world-atlas.test.ts` | D1210: 4 arms — SSR-no-island pin, partition totals (12+16+11+12+6+5+6 = 68), layer codes both locales, footer link |
 | `apps/web/src/components/command-console.tsx` | D1183: the passphrase-123 island — five panels (counters / top phrases / chapter heat / retention / next moves), all baked-in fixtures, disclaimed onscreen |

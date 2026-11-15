@@ -2276,4 +2276,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-central-mandarin-oriental-chef-chronicle', title: '中午十二時一刻：中環——文華東方酒店——陳總廚的飯盒時光（香港系列 · 第七十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：中午十二時一刻的文華東方酒店——一位行政總廚在午後最忙的時候離開崗位，只為吃一頓自己帶的飯盒。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十二時一刻。中環文華東方酒店（合成敘事地點，非真實故事——場景與人物全部是敘事建構）——行政總廚陳業之（合成敘事人物）把圍裙脫下來，吃飯時間到了。' },
+      { type: 'heading', text: '一、脫圍裙的時機' },
+      { type: 'paragraph', text: '午後十二時一刻，另外兩層廚房裡——人聲鼎沸——陳總廚這個時段放下圍裙：「總廚什麼時候吃飯——不看客人的，看鐘。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '文華東方可見', items: [] },
+      { type: 'heading', text: '二、自己帶的飯盒' },
+      { type: 'paragraph', text: '陳總廚的飯盒起碼放著兩種鹹菜和一條辣鯪魚——這是他童年時代母親叫人做的。這一頓飯比任何晚宴都體面，比任何菜單都正統。' },
+      { type: 'cards', title: '文華東方可聽', items: [] },
+      { type: 'heading', text: '三、這頓飯不在菜譜上' },
+      { type: 'paragraph', text: '陳總廚的飯盒菜廚房都知道，但沒有人敢叫它——它不在任何一份菜單上，不給任何客人，也不能隨便丟掉。這是他留給自己的：母親說的話、童年的歲月，全在這一個飯盒裡面。' },
+      { type: 'cards', title: '文華東方可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「文華東方」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

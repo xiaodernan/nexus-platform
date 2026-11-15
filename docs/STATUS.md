@@ -45073,3 +45073,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **The fix.** `dict.ts` line: 午后 → 午後. Local re-run: `falsify_ui_script` **PASS 30/30 arms**; census 0 simplified / **2,143 literals**; web **389/389**; `verify_all` NO OFFENDER. The lesson now lives beside D1208/D1210: keep `后/午后/前后/晚后` out of every zh literal; always use `後`. The mandate-showcased booklet is the user-facing write-up; the arm reddens on a single character — the machine cannot read intent.
 
 **Honest boundaries.** Nothing else in the D1215 changes was implicated (e2e still green, lint-type green, security green; only the script-census falsify arm reddened). The reader then and now reddens on the same class: every zh character that this project writes, must survive "the arm where the tables are taught a pair at a time." The literal string is never the problem in intent; the problem is the latent mismatch between Traditional vocabulary and Simplified parity tables.
+
+## 1216. D1216 — chapter LXXIV （文華東方酒店陳總廚， 12:15） — the lunch hour this city writes on itself
+
+**Why.** The series needed one more ordinary minute inside a very expensive hotel — the one where, at quarter past noon, the busy crew does not eat. The head chef does. Every city in this series is the same city: the one under these walls.
+
+**The unit.** `DEMO_GUIDES` gains `hk-central-mandarin-oriental-chef-chronicle`, 「中午十二時一刻：中環——文華東方酒店——陳總廚的飯盒時光（香港系列 · 第七十四章）」。 Traditional HK script; 合成敘事 framing; three heading cards （一、脫圍裙的時機 · 二、自己帶的飯盒 · 三、這頓飯不在菜譜上）, 後記 + SearchBox pointer （「文華東方」）. Arc clock gains 12:15 between 燒味（12:00）與東涌（12:30）— **148 chips across both locales**; handbook reading order updated; `chapter-icons` gains `'hk-central-mandarin-oriental-chef-chronicle': 'navigation'`; e2e floors ≥74; `/world` copy 73→74; partition test asserts **12+16+16+13+6+5+6 = 74**.
+
+**Verification (host).** `tsc` clean · web **389/389** · census 0 simplified / **2,152** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30 PASS** · `verify_all` NO OFFENDER · mock build compiled 16.9s · SSR curls both locales: `/world` returns **74 distinct guide links in each arm**, `/hong-kong` carries the chip and 第七十四章, chapter page and name everywhere limited to 合成敘事 wording.
+
+**Honest boundaries.** The 文華東方酒店 is the real Central hotel's public name; every person in the chapter —陳總廚， his mother's salted radish minced pork belly lunchbox, the unlisted menu — is synthetic construction. The venue is named as a landmark, not as an endorser; the Hotel has not been told, the story would not survive contact with reality, and would not need to. The chapter's private lunchbox is fiction even for the fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
