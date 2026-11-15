@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1168",
-  "milestone_full": "教學列嵌入產品 · 94 滑動快門時鐘 · 全 locale title 覆蓋",
+  "milestone": "D1169",
+  "milestone_full": "單框合併：併發同字節 zero 調用大模型 · 全鏈路降本",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "Teaching layer inside the chrome: every main CTA (search / guides / collections / handbook / me / daily / hk-type / hong-kong / quiz / searchCta) carries a native title tooltip — bilingual, one breath each",
-    "The 94-chip arc clock no longer squeezes: horizontal snap-scroll filmstrip with fixed-width chapter plates and line-clamp-2 names",
-    "Layer G opens: XLVI 羅湖站的雙向貨幣 (14:30) · XLVII 皇崗口岸的員工餐廳 (19:15) · XLVIII next — 96 clock chips both locales",
-    "D1165: the stampede — 2000 requests @128 in flight vs one shared Redis token bucket; per-store admit accounting closed; falsifier arm sharp",
-    "D1163: Roman chapter badges · D1160: prefix/probe measured; replay cache whitespace-folded",
-    "D1150: manual inside chrome · D1142: LangGraph engine · D1140: Redis shared token bucket · census 1703 clean"
+    "D1169: singleflight coalescing — N concurrent identical temp-0 calls ride ONE provider call, the coalescers bill replay rows; opt-out NEXUS_LLM_INFLIGHT_COALESCE=0",
+    "D1168: teaching layer inside the chrome — every main CTA carries a bilingual native title tooltip",
+    "D1167: XLVII 皇崗口岸的員工餐廳 (19:15) · D1166: XLVI 羅湖站的雙向貨幣 (14:30) · D1165: the stampede",
+    "D1160: wkapi.pro measured — only whole-request caching; replay cache whitespace-folded; probe weekly Tuesday",
+    "D1163: chapter cards wear print-annual Roman numerals · D1150: manual inside chrome · D1142: LangGraph engine",
+    "Multi-branch worktree merge-verified — single master, no stray trees; census 1703 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

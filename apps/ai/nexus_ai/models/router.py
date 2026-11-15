@@ -28,6 +28,10 @@ class RoutedCall:
     response: LLMResponse
     task_class: str
     fallback_from: str | None = None
+    #: D1169 — True when this route was answered by the inflight coalescer instead of a
+    #: provider/fallback call. The meter bills the real caller once (tokens as usual);
+    #: the waiters' rows carry cache_hit=True and zero tokens, honest replay economics.
+    coalesced: bool = False
 
     def as_llm_call_row(self, agent_run_id: Any = None) -> dict[str, Any]:
         r = self.response
@@ -107,12 +111,14 @@ class ModelRouter:
     # round trip entirely. Any failure degrades to the normal chain (§105).
 
     def __init__(self, adapters: list[LLMAdapter], *, max_llm_calls: int = 3,
-                 tier_override: dict[str, str] | None = None):
+                 tier_override: dict[str, str] | None = None, coalescer=None):
         if not adapters:
             raise ValueError("ModelRouter needs at least one adapter")
         self.adapters = adapters
         self.max_llm_calls = max_llm_calls
         self.tier_override = tier_override or {}
+        from nexus_ai.models.inflight import InflightCoalescer
+        self.coalescer = coalescer if coalescer is not None else InflightCoalescer()
 
     @property
     def primary(self) -> LLMAdapter:
@@ -148,30 +154,65 @@ class ModelRouter:
             meter.records.append(routed)
             return routed
 
-        last_err: LLMError | None = None
-        for idx, adapter in enumerate(self.adapters):
-            try:
-                resp = await adapter.complete(req)
-            except LLMError as exc:
-                last_err = exc
-                continue
-            except Exception as exc:  # adapter bug must not kill the request (§105)
-                last_err = LLMError(f"{adapter.name} crashed: {exc}", provider=adapter.name,
-                                    retryable=True)
-                continue
-            try:
-                from nexus_ai.api.llm_response_cache import llm_cache_set
+        async def _chain():
+            last_err: LLMError | None = None
+            for idx, adapter in enumerate(self.adapters):
+                try:
+                    resp = await adapter.complete(req)
+                except LLMError as exc:
+                    last_err = exc
+                    continue
+                except Exception as exc:  # adapter bug must not kill the request (§105)
+                    last_err = LLMError(f"{adapter.name} crashed: {exc}", provider=adapter.name,
+                                        retryable=True)
+                    continue
+                try:
+                    from nexus_ai.api.llm_response_cache import llm_cache_set
 
-                llm_cache_set(req, chain, resp)
-            except Exception:
-                pass  # replay storage is best-effort
+                    llm_cache_set(req, chain, resp)
+                except Exception:
+                    pass  # replay storage is best-effort
+                return resp, idx
+            # exhausted the chain: the caller's next rung is deterministic search (§105)
+            raise last_err or LLMError("no adapter available", provider="none")
+
+        # D1169 — singleflight coalescing: N concurrent identical byte-calls share one
+        # provider call. Excluded: temperature != 0 (nondeterministic) and reason rows.
+        import dataclasses
+
+        from nexus_ai.models.inflight import chain_key, enabled as _coalescible
+
+        coalesce_ok = _coalescible() and float(req.temperature or 0.0) == 0.0 and req.task_class != "reason"
+        if coalesce_ok:
+            (resp_and_idx, coalesced) = await self.coalescer.run(chain_key(req, chain), _chain)
+            resp, idx = resp_and_idx
+            if coalesced:
+                # the waiter rides the winner's call: same text, zero tokens, zero cost
+                zero = dataclasses.replace(resp, prompt_tokens=0, completion_tokens=0,
+                                           cost_usd=0.0, latency_ms=resp.latency_ms,
+                                           cache_hit=True, cached_tokens=0,
+                                           cache_reported=False)
+                if meter is not None:
+                    meter.add(zero)
+                    routed = RoutedCall(response=zero, task_class=req.task_class,
+                                        fallback_from=None, coalesced=True)
+                    meter.records.append(routed)
+                return routed
+            # falling straight to the shared tail with the winner's real call
             if meter is not None:
                 meter.add(resp)
             routed = RoutedCall(response=resp, task_class=req.task_class,
-                                fallback_from=self.adapters[0].name if idx else None)
-            # D437: the meter keeps the call itself, so the recorder can write the
-            # `llm_calls` row the cost ledger is made of.
+                                fallback_from=self.adapters[0].name if idx else None,
+                                coalesced=False)
             meter.records.append(routed)
             return routed
-        # exhausted the chain: the caller's next rung is deterministic search (§105)
-        raise last_err or LLMError("no adapter available", provider="none")
+
+        resp, idx = await _chain()
+        if meter is not None:
+            meter.add(resp)
+        routed = RoutedCall(response=resp, task_class=req.task_class,
+                            fallback_from=self.adapters[0].name if idx else None)
+        # D437: the meter keeps the call itself, so the recorder can write the
+        # `llm_calls` row the cost ledger is made of.
+        meter.records.append(routed)
+        return routed

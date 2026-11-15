@@ -118,6 +118,15 @@ shape of the proxy's behaviour:
 never modified) so intents differing only in copy-paste whitespace replay against the same entry. Two pins in
 `tests/test_llm_response_cache.py`.
 
+**D1169 (2026-11-15).** `apps/ai/nexus_ai/models/inflight.py` adds a **singleflight coalescer** to `ModelRouter`:
+N concurrent byte-identical temperature-0 calls for the same chain land on exactly **one** provider call — the first
+caller becomes the winner, the rest ride the winner's answer with a zero-metered replay-shaped row
+(`cache_hit=True`, zero tokens, `coalesced=True` on the RoutedCall). The provider-side replay cache (D1047/D1160)
+collapses sequential duplicates; this collapses concurrent ones. Four pins in `tests/test_inflight_coalesced.py`
+(concurrent-identical → provider called once; temperature-gate; byte-difference splits the cell;
+`NEXUS_LLM_INFLIGHT_COALESCE=0` opts back to the pre-D1169 path). `reason` task class excluded like D1047.
+Default ON; the env reverts the whole route to the pre-D1169 behaviour.
+
 ## 6. Evaluation gate (§71–§73, [`AGENT_CONTRACT.md`](AGENT_CONTRACT.md) §11)
 
 `suites` — **shipped and CI-gated now**: `intent_v1` (69 cases), `rag_faithfulness_v1` (25 cases, ≤2% hallucination

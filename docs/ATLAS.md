@@ -177,6 +177,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/components/scroll-progress.tsx` | D1048: the reading-progress hairline — `use client` island, passive listeners, `transform: scaleX` only, SSR `scaleX(0)`, aria-hidden, reduced-motion-safe by construction |
 | `apps/web/src/lib/scroll-progress.test.ts` | D1048: five structural pins — island placement, transform-only paint, passive listeners, aria-hidden SSR zero-width, token-gradient/pointer-events/reduced-motion CSS contract |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1160: cached key material is whitespace-folded (payload strings recursively; ends trimmed; request untouched) — the exact-intent replay hit rate stops depending on copy-paste whitespace |
+| `apps/ai/nexus_ai/models/inflight.py` | D1169: singleflight coalescer for temp-0 identical concurrent calls — one provider call per in-flight window, N zero-metered replay-shaped rows for every other waiter |
 | `apps/ai/nexus_ai/api/llm_response_cache.py` | D1047: opt-in Redis replay cache — byte-identical temperature-0 requests, sha256 over canonicalised request + adapter chain, zero-token replay with cache_hit=True; live-verified against wkapi.pro + local Redis |
 | `apps/ai/tests/test_llm_response_cache.py` | D1047: 8 offline arms pin gates (env/temperature/reason/chain/failure degradation) + router replay round trip |
 | `apps/ai/nexus_ai/models/router.py` | D1047: `ModelRouter.run` consults the replay before the adapter chain; replay consumes a budget slot at zero tokens; store is best-effort |

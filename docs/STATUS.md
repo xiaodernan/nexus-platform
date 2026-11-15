@@ -44458,3 +44458,26 @@ TypeScript: `tsc --noEmit` clean; web 350/350; census 1703 literals (0 simplifie
 **Honest boundaries.** `title` tooltips are the platform-standard teaching affordance (keyboard accessible via focus ring, screen readers read the same string via `aria-label` where set); they are deliberately NOT a tour engine — the full new-user walkthrough remains `/handbook` (D1150) and the daily starter is `/daily` (D1144). Over-title everything is failure mode; curation over completeness. No locale-hint drift (zh strings verified census-clean as zh-HK Traditional).
 
 - readers: `apps/web/src/components/site-chrome.tsx`, `apps/web/src/components/hk-arc-timeline.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/hong-kong/page.tsx`, this ledger entry.
+
+## 1169. D1169 — singleflight coalescing: concurrent identical temp-0 calls ride ONE provider call
+
+**Why.** The replay cache (D1047) collapses *sequential* duplicates; the concurrent case is untouched — N identical
+calls launched in the same window each hit the provider and each pay full price. Under a hot tenant or a
+marketing-link burst, this is the dominant cost shape, invisible in the ledger because nobody measured it.
+
+**The unit.** New module `apps/ai/nexus_ai/models/inflight.py` — `InflightCoalescer`, one pending cell per
+(chain, task_class, system, user_text, json_hint), sha256 of the same canonical fold the replay key uses.
+`ModelRouter.run()` takes it from the replay check (already temp-0-gated) and wraps the fallback chain in one coroutine;
+the first caller in a window awaits it as the winner, every other caller awaits the same future, then is served a
+zero-metered replay-shaped row (`prompt_tokens=0, completion_tokens=0, cost_usd=0.0, cache_hit=True, coalesced=True`).
+`RoutedCall` gains `coalesced: bool = False` (harmless extra key in `as_llm_call_row` — the INSERT ignores it).
+Opt-out via `NEXUS_LLM_INFLIGHT_COALESCE=0` restores the exact pre-D1169 path. Tests: four pins in
+`tests/test_inflight_coalesced.py` (concurrent-identical → provider called once; temperature≠0 bypass;
+byte-difference splits cells; opt-out is the pre-D1169 path exactly). Full offline AI suite: **37,809 pass / 499 skipped
+/ zero failures.**
+
+**Honest boundaries.** Process-local — two processes both holding a cell each still hit the provider (Redis replay
+cache is the cross-process arm). No ordering guarantee. The winner's answer is the waiters' answer — that is the
+point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, `reason`) never coalesce.
+
+- readers: `apps/ai/nexus_ai/models/inflight.py`, `apps/ai/nexus_ai/models/router.py`, `apps/ai/tests/test_inflight_coalesced.py`, `docs/AI.md`, `docs/ATLAS.md`, this ledger entry.
