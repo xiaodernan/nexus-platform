@@ -2473,12 +2473,13 @@ const zhHK: Dict = {
         '不接入任何分析 pixel、不載入第三方廣告；AI 草拟的東西會明文標註「由 AI 草拟／未有人審」。',
         '僅本地儲存：章節進度、已讀計數存在瀏覽器；清一清 localStorage 就回到零。',
       ] },
-      { id: 'faq', kicker: 'FAQ', title: '9 · 常見問題，三條最實用', paragraphs: [
-        '你衝過來只想知道一兩件事的話，先看這三條：',
+      { id: 'faq', kicker: 'FAQ', title: '9 · 常見問題，四條最實用', paragraphs: [
+        '你衝過來只想知道一兩件事的話，先看這四條：',
       ], bullets: [
         '「為什麼我打不到東京的結果？」示例數據集僅有香港樣本；將來會拓更多城市。',
         '「商戶的價錢是真的嗎？」mock 模式是虛構；live 模式才有實時價錢。',
         '「還有第十一章嗎？」這個系列永遠有下一章；發佈進度寫進 STATUS.md（開發者賬本），跟進系列節奏就來 /hong-kong 看板更新。',
+        '「滑鼠滾輪是不是做反了？」不是。頁面沒有平滑滾動、也沒有顛倒滾動軸——往上滑＝看上文、往下滑＝看下文，方向由你的作業系統決定。Windows 在「設定 → 藍牙和裝置 → 滑鼠」改滾輪方向；Mac 在「系統設定 → 觸控式軌跡板／滑鼠」關掉「自然捲動」。想橫向捲動章節橫條？按住 Shift 再滾輪；桌面滑鼠在任何橫條上往下滾，也會自動橫向前進。',
       ] },
     ],
     nextTitle: '想要更多？',
@@ -3948,12 +3949,13 @@ const en: Dict = {
         'No analytics pixels, no advertising trackers; AI-drafted copy is flagged as "AI-drafted, unedited".',
         'localStorage only: reading progress and inbox counters live in your browser; wipe it, start over.',
       ] },
-      { id: 'faq', kicker: 'FAQ', title: '9 · The three questions everyone asks', paragraphs: [
-        'If you stuck around for three lines, here they are:',
+      { id: 'faq', kicker: 'FAQ', title: '9 · The four questions everyone asks', paragraphs: [
+        'If you stuck around, here they all are:',
       ], bullets: [
         '"Why no Tokyo?" The fixture set holds Hong Kong; other cities are future expansion.',
         '"Is the price real?" In mock mode it is imaginary; in live mode the platform only shows what it has checked.',
         '"Is a twentieth chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
+        '"Is my mouse wheel inverted?" No. The page has no scroll smoothing and no reversed wheel axis — wheel up looks up, wheel down looks down, exactly as your operating system decides. Windows: Settings → Bluetooth & devices → Mouse to flip the wheel direction; macOS: System Settings → Trackpad/Mouse to switch Natural scrolling off. Want to scroll a chapter strip sideways? Hold Shift and wheel — or just wheel down over any rail: desktop mouse wheels now bridge into the strip automatically.',
       ] },
     ],
     nextTitle: 'Want more?',

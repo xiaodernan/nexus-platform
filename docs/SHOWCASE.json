@@ -1,7 +1,7 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1183",
-  "milestone_full": "港灣指揮中心 /command · 密碼 123 解鎖的演示後台——過去兩星期的合成數據儀表（關鍵數字／熱門關鍵詞／章節熱度／回頭 proxy／下一步行動）",
+  "milestone": "D1184",
+  "milestone_full": "滾動與滑鼠 · 橫向章節橫條接入細指標滚輪橋——桌面滾輪直接橫向推進、兩端即時放行、軸向正負號永遠屬於作業系統；說明書補滾動 FAQ",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
@@ -9,9 +9,10 @@
     "HK series: fifty-three Traditional chapters — 00:30→22:45 full day arc · 106-chip clock both locales",
     "Edition LIII — 安樹堂的開診時間 (08:00) · Layer G continues",
     "Layer G full tract: LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
+    "D1184: fine-pointer wheel bridge — desktop wheel advances every horizontal rail & the arc clock; ends release to the page; the OS keeps the axis sign",
     "/command — demo operator desk, unlock with 123: six counters · top phrases · chapter heat · retention proxy · next moves. Synthetic-only, badged on screen",
     "/stamp passport game · /try five-step walkthrough · /hong-kong continue-CTA · /daily ritual · /handbook · /hk-type",
-    "D1183: /command demo console · D1182: LIII 安樹堂 · D1181: 章節標誌 glyphs · D1180: LII 九龍灣製衣廠 · D1178: 今日編框 · D1177: 護照集印"
+    "D1184: wheel bridge + 說明書滾動 FAQ · D1183: /command demo console · D1182: LIII 安樹堂 · D1181: 章節標誌 glyphs · D1178: 今日編框"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

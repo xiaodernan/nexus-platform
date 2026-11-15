@@ -6,6 +6,7 @@ import { cx } from '../utils';
 import { Icon } from '../icons/Icon';
 import { CardMedia, DemoBadge, DistanceBadge, MatchExplanations, OpenBadge, PriceTag, RatingStars, SponsoredBadge, AvailabilityBadge, type TrustLabels } from './Renderers';
 import { cardKeys } from './cardKeys';
+import { attachRailWheelBridge } from './wheel-bridge';
 import type { CardAction, EntityCard as EntityCardModel } from './types';
 
 /**
@@ -222,11 +223,13 @@ export function EntityRail({
     const el = railRef.current;
     if (!el) return;
     el.addEventListener('scroll', measure, { passive: true });
+    const detachWheel = attachRailWheelBridge(el);
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : undefined;
     ro?.observe(el);
     window.addEventListener('resize', measure);
     return () => {
       el.removeEventListener('scroll', measure);
+      detachWheel();
       ro?.disconnect();
       window.removeEventListener('resize', measure);
     };

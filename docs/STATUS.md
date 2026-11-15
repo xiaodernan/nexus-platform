@@ -44622,3 +44622,17 @@ Dict 擴 `cmdConsole`（zh-HK Traditional + en 雙語鎖步；UI census 1867 lit
 **Honest boundaries.** 這是一個 literacy tool，不是 security boundary。任何知道 `123` 的訪客都能解鎖——這是設計目標；數據全是合成 fixtures，無任何真實用戶／商家／訂單資訊、無遙測、無後端契約。它沒有進入 `/admin` 的 §68 gate，也不冒充 production telemetry。兩類鎖並存：真後台要 identity，演示後台要「隨手可看」。
 
 - readers: `apps/web/app/command/page.tsx`, `apps/web/src/components/command-console.tsx`, `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1184. D1184 — 滾動與滑鼠:horizontal strips gain a wheel bridge; the OS keeps the sign
+
+**Why.** 用戶以最後通牒措辭投訴：「鼠標引擎好像做反了……往上滑是往下看、往下滑是往上看，搞反了……一定要修復，很影響用戶體驗。」——這是連續第二次（第一次 D1131 移除全局 `scroll-behavior: smooth`，判定「代碼從來沒有顛倒 wheel handler」）。我把整個倉庫再查了一遍：**不存在任何 `wheel` 監聽器、`scaleY(-1)`、`direction: rtl`、`scrollbar-sideways` 或 body 級 scroll lock（除 command-palette 正確的 restore-previous）**——頁面本身對軸的正負號從未干涉過。兩個真正成立的缺口分別是：(1) 桌面滑鼠對橫向 snap 橫條的 wheel 完全不響應（瀏覽器原生只給橫向 overflow 留給觸控板／Shift+wheel／軌道按鈕），用戶手感就是「滾輪失靈／反了」；(2) 用戶把「自然捲動」當成頁面缺陷——沒有任何網頁可以替用戶改 OS 層的軸向。所以：代碼側修能修的，文檔側說清不能改的。
+
+**The unit.** 新共享原語 `packages/ui/src/trust/wheel-bridge.ts` — `decideWheelBridge(metrics, deltaX, deltaY)` 纯函數 + `attachRailWheelBridge(el)`：只有 fine pointer（`(hover: hover) and (pointer: fine)`）才會下掛；`|deltaX| >= |deltaY|` 時原生橫向手勢絕不攔截；到達兩端即時放行（preventDefault 只在需要消費時發生）；零 rAF、零 timer、零 React state。EntityRail 在本來的 measure effect 裏接上橋——全站橫條統一生效；`/hong-kong` 弧時鐘橫條（無柵格、106 chips）同樣接上。附 WHY 註釋段寫明哲學：**never reverses a sign — the OS owns the sign**。
+
+**Embedded manual.** `/handbook` FAQ 第九節由「三條」改「四條」：新增「滑鼠滾輪是不是做反了」——說明頁面沒有任何平滑／顛倒軸；Windows「設定 → 藍牙和裝置 → 滑鼠」改方向；macOS「系統設定 → 觸控式軌跡板／滑鼠」關「自然捲動」；按住 Shift 滾輪即橫向捲動任何橫條；桌面滾輪已原生橋接橫向章節橫條。zh + en 雙語全量一致。
+
+**Measured, not asserted.** Headless Chromium 實測 `/hong-kong`：hover 橫條中心真實滾輪 wheel(0,240) → scrollLeft 20→188（snap-mandatory 對齊第二格）；橫條滾到 max(7850) 後再 wheel(0,500) → 橫條不動、**頁面** scrollY 0→500（放行成立）。12/12 新釘子（8 個纯函數臂 + 4 個 source pins）；packages/ui 與 apps/web tsc 皆乾淨；UI census 1868 literals；web 366/366；build 通／chunk 8587 含橋接代碼；verify_all NO OFFENDER。
+
+**Honest boundaries.** 橋接不改變任何縱向滾動的方向——「往下滑就是往下看」本來就是 Windows 默認、也是 macOS 關閉自然捲動後的行為；頁面對軸號零干涉、零劫持（兩端即時放行）、對 touch 零干涉。橫條跳格間距由 snap 對齊決定，不是 easing。
+
+- readers: `packages/ui/src/trust/wheel-bridge.ts`, `packages/ui/src/trust/EntityCard.tsx`, `packages/ui/src/index.ts`, `apps/web/src/lib/rail-wheel-bridge.test.ts`, `apps/web/src/components/hk-arc-timeline.tsx`, `apps/web/src/lib/i18n/dict.ts`, `docs/ATLAS.md`, this ledger entry.

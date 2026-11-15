@@ -6,8 +6,8 @@
  * chalk the chapter as read — the same persistence the reading-progress strip uses.
  */
 
-import { useEffect, useState } from 'react';
-import { Icon } from '@nexus/ui';
+import { useEffect, useRef, useState } from 'react';
+import { Icon, attachRailWheelBridge } from '@nexus/ui';
 
 import { CHAPTER_READ_KEY, markChapter, readChapters, slugFromGuideHref } from '@/lib/chapter-read';
 
@@ -29,10 +29,17 @@ export { CHAPTER_READ_KEY };
 export function HkArcTimeline({ copy }: { copy: HkArcClockCopy }) {
   const [read, setRead] = useState<readonly string[]>([]);
   const [ready, setReady] = useState(false);
+  const stripRef = useRef<HTMLOListElement>(null);
 
   useEffect(() => {
     setRead(readChapters());
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return undefined;
+    return attachRailWheelBridge(strip);
   }, []);
 
   const mark = (href: string) => {
@@ -57,7 +64,7 @@ export function HkArcTimeline({ copy }: { copy: HkArcClockCopy }) {
         </h2>
         <span className="text-2xs font-medium leading-relaxed text-ink-muted">{copy.hint}</span>
       </div>
-      <ol className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-5 pt-3 [scrollbar-width:thin]">
+      <ol ref={stripRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-5 pt-3 [scrollbar-width:thin]">
         {copy.entries.map((entry) => {
           const slug = slugFromGuideHref(entry.href);
           const isRead = ready && readSet.has(slug);
