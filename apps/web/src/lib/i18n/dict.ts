@@ -170,6 +170,17 @@ export interface Dict {
       ctaBody: string;
       cta: string;
     };
+    /** D1177: the /stamp collection page — every read-action stamps you deeper into the series. */
+    stamp: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      continueCta: string;
+      doneTitle: string;
+      doneBody: string;
+      collected: string;
+      unfinished: string;
+    };
     /** D1118: mixed-locale fixes — badges that used to leak English into the zh plane. */
     hkProgress: {
       done: string;
@@ -1154,6 +1165,16 @@ const zhHK: Dict = {
       ctaTitle: '你而家已經會用',
       ctaBody: '五步全部係實嘢：搜索、讀懂推薦、收藏、今日儀式、人格測試。去下一步嘅按鈕係唯一需要按的 — 唔會再聽你問其他嘢。',
       cta: '現在就一句話出去',
+    },
+    stamp: {
+      eyebrow: '印章之旅 · STAMPS ON PASSPORTS',
+      title: '每讀一章，就等於在護照上敲一個章印',
+      intro: '五十章香港系列，每一章都是這座城市的另一面。你看，印章是你自己收集的——它停在本地瀏覽器裡，換一部機器都可以從頭再收集一次。但是，如果你想快點收完，每敲一個章就是證明。',
+      continueCta: '繼續讀章節',
+      doneTitle: '你收集完了整本護照！',
+      doneBody: '五十章之後，沒有地方可以再敲了 — 這不是結束，是入場券、把這座城市完整看完的證明。',
+      collected: '已蒐集',
+      unfinished: '未蒐集',
     },
     hkProgress: {
       done: '已讀 {read} ／ 共 {total} 章',
@@ -2544,6 +2565,16 @@ const en: Dict = {
       ctaTitle: 'You’re ready',
       ctaBody: 'You touched every surface: search, recommendation, reading, saving, today, quiz. Nothing below this line is a demo. Nothing above it was a trick.',
       cta: 'One sentence — go, right now',
+    },
+    stamp: {
+      eyebrow: 'STAMPS ON A PASSPORT',
+      title: 'Every chapter stamps your passport',
+      intro: 'Fifty chapters, fifty stamps. They live on this device in your local storage. If you want the fastest win: each chapter is one stamp, and every stamp adds up.',
+      continueCta: 'Continue reading',
+      doneTitle: 'You collected the full passport!',
+      doneBody: 'No more chapters to stamp — this isn’t the end, it’s the proof you watched the whole city from morning to night.',
+      collected: 'Collected',
+      unfinished: 'Not collected',
     },
     hkProgress: {
       done: '{read} of {total} chapters read',

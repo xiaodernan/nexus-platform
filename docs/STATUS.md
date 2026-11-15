@@ -44544,3 +44544,14 @@ does not invent a second event.
 **Honest boundaries.** Synthetic fixture; the shop, the owner, the towel, the symphonic smell are narrative constructions. No such Yau Ma Tei house exists under that name; nothing is claimed about any real proprietor.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1177. D1177 — `/stamp`: the passport you earn by reading the HK series
+
+**Why.** The mandate is "no boring world" — a world with fifty chapters but no proof you travelled it is a world of tourist guides, not an in-game completion. The Stamp Collection turns the existing local-first `nexus.hk-series.read` tracker into a visible game: every chapter you finish earns you a stamp in your HK passport — a wide bilingual trophy case of all fifty chapters, with the same source of truth the progress bar and the arc timeline use.
+
+**The unit.** New route `/stamp` (server-rendered, force-static) + client island `StampCollection` (`apps/web/src/components/stamp-collection.tsx`): shows every entry in the HK series clock rail in a 4-column grid with kicker, label and a checkmark badge on read. 3 states: `start` (0 read), `continue` (progressing, bar fills toward 50), `done` (all 50). Locale-identical both ways; zh-HK Traditional entries guaranteed by the census.
+- Dict: `home.stamp` block in zh+en; footer gains the `/stamp` entry in both locales ("印章收集 / Passport stamps").
+- Tests: 4 new pins in `src/lib/stamp-collection.test.ts`.
+- Verified: `tsc --noEmit` clean; web 354/354 (+4); production build OK; census 1784 clean; verify_all NO OFFENDER.
+
+- readers: `apps/web/src/components/stamp-collection.tsx`, `apps/web/app/stamp/page.tsx`, `apps/web/src/lib/stamp-collection.test.ts`, `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/i18n/dict.ts`, `docs/ATLAS.md`, this ledger entry.

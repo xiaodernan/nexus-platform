@@ -138,6 +138,7 @@ export function SiteFooter({ locale }: { locale: string }) {
     { href: '/hk-type', label: dict.nav.hkType, title: dict.nav.hints.hkType },
     { href: '/handbook', label: dict.nav.handbook, title: dict.nav.hints.handbook },
     { href: '/daily', label: dict.nav.daily, title: dict.nav.hints.daily },
+    { href: '/stamp', label: locale === 'zh-HK' ? '印章收集' : 'Passport stamps', title: locale === 'zh-HK' ? '已讀章節集印 — 每讀一章，護照就多一個章印' : 'Every read chapter earns a stamp — 50 stamps to a complete passport' },
     { href: '/hong-kong', label: dict.home.hkHub.seriesLink, title: dict.nav.hints.hongKong },
   ];
   return (

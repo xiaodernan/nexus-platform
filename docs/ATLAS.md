@@ -164,6 +164,9 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/handbook.test.ts` | D1119: the manual's source pins + bilingual dict pins + footer wiring |
 | `tests/e2e/specs/consumer/handbook.spec.ts` | D1119: two arms — the page renders every section; the hero CTA lands on /search |
 | `apps/web/app/try/page.tsx` | D1171: the /try quick-start walkthrough — five-step in-product tour bilingual (zh-HK Traditional / en), CTA-per-step, footer discoverable |
+| `apps/web/app/stamp/page.tsx` | D1177: the /stamp passport collection — every chapter is a stamp, complete-all-fifty is the game; localStorage-read, localStorage-only, zero network |
+| `apps/web/src/components/stamp-collection.tsx` | D1177: the island; reads nexus.hk-series.read, renders the trophy case bilingual |
+| `apps/web/src/lib/stamp-collection.test.ts` | D1177: 4 pins — source of truth honest, island decor (no fetch), /stamp route renders 50 hrefs, footer link both locales |
 | `apps/web/app/hong-kong/page.tsx` | D1109: unconditionally rendered, dict-driven editorial across all deployments |
 | `apps/web/src/components/hk-quiz.tsx` | D1113: the result branch now renders the daily HK ticket line |
 | `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |

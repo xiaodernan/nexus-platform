@@ -1,17 +1,16 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1176",
-  "milestone_full": "香港系列五十章 · 佐敦餃麵店 · 粉紅毛巾第十四年",
+  "milestone": "D1177",
+  "milestone_full": "香港系列五十章 · 護照集印 · /stamp 路由",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
+    "New: /stamp — the HK passport trophy case (zh-HK Traditional + en); every read chapter earns a stamp",
     "HK series: fifty Traditional chapters — 00:30→22:45 full day arc · 100-chip clock both locales",
     "Edition L — 佐敦吉華餃麵店 (12:45)",
-    "Layer G full tract: XLVI 羅湖 (14:30) · XLVII 皇崗 (19:15) · XLVIII 萬象天地 (15:30) · XLIX 羅湖手車 (03:15) · L 佐敦餃麵店 (12:45)",
-    "D1173/D1175: zh-HK home localised rails-degraded banner (no English dev string in the zh plane)",
-    "D1171: /try — five-step walkthrough bilingual · D1170: /hong-kong continue-reading CTA · D1169: singleflight coalescing · D1168: teaching layer in chrome",
-    "D1165: THE STAMPEDE · D1163: Roman chapter badges · D1160: prefix/probe measured · census 1776 clean"
+    "/hong-kong: continue-reading CTA · /handbook embedded manual · /daily ritual · /try five-step walkthrough",
+    "D1169: singleflight coalescing · D1168: teaching layer in chrome · D1165: THE STAMPEDE · census 1784 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }
