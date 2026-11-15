@@ -1814,4 +1814,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kowloon-bay-garment-chronicle', title: '凌晨四點四十五分：九龍灣製衣廠的冚廠清晨（香港系列 · 第五十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：九龍灣的老廠房在凌晨四點四十五分亮燈——一家完整的製衣廠的晨歌。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨四點四十五分。九龍灣製衣廠（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——整條廠的燈仍然關著，只有一層一層甬道留著冷白的光。老陳（合成敘事，非真實人物）坐在剪裁台前看電視——觀塘工業區的翻譯歌台，靜靜經過了一夜。' },
+      { type: 'heading', text: '一、稱之為布面的妻子' },
+      { type: 'paragraph', text: '殘餘的布料像潮汐；他把布料量了一次又一次。老陳不在乎潮汐會不會變天，他只在乎手上的這一塊布面夠不夠清楚——不揚、不扭、不疊、不塞。布面是今天的孩子；剪子是規定的老闆；他本人只是信使。他知道每一片布面都有一條去幫襯或去家裡的命運。' },
+      { type: 'cards', title: '九龍灣可見', items: [] },
+      { type: 'heading', text: '二、甌文的古語' },
+      { type: 'paragraph', text: '廠房樓上滋滋住著工人。他們從四點左右到廠，為了使整個城市的衣物看起來像一個樣子。凌晨四點四十五分，吳姐（合成敘事，非真實人物）把最要緊的訂單寫在牆上；她吸完一次煙，然後心甘情願露出一張微笑。她說，把衣服做好是她的第二個妻子——但她從來沒有第一個妻子。' },
+      { type: 'cards', title: '九龍灣可聽', items: [] },
+      { type: 'heading', text: '三、剪刀的一聲響' },
+      { type: 'paragraph', text: '四點五十五分。機器全啟。噪音一層一層告訴整棟樓：九龍灣這座城在跑。今天吳姐要排十二個訂單——這不是她最後一個夜班。她開始唱歌：一個舊廣東話老歌——她不知道這歌是誰寫的，她只知道當她喝酒時就會把歌詞都忘光。「歌者終究活在國際歌裡」——這句話她並不需要明白。她只要今天的布面準備好了。' },
+      { type: 'cards', title: '九龍灣可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「九龍灣 製衣廠」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

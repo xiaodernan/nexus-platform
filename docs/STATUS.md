@@ -44575,3 +44575,13 @@ does not invent a second event.
 **Honest boundaries.** Synthetic fixture; the depot, the coordinator, the distributor, the truck, the alcohol are narrative constructions. No real depot, no real shift manager, no actual delivery route is claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1180. D1180 — chapter LII lands the 04:45 slot: 凌晨四點四十五分：九龍灣製衣廠的冚廠清晨 — the industrial dawn
+
+**Why.** Layer G continues with 04:45 — the garment floor that never slept. The arc clock slot 04:45 was inherited by the factory behind Kowloon Bay: the cutting tables, the garment workers who make everything in this city's closet, the pre-dawn嗓韌 of textiles. A chapter long-held in the queue for a place in the series.
+
+**The unit.** `DEMO_GUIDES` gains `hk-kowloon-bay-garment-chronicle` — 「凌晨四點四十五分：九龍灣製衣廠的冚廠清晨（香港系列 · 第五十二章）」. Three heading cards（一、稱之為布面的妻子 · 二、甌文的古語 · 三、剪刀的一聲響）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「九龍灣 製衣廠」）。Both locales carry the chapter; the arc clock gains 04:45 between the fish market and the Kwun Tong Paper Depot (104 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-two on both locales; e2e floors ≥52; census 1805 literals clean (0 simplified); web 354/354; verify_all NO OFFENDER.
+
+**Honest boundaries.** Synthetic fixture; the factory, the workers, the orders, the歌詞 and the scissors are narrative constructions. No real guanxi, no proprietor is named, no operational claim about garment manufacturing is made.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.

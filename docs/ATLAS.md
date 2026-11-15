@@ -129,6 +129,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1172: the forty-ninth HK chapter (hk-loohu-trolleys-chronicle, 羅湖行李手車的第一班趟) — Layer G at the first crossing, 03:15 |
 | `apps/web/src/lib/mock/seed.ts` | D1176: the fiftieth HK chapter (hk-yauma-tei-dumpling-chronicle, 佐敦吉華餃麵店) — the half-hundred lands at 12:45 |
 | `apps/web/src/lib/mock/seed.ts` | D1179: the fifty-first HK chapter (hk-kwun-tong-newsboy-chronicle, 觀塘曙光報紙的分送員) — the dawn paper depot at 05:00 |
+| `apps/web/src/lib/mock/seed.ts` | D1180: the fifty-second HK chapter (hk-kowloon-bay-garment-chronicle, 九龍灣製衣廠的冚廠清晨) — the industrial dawn at 04:45 |
 | `apps/web/src/lib/roman-numeral.ts` + `apps/web/src/components/hk-series-progress.tsx` | D1163: print-annual Roman numeral backdrop on every chapter card — bounded romanOf, ~9% accent opacity, purely decorative |
 | `apps/web/src/lib/mock/seed.ts` | D1157: the forty-first HK chapter (hk-mumbai-curry-central-chronicle, 灣仔咖哩魚飯堂) |
 | `apps/web/src/lib/mock/seed.ts` | D1156: the thirty-eighth, thirty-ninth and fortieth HK chapters (hk-beijing-writer-chronicle, 北漂作家; hk-teochew-markets-chronicle, 旺角菜市場; hk-filipino-central-chronicle, 菲律賓中環) — opens WORLD_ROADMAP Layer E |

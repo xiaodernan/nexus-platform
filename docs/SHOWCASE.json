@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1179",
-  "milestone_full": "香港系列五十一章 · 觀塘曙光報紙 · 凌晨五點的鐵閘",
+  "milestone": "D1180",
+  "milestone_full": "香港系列五十二章 · 九龍灣製衣廠 · 凌晨四點四十五分",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: fifty-one Traditional chapters — 00:30→22:45 full day arc · 102-chip clock both locales",
-    "Edition LI — 觀塘曙光報紙的分送員 (05:00) · Layer G continues",
-    "/stamp passport game on 50 chapters (now 51) · /try five-step walkthrough · /hong-kong continue-CTA · /handbook embedded manual",
-    "D1178: 今日編框 home spotlight · D1177: 50-stamp passport · D1176: L — 佐敦餃麵店 (12:45) · D1175: zh-HK localised degraded banner",
-    "D1169: singleflight coalescing · D1168: teaching layer in chrome · D1165: THE STAMPEDE · D1163: Roman chapter badges",
-    "D1164: XLV 21:00 Sunday last queue · D1160: prefix/probe measured · D1142: LangGraph engine · census 1796 clean"
+    "HK series: fifty-two Traditional chapters — 00:30→22:45 full day arc · 104-chip clock both locales",
+    "Edition LII — 九龍灣製衣廠的冚廠清晨 (04:45) · Layer G continues",
+    "Layer G full tract: XLVI 羅湖 (14:30) · XLVII 皇崗 (19:15) · XLVIII 萬象天地 (15:30) · XLV-LI 排完 · LII 九龍灣製衣廠 (04:45) — 凌晨工業剖析",
+    "/stamp passport game 50 stamps · /try five-step walkthrough · /hong-kong continue-CTA · /daily ritual · /handbook",
+    "D1178: 今日編框 home spotlight · D1179: LI 觀塘曙光報紙 · D1177: 護照集印 · D1176: L 佐敦餃麵店 · D1175: zh-HK localized degraded banner",
+    "D1169: singleflight coalescing · D1168: teaching layer in chrome · D1165: THE STAMPEDE · D1163: Roman chapter badges · D1160: prefix/probe measured · census 1805 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }
