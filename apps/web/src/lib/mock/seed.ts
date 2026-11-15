@@ -1898,4 +1898,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-yauma-tei-opera-supper-chronicle', title: '晚上八點半：油麻地粵劇牌樓老倌的散場宵夜（香港系列 · 第五十六章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：晚上八點半的油麻地粵劇牌樓——落幕四鼓、散場的老倌、最後一鍋靚湯米線；這個城仍然為散場的人留一盞燈。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上八點半。油麻地粵劇牌樓（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——最後一幕的四鼓剛落。後台的燈暗了一半，演員席仍然亮著；一張舊木桌，兩籠點心，一壺靚湯。' },
+      { type: 'heading', text: '一、散場的四鼓' },
+      { type: 'paragraph', text: '阿群（合成敘事，非真實人物）是看台下的後生——專職遞鑼鼓、收刀槍、替老倌斟茶。他說，四鼓落地不算收場，收場是後台沒有人再叫下一幕。今日扮武生的余Sir（合成敘事，非真實人物）關掉對講機，把高冠脫在桌上，說聲「今日到」。' },
+      { type: 'cards', title: '牌樓後台可見', items: [] },
+      { type: 'heading', text: '二、燒肉的重逢' },
+      { type: 'paragraph', text: '牌樓隔兩條街是一間散場不散的燒臘檔。余Sir從來只點一件事：一碟燒鴨、一碗湯米線、一碟靚湯的白粥。老闆娘三姨（合成敘事，非真實人物）見他就說：「余Sir，今日辛苦咗。」他回答：「散場之後個世界先算數。」' },
+      { type: 'cards', title: '散場宵夜可聽', items: [] },
+      { type: 'heading', text: '三、關閘前的十三圍' },
+      { type: 'paragraph', text: '晚上十點半，阿群替余Sir送他回家。關閘之前的十三圍——他數路過的每一個燈：便利店、米鋪、麻將牌室、茶餐廳最後一個爐——她數到第十三盞時，余Sir的燈已經亮著。散場不是結束；散場是下一幕在安靜地排隊。' },
+      { type: 'cards', title: '牌樓可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「油麻地 粵劇」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

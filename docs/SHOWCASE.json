@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1186",
-  "milestone_full": "香港系列第五十五章 · 清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨 · 東西兩岸 Layer G 繼續",
+  "milestone": "D1187",
+  "milestone_full": "香港系列第五十六章 · 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 · Layer G 夜場",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: fifty-five Traditional chapters — 00:30→22:45 full day arc · 110-chip clock both locales",
-    "Edition LV — 清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨 (06:15) · Layer G continues east–west",
-    "Layer G full tract: LV 落馬洲禁區 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
+    "HK series: fifty-six Traditional chapters — 00:30→22:45 full day arc · 112-chip clock both locales",
+    "Edition LVI — 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 (20:30) · Layer G continues past the finale",
+    "Layer G full tract: LVI 油麻地粵劇散場宵夜 · LV 落馬洲禁區通勤前哨 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
     "D1184: fine-pointer wheel bridge — desktop wheel advances every horizontal rail & the arc clock; ends release to the page; the OS keeps the axis sign",
     "/command — demo operator desk, unlock with 123: six counters · top phrases · chapter heat · retention proxy · next moves. Synthetic-only, badged on screen",
     "/stamp passport game · /try five-step walkthrough · /hong-kong continue-CTA · /daily ritual · /handbook · /hk-type",
-    "D1186: chapter LV 落馬洲禁區通勤前哨 · D1185: 深水埗零頭布 · D1184: wheel bridge · D1183: /command demo console · D1182: LIII 安樹堂 · D1181: 章節標誌 glyphs"
+    "D1187: chapter LVI 油麻地粵劇散場 · D1186: chapter LV 落馬洲 · D1185: 深水埗零頭布 · D1184: wheel bridge · D1183: /command demo console · D1182: LIII 安樹堂"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

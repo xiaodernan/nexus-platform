@@ -44669,3 +44669,13 @@ The ledger entries for D1181 and D1182 stated CI green. They were not:
 - **D1183 / D1184 / D1185 / D1186** — ci **success** (all four observed completed=success).
 
 Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push can still be CI-red on eslint/e2e. From D1183 onwards, CI run conclusion is checked after every push and recorded in the memory log. This addendum is the record-correction; the D1181/D1182 ledger bodies are left intact, as the ledger is append-only.
+
+## 1187. D1187 — chapter LVI lands the 20:30 slot: 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜
+
+**Why.** Series continues Layer G past the finale hour. 20:30 has no tenant; the temple of the Peking opera is always empty right after the last drum — the exact hour the city otherwise vacates but the troupe is still warming the ladle. A chapter about Cantonese opera at Yau Ma Tei, the troupe eating 燒鴨 after the finale, and how the one lamp in the district belongs to the ones who just performed.
+
+**The unit.** `DEMO_GUIDES` gains `hk-yauma-tei-opera-supper-chronicle` — 「晚上八點半：油麻地粵劇牌樓老倌的散場宵夜（香港系列 · 第五十六章）」。Three heading cards（一、散場的四鼓 · 二、燒肉的重逢 · 三、關閘前的十三圍）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「油麻地 粵劇」）。Both locales carry the chapter; the arc clock gains 20:30 between the communal long table and the last queue of the Sunday (112 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-six on both locales; chapter-icons gains `'hk-yauma-tei-opera-supper-chronicle': 'moon'`; e2e floors ≥56; census 1895 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 21s and the chapter renders end-to-end via /guides/hk-yauma-tei-opera-supper-chronicle clean.
+
+**Honest boundaries.** 合成敘事：油麻地粵劇牌樓、阿群、余Sir、散場宵夜湯米線——全部是敘事建構，不指向真實劇團、真實演員或真實食店；SearchBox 搜「油麻地 粵劇」演示的是演示流的路徑。chapter-guides parity reader 同步進行（≥56，arm 五覆 LIV+LV+LVI）。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
