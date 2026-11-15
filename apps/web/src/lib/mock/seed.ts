@@ -2234,4 +2234,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-central-tram-ding-ding-chronicle', title: '早上十一點一刻：中環電車——老何的叮叮慢拍（香港系列 · 第七十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上十一點一刻的中環德輔道中——老何師傅的打掣節奏、電車的「叮叮」鈴聲、德輔道中的車與城市裡最慢的那條線。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上十一點一刻。德輔道中的叮叮車（合成敘事，非真實司機與真實時刻——時刻與場景全部是敘事建構）——叮叮動了一聲，整條德輔道中都聽得到了。' },
+      { type: 'heading', text: '一、叮叮鈴不是鈴' },
+      { type: 'paragraph', text: '叮叮的意義不是教育行人；它只是告訴這座城：現在輪到你讓一讓。叮叮動一聲，行人停住了腳步——這一停就是這座城最自律的時刻。' },
+      { type: 'cards', title: '電車可見', items: [] },
+      { type: 'heading', text: '二、老何的叮叮拍' },
+      { type: 'paragraph', text: '老何師傅打了三十一年的電車。他不在乎車快不快：電車開得快了，沒有人看見電車；慢下來，每一個人都可以在自己的時間裡把報紙讀完。「我們不運東西。我們運時間。」（合成對話，非真實人物。）' },
+      { type: 'cards', title: '電車可聽', items: [] },
+      { type: 'heading', text: '三、電車走的那一條' },
+      { type: 'paragraph', text: '德輔道中的叮叮車是這座城最慢的物件——但它不著急。這也是一種讀法：人的速度其實從來不能決定人在世界活得怎樣——它只是影響人看得見多少世界。' },
+      { type: 'cards', title: '電車可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「中環 電車」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

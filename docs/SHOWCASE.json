@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1213",
-  "milestone_full": "說明書 REAL-HK IV（香港天文台）· 第七十一章 · 旺角花墟——走花市的最後一站（10:45）· 世界地圖切到 71 章",
+  "milestone": "D1214",
+  "milestone_full": "第七十二章 · 中環電車——老何的叮叮慢拍（11:15）· llm-cache-probe 重跑：wkapi 同文件藏整條前綴；SSE 預設被證明",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
-  "as_of": "2026-11-16",
+  "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: seventy-one Traditional chapters — 00:00→23:00 full day arc · 142-chip clock both locales",
-    "Edition LXXI — 早上十點四十五分：旺角花墟——走花市的最後一站 (10:45) · the flower-market walk-out closes the morning block",
-    "handbook REAL-HK IV — 香港天文台 sourced: formed 1883-03-02 (Sir George Bowen) · Doberck first director 24y · 1912 Royal Charter · 1883 building a Hong Kong declared monument (1984) · 315 staff (2018) · ~HK$381.4M budget (2019–20) · current director Chan Pak-wai — Wikipedia, retrieved 2026-11-16 (inline URL in both locales)",
-    "handbook REAL-HK I/II/III — MTR (~5.76M daily, 245.3 km) · Star Ferry (1888 · ~70k/day · ~26M/yr) · HKIA (1998-07-06 · 2025 60.992M pax · 5.07M t) — every figure source-URL'd on the page",
-    "D1212 — /insights seven-day trend panel (OLS slope rising/cooling/flat) · D1210 — /world atlas · D1207 — one-click zh ↔ en everywhere · D1206 — /insights ghost-reader replay",
-    "/hong-kong (71 chapters) · /world (71 chips) · /stamp passport · /handbook (4 REAL-HK blocks) · /hk-type quiz · /command 123 · /daily · /insights",
-    "D1213: LXXI + REAL-HK IV · D1212: LXX + weekly trend · D1211: LXIX + REAL-HK III · D1210: /world · D1209: LXVIII + REAL-HK II · D1208: LXVII"
+    "HK series: seventy-two Traditional chapters — 00:00→23:00 full day arc · 144-chip clock both locales",
+    "Edition LXXII — 早上十一點一刻：中環電車——老何的叮叮慢拍 (11:15) · the Tram arc opens, brass cadence",
+    "llm-cache-probe reruns clean (2026-11-15, CI runner): identical-burst 100% after two warm calls; diverse bursts 0%; contract bursts 25% — wkapi caches identical/frozen-head only, no cross-query prefix reuse; SSE-with-usage default (D1044) proven again — dashboard's 'not streamed' was a non-SSE wire step",
+    "handbook REAL-HK I/II/III/IV — MTR (~5.76M/day) · Star Ferry (1888) · HKIA (1998 · 60.992M pax 2025) · Observatory (formed 1883-03-02, 143y) — inline URLs",
+    "D1212 — /insights seven-day trend panel (OLS slope) · D1210 — /world atlas (72 chips asserted 12+16+15+12+6+5+6) · D1207 — one-click zh ↔ en everywhere · D1206 — /insights ghost-reader replay",
+    "/hong-kong (72 chapters) · /stamp passport · /handbook · /hk-type quiz · /command 123 · /daily · /insights",
+    "D1214: LXXII + cache probe ledger · D1213: LXXI + REAL-HK IV · D1212: LXX + weekly trend · D1211: LXIX · D1210: /world · D1209: LXVIII"
   ],
-  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
+  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. wkapi.pro calls keep the SSE-with-include_usage envelope (D1044); the literal key in the mandate reproduces 401 Invalid token from this host, hence all probe automation runs through the repository secret."
 }

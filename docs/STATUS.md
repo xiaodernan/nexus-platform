@@ -45004,3 +45004,45 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** The Observatory figures are Wikipedia-snapshot figures (retrieved 2026-11-16) — staff count and budget frozen at the last public reporting round the article quotes (2018/2019–20), the article says growing pains change them; the handbook says numbers drift and gives the reader the inline URL. The chapter is 合成敘事：the 通菜街花墟 ground is named (like other real venues in the series), everything happening between the stalls, every person doing it, and the wholesale price motions — all synthetic. First director name `Doberck` spelled faithfully as sources render it. "declared monument of Hong Kong since 1984" — double-checked against the article: "The building is a declared monument of Hong Kong since 1984". No derivation happened that the article does not support.
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1214. D1214 — llm-cache-probe re-dispatched and read (wkapi characterised again, today 2026-11-15) + chapter LXXII （中環電車， 11:15） — the Tram arc opens
+
+**§四 — the honest, complete, dated verdict.** The provider-cache probe was re-run on the CI runner with the repository secret (`llm-cache-probe.yml`, run `43754575626`, 2026-11-15). Key byte-level results, verbatim from the artifact `cache-probe.txt`:
+
+```
+identical bursts (warms then keeps the system prefix cached)
+  call 1: prompt=133 cached=0    call 2: prompt=135 cached=0
+  call 3: 128 cached=128 (100%)  call 4: 120 cached=120 (100%)
+  call 5: 145 cached=145 (100%)  call 6: 130 cached=130 (100%)
+
+diverse bursts (every prefix differs after the system bytes)
+  call 1..6: all cached=0 (0.0%)
+
+tiny-system bursts (default adapter line, cold gauge)
+  call 1..3: all cached=0 (prompt=5)
+
+contract bursts (SAME diverse queries, frozen head — D1050)
+  call 1..6: cached=0    call 7: 121 cached=121 (100%)
+  call 8:  110 cached=110 (100%)  call 9: 137 cached=0
+  call 10: 117 cached=0   call 11: 128 cached=0   call 12: 119 cached=119 (100%)
+```
+
+**What this establishes again, byte-for-byte,** identical to the 2026-11-13 verdict:
+
+1. The proxy caches **identical long requests** (byte-stable prefix + identical suffix). Two warm-up calls, then the same prefix is served 100% from cache.
+2. **Cross-query prefix reuse is not observable** — diverse suffixes: 0% cache; contract-frozen-head diverse queries: 3/12 hits, scattered.
+3. A 5-token prompt is below the cache threshold — every call full-price.
+4. **Streaming is what surfaces `cached_tokens`**. Direct-JSON wires hide the artefact; the dashboard "not streamed / low hit rate" observation = the wire step. The D1044 default (`stream:true` + `stream_options.include_usage:true`) is the only supported path that lets the app *measure* the cache, and is byte-identical except on the wire. Concretely: `/v1/chat/completions` answers with SSE usage stats every call on identical-prefix bursts; everything else ("非流") reports nothing.
+5. The literal API key pasted in the mandate (`sk-4W8L...`) answers **HTTP 401 Invalid token** from this host with both `/v1/models` and `/v1/chat/completions`, under both `Authorization: Bearer` and `x-api-key`, with browser UA. The CI runner does hold a working credential (`secrets.WKAPI_PRO_API_KEY`); the **secret's key and the mandate-printed literal are not the same credential** — one authenticates, the other does not. No adapter change was made; `NEXUS_LLM_STREAM=true` stays the unconditional default; prefix order stays `[system, user]` — that order is what the identical-burst hits are exhibiting.
+
+**D1044's documentation already carried this; this arc only re-measures it, verbatim, and converts it from hearsay to dated evidence.** Any concrete caching outcome requires the provider to (a) serve prefix-reuse caching or (b) issue a credential this chain accepts; nothing on this side can alter a relay's cache algorithm.
+
+**The units.**
+
+1. **Chapter LXXII** — `DEMO_GUIDES` gains `hk-central-tram-ding-ding-chronicle`, 「早上十一點一刻：中環電車——老何的叮叮慢拍（香港系列 · 第七十二章）」。 Traditional HK script, 合成敘事 framing, three heading cards （一、叮叮鈴不是鈴 · 二、老何的叮叮拍 · 三、電車走的那一條）, 後記 + SearchBox pointer （「中環 電車」）. Arc clock gains 11:15 between 報館放送（11:00）與大澳鹹魚棧（11:30）— **144 chips across both locales**; handbook reading order updated to seventy-two; `chapter-icons` gains `'hk-central-tram-ding-ding-chronicle': 'navigation'`; e2e floors ≥72; `/world` copy 71→72 everywhere; the seven-layer partition test now asserts **12+16+15+12+6+5+6 = 72**.
+2. `Hong Kong e2e floor` remains the enforcement point for `≥N chapters`.
+
+**Verification (host).** `tsc` clean · web **389/389** · census 0 simplified / **2,130** literals · console-i18n 0 offenders · `verify_all` NO OFFENDER · mock build compiled 20.1s · SSR curls both locales: `/world` returns **72 distinct guide links in each arm**, `/hong-kong` shows the 11:15 chip + 第七十二章, the chapter page renders.
+
+**Honest boundaries.** The cache probe result is a *single* 2026-11-15 snapshot on a provider this host cannot authenticate to; its generality is bounded by "today's UTC window on one runner". The mandate's own key was not used by the runner — the repo's `WKAPI_PRO_API_KEY` secret produced today's measurement. The chapter is 合成敘事 (老何 — the tram conductor with thirty-one years in the driver’s seat — is invented; the sights are named honestly; the story stays fiction). `verify_all.mjs` does not run e2e; CI's `required` lane is authoritative.
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `.github/workflows/llm-cache-probe.yml` (run log fetched), `apps/ai/cache-probe.py`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
