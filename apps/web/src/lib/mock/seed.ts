@@ -1772,4 +1772,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-yauma-tei-dumpling-chronicle', title: '中午十二點四十五分：佐敦吉華餃麵店（香港系列 · 第五十章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：佐敦的午餐時光——餃子、肉汁、麵條和老闆娘第十四年的粉紅毛巾。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十二點四十五分。佐敦吉華餃麵店（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——一條窄窄的舊街、一扇紅色的窗。餃子在煎碟上跳舞，肉味穿了整條街。老闆娘把她連續第十四年的粉紅毛巾放在側邊。' },
+      { type: 'heading', text: '一、豬肉的堅持' },
+      { type: 'paragraph', text: '老闆姓吉（合成敘事，非真實人物）把豬手肉切成極小的粒；餃子皮要用兩手的指合手指捏好邊；牠們有一個共同的精神：一個好的餃子不需要所有東西都是新的，牠只需要老闆記得誰的口味是怎麼樣。' },
+      { type: 'cards', title: '佐敦吉華可見', items: [] },
+      { type: 'heading', text: '二、粉紅毛巾的傳說' },
+      { type: 'paragraph', text: '老闆娘的粉紅毛巾已經使用十四年。上面是她自己刺繡出來的圖案——蝴蝶結、一個笑臉、一個小小的獨角獸。每天早上，她把她疊成一疊餐巾放在桌前；每天晚上，她把她洗乾淨疊在一旁。客人問起來，她只是白白地笑一下：「如果牠沒有名字，順便送妳。」' },
+      { type: 'cards', title: '佐敦吉華可聽', items: [] },
+      { type: 'heading', text: '三、午餐過後' },
+      { type: 'paragraph', text: '十三點之前，老闆娘會把所有桌椅和砧板都收起來；吉華的午餐會告一段落。下午，她會去她的便宜窗戶前、然後把窗關住但不上鎖。客人們都知道：這家店明天早上六點會照例有餃子。這是吉華的堅持——每個早晨、每個中午、每個晚上都有餃子。' },
+      { type: 'cards', title: '佐敦吉華可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「佐敦 餃子」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

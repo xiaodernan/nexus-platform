@@ -7,7 +7,7 @@ NEXUS does not merely compile a merchant directory for Hong Kong; it maintains a
 *editorial instrument* shaped like the city's day. The founding promise — one sentence finds
 your table tonight — is the same promise Hong Kong makes to itself at every dawn and every
 midnight: the fruit market is already moving, and the table is already being set. This
-document is the continuity plan for that world-layer: how the forty-nine chapters (D1093 → D1172)
+document is the continuity plan for that world-layer: how the fifty chapters (D1093 → D1176)
 interlock, what each hour owns, what the product serves there, and where the next panels
 belong.
 

@@ -44534,3 +44534,13 @@ point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, 
 the code change landed as `364d3b2` tagged `D1175` in its commit message; the docs ledger named it `D1173`. There is no
 behavioral difference — one unit, two names. The next milestone is `D1176`. This entry pins the offset so a later reader
 does not invent a second event.
+
+## 1176. D1176 — chapter L lands the 12:45 slot: 中午十二點四十五分：佐敦吉華餃麵店 — chapter 50 breaks the half-hundred
+
+**Why.** Fifty chapters is a fork in the road: an odd half-decade for a series that walked in by the hour — from 05:30 早茶 through 22:45 車仔麵 — that no local press or restaurant guide would ever own. The 12:45 lunch slot belongs to a family dumpling house in Yau Ma Tei: a pearl-pink towel on the side, fourteen years and counting.
+
+**The unit.** `DEMO_GUIDES` gains `hk-yauma-tei-dumpling-chronicle` — 「中午十二點四十五分：佐敦吉華餃麵店（香港系列 · 第五十章）」. Three heading cards（一、豬肉的堅持 · 二、粉紅毛巾的傳說 · 三、午餐過後）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「佐敦 餃子」）。Both locales carry the chapter; the arc clock gains 12:45 between the new-airport wind and the Sunday lunch (100 chips across both locales — round); hk-type link list gains it; handbook reading order re-sorted to fifty on both locales; e2e floors ≥50; census 1776 literals clean (0 simplified); web 350/350; build passes; verify_all NO OFFENDER.
+
+**Honest boundaries.** Synthetic fixture; the shop, the owner, the towel, the symphonic smell are narrative constructions. No such Yau Ma Tei house exists under that name; nothing is claimed about any real proprietor.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
