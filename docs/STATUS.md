@@ -45117,3 +45117,20 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** 爐主阿九 is invented; the Chai Wan industrial building is an East-Kowloon archetype, not any specific address; the 第五個關爐聲 and the five egg tarts are dramaturgy. The skip-layer nav speaks no new copy: every label comes from the same dictionary the layers already carry — zero new leaves, zero new translations to keep in sync. `verify_all` does not run e2e; CI runs it.
 
 - readers: `apps/web/app/world/page.tsx`, `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1219. D1219 — chapter LXXVII （觀塘牛頭角魚蛋檔， 17:45） + the six-surface pressure re-run
+
+**Why.** The mandate wants full-face coverage of every surface on every arc — this one closes the consistency loop for D1218's nav+li, D1217's action matrix, and the earlier KPI flip: six surfaces, 128 requests, 32-concurrent, all green. Also, the afternoon arc continues — the fishball stall in Niu Tou Jiao speaks the Cantonese farewell everybody knows from that neighbourhood: 「食咗未」.
+
+**The units.**
+
+1. **Chapter LXXVII** — `DEMO_GUIDES` gains `hk-kwun-tong-fishball-stall-dusk-chronicle`, 「下午五點四十五分：觀塘——牛頭角——魚蛋檔的黃生關燈（香港系列 · 第七十七章）」. Traditional HK script, 合成敘事 framing, three heading cards （一、關燈的順序 · 二、最後一鍋的鮮味 · 三、「食咗未」）, 後記 + SearchBox pointer （「觀塘 魚蛋檔」）. Arc clock gains 17:45 between 觀音借（17:30）與獅子山（17:58）— **154 chips across both locales**; handbook reading order updated to seventy-seven; `chapter-icons` gains `'hk-kwun-tong-fishball-stall-dusk-chronicle': 'navigation'`; e2e floors ≥77; `/world` copy 76→77 everywhere; the seven-layer partition test now asserts **12+16+16+15+7+5+6 = 77**.
+2. **Pressure re-run (mandate §十一), mock plane, 128 requests × 32-concurrent × 6 routes, ALL 2xx, zero 5xx:**
+   `/` 2494ms p50 / 3854ms p99 · `/hong-kong` 680 / 858 · `/insights` 812 / 1175 · `/world` 818 / 985 · `/handbook` 727 / 889 · `/command` 403 / 570.
+   `/` remains the heavyweight (dynamic home-page SSR over the mock plane). `/` is not latency-SLO-tested in CI; it's the same ceiling the previous arc measured. Every other route holds under a second p50.
+
+**Verification (host).** `tsc` clean · web **393/393** · census 0 simplified / **2,194** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 15.0s · SSR curls both locales: chapter page renders, `/hong-kong` carries the chip + 第七十七章， `/world` returns **77 distinct guide links in each arm**.
+
+**Honest boundaries.** The 牛頭角 fishball stall is an archetype, not an address; every person in the chapter — 黃生， 芳姐喊「食咗未」— is synthetic construction; the stall keeps the daily-normal rite of the fishball. The `/` p50=2.49s is a mock-plane measurement of p50 at 32-concurrent on a laptop preview, not a production SLO — `verify_all` does not run e2e; CI runs it.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry. Showcase cadence: heavy milestone → sync + pages.yml dispatch + byte-verify.

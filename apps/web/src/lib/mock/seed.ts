@@ -2339,4 +2339,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kwun-tong-fishball-stall-dusk-chronicle', title: '下午五點四十五分：觀塘——牛頭角——魚蛋檔的黃生關燈（香港系列 · 第七十七章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：下午五點四十五分的牛頭角魚蛋檔——黃生一天收檔前的最後一個鍋、關燈的順序、鄰居的「食咗未」。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午五點四十五分。觀塘牛頭角（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——魚蛋檔的黃生關燈前的最後一鍋。' },
+      { type: 'heading', text: '一、關燈的順序' },
+      { type: 'paragraph', text: '黃生關燈依照固定的順序——先關日光、然後關冷氣、然後去檔口外面看一眼：「開攤容易；收檔難。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '魚蛋檔可見', items: [] },
+      { type: 'heading', text: '二、最後一鍋的鮮味' },
+      { type: 'paragraph', text: '這一鍋沒有客人。黃生沒有收起來：「這一鍋是留給樓下賣菜阿姐的——一兩把：好吃的不夠分。」' },
+      { type: 'cards', title: '魚蛋檔可聽', items: [] },
+      { type: 'heading', text: '三、「食咗未」' },
+      { type: 'paragraph', text: '關掉日光之後，對面另一層樓的芳姐喊了一句「食咗未」。黃生沒有起閧。牛頭角的晚上，人不需要說什麼：天有自己的尺度——亮了就是亮。魚蛋檔黃生的收檔，就這樣過去了。' },
+      { type: 'cards', title: '魚蛋檔可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「觀塘 魚蛋檔」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
