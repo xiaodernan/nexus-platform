@@ -2087,4 +2087,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-man-kam-to-return-chronicle', title: '早上七點一刻：文錦渡口岸榕記米業——浩明第三班折返（香港系列 · 第六十五章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上七點一刻的文錦渡口岸——浩明第三班折返、口岸燈光再開、追車的號角、文錦渡的第一班光明。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上七點一刻。文錦渡口岸榕記米業（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——浩明（合成敘事，非真實人物）開第三班車回來。這臺車在第二班從文錦渡回到深水埗，把昨日的米卸在碼頭。' },
+      { type: 'heading', text: '一、口岸的第三班' },
+      { type: 'paragraph', text: '浩明今年三十四歲。早上七點是第三班。他摸著車頭的水箱問候它：這臺車今天只跑這一班——昨天他已經交了油、還了車，今天只負責往碼頭交米，不再負責往文錦渡拉貨。' },
+      { type: 'cards', title: '文錦渡可見', items: [] },
+      { type: 'heading', text: '二、空車載不載' },
+      { type: 'paragraph', text: '早上七點的先頭部隊穿著橘色的反光衣從榕記方向走過來。浩明知道他們是誰。他們會來問這車現在裝滿沒有。如果三十九箱米都在——那就可以走。如果不夠——他們會告訴他還差多少。他不常遇到缺額，但他知道第一次做的時候一定被問過。' },
+      { type: 'cards', title: '文錦渡可聽', items: [] },
+      { type: 'heading', text: '三、晨光的交班' },
+      { type: 'paragraph', text: '早上七點十五分，浩明把車停好。車門關上、水箱蓋閉合、穩定器鬆開。他回到榕記裡面，跟倉庫裡的主記陳師傅交了帳。陳師傅拿了一杯熱茶給他。他們今天不需要說太多話——他只是交米，而主記只是接米。' },
+      { type: 'cards', title: '文錦渡可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「文錦渡 榕記」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

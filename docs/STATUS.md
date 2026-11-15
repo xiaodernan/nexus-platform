@@ -44844,3 +44844,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：文錦渡口岸、榕記米業、浩明、雙水銀燈——全部是敘事建構，不指向真實米行或真實關卡規範；搜索「文錦渡 榕記」演示的是演示流的路徑。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1204. D1204 — chapter LXV lands the 07:15 slot: 早上七點一刻：文錦渡口岸榕記米業——浩明第三班折返
+
+**Why.** Layer H now spans one serious cross-border freight thread across four chapters: LXIV (driver at the 00:45 gate) → LXV (His third run returning empty at dawn). This chapter exists because Layer H is about a *rhythm*, not a single event — the route across the border has a day's arc, from 00:45 to 07:15. The narrative holds the dict on that rhythm; chapter 65 closes it.
+
+**The unit.** `DEMO_GUIDES` gains `hk-man-kam-to-return-chronicle` — 「早上七點一刻：文錦渡口岸榕記米業——浩明第三班折返（香港系列 · 第六十五章）」。Three heading cards（一、口岸的第三班 · 二、空車載不載 · 三、晨光的交班），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「文錦渡 榕記」）。Both locales carry the chapter; the arc clock gains 07:15 between 07:00 隔水渡輪 and 07:30 早茶 (130 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to sixty-five on both locales; chapter-icons gains `'hk-man-kam-to-return-chronicle': 'navigation'`; e2e floors ≥65; census 1985 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 11s; chapter renders end-to-end via /guides/hk-man-kam-to-return-chronicle clean.
+
+**Honest boundaries.** 合成敘事：文錦渡口岸、榕記米業、浩明、反光部隊的先頭部隊、主記陳師傅——全部是敘事建構，不指向真實米行或真實關閘資料；搜索「文錦渡 榕記」演示的是演示流的路徑。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
