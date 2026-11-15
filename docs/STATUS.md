@@ -44648,3 +44648,13 @@ Dict 擴 `cmdConsole`（zh-HK Traditional + en 雙語鎖步；UI census 1867 lit
 **Honest boundaries.** 合成敘事：金源布莊、吳姐、每一件零頭、每一次開門關門、每一句「多少算多少」全部是敘事建構，不指向真實商戶、真實人物或真實價格；用戶應以 SearchBox 當作演示流路徑。本機事故實錄：工作機上的 `apps/web/.env.local`（gitignored 的開發者本機覆寫）設了 `NEXT_PUBLIC_DATA_MODE=live`，而 Next 把 `NEXT_PUBLIC_*` **在 build 時內聯**——本機能看到 /guides 全線軟 404 與 `/api/nexus/ai/ask` 502（找不到 platform 服務）。CI evidence 以 mock mode 構建，不受影響；修正方式僅為在本機用 `NEXT_PUBLIC_DATA_MODE=mock` 環境変数 rebuild 以目擊 mock 面——沒有動任何已提交文件。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1186. D1186 — chapter LV lands the 06:15 slot: 清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨
+
+**Why.** Layer G（東西兩岸）這一層正跟東北案關連。落馬洲關閘是全城最早醒的地方之一：通勤者、地盤工人、帶材料的老先生、小學生——過境線上的人都只需要兩個地方溫暖。系列繼續往前，不找一個夢醒的時刻來收尾，而是交給下一個閘。
+
+**The unit.** `DEMO_GUIDES` gains `hk-loko-ma-chau-barrier-chronicle` — 「清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨（香港系列 · 第五十五章）」。Three heading cards（一、六點一刻的閘機 · 二、過境者地圖 · 三、七點的第一班），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「上水 落馬洲」）。Both locales carry the chapter; the arc clock gains 06:15 between cha chaan teng and Lei Yue Mun (110 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-five on both locales; chapter-icons gains `'hk-loko-ma-chau-barrier-chronicle': 'navigation'`; e2e floors ≥55; census 1886 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 14s and the chapter renders end-to-end via /guides/hk-loko-ma-chau-barrier-chronicle clean.
+
+**Honest boundaries.** 合成敘事：上水火車站、落馬洲關閘通勤線、梁師傅、蛋治牌、白板上的四十二人——全部是敘事建構，不指向真實商戶、真實值班員或真實關閘時刻；搜索「上水 落馬洲」演示的是演示流的路徑。chapter-guides parity reader 同步升到 55 章，arm 五覆 LIV + LV。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.

@@ -1877,4 +1877,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-loko-ma-chau-barrier-chronicle', title: '清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨（香港系列 · 第五十五章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：清晨六點一刻的上水火車站——關卡通勤線、最先經過的地盤工人、和禁區明天關閘的聲音。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：清晨六點一刻。上水火車站連接落馬洲關閘的通勤線（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——第一班通勤車的門剛合上。站務員梁師傅（合成敘事，非真實人物）把茶餐廳的手寫牌掛在閘機旁邊：『今日：蛋治一個，咖央兩個，番梘一塊。』' },
+      { type: 'heading', text: '一、六點一刻的閘機' },
+      { type: 'paragraph', text: '六點二十分，第一班跨境的人先後到站。清潔的困尾、鐵絲網的反光、向北的車。梁師傅從來不問他們去過境的那一邊是什麼——他只替他們保管早餐。他說，過關的人只需要兩個地方溫暖：閘機這一端、和胃。' },
+      { type: 'cards', title: '禁區閘口可見', items: [] },
+      { type: 'heading', text: '二、過境者地圖' },
+      { type: 'paragraph', text: '梁師傅把當日的人數寫在白板上：今日到埗四十二人、圍住板凳吃掉九個蛋治、一位帶材料過境的老先生、兩位小學生。他從不藏疊紙——整個閘機對面的人過了一遍又一遍。他認得每個腳步的輕重。' },
+      { type: 'cards', title: '禁區閘口可聽', items: [] },
+      { type: 'heading', text: '三、七點的第一班' },
+      { type: 'paragraph', text: '早上七點，閘機響起最後一聲信號。梁師傅把白板改成留言：『今日請早一點關閘——明天七點見。』禁區的早晨沒有結束，但它永遠屬於下一個門。他拉開鐵閘，由左邊第一再關上，並輕輕地鎖住。' },
+      { type: 'cards', title: '禁區閘口可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「上水 落馬洲」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
