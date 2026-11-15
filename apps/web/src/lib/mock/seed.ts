@@ -1793,4 +1793,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kwun-tong-newsboy-chronicle', title: '凌晨五點：觀塘『曙光報紙』的分送員（香港系列 · 第五十一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：觀塘的報紙分發中心在凌晨五點醒過來——那輛留下來的電瓶車裡、一些什麼奇妙的結構。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨五點。觀塘曙光報紙分送中心（合成敘事，非真實商戶與真實時刻——時刻與街道全部是敘事建構）——四堵牆，三盞燈，一條電風扇哼的牆。吳伯穿拖鞋，把今天的報紙一疊一疊慢慢放上車。他這個習慣已經持續了四十三年——像一個習慣只可以說是活在記憶裡的動物，而不能變成另外一樣想法。' },
+      { type: 'heading', text: '一、曙光的鐵閘' },
+      { type: 'paragraph', text: '這裡的打開方式很微妙：鎖是好的，鐵閘是好的，但今天『晴』的報紙比昨日『陰』的報紙多兩三疊，對吳伯來說是一個軍事規律。他從一早兩點醒來，記住每一個區的需求，這是他的開始，也是他的結束。他說：『指揮別人發送報紙很容易，指揮別人睜開眼睛去爭取——就沒有那麼容易。』' },
+      { type: 'cards', title: '曙光可見', items: [] },
+      { type: 'heading', text: '二、城市的呼吸' },
+      { type: 'paragraph', text: '五點鍾，車從觀塘出發。沿途會經過很多地方——石礦場、花墟、紅磡的屠場、太子的報攤。每一個停靠點都有一位老師傅等著。他把報紙遞給站長，站長說兩個字或三個字，然後旁邊早已準備的是他拍照存證、或是結算帳目的小段話。' },
+      { type: 'cards', title: '曙光可聽', items: [] },
+      { type: 'heading', text: '三、回到凌晨' },
+      { type: 'paragraph', text: '五點十五分，曙光報紙分送中心又關上了閘，但今天的事情沒有重複的地方。吳伯給自己倒一杯白酒——是『南天門』送過來的招待，他的第一代朋友種的。他站在四堵牆之間，今天的報紙沒有了，有的只是別人的記憶和他們喊的聲音。' },
+      { type: 'cards', title: '曙光可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「觀塘 曙光」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

@@ -44565,3 +44565,13 @@ does not invent a second event.
 **Honest boundaries.** A vibe, not an algorithm. The FNV-1a hash does not promise any meaningful cadence — it promises something small and true: every reader on the same HK date sees the same chapter. No targeting; no reading-profile; no per-user lift. Skippable once the reader scrolls away.
 
 - readers: `apps/web/src/components/hk-today-slot.tsx`, `apps/web/src/components/hk-today-slot.copy.ts`, `apps/web/src/lib/today-slot.ts`, `apps/web/app/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+
+## 1179. D1179 — chapter LI lands the 05:00 slot: 凌晨五點：觀塘『曙光報紙』的分送員 — the dawn's first act
+
+**Why.** The arc clock stops at 04:30 (factory alley dawn) and picks up at 05:30 (three meals). The 05:00 slot belonged to nobody — until today. The Kwun Tong paper depot opens before dawn; the news distributor leaves with the first truck; the dawn drinks from the depot. The chapter belongs in the series.
+
+**The unit.** `DEMO_GUIDES` gains `hk-kwun-tong-newsboy-chronicle` — 「凌晨五點：觀塘『曙光報紙』的分送員（香港系列 · 第五十一章）」. Three heading cards（一、曙光的鐵閘 · 二、城市的呼吸 · 三、回到凌晨）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「觀塘 曙光」）。Both locales carry the chapter; the arc clock gains 05:00 between the fish market and three meals (102 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to fifty-one on both locales; e2e floors ≥51; census 1796 literals clean (0 simplified); web 354/354; build passes; verify_all NO OFFENDER.
+
+**Honest boundaries.** Synthetic fixture; the depot, the coordinator, the distributor, the truck, the alcohol are narrative constructions. No real depot, no real shift manager, no actual delivery route is claimed.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
