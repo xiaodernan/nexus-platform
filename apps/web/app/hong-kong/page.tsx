@@ -9,7 +9,6 @@ import { HkCantoneseDaily } from '@/components/hk-cantonese-daily';
 import { HkArcTimeline } from '@/components/hk-arc-timeline';
 import { HkContinueReading } from '@/components/hk-continue-reading';
 
-export const dynamic = 'force-static';
 
 /**
  * `/hong-kong` — the mega-hub of the Hong Kong story series. Every chapter of the series

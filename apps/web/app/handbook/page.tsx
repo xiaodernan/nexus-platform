@@ -11,7 +11,6 @@ import { currentLocale } from '@/lib/i18n/server';
  * three daily instruments, the `/hk-type` game tutorial, /me, the merchant shell, the honesty
  * contract — plus a five-step new-user walkthrough up front.
  */
-export const dynamic = 'force-static';
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = getDict(await currentLocale());

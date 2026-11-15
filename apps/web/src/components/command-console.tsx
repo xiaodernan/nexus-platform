@@ -2,7 +2,7 @@
 
 /**
  * D1183 — the /command demo console. A password-gated view unlocked by the shared passphrase `123`.
- * The page is localStorage-only, force-static, bilingual; no login state leaves the device; the
+ * The page is localStorage-only, server-rendered per request, bilingual; no login state leaves the device; the
  * data feed is synthetic and **explicit about it** — every panel carries a source note so the
  * operator never mistakes demo for production telemetry.
  *

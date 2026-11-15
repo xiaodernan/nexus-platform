@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
  * D1177 — pin the Stamp Collection page + island.
  *
  *   - the island is a client island that reads `nexus.hk-series.read` for its source of truth;
- *   - the page is force-static, no network, both locales dict-carried;
+ *   - the page is server-rendered per request, no network, both locales dict-carried
+ *     (D1207: no force-static so the one-click zh ↔ en switch reaches this document too);
  *   - the route compiles and renders the full 50 hrefs in SSR (everything-always-hydrates pattern);
  *   - the footer carries its link in both locales
  */
@@ -34,9 +35,11 @@ describe('D1177 /stamp collection island', () => {
     expect(src).not.toContain('XMLHttpRequest');
   });
 
-  it('page is force-static and renders the same island for both locales', () => {
+  it('page is server-rendered per request and renders the same island for both locales', () => {
     const page = read(PAGE);
-    expect(page).toContain("export const dynamic = 'force-static'");
+    // D1207: no force-static — the locale cookie must be honored per request on this route too.
+    expect(page).not.toContain("force-static");
+    expect(page).toContain("currentLocale()");
     expect(page).toContain('StampCollection');
     expect(page).toContain('canonical: \'/stamp\'');
   });

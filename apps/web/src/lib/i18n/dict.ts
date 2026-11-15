@@ -1013,6 +1013,30 @@ export interface Dict {
     nextTitle: string;
     screenshotNote: string;
   };
+  /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  insights: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    ritual: string;
+    ambientTitle: string;
+    ambientBody: string;
+    total: string;
+    funnel: string;
+    hourRamp: string;
+    table: string;
+    colProfile: string;
+    colCount: string;
+    colDwell: string;
+    colDrop: string;
+    colBand: string;
+    funnelLow: string;
+    funnelMid: string;
+    funnelHigh: string;
+    nextTitle: string;
+    disclaimer: string;
+    fmtDwell: (sec: number) => string;
+  };
 }
 
 const zhHK: Dict = {
@@ -2532,6 +2556,30 @@ const zhHK: Dict = {
     ],
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
+  },
+  /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  insights: {
+    eyebrow: '營運者早間掃描 · 昨日 22 位讀者',
+    title: '幽靈的痕跡',
+    intro: '每天早上，這套機器會按香港日期重播過去廿四小時的讀者行為——沒有帳號、沒有追蹤碼、沒有 cookie。全是本地重放、只給營運者看，同時也看得見產品上人們怎樣用它。',
+    ritual: '每日儀式｜零追蹤',
+    ambientTitle: '營運主義說',
+    ambientBody: '有些讀者會在小按鈕上瞎點，有些一到首頁就關，有些則細細讀完三段再走。這頁專門記下他們——唯一要學會的功課，是聽懂他們不為何而開口。',
+    total: '昨收到的幽靈數',
+    funnel: '轉化階梯',
+    hourRamp: '每小時進場的人（0–100 對比刻度）',
+    table: '幽靈的六個類型',
+    colProfile: '類型',
+    colCount: '數',
+    colDwell: '最長停留',
+    colDrop: '流失率',
+    colBand: '漏斗檔位',
+    funnelLow: '低',
+    funnelMid: '中',
+    funnelHigh: '高',
+    nextTitle: '營運者下一步',
+    disclaimer: '合成示意：這頁沒有單一真實讀者的資料，全部出自一套確定性的重放程式。給營運者閱讀用，不是監控。',
+    fmtDwell: (sec: number) => `${sec} 秒`,
   },
 };
 
@@ -4056,6 +4104,30 @@ const en: Dict = {
     ],
     nextTitle: 'Want more?',
     screenshotNote: 'Screenshots lag the running build; this handbook is refreshed on every shipped milestone.',
+  },
+  /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  insights: {
+    eyebrow: 'The ops morning scan · 22 ghosts arrived yesterday',
+    title: 'Where the day bites',
+    intro: 'Every morning a deterministic replay rebuilds yesterday’s footfalls from the HK date. No accounts, no tracking, no cookies — all local replay, operators only, and a mirror onto how this product is actually used.',
+    ritual: 'Daily ritual · zero tracking',
+    ambientTitle: 'What the ops desk keeps',
+    ambientBody: 'Some readers dart, some glance once and close, and some stay three paragraphs in. This page is their ledger — the only game is learning to hear what they never say out loud.',
+    total: 'Ghost visits, all told',
+    funnel: 'The funnel',
+    hourRamp: 'Arrivals per hour (0–100 compare)',
+    table: 'The six ghost archetypes',
+    colProfile: 'Profile',
+    colCount: 'Count',
+    colDwell: 'Longest dwell',
+    colDrop: 'Drop-off',
+    colBand: 'Funnel band',
+    funnelLow: 'low',
+    funnelMid: 'mid',
+    funnelHigh: 'high',
+    nextTitle: 'Next optimisation this week',
+    disclaimer: 'Synthetic replay only. Zero real reader data — this is the operator’s mirror, not surveillance.',
+    fmtDwell: (sec: number) => `${sec}s`,
   },
 };
 

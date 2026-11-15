@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 /**
- * D1119 — `/handbook` pins: both locales carry the manual, the page is a force-static
- * dict-driven artefact with no island, and the zh copy is Holy Traditional HK script
- * (the census charges it anyway; this file pins a few visible strings).
+ * D1119 — `/handbook` pins: both locales carry the manual, the page is a dict-driven server
+ * artefact with no island, and the zh copy is Holy Traditional HK script (the census charges
+ * it anyway; this file pins a few visible strings). D1207: the route is server-rendered per
+ * request so the one-click zh ↔ en switch reaches the document everywhere.
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -31,9 +32,12 @@ describe('D1119 the /handbook manual', () => {
     }
   });
 
-  it('the page is force-static, renders dict content, and offers a real search path', () => {
+  it('the page is server-rendered per request, renders dict content, and offers a real search path', () => {
     const page = read(PAGE);
-    expect(page).toContain("export const dynamic = 'force-static';");
+    // D1207: no force-static — every route resolves the locale cookie per request so the
+    // one-click zh ↔ en switch reaches all documents, not just the dynamic ones.
+    expect(page).not.toContain("force-static");
+    expect(page).toContain("currentLocale()");
     expect(page).toContain('dict.handbook');
     expect(page).toContain('href="/search"');
     expect(page).toContain('copy.sections.map');

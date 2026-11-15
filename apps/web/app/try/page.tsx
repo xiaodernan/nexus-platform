@@ -5,7 +5,6 @@ import { Container, Icon } from '@nexus/ui';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 
-export const dynamic = 'force-static';
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = getDict(await currentLocale());

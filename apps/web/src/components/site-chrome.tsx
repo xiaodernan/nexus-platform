@@ -16,6 +16,7 @@ import { IS_MOCK, TENANT } from '@/lib/env';
 import { getDict, type Dict } from '@/lib/i18n';
 import { cityPath, labelFor } from '@/lib/directory';
 import { ThemeToggle } from './theme-toggle';
+import { LocaleToggle } from './locale-toggle';
 
 /**
  * The one place that decides whether the `/{city}` directory may be advertised. `/guides` and
@@ -108,6 +109,13 @@ export function SiteHeader({ locale }: { locale: string }) {
               {dict.home.demoTitle}
             </span>
           ) : null}
+          <LocaleToggle
+            locale={locale}
+            labels={{
+              toEn: '切換到英文版 — 整頁一鍵互換中英文',
+              toZh: 'Switch to the Traditional Chinese edition — one click swaps the whole page',
+            }}
+          />
           <ThemeToggle labels={{ toDark: dict.nav.themeToDark, toLight: dict.nav.themeToLight }} />
           <Link
             href="/search"
@@ -140,6 +148,7 @@ export function SiteFooter({ locale }: { locale: string }) {
     { href: '/daily', label: dict.nav.daily, title: dict.nav.hints.daily },
     { href: '/stamp', label: locale === 'zh-HK' ? '印章收集' : 'Passport stamps', title: locale === 'zh-HK' ? '已讀章節集印 — 每讀一章，護照就多一個章印' : 'Every read chapter earns a stamp — 50 stamps to a complete passport' },
     { href: '/command', label: locale === 'zh-HK' ? '指揮台' : 'Command desk', title: locale === 'zh-HK' ? '管理員 demo 頁 — 輸入 123 解鎖，看兩個星期的合成數據' : 'Demo operator view — unlock with 123 to read the synthetic two-week ledger' },
+    { href: '/insights', label: locale === 'zh-HK' ? '營運掃描' : 'Operator scan', title: locale === 'zh-HK' ? '虛擬讀者的每日鬼影分析 — 一頁看完，不存數據' : 'Daily ghost-readers from a deterministic replay — one screen, zero stored data' },
     { href: '/hong-kong', label: dict.home.hkHub.seriesLink, title: dict.nav.hints.hongKong },
   ];
   return (

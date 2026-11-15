@@ -98,7 +98,12 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/components/ask-merchant.tsx` | D1067: the empty-state branch grows a chip row of three focus starters (availability / signature / hours), seeding the existing textarea — user owns the send |
 | `apps/web/app/page.tsx` | D1173: localised home degraded-rails banner via dict.railsDegraded(failed,total) — zh-HK no longer leaks the English dev string |
 | `apps/web/src/lib/chapter-icons.ts` | D1181: chapter identity glyphs — slug → IconName for the chapter card rail (HkSeriesProgress, roman alphabet) |
-| `apps/web/app/command/page.tsx` | D1183: the /command demo operator route — force-static, locked gate; synthetic two-week desk |
+| `apps/web/app/command/page.tsx` | D1183/D1207: the /command demo operator route — locked gate; synthetic two-week desk (per-request SSR since D1207) |
+| `apps/web/app/insights/page.tsx` | D1206: the /insights operator `營運掃描` — SSR ghost-reader replay from the HK date; robots noindex |
+| `apps/web/src/lib/user-journeys.ts` | D1206: cyrb53-seeded deterministic ghost simulator — 22 readers, 24h ramp, six profiles, both locales |
+| `apps/web/src/lib/user-journeys.test.ts` | D1206: 9 arms — determinism, six-profile mirror, bilingual copy, date rollover |
+| `apps/web/src/components/locale-toggle.tsx` | D1207: the one-click zh ↔ en island — writes `nexus_locale`, reloads the document |
+| `apps/web/src/components/site-chrome.tsx` | D1207: header gains the locale switch before the theme toggle; every page honors the cookie per request |
 | `apps/web/src/components/command-console.tsx` | D1183: the passphrase-123 island — five panels (counters / top phrases / chapter heat / retention / next moves), all baked-in fixtures, disclaimed onscreen |
 | `apps/web/app/page.tsx` | D1068: the home hero gains a second chip row — six hot districts (沙田/中環/旺角/尖沙咀/銅鑼灣/荃灣), each routing to a district+intent `/search?q=` |
 | `apps/web/src/components/back-to-top.tsx` | D1071: the back-to-top island — passive scroll listener, visible only past the first viewport, reduced-motion honored |
@@ -189,7 +194,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/stamp-collection.test.ts` | D1177: 4 pins — source of truth honest, island decor (no fetch), /stamp route renders 50 hrefs, footer link both locales |
 | `apps/web/app/hong-kong/page.tsx` | D1109: unconditionally rendered, dict-driven editorial across all deployments |
 | `apps/web/src/components/hk-quiz.tsx` | D1113: the result branch now renders the daily HK ticket line |
-| `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |
+| `apps/web/src/lib/hk-type.test.ts` | D1095/D1207: 3 arms pin the island contract — per-request SSR (locale cookie honored), determinism, dict pins in both locales |
 | `apps/web/app/hk-type/page.tsx` | D1095: /hk-type server shell — chapter chips, dot-grid backdrop, static rendering |
 | `tests/e2e/specs/consumer/hk-type.spec.ts` | D1098: 1 desktop arm — the /hk-type quiz start → progressbar → 8×A → deterministic yum_cha result |
 | `apps/web/app/guides/page.tsx` | D1102: the /guides page gains an HK series editorial teaser above the listing grid, IS_MOCK-guarded |

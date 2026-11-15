@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * D1095 — the /hk-type archetype quiz. Three pins:
- *   - the route exists, is force-static, renders a client island, serializes zero answers;
+ *   - the route exists, renders a client island, serializes zero answers
+ *     (D1207: server-rendered per request so the one-click zh ↔ en switch reaches every document);
  *   - the island carries three archetypes with deterministic scoring and a restart loop;
  *   - the dict carries the whole quiz in both locales with HK Traditional script in zh.
  */
@@ -19,9 +20,11 @@ const ISLAND = 'apps/web/src/components/hk-quiz.tsx';
 const DICT = 'apps/web/src/lib/i18n/dict.ts';
 
 describe('D1095 /hk-type archetype quiz', () => {
-  it('is a force-static route streaming a client island with no telemetry', () => {
+  it('is a server-rendered route streaming a client island with no telemetry', () => {
     const page = read(PAGE);
-    expect(page).toContain("export const dynamic = 'force-static';");
+    // D1207: no force-static — the locale cookie must be honored per request on this route too.
+    expect(page).not.toContain("force-static");
+    expect(page).toContain("currentLocale()");
     expect(page).toContain('HkQuiz');
     expect(page).toContain("import { HkQuiz }");
     const island = read(ISLAND);

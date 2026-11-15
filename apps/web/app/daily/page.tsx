@@ -19,7 +19,6 @@ import { HkDailyShare } from '@/components/hk-daily-share';
  * Server-rendered shell, client islands for the two live pieces (date, clipboard) and for the two
  * already-existing daily islands. No backend, no fetch, no telemetry.
  */
-export const dynamic = 'force-static';
 
 export async function generateMetadata(): Promise<Metadata> {
   const dict = getDict(await currentLocale());

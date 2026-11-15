@@ -6,7 +6,6 @@ import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { HkQuiz } from '@/components/hk-quiz';
 
-export const dynamic = 'force-static';
 
 /**
  * `/hk-type` — the 互動篇章 of the Hong Kong story series: an 8-question archetype quiz
