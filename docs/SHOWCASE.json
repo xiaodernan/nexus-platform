@@ -1,16 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1182",
-  "milestone_full": "香港系列五十三章 · 安樹堂的開診時間 · 早上八點的西營盤",
+  "milestone": "D1183",
+  "milestone_full": "港灣指揮中心 /command · 密碼 123 解鎖的演示後台——過去兩星期的合成數據儀表（關鍵數字／熱門關鍵詞／章節熱度／回頭 proxy／下一步行動）",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
-  "as_of": "2026-11-14",
+  "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
     "HK series: fifty-three Traditional chapters — 00:30→22:45 full day arc · 106-chip clock both locales",
     "Edition LIII — 安樹堂的開診時間 (08:00) · Layer G continues",
     "Layer G full tract: LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
+    "/command — demo operator desk, unlock with 123: six counters · top phrases · chapter heat · retention proxy · next moves. Synthetic-only, badged on screen",
     "/stamp passport game · /try five-step walkthrough · /hong-kong continue-CTA · /daily ritual · /handbook · /hk-type",
-    "D1181: chapter identity glyphs · D1180: LII 九龍灣製衣廠 · D1179: LI 觀塘曙光報紙 · D1178: 今日編框 home spotlight · D1177: 護照集印"
+    "D1183: /command demo console · D1182: LIII 安樹堂 · D1181: 章節標誌 glyphs · D1180: LII 九龍灣製衣廠 · D1178: 今日編框 · D1177: 護照集印"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

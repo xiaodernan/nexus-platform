@@ -98,6 +98,8 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/components/ask-merchant.tsx` | D1067: the empty-state branch grows a chip row of three focus starters (availability / signature / hours), seeding the existing textarea — user owns the send |
 | `apps/web/app/page.tsx` | D1173: localised home degraded-rails banner via dict.railsDegraded(failed,total) — zh-HK no longer leaks the English dev string |
 | `apps/web/src/lib/chapter-icons.ts` | D1181: chapter identity glyphs — slug → IconName for the chapter card rail (HkSeriesProgress, roman alphabet) |
+| `apps/web/app/command/page.tsx` | D1183: the /command demo operator route — force-static, locked gate; synthetic two-week desk |
+| `apps/web/src/components/command-console.tsx` | D1183: the passphrase-123 island — five panels (counters / top phrases / chapter heat / retention / next moves), all baked-in fixtures, disclaimed onscreen |
 | `apps/web/app/page.tsx` | D1068: the home hero gains a second chip row — six hot districts (沙田/中環/旺角/尖沙咀/銅鑼灣/荃灣), each routing to a district+intent `/search?q=` |
 | `apps/web/src/components/back-to-top.tsx` | D1071: the back-to-top island — passive scroll listener, visible only past the first viewport, reduced-motion honored |
 | `apps/web/src/lib/back-to-top.test.ts` | D1071: 3 arms pin mount-once, past-fold visibility, dict presence in both locales |

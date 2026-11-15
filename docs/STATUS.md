@@ -44605,3 +44605,20 @@ does not invent a second event.
 **Honest boundaries.** Synthetic fixture; the clinic, the doctor, the patient, the omens are narrative constructions. No real acupuncture practice is described; nothing is claimed about medical efficacy or safety.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `apps/web/src/lib/chapter-icons.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1183. D1183 — `/command`: 密碼「123」解鎖的演示後台（Harbour Command 港灣指揮中心）
+
+**Why.** 用戶要求：「開發一個管理員功能可以檢測、分析、查看、觀察所有用戶的行為，密碼輸入 123 就可以進去了……展示統計數據、分析、趨勢預測、下一步優化措施。」——這是一個**演示後台**的訴求，不是安全後門。真正的 operator 後台另有 `/admin`（§68 identity gate，cookie + role read，fails closed）；這裏給的是任何訪客都能解開的 demo 儀表盤：所有數字是內置合成樣本、屏幕上明言與真實 AI 後端、真實運營數據無關。
+
+**The unit.** New route `/command`（server-rendered, force-static）+ client island `apps/web/src/components/command-console.tsx`. Server 預渲染 locked gate；client 掛載時檢查 `sessionStorage['nexus.command.unlocked']`——曾在本分頁 unlock 過就直接 swap 到儀表盤。Passphrase 常量為 `123`；錯誤嘗試 shake input 並以 aria-live 的 `cmdConsole.forbidden` 温和提示；unlock 只寫本 tab 的 sessionStorage（關閉瀏覽器即消失）。五個面板，全是 baked-in 合成樣本：
+1. 六個關鍵數字 counters（新會員／收錄商家／成交單量／預約／停權商家／待處理版權案：1,284／356／410／209／14／3）
+2. 熱門關鍵詞 top searches（6 phrases，HK 口語：「今晚有餐廳有位坐？」等；en 對照）
+3. 章節熱度排名 contentHeat（第一章 4,821 流覽／312 收藏；第二十四章：流覽高、收藏低，nextMoves 主攻它）
+4. 近 14 日回頭 proxy（回頭客 382／新會員 214／下一步：把塔樓清潔工推上首頁焦點位，先改引文）
+5. 這個禮拜可以做的兩件事 nextMoves（低風險改鉤子字；medium 風險：結果頁 CTA 去 passport 集印頁）
+
+Dict 擴 `cmdConsole`（zh-HK Traditional + en 雙語鎖步；UI census 1867 literals clean）；footer 加「指揮台／Command desk」入口（both locales）；`chapter-icons.ts` 重寫修復 trailing-tuple 解析錯；SSR-HTML 預渲染 locked gate（無 sessionStorage 的 crawler 所見即所得）；en 經 `nexus_locale` cookie 在所有動態路由上生效（force-static 與全站靜態頁同一機制：預設 zh-HK）。
+
+**Honest boundaries.** 這是一個 literacy tool，不是 security boundary。任何知道 `123` 的訪客都能解鎖——這是設計目標；數據全是合成 fixtures，無任何真實用戶／商家／訂單資訊、無遙測、無後端契約。它沒有進入 `/admin` 的 §68 gate，也不冒充 production telemetry。兩類鎖並存：真後台要 identity，演示後台要「隨手可看」。
+
+- readers: `apps/web/app/command/page.tsx`, `apps/web/src/components/command-console.tsx`, `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `docs/ATLAS.md`, this ledger entry.

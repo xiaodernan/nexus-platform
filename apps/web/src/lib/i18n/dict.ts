@@ -71,6 +71,43 @@ export interface Dict {
     /** D1150: the newbie mini-manual in the header — visible teaching entrypoint. */
     newbie: string;
   };
+  /** D1183: the /command demo admin console — password-locked, local-first, synthetic feed. */
+  cmdConsole: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    unlocked: string;
+    unlockedHint: string;
+    passwordLabel: string;
+    passwordHint: string;
+    passwordCta: string;
+    forbidden: string;
+    note: string;
+    sections: {
+      counters: string;
+      topSearches: string;
+      contentHeat: string;
+      retention: string;
+      nextMoves: string;
+    };
+    counters: Array<{ label: string; value: string }>;
+    topSearches: Array<{ phrase: string; count: number }>;
+    contentHeat: Array<{ title: string; impressions: number; saves: number }>;
+    retention: {
+      returning14d: number;
+      new14d: number;
+      returningLabel: string;
+      returningHint: string;
+      newLabel: string;
+      newHint: string;
+      nextPushLabel: string;
+      nextAction: string;
+    };
+    nextMoves: Array<{ move: string; why: string; risk: 'low' | 'medium' | 'high' }>;
+    savesUnit: string;
+    sourceStamp: string;
+    backLink: string;
+  };
   home: {
     /** D1144: the /daily page — everything the date can pick, in one place. */
     daily: {
@@ -1009,6 +1046,64 @@ const zhHK: Dict = {
       searchCta: '立即搜索今天的香港',
     },
     newbie: '新手教學',
+  },
+  cmdConsole: {
+    eyebrow: '管理員儀錶板 · 演示後台',
+    title: '港灣指揮中心',
+    intro: '過去兩星期的合成數據攤開來看——哪些商舖排在前、哪些章節流量最大、我們現在最該做什麼。本畫面的一切全部出自本 demo 內置資料，與真實 AI 後端無關。',
+    unlocked: '已解鎖',
+    unlockedHint: '撳一下重新上鎖',
+    passwordLabel: '隨便試試的密碼',
+    passwordHint: '什麼都可以 — 是 demo',
+    passwordCta: '解鎖儀錶板',
+    forbidden: '密碼不對。',
+    note: '密碼只存 sessionStorage，本機不上傳，關閉瀏覽器就消失。',
+    sections: {
+      counters: '六個關鍵數字',
+      topSearches: '熱門關鍵詞',
+      contentHeat: '章節熱度排名',
+      retention: '近 14 天回頭率',
+      nextMoves: '這個禮拜可以做的兩件事',
+    },
+    counters: [
+      { label: '新會員', value: '1,284' },
+      { label: '收錄商家', value: '356' },
+      { label: '成交單量', value: '410' },
+      { label: '預約', value: '209' },
+      { label: '停權商家', value: '14' },
+      { label: '待處理版權案', value: '3' },
+    ],
+    topSearches: [
+      { phrase: '今晚有餐廳有位坐？', count: 312 },
+      { phrase: '附近邊間早茶好？', count: 254 },
+      { phrase: '平啲啲嘅燒味', count: 188 },
+      { phrase: '東涌下午仲有咩做？', count: 142 },
+      { phrase: '軒尼詩道食咩好？', count: 121 },
+      { phrase: '大澳咸魚棧真唔真？', count: 97 },
+    ],
+    contentHeat: [
+      { title: '第一章 · 三餐的血', impressions: 4821, saves: 312 },
+      { title: '第二十一章 · 的士站最後一客', impressions: 3317, saves: 274 },
+      { title: '第四十二章 · 維園的外國傭工', impressions: 2899, saves: 245 },
+      { title: '第二章 · 燒味', impressions: 2601, saves: 198 },
+      { title: '第二十四章 · 塔樓清潔工', impressions: 2117, saves: 167 },
+    ],
+    retention: { returning14d: 382, new14d: 214, returningLabel: '回頭客', returningHint: '近 14 日，比上一個 14 日窗口', newLabel: '新會員', newHint: '近 14 日登記', nextPushLabel: '下一步', nextAction: '把「第二十四章 · 塔樓清潔工」推到香港首頁焦點位——流覽量高、收藏偏低（2,117 流覽／167 收藏），先改引文再推。' },
+    nextMoves: [
+      {
+        move: '在塔樓清潔工章頁的收藏按鈕旁加一句：「邊個一夜沒睡？」',
+        why: '這章流量已經排第二，轉化還有空間。把情感鉤子從標題延到內文，引誘讀者儲存。',
+        risk: 'low',
+      },
+      {
+        move: '在香港人格測試結果頁加一張「讀完呢一章去邊裡」卡片',
+        why: '完成人格測試之後的去向沒有指引，護照集印頁的入口機會流失——結果卡直接引導過去。',
+        risk: 'medium',
+      },
+    ],
+    savesUnit: '收藏',
+    sourceStamp: '所有數字均為合成示意 — 不包含任何真實用戶資料；每一次發版隨機浮動 ±5%',
+    backLink: '回首頁',
   },
   home: {
     daily: {
@@ -2422,6 +2517,64 @@ const en: Dict = {
       searchCta: 'Search today’s Hong Kong',
     },
     newbie: 'How to play',
+  },
+  cmdConsole: {
+    eyebrow: 'Command desk · Demo superuser',
+    title: 'Harbour Command',
+    intro: 'Synthetic two-week view — search trends, chapter heat, returns per visitor window and where to prod next. All numbers below come from a baked-in sample; nothing reaches a real operator dashboard or the AI service.',
+    unlocked: 'Unlocked',
+    unlockedHint: 'Lock again',
+    passwordLabel: 'Made-up passphrase',
+    passwordHint: 'Try anything — it is demo',
+    passwordCta: 'Unlock the console',
+    forbidden: 'Wrong passphrase.',
+    note: 'The passphrase never leaves this device — kept in sessionStorage only.',
+    sections: {
+      counters: 'Headline counters',
+      topSearches: 'Top phrases',
+      contentHeat: 'Chapter heat',
+      retention: 'Retention proxy (14 d vs last window)',
+      nextMoves: 'Two moves to ship this week',
+    },
+    counters: [
+      { label: 'Signups', value: '1,284' },
+      { label: 'Listed merchants', value: '356' },
+      { label: 'Orders', value: '410' },
+      { label: 'Reservations', value: '209' },
+      { label: 'Suspended', value: '14' },
+      { label: 'Open moderation', value: '3' },
+    ],
+    topSearches: [
+      { phrase: 'cha chaan teng tonight', count: 312 },
+      { phrase: 'yum cha near Wan Chai', count: 254 },
+      { phrase: 'cheaper siu mei', count: 188 },
+      { phrase: 'what is in Tung Chung at 4pm', count: 142 },
+      { phrase: 'restaurants Hennessy Road', count: 121 },
+      { phrase: 'Tai O dried fish worth it?', count: 97 },
+    ],
+    contentHeat: [
+      { title: 'Chapter 1 — three meals', impressions: 4821, saves: 312 },
+      { title: 'Chapter 21 — last fare', impressions: 3317, saves: 274 },
+      { title: 'Chapter 42 — the Filipina at Victoria Park', impressions: 2899, saves: 245 },
+      { title: 'Chapter 2 — siu mei', impressions: 2601, saves: 198 },
+      { title: 'Chapter 24 — tower cleaner', impressions: 2117, saves: 167 },
+    ],
+    retention: { returning14d: 382, new14d: 214, returningLabel: 'Returning readers', returningHint: 'last 14 days vs prior window', newLabel: 'New signups', newHint: 'last 14 days', nextPushLabel: 'Next push', nextAction: 'Feature the tower cleaner chapter on the HK homepage — impressions high, saves low. Rewrite the lede hook first.' },
+    nextMoves: [
+      {
+        move: 'Tighten the tower cleaner chapter’s save button hook',
+        why: '2,117 impressions but only 167 saves — readers glance, not save. Change the hook line to a question: “Who among us didn’t sleep last night?”',
+        risk: 'low',
+      },
+      {
+        move: 'Pair the quiz result with a passport-stamp CTA',
+        why: 'Returning-reader rate < 18% after the reveal — visitors leave right after the result. A stamp CTA pulls them one click further into the series.',
+        risk: 'medium',
+      },
+    ],
+    savesUnit: 'saves',
+    sourceStamp: 'Ad-hoc synthetic numbers — vary ±5% per release; never represent real operators or real readers.',
+    backLink: 'Back to home',
   },
   home: {
     daily: {
