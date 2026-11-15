@@ -1,19 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1210",
-  "milestone_full": "第六十八章世界地圖 · /world —— 全系列 68 章按時辰攤平，七層一次讀 · 說明書 REAL-HK II · 雙語一鍵全切換",
+  "milestone": "D1211",
+  "milestone_full": "說明書 REAL-HK III（香港國際機場）· 第六十九章 · 天星小輪——維港的慢拍開始轉動（09:15）· 世界地圖切到六十九章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: sixty-eight Traditional chapters — 00:00→23:00 full day arc · 136-chip clock both locales",
-    "D1210 — /world 世界地圖 atlas: every one of the 68 chapters, partitioned into seven hour-layers (night run · dawn markets · morning market · afternoon street · dusk settling · night-market row · the stayers), SSR per request, fully bilingual, zero hand-duplicated data",
-    "Edition LXVIII — 早上八點四十五分：皇崗口岸——返城班車的司機阿昌 (08:45) · Layer H seventh beat of the border arc",
-    "handbook REAL-HK II — 天星小輪 sourced (1888 · ~70k/day · ~26M/year · 1957 twin pier · 2018-03 franchise) + REAL-HK (MTR 245.3 km · ~5.76M daily · ~99.9% on-time)",
-    "D1206 — /insights 營運掃描：deterministic ghost-reader replay · D1207 — one-click zh ↔ en across the whole document",
-    "D1209 pressure re-run (128 req × 32 concurrent × 6 surfaces) — all 2xx · Spring Cloud sidecar: Eureka :24761 · Config :24889 · Gateway :24089 · Admin :25445",
-    "/hong-kong (68 chapters) · /world · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily · /insights",
-    "D1210: /world atlas · D1209: LXVIII + REAL-HK II · D1208: LXVII · D1207: bilingual · D1206: /insights · D1202: handbook inline source URL"
+    "HK series: sixty-nine Traditional chapters — 00:00→23:00 full day arc · 138-chip clock both locales",
+    "Edition LXIX — 早上九點十五分：天星小輪——維港的慢拍開始轉動 (09:15) · the harbour arc begins, anchored by REAL-HK II figures",
+    "handbook REAL-HK III — 香港國際機場 sourced: opened 1998-07-06 · world's busiest cargo gateway since 2021 · 2025: 60,992,000 pax · 5,070,000 t · 394,730 movements (Jan–Jun 2026: 32.8M pax +11.7% · 2.5M t +4.1% · 200,685 mov +4.4%) — Wikipedia, retrieved 2026-11-16 (inline URL in both locales)",
+    "D1210 — /world atlas reads 69 chips (12+16+12+12+6+5+6 asserted) · D1209 — REAL-HK II (Star Ferry) · D1207 — one-click zh ↔ en across the whole document",
+    "D1206 — /insights 營運掃描：deterministic ghost-reader replay · D1208 — LXVII; D1207 bilingual restore · REAL-HK I (MTR) + II (Star Ferry) + III (HKIA)",
+    "/hong-kong (69 chapters) · /world · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily · /insights",
+    "D1211: LXIX + REAL-HK III · D1210: /world · D1209: LXVIII · D1208: LXVII · D1207: bilingual · D1206: /insights · D1202: handbook inline source URL"
   ],
-  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data."
+  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. Airport/MTR/Star Ferry figures are from public sources with URLs on the page."
 }

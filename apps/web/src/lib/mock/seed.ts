@@ -2171,4 +2171,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-central-pier-star-ferry-chronicle', title: '早上九點十五分：天星小輪——維港的慢拍開始轉動（香港系列 · 第六十九章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上九點十五分的中環碼頭——天星小輪下一次啟航前的兩分鐘、月台八達通閘前的隊、從 Salisbury Road 出來的風。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上九點十五分。天星小輪中環碼頭（合成敘事，非真實商戶與真實班次——時刻與場景全部是敘事建構）。第二班的閘剛剛放開，給維港一個慢拍。' },
+      { type: 'heading', text: '一、緩慢是這座城的底火' },
+      { type: 'paragraph', text: '沒有人為了天星小輪趕時間。來到月台的人，大多是為慢來的——早報來得及讀完、茶香留得住、水光還沒碎就到了對岸（合成敘事中的合成場景）。' },
+      { type: 'cards', title: '月台可見', items: [] },
+      { type: 'heading', text: '二、八達通閘的兩種節奏' },
+      { type: 'paragraph', text: '遊客與本地人各有各的節奏。遊客先拍閘再拍照；本地人先拍閘再閉目現場演練站位。閘門沒有意見。' },
+      { type: 'cards', title: '月台可聽', items: [] },
+      { type: 'heading', text: '三、鳴笛的那一刻' },
+      { type: 'paragraph', text: '開船的鳴笛響起時，水面的碎光跟著猛震一番。旅客們把這當成一句有掌聲的開場白——早上九點十五分，這座城——人們說慢，其實是在說長。' },
+      { type: 'cards', title: '月台可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「天星小輪 碼頭」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
