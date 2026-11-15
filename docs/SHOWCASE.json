@@ -1,7 +1,7 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1223",
-  "milestone_full": "第八十章 · 深水埗——財俊大廈士多——阿梅關舖的最後一燈（20:15）· /world 八十章",
+  "milestone": "D1224",
+  "milestone_full": "說明書 REAL-HK V（山頂纜車）· /world 八十章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
@@ -9,10 +9,10 @@
     "HK series: eighty Traditional chapters — 00:00→23:00 full day arc · 160-chip clock both locales",
     "Edition LXXX — 晚上八點一刻：深水埗——財俊大廈士多——阿梅關舖的最後一燈 (20:15) · the close of Ah Mui's 30-year tuk-tuk stall, synthetic",
     "D1221 — /stamp wax-seal certificate (inline SVG, one-tap print, HK date) · D1220 — 10-surface handbook quick rail · D1219 — pressure re-run · D1218 — /world skip-to-layer nav",
-    "handbook REAL-HK I/II/III/IV — MTR · Star Ferry · HKIA · Observatory (143 years, 1883-03-02) — inline URLs",
+    "handbook REAL-HK I/II/III/IV/V — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) — inline URLs",
     "/world atlas reads 80 chips (12+16+16+15+8+7+6 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (80 chapters) · /world (80 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + seven-step tour) · /hk-type · /command 123 · /insights",
-    "D1223: LXXX · D1222: LXXIX · D1221: /stamp endgame · D1220: LXXVIII + quick rail · D1219: LXXVII · D1218: LXXVI + world nav"
+    "/hong-kong (80 chapters) · /world (80 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 5 REAL-HK) · /hk-type · /command 123 · /insights",
+    "D1224: REAL-HK V · D1223: LXXX eighty chapters · D1222: LXXIX Temple Street · D1221: /stamp wax seal · D1220: LXXVIII + quick rail"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

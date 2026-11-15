@@ -2655,6 +2655,15 @@ const zhHK: Dict = {
         '職員人數 315（2018 年 3 月）；年預算約 HK$381.4M（2019–20）',
         '現任台長 Chan Pak-wai（2023 年 3 月上任）；前任 Shun Chi-ming（2011–2020）',
       ] },
+      { id: 'peaktram', kicker: 'REAL-HK', title: '14 · 山頂纜車——1888 年的機械詩（不是演示數據）', paragraphs: [
+        '中環寫對你自己看得最遠的地方，三百萬市民都上去看看。下面這幾筆同樣是公開來源的真實刻度，不屬本站演示資料。',
+        '資料來源：Wikipedia — Peak Tram（https://en.wikipedia.org/wiki/Peak_Tram，2026-11-15 網頁查閱）。數字隨時間變動；點開連結可核對最新乘客量與技術參數。',
+      ], bullets: [
+        '1888 年 5 月 28 日啟用（香港唯一的纜坡鐵路，由 Garden Road 一直升到太平山頂）；亞洲首條纜坡鐵路，深層依托 Alexander Findlay Smith',
+        '行走全長 1.365 公里；海拔 27–396 米；最陡坡度 48%；軌距 1,520 mm；全程約 5 分鐘',
+        '載客量 210 人/架車（第六代長度車身，2021 年 6 月安裝）；日均乘客 17,000（2019–2024 約數）；升級項目 2019–2022 經歷 14 個月停運後於 2022 年 8 月 27 日重開',
+        '現由 Hongkong and Shanghai Hotels（香港及上海大酒店）全資擁有——不是私人商戶，是一條接通半山頂的經典齒軌',
+      ] },
     ],
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
@@ -4327,6 +4336,15 @@ const en: Dict = {
         '1883 building at 134A Nathan Road declared a monument of Hong Kong in 1984; the 1983 Centenary Building is the current headquarters',
         '315 employees (March 2018); annual budget ~HK$381.4M (2019–20)',
         'Current director Chan Pak-wai (from March 2023); previous director Shun Chi-ming (2011–2020)',
+      ] },
+      { id: 'peaktram', kicker: 'REAL-HK', title: '14 · The Peak Tram — a mechanical poem from 1888', paragraphs: [
+        'Admiralty’s widest view on the way up to the Peak; the city in one long breath to Central’s axis — the numbers below come from public sources too; they are not demo data.',
+        'Source: Wikipedia — Peak Tram (https://en.wikipedia.org/wiki/Peak_Tram, retrieved 2026-11-15). The figures drift with time; open the link to check current ridership and tech specs.',
+      ], bullets: [
+        'Opened 28 May 1888 (Hong Kong’s only funicular railway, Garden Road up to The Peak); the first funicular railway in Asia',
+        'Line length 1.365 km; elevation 27–396 m; max steepness 48%; track gauge 1,520 mm; average 5 minutes end-to-end',
+        'Capacity 210 per car (sixth-generation longer-body trains fitted June 2021); daily ridership ~17,000 (2019–2024 ranges); upgrade project 2019–2022 with 14 months of closure, reopened 27 August 2022',
+        '100% owned by Hongkong and Shanghai Hotels (HSH) — not a private vendor; a real, standing conveyor of the city’s upper edge',
       ] },
     ],
     nextTitle: 'Want more?',

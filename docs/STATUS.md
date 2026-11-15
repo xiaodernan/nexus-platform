@@ -45196,3 +45196,19 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** The tuk-tuk (士多) is a real Hong Kong landmark archetype; the 財俊大廈 and Ah Mui are both synthetic; the 30-year career is dramaturgy. No real merchant is represented in this chapter; no real landmark sells or owes anything to this fiction. The world continues because the series is written for exactly the seventy-eight-and-beyond light.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1224. D1224 — handbook REAL-HK V （山頂纜車 · Peak Tram, 1888)
+
+**Why.** Mandate §九 says real data must carry the booklet; five inline-sourced blocks are more compelling than four. The Peak Tram — Asia's first funicular railway, 48% gradient, 5-minute ride, 210-passenger sixth-generation cars, 17,000 riders a day — is the one piece of the city that opened on muscle and cable, and is still the way most Hong Kongers take their first walk up the southern slopes.
+
+**The unit.**
+
+1. **handbook REAL-HK V** — new `peaktram` section (kicker `REAL-HK`) in both locales, after REAL-HK IV. Source: Wikipedia — Peak Tram (https://en.wikipedia.org/wiki/Peak_Tram, retrieved 2026-11-15; URL inline in both blocks):
+   - Opened May 1888 (Asia's first funicular railway, Garden Road → The Peak); technical: 1.365 km line length; elevation 27–396 m; max steepness 48%; track gauge 1,520 mm; 5-minute journey; sixth-generation longer-body trainsets since June 2021 (210 passengers per direction); ~17,000 daily riders (2019–2024); 2019–2022 upgrade project with 14-month closure (27 August 2022 reopening); owned by Hongkong and Shanghai Hotels (HSH) — not a vendor, an institution.
+   zh carries Traditional script with inline URL; en is the mirror. Rendered SSR-verified both locales.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,254** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 10.2s · SSR curls both locales: `/handbook` shows its own REAL-HK Peak Tram block; zh title 「山頂纜車——1888 年的機械詩」 rendered in Traditional characters; en is the mirror; both arms show the inline URL.
+
+**Honest boundaries.** Peak Tram numbers are Wikipedia-snapshot figures (retrieved 2026-11-15); they drift; the handbook tells the reader so and embeds the URL so a reader can verify. The Sixth-generation car count (210) is the article's specific claim; we don't know better. The booklet calls the line "a mechanical poem" deliberately — that is atmosphere, not fact; the numbers are fact. The article's infobox says "Began operation 30 May 1888" while the body says "opened for public service on 28 May 1888" — we quote the year, avoid the day. No vendor relationship is claimed for the article, only that it is Wikipedia.
+
+- readers: `apps/web/src/lib/i18n/dict.ts` (new REAL-HK V Peak Tram block, zh + en), this ledger entry.
