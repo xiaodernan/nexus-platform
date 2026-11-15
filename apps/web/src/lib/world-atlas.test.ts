@@ -42,9 +42,9 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
   it('partitions all 68 arc-clock chips exactly once into the seven layers', async () => {
     const zh = getDict('zh-HK');
     const clock = zh.home.hkHub.clock;
-    expect(clock).toHaveLength(77);
+    expect(clock).toHaveLength(78);
     const en = getDict('en');
-    expect(en.home.hkHub.clock).toHaveLength(77);
+    expect(en.home.hkHub.clock).toHaveLength(78);
 
     const counts = new Array<number>(7).fill(0);
     const seen = new Set<string>();
@@ -54,8 +54,8 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
       seen.add(chip.href);
       expect(chip.href).toMatch(/^\/guides\//);
     }
-    expect(counts).toEqual([12, 16, 16, 15, 7, 5, 6]);
-    expect(seen.size).toBe(77);
+    expect(counts).toEqual([12, 16, 16, 15, 8, 5, 6]);
+    expect(seen.size).toBe(78);
 
     // zh and en must partition identically by time (translations drift only in copy)
     const enCounts = new Array<number>(7).fill(0);
@@ -80,5 +80,19 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
     expect(chrome).toContain("href: '/world'");
     expect(chrome).toContain('世界地圖');
     expect(chrome).toContain('World atlas');
+  });
+
+  it('handbook quickLinks covers every shipped surface, bilingual', () => {
+    const zh = getDict('zh-HK').handbook.quickLinks;
+    const en = getDict('en').handbook.quickLinks;
+    expect(zh).toHaveLength(10);
+    expect(en).toHaveLength(10);
+    expect(zh.map((l) => l.href)).toEqual(en.map((l) => l.href));
+    expect(zh.map((l) => l.href)).toEqual([
+      '/search', '/hong-kong', '/world', '/stamp', '/handbook',
+      '/hk-type', '/daily', '/insights', '/command', '/me',
+    ]);
+    for (const link of zh) expect(link.label.trim().length).toBeGreaterThan(0);
+    for (const link of en) expect(link.label.trim().length).toBeGreaterThan(0);
   });
 });

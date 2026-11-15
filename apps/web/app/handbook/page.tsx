@@ -26,13 +26,7 @@ export default async function HandbookPage() {
   const dict = getDict(locale);
   const copy = dict.handbook;
 
-  const quickLinks = [
-    { href: '/search', label: dict.nav.search },
-    { href: '/daily', label: dict.nav.daily },
-    { href: '/hong-kong', label: dict.home.hkHub.seriesLink },
-    { href: '/hk-type', label: dict.nav.hkType },
-    { href: '/me', label: dict.nav.account },
-  ];
+  const quickLinks = dict.handbook.quickLinks;
 
   return (
     <div className="flex flex-col">

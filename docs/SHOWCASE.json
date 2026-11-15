@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1219",
-  "milestone_full": "第七十七章 · 觀塘——牛頭角——魚蛋檔的黃生關燈（17:45）· 壓力六面複驗全綠",
+  "milestone": "D1220",
+  "milestone_full": "說明書手錶快車道：十個表面全動線 · 第七十八章 · 老秤匠阿利的半邊天秤（18:45）",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: seventy-seven Traditional chapters — 00:00→23:00 full day arc · 154-chip clock both locales",
-    "Edition LXXVII — 下午五點四十五分：觀塘——牛頭角——魚蛋檔的黃生關燈 (17:45) · the last daylight minute of a Kwun Tong fishball stall",
-    "D1218 — /world seven-layer skip-to-layer nav · D1217 — /insights six-archetype action matrix · D1216 — LXXIV · D1215 — LXXIII + seven-step tour",
+    "Handbook quick rail now covers every shipped surface (10 links, bilingual): search · Hong Kong run · world atlas · passport stamps · handbook · persona quiz · daily kitchen · operator scan · command desk · account",
+    "HK series: seventy-eight Traditional chapters — 00:00→23:00 full day arc · 156-chip clock both locales",
+    "Edition LXXVIII — 晚上六點四十五分：九龍灣——三家村——老秤匠阿利的半邊天秤 (18:45) · the Kowloon Bay scalemaker of the half-heaven weight",
     "handbook REAL-HK I/II/III/IV — MTR · Star Ferry · HKIA · Observatory (143 years, 1883-03-02) — inline URLs",
-    "D1219 pressure re-run (128 req × 32-concurrent × 6 routes): all 2xx — `/` 2494 · `/hong-kong` 680 · `/insights` 812 · `/world` 818 · `/handbook` 727 · `/command` 403 (p50 ms)",
-    "/hong-kong (77 chapters) · /world (77 chips + 7 anchors) · /stamp passport · /handbook (seven-step tour) · /hk-type quiz · /command 123 · /daily · /insights",
-    "D1219: LXXVII + pressure re-run · D1218: LXXVI + world nav · D1217: LXXV + action matrix · D1216: LXXIV · D1215: LXXIII + seven-step tour · D1214: LXXII + cache probe"
+    "D1218 — /world skip-to-layer nav · D1217 — /insights action matrix · D1215 — seven-step tour · D1214 — LXXII + cache probe · D1212 — seven-day OLS trend",
+    "/hong-kong (78 chapters) · /world (78 chips + 7 anchors) · /stamp passport · /handbook (10-surface quick rail + seven-step tour) · /hk-type · /command 123 · /daily · /insights",
+    "D1220: LXXVIII + quick rail · D1219: LXXVII + pressure re-run · D1218: LXXVI + world nav · D1217: LXXV + action matrix · D1216: LXXIV · D1215: LXXIII"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

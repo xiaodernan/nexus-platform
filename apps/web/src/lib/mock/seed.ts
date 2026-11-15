@@ -2360,4 +2360,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kowloon-bay-scalemaker-chronicle', title: '晚上六點四十五分：九龍灣——三家村——老秤匠阿利的半邊天秤（香港系列 · 第七十八章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：晚上六點四十五分的九龍灣三家村——老秤匠阿利的天秤舖、今天的最後一個客人與「半邊天秤」的故事。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上六點四十五分。九龍灣三家村（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——老秤匠阿利在麵醬絲布店的門口。鏡子裡映著他自己——今天沒有人進門。' },
+      { type: 'heading', text: '一、四十九年的天秤' },
+      { type: 'paragraph', text: '四十九年了。從阿利媽媽那時候起——他記得天秤比計程車的鈴聲早聽熟——現在的鬼叫了也沒人停下來。「秤是客人相信的東西，比相信我自己還有用。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '阿利鋪可聽', items: [] },
+      { type: 'heading', text: '二、半邊天秤' },
+      { type: 'paragraph', text: '阿利店內最難看的秤，是一面平、一面天秤——多數人沒看清這條面是哪一面平、哪一面彎。秤可不可以彎，沒人問；秤能不能信，客人卻永遠在等。' },
+      { type: 'cards', title: '阿利鋪可聽', items: [] },
+      { type: 'heading', text: '三、對面的九八士多' },
+      { type: 'paragraph', text: '對面的九八士多做了四十八年——阿利做了四十九年。兩個老人對著對面，發呆。對面的窗子關住了，阿利的燈卻遲了十數年都不熄。' },
+      { type: 'cards', title: '阿利鋪可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「九龍灣 秤匠」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
