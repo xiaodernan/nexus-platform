@@ -1,17 +1,16 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1170",
-  "milestone_full": "四十八章 · 萬象天地的設計師街 · 續讀入口常置港",
+  "milestone": "D1171",
+  "milestone_full": "新手五步 - /try 內嵌教學，零外部依賴",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: forty-eight Traditional chapters — 00:30→22:45 full day arc · 96-chip clock both locales",
-    "Edition XLVIII — 萬象天地的設計師街 (15:30) · Layer G at design-time",
-    "New: the /hong-kong continue-reading CTA — reads local `nexus.hk-series.read`; one tap to your next chapter; fully bilingual",
-    "Layer G full tract: XLVI 羅湖 (14:30) · XLVII 皇崗 (19:15) · XLVIII 萬象天地 (15:30)",
-    "D1169: singleflight coalescing · D1168: teaching layer in chrome · D1165: THE STAMPEDE",
-    "D1163: Roman badges · D1160: prefix measured · D1150: manual inside chrome · census 1721 clean"
+    "New: /try — the five-step quick-start walkthrough inside the product (zh-HK Traditional + en, one screen per step, CTA-per-step)",
+    "Every chapter of the HK series — forty-eight — Traditional HK, full arc 00:30→22:45, 96-chip clock both locales",
+    "D1170: HK continue-reading CTA on /hong-kong · D1169: singleflight coalescing · D1168: teaching layer in chrome",
+    "D1167: XLVII 皇崗口岸的員工餐廳 (19:15) · D1166: XLVI 羅湖站的雙向貨幣 (14:30) · D1165: THE STAMPEDE",
+    "D1163: Roman chapter badges · D1160: prefix/probe measured · D1150: manual inside chrome · census 1757 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

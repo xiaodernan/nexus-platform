@@ -160,6 +160,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/app/handbook/page.tsx` | D1119: the in-product instruction manual — full feature tour + game tutorial + honesty contract |
 | `apps/web/src/lib/handbook.test.ts` | D1119: the manual's source pins + bilingual dict pins + footer wiring |
 | `tests/e2e/specs/consumer/handbook.spec.ts` | D1119: two arms — the page renders every section; the hero CTA lands on /search |
+| `apps/web/app/try/page.tsx` | D1171: the /try quick-start walkthrough — five-step in-product tour bilingual (zh-HK Traditional / en), CTA-per-step, footer discoverable |
 | `apps/web/app/hong-kong/page.tsx` | D1109: unconditionally rendered, dict-driven editorial across all deployments |
 | `apps/web/src/components/hk-quiz.tsx` | D1113: the result branch now renders the daily HK ticket line |
 | `apps/web/src/lib/hk-type.test.ts` | D1095: 3 arms pin the island contract — force-static page, determinism, dict pins in both locales |

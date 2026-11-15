@@ -130,6 +130,7 @@ export function SiteFooter({ locale }: { locale: string }) {
   const directory = directoryLink(dict);
   const links = [
     ...(directory ? [directory] : []),
+    { href: '/try', label: locale === 'zh-HK' ? '新手試試' : 'Quick try', title: locale === 'zh-HK' ? '五步直通 · 一分鐘試用產品' : 'Five steps · one minute to feel the product' },
     { href: '/guides', label: dict.nav.guides, title: dict.nav.hints.guides },
     { href: '/collections', label: dict.nav.collections, title: dict.nav.hints.collections },
     { href: '/search', label: dict.nav.search, title: dict.nav.hints.search },

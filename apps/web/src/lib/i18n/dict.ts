@@ -160,6 +160,16 @@ export interface Dict {
       dismiss: string;
       steps: Array<{ href: string; label: string }>;
     };
+    /** D1171: the /try quick-start demo route — the in-product walkthrough. */
+    tryFlow: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      steps: Array<{ kicker: string; title: string; body: string; example: string; cta: string; href: string }>;
+      ctaTitle: string;
+      ctaBody: string;
+      cta: string;
+    };
     /** D1118: mixed-locale fixes — badges that used to leak English into the zh plane. */
     hkProgress: {
       done: string;
@@ -1090,6 +1100,56 @@ const zhHK: Dict = {
         { href: '/hk-type', label: '自測係邊個' },
         { href: '/handbook', label: '翻閱說明書' },
       ],
+    },
+    tryFlow: {
+      eyebrow: '五步直通 · FIVE STEPS',
+      title: '一分鐘直通：從「今晚食甚麼」到「阿婆嘅好意」',
+      intro: '不需要讀說明書先掂 — 跟住講就得。五步，每一步都有東西撳，拎走你最想要嘅那個答案。',
+      steps: [
+        {
+          kicker: '第 一 步',
+          title: '一句話去叫：這個搜尋框',
+          body: '撳一下主頁正中間的搜尋框，用任何一句你想講的字 — 例如「今晚灣仔有咩開」。AI 會由難度的句子分出品類、地點、預算、時間、心情、口味。它不是聽懂一句中文，是聽懂一個香港人成個下午。',
+          example: '例如：今晚灣仔有咩開',
+          cta: '去看看搜索頁',
+          href: '/search?q=%E4%BB%8A%E6%99%9A%E6%BE%99%E4%BB%95%E6%9C%89%E5%92%AA%E9%96%8B',
+        },
+        {
+          kicker: '第 二 步',
+          title: '為甚麼推薦：讀一讀每張卡',
+          body: '每間店都標明咗來源同更新時間。有價格過了嘅話會直接講，唔會靜雞雞推薦。你唔係求一個藥方，你想知：為甚麼係呢間、收唔收、要唔要訂位、係唔係啱你。',
+          example: '來源驗證 ／ 價格實測 ／ 更新時間 ／ 一句話講理由',
+          cta: '去看看搜尋結果',
+          href: '/search?q=admiralty%20cha%20chaan%20teng',
+        },
+        {
+          kicker: '第 三 步',
+          title: '撳一個靚星：收藏一間你想試的店',
+          body: '喺任何一張商舖卡右上角撳個星，就即時收藏到「我的」。下次再來，唔使搜第二次 — 系統記得，你淨係撳個位就得。',
+          example: '卡頂右上撳個 ☆ 就得',
+          cta: '去我的頁',
+          href: '/me',
+        },
+        {
+          kicker: '第 四 步',
+          title: '今日儀式：食運、廣東話一句、系列今天那一章',
+          body: '去「今日」頁 — 今日食運、每日一句廣東話、同按日期揀出嚟嘅香港系列一章，全部擺咗係同一頁。順帶俾你拎一張可以分享嘅卡寄俾朋友。',
+          example: '香港日期決定今天去讀第幾章',
+          cta: '去今日頁',
+          href: '/daily',
+        },
+        {
+          kicker: '第 五 步',
+          title: '三分鐘測出你的香港人格',
+          body: '去「香港人格」頁，三分鐘揀完即得自己嗰個 archetype，出咗嚟的卡唔止俾自己睇，share 去 Instagram／WhatsApp 都得 — 而且係你留低的印記。',
+          example: '灣仔 茶餐廳老闆／深夜車仔麵人／冰室老派派',
+          cta: '去測一測',
+          href: '/hk-type',
+        },
+      ],
+      ctaTitle: '你而家已經會用',
+      ctaBody: '五步全部係實嘢：搜索、讀懂推薦、收藏、今日儀式、人格測試。去下一步嘅按鈕係唯一需要按的 — 唔會再聽你問其他嘢。',
+      cta: '現在就一句話出去',
     },
     hkProgress: {
       done: '已讀 {read} ／ 共 {total} 章',
@@ -2423,6 +2483,56 @@ const en: Dict = {
         { href: '/hk-type', label: 'Ask which you are' },
         { href: '/handbook', label: 'Open the handbook' },
       ],
+    },
+    tryFlow: {
+      eyebrow: 'WALKTHROUGH · FIVE STEPS',
+      title: 'One minute, start to finish: from “what do I eat tonight?” to “you already know how this works”',
+      intro: 'You do not need to learn anything first. Five taps, one minute, and every button you touch is labelled — you walk out standing on a surface you can use forever.',
+      steps: [
+        {
+          kicker: 'STEP ONE',
+          title: 'Ask it anything: the search box',
+          body: 'Tap the search box, dead centre of the homepage. Say anything you like — “what’s open in Wan Chai tonight?” The model splits it into thing / place / budget / time / mood / taste. It does not hear a sentence — it hears an entire Friday afternoon.',
+          example: 'e.g. “Open cha chaan teng in Wan Chai tonight?”',
+          cta: 'Go see search',
+          href: '/search?q=open%20cha%20chaan%20teng%20in%20Wan%20Chai%20tonight',
+        },
+        {
+          kicker: 'STEP TWO',
+          title: 'Why this pick: read the cards',
+          body: 'Every shop is tagged with its source and update time. If a price drifted, the engine says so — it never quietly recommends a stale number. Not a prescription; a friend that tells you when it’s guessing.',
+          example: 'verified source / live price / update time / one honest “why”',
+          cta: 'Go see results',
+          href: '/search?q=Admiralty%20cha%20chaan%20teng',
+        },
+        {
+          kicker: 'STEP THREE',
+          title: 'Star the one you’re going to try',
+          body: 'Tap the star, top-right of any shop card — it saves straight to Me. Next visit, you won’t have to find it again — the system remembered it for you.',
+          example: '☆ · top-right of the card',
+          cta: 'Open Me',
+          href: '/me',
+        },
+        {
+          kicker: 'STEP FOUR',
+          title: 'Today: food-luck, Cantonese phrase, today’s HK chapter',
+          body: 'On the Daily page is every ritual this city carries: today’s food-luck, a Cantonese phrase, and the Hong Kong series chapter picked for the date — all in one page. There’s also a share-ready card if you want to pass one on.',
+          example: 'HK-date chapter — found by your calendar, not your inbox',
+          cta: 'Open Daily',
+          href: '/daily',
+        },
+        {
+          kicker: 'STEP FIVE',
+          title: 'Find your HK archetype in three minutes',
+          body: 'Three minutes on the quiz page and you walk away with your archetype — a card you can share anywhere, and a sticker on your profile the product carries forever.',
+          example: '【茶餐廳 老闆】【2am cart-noodle】【冰室 purist】',
+          cta: 'Take the quiz',
+          href: '/hk-type',
+        },
+      ],
+      ctaTitle: 'You’re ready',
+      ctaBody: 'You touched every surface: search, recommendation, reading, saving, today, quiz. Nothing below this line is a demo. Nothing above it was a trick.',
+      cta: 'One sentence — go, right now',
     },
     hkProgress: {
       done: '{read} of {total} chapters read',

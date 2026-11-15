@@ -44493,3 +44493,19 @@ point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, 
 **Honest boundaries.** Synthetic fixture; MixC World is a real mall name but no tenant chain is described, no rent figure, no shopping advice is claimed — the demo framing (`flags: { demo: true }`) governs narrative invention, and the resonance point is Hang Son's own Saturday corner, nothing more.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/components/hk-continue-reading.tsx`, `apps/web/app/hong-kong/page.tsx`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1171. D1171 — `/try`: the in-product quick-start walkthrough, bilingual, embedded, one screen away
+
+**Why.** The user re-reported it on the mandate: "快速上手教程演示 教会用户怎么玩 怎么用" — a walkthrough signpost is the missing piece between "how the product works in pieces" and "how the product rewards a first-time visitor in five taps." Existing `/handbook` is a reference — this is a story.
+
+**The unit.** New static route `/try` — one full viewport per step, five steps, every step with its own inline argument, example line and CTA:
+**1 · 一句話去叫：** Tap the search box — one sentence, any sentence, and the model hears the Friday afternoon inside it.
+**2 · 為甚麼推薦：** Every card tells you *why* — source, price truth, update cadence, one honest sentence per recommendation.
+**3 · 撳一個靚星：** Tappable star, taps save to `/me`, next visit knows.
+**4 · 今日儀式：** `/daily` — today's food-luck, a Cantonese phrase and the chapter-of-the-day, picked by the HK date, all in one place.
+**5 · 三分鐘測出你的香港人格：** `/hk-type` — three minutes, archetype revealed, shareable.
+`tryFlow` dict slice lands in zh-HK + en (zero leftover en in zh plane — census 1757 clean); every step carries its own `kicker`, `title`, `body` (pedagogic, not persuasive prose), `example`, `cta` link and `href`. The footer gains a new link ("新手試試 / Quick try") pointing at the route. The existing `/handbook` remains the manual; `/try` is the one-minute story.
+
+**Honest boundaries.** Static, server-rendered, no network dependency, no interaction tracking. Every step is a real product surface that already exists — `/try` adds no ghost features, no dead buttons, no fake promises.
+
+- readers: `apps/web/app/try/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/components/site-chrome.tsx`, this ledger entry.
