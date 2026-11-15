@@ -2003,4 +2003,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-shenzhen-huanggang-night-gate-chronicle', title: '凌晨兩點四十五分：皇崗口岸以北的第一道閘機——陳師傅的跨境夜班（香港系列 · 第六十一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：凌晨兩點四十五分的皇崗口岸——貨櫃卡車長龍、跨境巴士的夜班司機、與深港邊界深處的燈光與車流。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨兩點四十五分。皇崗口岸北閘——深港邊界深處連接香港與深圳的北向通道（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——貨櫃卡車排起長龍，跨境巴士的引擎還沒熄。陳師傅（合成敘事，非真實人物）從香港開了八個小時的最後一班回港巴士，經機場路、經西區隧道，車經過時鋼架抖了一抖。' },
+      { type: 'heading', text: '一、攔車的人與開卡的人' },
+      { type: 'paragraph', text: '皇崗口岸的北閘口站是深港跨境交通的一個節點。陳師傅說，凌晨兩點他最不喜歡的事情，不是路長——是『可能要等』。跨境時間——香港、深圳兩邊的燈光、通關、貨櫃——最怕的是等一個不確定的等待。他每天凌晨兩點不會關掉大陰，因為他今天還要開出去。' },
+      { type: 'cards', title: '皇崗閘機可見', items: [] },
+      { type: 'heading', text: '二、無線電裡的交通指揮' },
+      { type: 'paragraph', text: '陳師傅的無線電從不關。他每隔八分鐘聽一次邊界廣播：哪一道閘機排隊、貨櫃哪一條改道、今天進入皇崗的是不是春節期的運輸車。他說自己莫名喜歡這個聲音——它告訴他這個世界還在運轉，而他的車還在運轉。' },
+      { type: 'cards', title: '皇崗閘機可聽', items: [] },
+      { type: 'heading', text: '三、凌晨三點的回港' },
+      { type: 'paragraph', text: '凌晨三點整，最後一班跨境巴士啟動。陳師傅不在車上——他站在貨櫃的陰影裡抽了一支煙。他說，過了一個冬天、一個夏天，他已經分不清自己在香港生活還是在深圳生活。新時代最深的表情，不是選擇在哪裡生活；而是知道自己的腳程可以兩邊都來回穿梭。' },
+      { type: 'cards', title: '皇崗閘機可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「皇崗 跨境巴士」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

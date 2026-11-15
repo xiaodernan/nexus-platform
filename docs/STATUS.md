@@ -44794,3 +44794,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** No new code shipped in this milestone (pure doc reconciliation). `verify_all` not run because the change does not touch readers. The five new layers are aspirational specifications, not completed work — they are the menu of what happens next in this arc chain.
 
 - readers: `docs/WORLD_ROADMAP.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1199. D1199 — chapter LXI lands the 02:45 slot: 凌晨兩點四十五分：皇崗口岸以北的第一道閘機
+
+**Why.** Layer H（邊境章）opens after the lx chapter. 00:30 of one day is 23:30 of the other. The border whose seams run under theme nodes and cargo. This chapter tells the story the border traffic tells — the 02:45 gate, the last bus to HK, the driver who remembers when the border was paper.
+
+**The unit.** `DEMO_GUIDES` gains `hk-shenzhen-huanggang-night-gate-chronicle` — 「凌晨兩點四十五分：皇崗口岸以北的第一道閘機（香港系列 · 第六十一章）」。Three heading cards（一、攔車的人與開卡的人 · 二、無線電裡的交通指揮 · 三、凌晨三點的回港），Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「皇崗 跨境巴士」）。Both locales carry the chapter; the arc clock gains 02:45 between the tong sui urn and the ER entrance (122 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to sixty-one on both locales; chapter-icons gains `'hk-shenzhen-huanggang-night-gate-chronicle': 'shield'`; e2e floors ≥61; census 1949 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 7s; chapter renders end-to-end in /hong-kong + /guides/hk-shenzhen-huanggang-night-gate-chronicle clean.
+
+**Honest boundaries.** 合成敘事：皇崗口岸以北、貨櫃、陳師傅 —— 全部是敘事建構，不指向真實邊界管理員、實際商戶或商務時刻；搜索「皇崗 跨境巴士」演示的是演示流的路徑。Layer H is a layer of the world, not a claim about the Ministry of Security.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
