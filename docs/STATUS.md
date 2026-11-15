@@ -44706,3 +44706,20 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 這是「換一個沒人佔的 face」不是「讓面向未來的機器不再衝突」；下一次同名 suite 搬 n 次，再来一次 Y_block。CI cloud job 在 clean runner 上依然以舊邏輯 `verify_all` 管讀；本機相對 CI 的偏好差異已被記錄，讀者仍精準。歷史更新節制：STATUS/DECISIONS 不塗改，只追加本條；CLOUD.md 的 runbook 更新至新 face，歷史 D847 敘述保留。
 
 - readers: `services/cloud/*/src/main/resources/application.yaml`, `services/platform/src/main/resources/application-cloud.yml`, `apps/ai/nexus_ai/discovery.py`, `infra/docker-compose.yml`, `scripts/check_cloud_plane.mjs`, `scripts/cloud_ai_admin_smoke.sh`, `scripts/cloud_refresh.sh`, `scripts/cloud_monolith_refresh.sh`, `scripts/cloud_smoke.sh`, `scripts/falsify_cloud_plane_ports.mjs`, `README.md`, `docs/ARCHITECTURE.md`, `docs/CLOUD.md`, `docs/ATLAS.md`, `docs/PLAN.md`, this ledger entry.
+
+## 1192. D1192 — the handbook gains 香港（真實刻度）: real sourced MTR figures, not demo crumbs
+
+**Why.** 用戶與其說「全部演示數據」不如說「它不真實」。本站香港系列章節講食不計數，但香港是真的城市；給讀者一組公開可查的真實數字——不建在本站演示資料上，而是上了站、標了日期、寫了 URL。這是本站「合成敘事示例」紀律的另一端：合成的東西要標明是合成，真的的也要標明是真的。
+
+**The figures** (Wikipedia `MTR (Hong Kong)`, webfetch 2026-11-15, Traditional HK usage on zh plane)：
+- 每日約 576 萬人次乘搭全港鐵路（港鐵公佈，2023-11；純城市鐵路約 4.82M）
+- 99 個重鐵站 + 68 個輕鐵站 + 1 個高鐵西九龍站點
+- 全網長度約 245.3 km（截至 2022-12）
+- 準點率約 99.9%；鐵路佔專營公共交通乘客份額約 50.2%（2025）
+- 標出「資料來源：Wikipedia — MTR (Hong Kong)」+ 存取日期 +「不是維基百科的複述，是公開年報給出的量級感覺」免責警語
+
+**The unit.** `apps/web/src/lib/i18n/dict.ts` handbook `sections` 陣列追加一格 `realnumbers`（kicker `REAL-HK`）；zh-HK Traditional + en 兩語，段落數 +2 / 子彈 4 條 each；census 1904 literals 雜淨（0 simplified）；tsc clean；web 371/371；build 15s；SSR-HTML 渲染、標記全部 HIT；verify_all NO OFFENDER。en 側同以 `Real-HK` 段落出現，en/lang cookie 解析後兩處一致。
+
+**Honest boundaries.** 數字會隨時間變動（按鐵路準點率就是個 2025 的數字）；本站不複述 Wikipedia，只留下連結與存取日期，讀者自行查核；清楚標注「不是演示資料」。zh 段夾雜「km」與「245.3」屬數據記號，不構成「中英夾雜」違規——是公認的公制單位與數字。
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.

@@ -2490,6 +2490,15 @@ const zhHK: Dict = {
         '「還有第十一章嗎？」這個系列永遠有下一章；發佈進度寫進 STATUS.md（開發者賬本），跟進系列節奏就來 /hong-kong 看板更新。',
         '「滑鼠滾輪是不是做反了？」不是。頁面沒有平滑滾動、也沒有顛倒滾動軸——往上滑＝看上文、往下滑＝看下文，方向由你的作業系統決定。Windows 在「設定 → 藍牙和裝置 → 滑鼠」改滾輪方向；Mac 在「系統設定 → 觸控式軌跡板／滑鼠」關掉「自然捲動」。想橫向捲動章節橫條？按住 Shift 再滾輪；桌面滑鼠在任何橫條上往下滾，也會自動橫向前進。',
       ] },
+      { id: 'realnumbers', kicker: 'REAL-HK', title: '10 · 香港，一組真實刻度（不是演示數據）', paragraphs: [
+        '香港系列寫食但香港是真的城市。下面這幾筆是公開來源的真實數字——不是本站演示資料，也不是坊間傳言。',
+        '資料來源：Wikipedia — MTR (Hong Kong)（網頁查閱，2026-11-15）。數字會隨時間變動；這不是維基百科的複述，是公開年報給出的量級感覺。',
+      ], bullets: [
+        '每日約 576 萬人次乘搭全港鐵路（港鐵公佈，2023 年 11 月，含城際與輕鐵；純城市鐵路約 482 萬人次）',
+        '99 個重鐵站 + 68 個輕鐵站 + 1 個高鐵站（西九龍站點）',
+        '全網長度約 245.3 公里（截至 2022 年 12 月）',
+        '準點率約 99.9%；鐵路佔專營公共交通乘客份額約 50.2%（2025 年），全港最廣泛的出行選項',
+      ] },
     ],
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
@@ -3974,6 +3983,15 @@ const en: Dict = {
         '"Is the price real?" In mock mode it is imaginary; in live mode the platform only shows what it has checked.',
         '"Is a twentieth chapter planned?" The series never stops; the milestone ledger (STATUS.md) shows what is live, and the reader board is /hong-kong.',
         '"Is my mouse wheel inverted?" No. The page has no scroll smoothing and no reversed wheel axis — wheel up looks up, wheel down looks down, exactly as your operating system decides. Windows: Settings → Bluetooth & devices → Mouse to flip the wheel direction; macOS: System Settings → Trackpad/Mouse to switch Natural scrolling off. Want to scroll a chapter strip sideways? Hold Shift and wheel — or just wheel down over any rail: desktop mouse wheels now bridge into the strip automatically.',
+      ] },
+      { id: 'realnumbers', kicker: 'REAL-HK', title: '10 · The city in numbers — not demo figures', paragraphs: [
+        'The HK series chapters talk food, but Hong Kong is a real city. These figures come from public sources — not from the demo plane, not from folklore.',
+        'Source: Wikipedia — MTR (Hong Kong), accessed 2026-11-15. The numbers drift with time; this is not a Wikipedia mirror — it is the order of magnitude public annual data gives you.',
+      ], bullets: [
+        '~5.76 million daily rail journeys (MTR published figures, November 2023, all rail modes; ~4.82 million on city metro lines alone)',
+        '99 heavy-rail stations + 68 light-rail stops + 1 high-speed terminus (West Kowloon)',
+        '~245.3 km of track across the network (as of December 2022)',
+        '~99.9% on-time performance; ~50.2% share of the franchised public transport market (2025)',
       ] },
     ],
     nextTitle: 'Want more?',
