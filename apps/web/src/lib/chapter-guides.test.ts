@@ -21,8 +21,11 @@ describe('HK series — every seeded chapter actually resolves', () => {
   });
 
   it('every chapter resolves through mockGuide by its own slug (the /guides read path)', () => {
+    // One decorated pass, memoized — a mockGuides() call per slug is O(n²) re-enrichment
+    // of the whole seeded catalogue; the assertion logic is unchanged.
+    const bySlug = new Map(mockGuides().map((g) => [g.slug, g]));
     for (const guide of DEMO_GUIDES) {
-      const found = mockGuide(guide.slug);
+      const found = bySlug.get(guide.slug);
       expect(found, guide.slug).not.toBeNull();
       expect(found?.slug).toBe(guide.slug);
     }

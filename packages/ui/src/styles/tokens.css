@@ -324,3 +324,38 @@ body {
     transform: none !important;
   }
 }
+
+
+/*
+ * D1189 — defensive CJK/truncation discipline. Two rules, applied at the element layer
+ * so every future component inherits them without per-site edits:
+ *  1. Long unbreakable runs (URLs, rel-canonical slugs, code-laden captions) break inside
+ *     their container instead of painting outside the edge or over the next block.
+ *  2. Replaced media can never exceed its slot; images and video clip to the parent.
+ * Both are additive wins: nothing moves, nothing changes color, nothing is hidden.
+ */
+:is(h1, h2, h3, p, a, li, span, dd, dt, button) {
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+:is(img, svg, video, iframe) {
+  max-width: 100%;
+}
+
+
+/*
+ * D1190 — CJK eyebrow discipline. Wide Latin letter-spacing transfers to Han glyphs,
+ * stretching inter-glyph gaps until the eye/caption reads as crooked. Collapsing the
+ * tracking for zh-HK pages only (:lang matches html/content language; the English
+ * default keeps its track) restores inter-glyph cadence. Additive rule: nothing hides,
+ * nothing moves horizontally — wide tracking only existed to air Latin caps.
+ */
+:lang(zh) .tracking-tight,
+:lang(zh) .tracking-normal,
+:lang(zh) .tracking-wide,
+:lang(zh) .tracking-wider,
+:lang(zh) .tracking-widest,
+:lang(zh) [class*="tracking-["] {
+  letter-spacing: normal !important;
+}
