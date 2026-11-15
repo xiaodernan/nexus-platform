@@ -13,6 +13,9 @@ import { CardRail } from '@/components/cards';
 import { SearchBox } from '@/components/search-box';
 import { HkDailyAlmanac } from '@/components/hk-daily-almanac';
 import { NewcomerTour } from '@/components/newcomer-tour';
+import { hkDateKey } from '@/lib/almanac';
+import { HkTodaySlotCard } from '@/components/hk-today-slot';
+import { pickTodaySlot } from '@/lib/today-slot';
 
 /**
  * Home (§6): the search box is the product. Everything below it is a rail of EntityCards built from
@@ -39,6 +42,11 @@ export default async function HomePage(props: {
   const geo = resolveGeo({ lat: params.lat, lng: params.lng, district: params.district });
   const rails = await homeRails({ geo, locale, signedIn: false });
   const prompts = examplePrompts(locale);
+  const todayKey = hkDateKey(new Date());
+  const todaySlot = pickTodaySlot(
+    dict.home.hkSeries.cards.map((card) => ({ href: `/guides/${card.slug}`, roman: card.kicker, label: card.label })),
+    todayKey,
+  );
 
   const railSections = (
     [
@@ -124,6 +132,11 @@ export default async function HomePage(props: {
       </section>
 
       <NewcomerTour copy={dict.home.newcomer} />
+      {todaySlot ? (
+        <Container size="shell" className="pt-4">
+          <HkTodaySlotCard slot={todaySlot} copy={dict.home.todaySlot} />
+        </Container>
+      ) : null}
       <HkDailyAlmanac daily={dict.home.hkDaily} />
       <div className="border-b border-line bg-canvas">
         <Container size="shell" className="flex items-center justify-between gap-4 py-3 text-sm">

@@ -154,6 +154,12 @@ export interface Dict {
       placeholder: string;
       entries: string[];
     };
+    /** D1178: the “今日章節” editorial slot — deterministic FNV of HK-date against the fifty-chapter pool. */
+    todaySlot: {
+      eyebrow: string;
+      hint: string;
+      cta: string;
+    };
     /** D1122: the home newcomer strip — five first-run anchors; localStorage-off dismissable. */
     newcomer: {
       eyebrow: string;
@@ -1105,6 +1111,11 @@ const zhHK: Dict = {
         '『留意』：上水豬潤粥，熱辣辣落肚',
         '『宜』：兩隻腸粉加常餐——雨天不需要傘',
       ],
+    },
+    todaySlot: {
+      eyebrow: '今日編框',
+      hint: '今天的香港日期決定翻開哪一章。',
+      cta: '去讀這章',
     },
     newcomer: {
       eyebrow: '新手上路',
@@ -2505,6 +2516,11 @@ const en: Dict = {
         'Pork-offal congee at Sheung Shui — hot going in, quiet day after',
         'Two cheung fun and a set meal — enough rain-gear for any wet afternoon',
       ],
+    },
+    todaySlot: {
+      eyebrow: 'TODAY, FRAMED',
+      hint: 'Today’s chapter is chosen by today’s HK date — same day, same pick.',
+      cta: 'Open this chapter',
     },
     newcomer: {
       eyebrow: 'FIRST RUN',

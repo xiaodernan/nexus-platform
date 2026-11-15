@@ -44555,3 +44555,13 @@ does not invent a second event.
 - Verified: `tsc --noEmit` clean; web 354/354 (+4); production build OK; census 1784 clean; verify_all NO OFFENDER.
 
 - readers: `apps/web/src/components/stamp-collection.tsx`, `apps/web/app/stamp/page.tsx`, `apps/web/src/lib/stamp-collection.test.ts`, `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/i18n/dict.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1178. D1178 — "今日編框" spotlight: the front page's deterministic daily anchor
+
+**Why.** The product's home page was a single, mechanical SearchBox over a rail of merchants. The mandate asked the front page to feel like opening the paper to a single frame — one edited slot the reader can't miss. A pure-FNV date hash picks one chapter of the series, every reader, every day; the same date finds the same chapter; change the date and the slot moves on.
+
+**The unit.** New module `apps/web/src/lib/today-slot.ts` — `pickTodaySlot(slots, dateKey)` over FNV-1a (native JS, no dependency); server and client agree because it's the same pure module. New client island `apps/web/src/components/hk-today-slot.tsx` renders the spotlight in zh-HK and en, fully dict-carried; the page calls `pickTodaySlot(dict.home.hkSeries.cards, hkDateKey(new Date()))` at SSR and renders the island inside home between the newcomer strip and the almanac. Hint text zh 「今天的香港日期決定翻開哪一章。」 en 「Today’s chapter is chosen by today’s HK date — same day, same pick.」. SSR-verification via `document.body.innerHTML.includes('今日編框') === true` in headless browser; `tsc --noEmit` clean; census 1787 clean; build compiled; web 354/354; verify_all NO OFFENDER; preview `127.0.0.1:4010/` returns 200 with the island in the HTML.
+
+**Honest boundaries.** A vibe, not an algorithm. The FNV-1a hash does not promise any meaningful cadence — it promises something small and true: every reader on the same HK date sees the same chapter. No targeting; no reading-profile; no per-user lift. Skippable once the reader scrolls away.
+
+- readers: `apps/web/src/components/hk-today-slot.tsx`, `apps/web/src/components/hk-today-slot.copy.ts`, `apps/web/src/lib/today-slot.ts`, `apps/web/app/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
