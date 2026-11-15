@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1204",
-  "milestone_full": "香港系列第六十五章 · 早上七點一刻：文錦渡口岸榕記米業——浩明第三班折返 · Layer H 貨運弧隻弧 · 跨境貨運至返回南落錨",
+  "milestone": "D1205",
+  "milestone_full": "香港系列第六十六章 · 早上七點四十五分：文錦渡口岸榕記米業——浩明的早班米斗 · Layer H 貨運 arc 三個節拍",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: sixty-five Traditional chapters — 00:30→22:45 full day arc · 130-chip clock both locales",
-    "Edition LXV — 早上七點一刻：文錦渡口岸榕記米業——浩明第三班折返 (07:15) · Layer H fades to dawn",
-    "Layer H opens with freight LXIV (00:45) closing with LXV (07:15) — the cross-border haulage arc closes",
+    "HK series: sixty-six Traditional chapters — 00:30→22:45 full day arc · 132-chip clock both locales",
+    "Edition LXVI — 早上七點四十五分：文錦渡口岸榕記米業——浩明的早班米斗 (07:45) · Layer H third beat of the freight arc",
+    "Layer H freight thread now 3-beats: LXIV (00:45 rice gate) → LXV (07:15 dawn return-leg) → LXVI (07:45 first rice-bucket)",
     "Spring Cloud sidecar: Eureka · Config · Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
-    "WORLD_ROADMAP aligned: A-G landed (60 chapters), Layer H specified (61-73) with LXI-LXV landed",
-    "handbook REAL-HK: sourced MTR figures + inline Wikipedia source URL · zh census clean · D1193: pressure all-green · D1191: cloud re-port (24761/24889/24089/25445)",
-    "/hong-kong (65 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily",
-    "D1204: chapter LXV · D1203: LXIV 文錦渡貨運 · D1202: handbook inline URL · D1201: LXIII 北河街市 · D1199: LXI 皇崗 · D1198: WORLD_ROADMAP aligned"
+    "handbook REAL-HK: sourced MTR figures + inline Wikipedia source URL · D1192 adds URL; D1193: pressure all-green · D1191: cloud re-port (24761/24889/24089/25445)",
+    "humors across 64 chapters: Layer H opens with freight LXIV · LXV · LXVI — the cross-border trucks, dock & return complete one morning",
+    "/hong-kong (66 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily",
+    "D1205: chapter LXVI · D1204: LXV 浩明折返 · D1203: LXIV 文錦渡米車 · D1202: handbook inline URL · D1201: LXIII 北河街市 · D1199: LXI 皇崗"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

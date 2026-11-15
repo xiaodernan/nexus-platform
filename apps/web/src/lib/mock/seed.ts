@@ -2108,4 +2108,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-man-kam-to-morning-chronicle', title: '早上七點四十五分：文錦渡口岸榕記米業——浩明的早班米斗（香港系列 · 第六十六章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：早上七點四十五分的文錦渡口岸——浩明早班的米斗裝卸、米斗的準確、口岸棧板與春韭的最後一筆記帳。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上七點四十五分。文錦渡口岸榕記米業（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——浩明（合成敘事，非真實人物）的早班米車從口岸廠門走出來。這是他今天開始發米的第一輛車，也是每天賣給客戶的第一斗米。' },
+      { type: 'heading', text: '一、榕記的清晨' },
+      { type: 'paragraph', text: '浩明今年三十四歲。早上七點已經開始有車進來叫米。他還在榕記門口閉目養神——耳朵卻很靈。他知道每一輛米車進來時引擎的聲音。' },
+      { type: 'cards', title: '榕記可見', items: [] },
+      { type: 'heading', text: '二、米斗的準確' },
+      { type: 'paragraph', text: '浩明隨車的常用米斗是四十斗。每一斗五十斤。他數春韭——早班春韭的米一定要給最大的客戶——他不確定這是甚麼規矩，但他遵從它。每一斗米在他的手上都很穩。' },
+      { type: 'cards', title: '榕記可聽', items: [] },
+      { type: 'heading', text: '三、早班米的第一鏟' },
+      { type: 'paragraph', text: '早上八點一刻，浩明把第一斗米從米斗上抬下來。他沒有說甚麼——只是把米抬得很穩當。車子關門之前，他在米鬥裡的米面上按下了一個記號。這便是好米的記號。' },
+      { type: 'cards', title: '榕記可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「文錦渡 榕記」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
