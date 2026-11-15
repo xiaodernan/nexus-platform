@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1199",
-  "milestone_full": "香港系列第六十一章 · 凌晨兩點四十五分：皇崗口岸以北的第一道閘機 · Layer H 邊境章開幕 · 跨境巴士與貨櫃與兩地燈火",
+  "milestone": "D1200",
+  "milestone_full": "香港系列第六十二章 · 凌晨三點四十五分：羅湖口岸以南的夜市小販 · Layer H 邊境章雙擊 · 最後的油條與汽笛",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: sixty-one Traditional chapters — 00:30→22:45 full day arc · 122-chip clock both locales",
-    "Edition LXI — 凌晨兩點四十五分：皇崗口岸以北的第一道閘機 (02:45) · Layer H the border dawn opens",
-    "Layer H started: 邊境章 opens with LXI 皇崗夜班閘機; Layer A–G all landed (60 chapters)",
+    "HK series: sixty-two Traditional chapters — 00:30→22:45 full day arc · 124-chip clock both locales",
+    "Edition LXII — 凌晨三點四十五分：羅湖口岸以南的夜市小販 (03:45) · Layer H the border crossing at dawn",
+    "Layer H chapters LXI+LXII: 皇崗夜班閘機 (02:45) · 羅湖夜市小販 (03:45) — first border arc complete",
     "Spring Cloud sidecar: Eureka · Config · Gateway · Admin :25445 · nexus-insight fifth service — CI on every master",
-    "D1192: REAL-HK handbook with sourced MTR figures · D1193: pressure test all-green · D1191: cloud re-port (24761/24889/24089/25445)",
-    "60 chapters → Edition LX · Languages layer E · Layer F Sunday cycle L · Layer G border L",
-    "/command demo 123 · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /hong-kong all · /daily",
-    "D1199: chapter LXI opens Layer H · D1198: WORLD_ROADMAP aligned · D1197: LX · D1196: LIX · D1194: LVII · D1191: cloud re-port"
+    "D1193: pressure all-green · D1192: REAL-HK handbook (`MTR` sourced figures) · D1191: cloud re-port (24761/24889/24089/25445)",
+    "WORLD_ROADMAP aligned: Layer A–G landed (60), Layer H–L specified (61–120)",
+    "/hong-kong (62 chapters) · /stamp passport · /handbook · /try walkthrough · /hk-type quiz · /command 123 · /daily",
+    "D1200: chapter LXII · D1199: LXI 皇崗夜班 · D1198: WORLD_ROADMAP reconciled · D1197: LX · D1193: memo + pressure"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

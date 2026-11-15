@@ -44804,3 +44804,13 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：皇崗口岸以北、貨櫃、陳師傅 —— 全部是敘事建構，不指向真實邊界管理員、實際商戶或商務時刻；搜索「皇崗 跨境巴士」演示的是演示流的路徑。Layer H is a layer of the world, not a claim about the Ministry of Security.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1200. D1200 — chapter LXII lands the 03:45 slot: 凌晨三點四十五分：羅湖口岸以南的夜市小販
+
+**Why.** Layer H（邊境章）doubles down on the early border crossing hours. 03:45 is when the last grease runs dry — the last dough, the last dim-sum steamer, the last vendor says quietly "夠數" and pulls the shutter. Two chapters in a row into the bottom of the clock: the border crossing officer and the border crossing vendor who never gets off work.
+
+**The unit.** `DEMO_GUIDES` gains `hk-shenzhen-luohu-night-market-chronicle` — 「凌晨三點四十五分：羅湖口岸以南的夜市小販——最後的油條與最後的汽笛（香港系列 · 第六十二章）」。Three heading cards（一、最後的油條 · 二、罐頭的記憶 · 三、汽笛過後）, Traditional HK script throughout, 合成敘事示例 framing, 後記 + SearchBox pointer（「羅湖 夜市」）。Both locales carry the chapter; the arc clock gains 03:45 between the dawn bakery and the window cleaners (124 chips across both locales); hk-type link list gains it; handbook reading order re-sorted to sixty-two on both locales; chapter-icons gains `'hk-shenzhen-luohu-night-market-chronicle': 'map'`; e2e floors ≥62; census 1958 literals clean (0 simplified); web 371/371; verify_all NO OFFENDER; mock-plane build compiled 11s; chapter renders end-to-end in /hong-kong + /guides/hk-shenzhen-luohu-night-market-chronicle clean.
+
+**Honest boundaries.** 合成敘事：羅湖口岸以南、油條條爺、罐頭阿芳 —— 全部是敘事建構，不指向真實商舖或真實時刻。加之整個邊境一整天在這個時段根本沒有夜市，這完全是 Layer H 的一條房間線，不是恭維現實情況。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, this ledger entry.

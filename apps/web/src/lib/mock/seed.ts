@@ -2024,4 +2024,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-shenzhen-luohu-night-market-chronicle', title: '凌晨三點四十五分：羅湖口岸以南的夜市小販——最後的油條與最後的汽笛（香港系列 · 第六十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：凌晨三點四十五分的羅湖口岸以南——小販的油條、汽笛的最後一聲、與深夜跨境客的零碎交易。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨三點四十五分。羅湖口岸以南的夜市一條街（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——賣油條的條爺（合成敘事，非真實人物）剛剛拉好一鍋新麵糊。汽笛從火車站的方向傳來——又是個星期的凌晨三點。' },
+      { type: 'heading', text: '一、最後的油條' },
+      { type: 'paragraph', text: '條爺凌晨兩點醒、四點前賣到完。他不想睡。他說，這個生意不對他的時辰；但對凌晨的時段反而更需要一口熱東西。他今天最後賣的是第七袋油條……客人要多少就炸多少。他說：「客人不問價錢，只問值不值。」' },
+      { type: 'cards', title: '羅湖夜市可見', items: [] },
+      { type: 'heading', text: '二、罐頭的記憶' },
+      { type: 'paragraph', text: '條爺左邊是個賣罐頭的女生——阿芳（合成敘事，非真實人物）。她從來沒有告訴任何人自己姓甚麼；客人只叫她「罐頭阿芳」。一罐夫妻肺片罐頭、一罐桂花糖水罐頭、一罐咖啡罐頭——全部是兩年前清倉的貨，竟然全部賣完了。' },
+      { type: 'cards', title: '羅湖夜市可聽', items: [] },
+      { type: 'heading', text: '三、汽笛過後' },
+      { type: 'paragraph', text: '凌晨四點整，汽笛聲震動了整條夜市的煙霧。條爺咳了咳喉嚨，拉上鐵閘。汽笛過後，夜市完全空蕩了——空下來的是油煙、是絹絲布、是幾袋乾蔥頭。他知道：這個季節的汽笛，永遠是這個節奏的結束。' },
+      { type: 'cards', title: '羅湖夜市可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「羅湖 夜市」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
