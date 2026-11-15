@@ -44519,3 +44519,11 @@ point of byte-identical interchange. Nondeterministic rows (`temperature != 0`, 
 **Honest boundaries.** Synthetic fixture; the trolleys, the clock, the station, the lady whose number is 梁麗 are narrative constructions. No real station staff, no documented procedure, no access rules is claimed.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1173. D1173 — the zh-HK home page no longer falls back to an English dev-fallback line
+
+**Why.** A zh-HK reader thought something was wrong with the site: when the rails came back degraded, the banner said "4 of 5 rails unavailable" — written in English, addressed to a developer, not a reader. An English string stranded in the Traditional-HK plane is a defect on both halves of the double-track.
+
+**The unit.** `dict` gains `home.railsDegraded(failed, total)` in zh-HK (Traditional) and en. `apps/web/app/page.tsx` renders the banner through it: a regex extracts `failed of total` from the upstream `degradedReason` when the shape is the known one, and falls back to the raw reason otherwise (honest — never silently drops a signal). Tests unchanged (`home-rails-degrade.test.ts` pins the upstream shape; `rails-degraded` was the only polluted consumer).
+
+- readers: `apps/web/app/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, this ledger entry. tsc clean; web 350/350; verify_all NO OFFENDER; census 1767 clean.

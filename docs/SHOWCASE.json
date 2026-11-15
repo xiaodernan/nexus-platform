@@ -1,17 +1,16 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1172",
-  "milestone_full": "四十九章 · 羅湖行李手車 · 凌晨三點十五分",
+  "milestone": "D1173",
+  "milestone_full": "zh-HK 首頁降級橫幅全繁體 · 告別英文 fallback",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-14",
   "updated_at_commit": "current-master",
   "features": [
+    "Intern: the zh-HK home is fully Traditional script — the degraded-rails banner is now localised, never an English dev-fallback",
     "HK series: forty-nine Traditional chapters — 00:30→22:45 full day arc · 98-chip clock both locales",
     "Edition XLIX — 羅湖行李手車的第一班趟 (03:15) · Layer G at the first crossing",
-    "Layer G full arc: XLVI 羅湖 (14:30) · XLVII 皇崗 (19:15) · XLVIII 萬象天地 (15:30) · XLIX 羅湖手車 (03:15)",
-    "D1171: /try — the five-step in-product walkthrough bilingual, footer discoverable",
-    "D1170: /hong-kong continue-reading CTA · D1169: singleflight coalescing · D1168: teaching layer in chrome",
-    "D1167: XLVII 皇崗口岸的員工餐廳 · D1166: XLVI 羅湖站的雙向貨幣 · D1165: THE STAMPEDE · census 1766 clean"
+    "/try five-step walkthrough bilingual · D1170/HK continue-reading · D1169/the slowest chain coalesced",
+    "/try · D1165 THE STAMPEDE · D1163 Roman badges · D1160 wkapi measured · D1150 embedded manual · census 1767 clean"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }
