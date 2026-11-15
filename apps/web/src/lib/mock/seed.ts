@@ -2381,4 +2381,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-temple-street-alpo-market-closing-chronicle', title: '晚上七點四十五分：廟街——阿婆的尾盤檔（香港系列 · 第七十九章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上七點四十五分的廟街——年三十八歲開始賣牛雜的阿婆尾盤檔、她一盤一鍋的堅持與關檔前的最後一個買家。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上七點四十五分。廟街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿婆正在把今天剩下的牛雜和叉燒尾放進告示牌下面，明天還要開檔。' },
+      { type: 'heading', text: '一、廟街的尾盤' },
+      { type: 'paragraph', text: '廟街的尾盤不是說「有貨沒賣掉」，是一種年紀差別——要找到剛好的買家，把鍋裡這碗湯的最後一客吃掉的那個人。找到就是找到；沒有找到就收回家燉給自己。' },
+      { type: 'cards', title: '廟街可聽', items: [] },
+      { type: 'heading', text: '二、年三十八歲開始' },
+      { type: 'paragraph', text: '阿婆年三十八歲開始賣牛雜。沒有人告訴她。廟街是不用學的；你只是站在這裡，就可以吃一輩子的牛雜。她說：「我為甚麼賣牛雜？因為一天一口，永遠有人在輪。」' },
+      { type: 'cards', title: '廟街可見', items: [] },
+      { type: 'heading', text: '三、收盤的小儀式' },
+      { type: 'paragraph', text: '阿婆收盤的時候一定會選年紀最大的牛骨——它進不了鍋了，只能放到竹簍。她說：「今日賣沒賣完不緊要——這一晚要做完的事，做完才算今天。」' },
+      { type: 'cards', title: '廟街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「廟街 阿婆 尾盤」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

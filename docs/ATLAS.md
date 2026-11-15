@@ -115,6 +115,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1218: the seventy-sixth HK chapter (hk-chai-wan-oven-close-chronicle, 下午四時四十五分・柴灣——工業大廈——爐主阿九關爐的第五聲) — 16:45, the Chai Wan industrial building |
 | `apps/web/src/lib/mock/seed.ts` | D1219: the seventy-seventh HK chapter (hk-kwun-tong-fishball-stall-dusk-chronicle, 下午五點四十五分・觀塘——牛頭角——魚蛋檔的黃生關燈) — 17:45, the Kwun Tong fishball stall dusk |
 | `apps/web/src/lib/mock/seed.ts` | D1220: the seventy-eighth HK chapter (hk-kowloon-bay-scalemaker-chronicle, 晚上六點四十五分・九龍灣——三家村——老秤匠阿利的半邊天秤) — 18:45, the Kowloon Bay all-evening scale shop |
+| `apps/web/src/lib/mock/seed.ts` | D1222: the seventy-ninth HK chapter (hk-temple-street-alpo-market-closing-chronicle, 晚上七點四十五分・廟街——阿婆的尾盤檔) — 19:45, the Temple Street closing-time stall |
 | `apps/web/app/handbook/page.tsx` | D1220: handbook quickLinks now carry the full 10-surface rail (/search→/me), both locales — every shipped page reachable, gated by tests |
 | `apps/web/src/components/stamp-collection.tsx` | D1221: /stamp endgame — printable wax-seal certificate (inline SVG, single-tap `window.print()`), print-hidden chrome, HK-date stamp |
 | `apps/web/app/world/page.tsx` | D1218: skip-to-layer nav row on top of the atlas (7 hour-layer anchors, same dict entries) |

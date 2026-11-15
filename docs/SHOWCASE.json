@@ -1,17 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1221",
-  "milestone_full": "印章終章——/stamp 七十八章全讀通報（inline SVG 火漆、單擊列印、HK 日戳）",
+  "milestone": "D1222",
+  "milestone_full": "第七十九章 · 廟街——阿婆的尾盤檔（19:45）· /world 七十九章 · 七層 anchor",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "D1221 — /stamp endgame: the complete-passport certificate now renders as an inline-SVG wax seal (double red ring ornament · 章 character · HK-day date + 七十八章讀竟 caption), one-tap window.print(); @media print rules hide all chrome, leaving the seal alone",
-    "HK series: seventy-eight Traditional chapters — 00:00→23:00 full day arc · 156-chip clock both locales",
-    "Handbook quick rail 10 surfaces (every shipped page) · handbook REAL-HK I/II/III/IV — MTR · Star Ferry · HKIA · Observatory (143 years)",
-    "/world atlas (78 chips + skip-to-layer nav) · D1217 action matrix · D1212 seven-day OLS trend · D1207 one-click zh ↔ en everywhere · D1206 /insights replay",
-    "/hong-kong (78 chapters) · /stamp passport (new wax seal with HK-date stamp) · /handbook (seven-step tour) · /hk-type quiz · /command 123 · /daily · /insights",
-    "D1221: wax seal endgame · D1220: LXXVIII + quick rail · D1219: LXXVII + pressure re-run · D1218: LXXVI + world nav · D1217: LXXV + action matrix"
+    "HK series: seventy-nine Traditional chapters — 00:00→23:00 full day arc · 158-chip clock both locales",
+    "Edition LXXIX — 晚上七點四十五分：廟街——阿婆的尾盤檔 (19:45) · the last daylight hour of Temple Street's closing stall",
+    "D1221 — /stamp wax-seal certificate (inline SVG, one-tap print, HK date on completion) · D1220 — 10-surface handbook quick rail · D1219 — pressure re-run · D1218 — /world skip-to-layer nav",
+    "handbook REAL-HK I/II/III/IV — MTR · Star Ferry · HKIA · Observatory (143 years, 1883-03-02) — inline URLs",
+    "/world atlas reads 79 chips (12+16+16+15+8+6+6 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
+    "/hong-kong (79 chapters) · /world (79 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + seven-step tour) · /hk-type · /command 123 · /insights",
+    "D1222: LXXIX · D1221: /stamp endgame · D1220: LXXVIII + quick rail · D1219: LXXVII + pressure re-run · D1218: LXXVI + world nav"
   ],
-  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. The /stamp certificate is a client-side SVG artefact over the reader's own local progress — nothing is sent, nothing stored, print only on tap."
+  "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
