@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1225",
-  "milestone_full": "第八十一章 · 黃大仙祠——黃先生來上香（20:45）· /world 八十一章",
+  "milestone": "D1226",
+  "milestone_full": "第八十二章 · 中環——雪廠街——阿良的西裝舖（21:15）· /world 八十二章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: eighty-one Traditional chapters — 00:00→23:00 full day arc · 162-chip clock both locales",
-    "Edition LXXXI — 晚上八點四十五分：黃大仙——黃大仙祠——黃先生來上香 (20:45) · the quiet incense every night, synthetic",
-    "D1224 — REAL-HK V Peak Tram (sourced) · D1223 — LXXX eighty chapters · D1222 — LXXIX · D1221 — /stamp wax seal",
+    "HK series: eighty-two Traditional chapters — 00:00→23:00 full day arc · 164-chip clock both locales",
+    "Edition LXXXII — 晚上九點一刻：中環——雪廠街——阿良的西裝舖 (21:15) · the last tailor on a street tourists never find",
+    "D1225 — LXXXI 黃大仙祠 · D1224 — REAL-HK V Peak Tram (1888, sourced) · D1223 — LXXX eighty chapters · D1222 — LXXIX · D1221 — /stamp wax seal",
     "handbook REAL-HK I/II/III/IV/V — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) — inline URLs",
-    "/world atlas reads 81 chips (12+16+16+15+8+8+6 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (81 chapters) · /world (81 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 5 REAL-HK) · /hk-type · /command 123",
-    "D1225: LXXXI · D1224: REAL-HK V · D1223: LXXX · D1222: LXXIX · D1221: /stamp wax seal · D1220: LXXVIII + quick rail"
+    "/world atlas reads 82 chips (12+16+16+15+8+9+6 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
+    "/hong-kong (82 chapters) · /world (82 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 5 REAL-HK) · /command 123",
+    "D1226: LXXXII · D1225: LXXXI · D1224: REAL-HK V · D1223: LXXX · D1222: LXXIX · D1221: /stamp wax seal"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

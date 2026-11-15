@@ -2444,4 +2444,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-central-snow-factory-street-tailor-chronicle', title: '晚上九點一刻：中環——雪廠街——阿良的西裝舖（香港系列 · 第八十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上九點一刻的雪廠街——阿良做了四十年的西裝舖今天的最後一件，雪廠街對阿良來說就是一種記錄。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上九點一刻。中環雪廠街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿良把身上最後一件西裝的接縫銼好。' },
+      { type: 'heading', text: '一、阿良的尺子' },
+      { type: 'paragraph', text: '阿良量度客人的腰圍，要的不是數字，而是他的態度：「男人心裏有強壯的時候，西裝是才肯要自己的那一號人。我從他肩膀上讀人——肩膀會說話。」' },
+      { type: 'cards', title: '西裝舖可見', items: [] },
+      { type: 'heading', text: '二、雪廠街的晚上' },
+      { type: 'paragraph', text: '雪廠街不是人們常過的路，卻是商戶清路。阿良每天晚上坐在同一個位置，知道每一個只收攤的香氣——糯米雞成了他做過的每一件西裝。' },
+      { type: 'cards', title: '西裝舖可聽', items: [] },
+      { type: 'heading', text: '三、迎春的西裝' },
+      { type: 'paragraph', text: '三月要迎春了——阿良的女兒把爸爸的舊西裝剪去大半。「爸爸，你穿。」他笑。背著十年的重量不掛、他笑得好自在。' },
+      { type: 'cards', title: '西裝舖可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「中環 阿良」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
