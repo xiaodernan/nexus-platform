@@ -194,7 +194,11 @@ export default async function HomePage(props: {
         {rails.degraded ? (
           <p className="mt-6 flex items-center gap-2 rounded-md border border-warning/70 bg-warning-soft px-3 py-2 text-xs text-warning">
             <Icon name="warning" size={14} className="shrink-0" />
-            {rails.degradedReason}
+            {(() => {
+              const m = rails.degradedReason?.match(/^(\d+) of (\d+) rails unavailable$/);
+              if (m) return dict.home.railsDegraded(Number(m[1]), Number(m[2]));
+              return rails.degradedReason;
+            })()}
           </p>
         ) : null}
 

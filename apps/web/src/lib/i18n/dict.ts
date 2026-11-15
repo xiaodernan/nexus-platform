@@ -179,6 +179,8 @@ export interface Dict {
     };
     /** One sentence under the tagline line underlining the sourcing discipline. */
     sourceNote: string;
+    /** D1175: localised home-rails-degraded line (no English leak into the zh plane). */
+    railsDegraded: (failed: number, total: number) => string;
     rails: Record<
       'popular_near_you' | 'for_you' | 'trending' | 'recommended' | 'recently_viewed',
       RailsCopy
@@ -1267,6 +1269,7 @@ const zhHK: Dict = {
       { district: '銅鑼灣', q: '銅鑼灣 咖啡', label: '銅鑼灣 · 咖啡' },
       { district: '荃灣', q: '荃灣 火鍋', label: '荃灣 · 火鍋' },
     ],
+    railsDegraded: (failed, total) => `部分資料暫時讀不到（${failed}／${total} 個欄位暫時無回應）——先看看指南頁也是不錯的選擇。`,
     rails: {
       popular_near_you: { title: '你附近熱門', description: '按距離與口碑排序，僅顯示已有事實的資料' },
       for_you: { title: '為你推薦', description: '未登錄時按附近熱度排序；登錄後才使用你聲明的偏好' },
@@ -2653,6 +2656,7 @@ const en: Dict = {
       { district: 'Causeway Bay', q: 'Causeway Bay coffee', label: 'Causeway Bay · Coffee' },
       { district: 'Tsuen Wan', q: 'Tsuen Wan hotpot', label: 'Tsuen Wan · Hotpot' },
     ],
+    railsDegraded: (failed, total) => `Some of the live rails couldn't be reached right now (${failed} of ${total}) — try the guide page instead.`,
     rails: {
       popular_near_you: { title: 'Popular near you', description: 'Distance and reputation, using verified facts only' },
       for_you: { title: 'For you', description: 'Trending nearby for guests; your declared preferences only after sign-in' },
