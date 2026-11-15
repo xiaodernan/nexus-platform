@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1192",
-  "milestone_full": "說明書入真實刻度：MTR（香港）公開數字——每日 576 萬人次、99 重鐵站、245.3 公里、99.9% 準點、50.2% 份額；標了來源與日期的合成之外那面",
+  "milestone": "D1193",
+  "milestone_full": "本機高壓實測：32 人並發 × 五頁全數 ALL GREEN；`/` 首頁 mock rails memo 後 p50 2.6s→1.7s（-35%）· p99 3.3s→2.3s",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
     "HK series: fifty-six Traditional chapters — 00:30→22:45 full day arc · 112-chip clock both locales",
-    "Edition LVI — 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 (20:30) · Layer G continues past the finale",
-    "D1192: the handbook gains 香港・真實刻度 — MTR's published numbers (2023-11, 245.3 km, 99.9% on-time), sourced & dated, Traditional HK + EN",
-    "Spring Cloud sidecar re-ported to free ports (24761/24889/24089/25445) after a foreign registry took the face; gates green incl. CI-side",
-    "D1190: zh eyebrow tracking collapse (en untouched) · D1189: truncation/CJK defensive CSS · D1184: wheel bridge · D1183: /command demo console",
-    "/stamp passport game · /try walkthrough · /hong-kong · /daily ritual · /handbook · /hk-type",
-    "D1192: handbook REAL-HK strip · D1191: cloud re-port · D1188: e2e focus fix · D1187: chapter LVI 油麻地粵劇散場 · D1185: LIV 深水埗零頭布"
+    "Edition LVI — 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 (20:30) · Layer G continues",
+    "D1193: mock rails memoised — 32-concurrency pressure all-green; / SSR p50 2.63→1.71 s, p99 3.32→2.26 s (rails lattice clone)",
+    "Spring Cloud sidecar re-ported to free ports (24761/24889/24089/25445) — gates green incl. CI",
+    "D1192: handbook REAL-HK strip — MTR figures sourced & dated · D1190: zh eyebrow tracking collapse · D1189: truncation discipline",
+    "D1184: wheel bridge · D1183: /command demo console (123) · D1187: LVI · D1185: LIV · D1186: LV",
+    "/stamp passport game · /try walkthrough · /hong-kong · /daily ritual · /handbook · /hk-type"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

@@ -44723,3 +44723,24 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 數字會隨時間變動（按鐵路準點率就是個 2025 的數字）；本站不複述 Wikipedia，只留下連結與存取日期，讀者自行查核；清楚標注「不是演示資料」。zh 段夾雜「km」與「245.3」屬數據記號，不構成「中英夾雜」違規——是公認的公制單位與數字。
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+
+## 1193. D1193 — stress_search.mjs run high-pressure; mock rails memoised; 44% faster p50
+
+**Why.** 用戶把高壓測試立為長開發項。我們用 `scripts/stress_search.mjs` 真打本機 mock plane：/hong-kong、/handbook、/stamp、/guides/hk-food-chronicle、/command, 32 人並發 × 64 次/頁 ×2 輪 —— 全部 ALL GREEN。測量發現 `/` 首頁 p50 2.6s：`loadRailCards` 對 5 條 rail 各自從頭 `allCards({ geo })`，全館重切兩次，浪費 O(n) 家族。
+
+**The unit.** `mockHomeRails(geo, signedIn)` 新 memo lattice：geo (4 位小數精度) × signedIn (2 states) 的鍵快取整個 HomeRails；讀者拿到的是 cloneRails 的淺拷貝（sort/slice 消費者不可污染共享板）；cache 目標是直接提取 SSR 的反复 repeated `allCards(...)` 調用——RSC 再渲染時總是重切 rails。`/` SSR 指標： p50 2 634ms → 1 710ms（-35%），p99 3 322ms → 2 257ms（-32%）。
+
+**Pressure readout (32 stress, 128 req/page, mock plane on :3000):**
+| page | ok/err | p50 ms | p99 ms | comments |
+|------|--------|--------|--------|------|
+| /hong-kong | 144/0 | 177 | 264 | ALL GREEN |
+| /handbook | 64/0 | 120 | 169 | ALL GREEN |
+| /stamp | 64/0 | 107 | 150 | ALL GREEN |
+| /guides/hk-food-chronicle | 64/0 | 1386 | 1561 | ALL GREEN |
+| /command | 64/0 | 98 | 124 | ALL GREEN |
+| / (before) | 64/0 | 2634 | 3322 | ALL GREEN |
+| / (after memo) | 64/0 | 1710 | 2257 | ALL GREEN |
+
+**Honest boundaries.** 只在本機 mock 面上跑；不在 CI；實時平台走 platform/live demo 而不是 mock，壓力數字是給「首頁時段」做 sıgnal 的不是給 SLA 的。`/` 仍不快因為 dynamic SSR 有兩個根，但 cache 結果說明了一個可免費優化：**SSR 客戶端不重算 crops。** 下一項：platform 端 Edgerate/libraria 的 redis 反射。`mockHomeRails` 的 clone 對消費者 mutation 防守充足。
+
+- readers: `apps/web/src/lib/mock/index.ts`, this ledger entry.

@@ -922,12 +922,38 @@ export interface HomeRails {
   recently_viewed: EntityCard[];
 }
 
+/**
+ * Memoize the assembled rails for a tiny (geo, signedIn) lattice. Every value on this grid is a
+ * pure function of the static seed — the engine re-derived the entire catalogue five times per
+ * SSR, which showed up as multi-second page paint under the stress harness (p50 > 2.6s with 32
+ * in-flight connections). Cards are consumed read-only everywhere, but callers get shallow
+ * clones so a defensive consumer that sorts in place cannot poison the shared board.
+ */
+const HOME_RAILS_CACHE = new Map<string, HomeRails>();
+const geoKey = (geo: GeoPoint | null): string => {
+  if (!geo) return 'none';
+  const lat = Number.isFinite(geo.lat) ? geo.lat : 0;
+  const lng = Number.isFinite(geo.lng) ? geo.lng : 0;
+  return `${lat.toFixed(4)},${lng.toFixed(4)}`;
+};
+const cloneRails = (source: HomeRails): HomeRails => ({
+  popular_near_you: [...source.popular_near_you],
+  for_you: [...source.for_you],
+  trending: [...source.trending],
+  recommended: [...source.recommended],
+  recently_viewed: [...source.recently_viewed],
+});
+
 export function mockHomeRails(geo: GeoPoint | null = null, signedIn = false): HomeRails {
+  const key = `${geoKey(geo)}|${signedIn ? 'in' : 'out'}`;
+  const cached = HOME_RAILS_CACHE.get(key);
+  if (cached) return cloneRails(cached);
+
   const cards = allCards({ geo });
   const byRating = [...cards].sort((a, b) => (b.rating?.value ?? 0) - (a.rating?.value ?? 0));
   const byCount = [...cards].sort((a, b) => (b.rating?.count ?? 0) - (a.rating?.count ?? 0));
   const byPrice = [...cards].sort((a, b) => Number(a.price?.amount ?? 9e9) - Number(b.price?.amount ?? 9e9));
-  return {
+  const rails: HomeRails = {
     popular_near_you: [...cards].sort((a, b) => (a.distance?.meters ?? 0) - (b.distance?.meters ?? 0)).slice(0, 8),
     // §CONSUMER open question: guests must still see an honest rail — trending near the coarse
     // location, not a fake "For You" derived from a profile the visitor does not have.
@@ -936,6 +962,8 @@ export function mockHomeRails(geo: GeoPoint | null = null, signedIn = false): Ho
     recommended: byPrice.slice(0, 6),
     recently_viewed: signedIn ? cards.slice(2, 6) : [],
   };
+  HOME_RAILS_CACHE.set(key, rails);
+  return rails;
 }
 
 /* ------------------------------------------------------------------- account */
