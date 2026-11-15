@@ -2297,4 +2297,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-wan-chai-pawnshop-chronicle', title: '下午一時一刻：灣仔——擺押局——老黃生的中午開櫃（香港系列 · 第七十五章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：下午一時一刻的灣仔擺押局——老黃生的中午開櫃時刻，一只用錦布蒙住的抽屜與香港擺押的生意經。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午一時一刻。灣仔擺押局（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——老黃生正式打開後櫃，這是這一天裡他的母親不知道的唯一一件事。' },
+      { type: 'heading', text: '一、開櫃時刻' },
+      { type: 'paragraph', text: '擺押局已經七十年沒有打過廣告。老黃生開櫃的時候，一個路過的姑娘站住看：「開櫃的時候大概是不會有人拍照的。」（合成對話，非真實商戶）' },
+      { type: 'cards', title: '擺押局可見', items: [] },
+      { type: 'heading', text: '二、每個月的庫存日' },
+      { type: 'paragraph', text: '每個月一號下午一時一刻——老黃生再打開櫃子裡面那個用錦布蒙住的抽屜，把它攤在自己面前，從最深的裡面小心取出東西。他從來不讓人拍照，因為那不是「古董」，是「還要回來」。' },
+      { type: 'cards', title: '擺押局可聽', items: [] },
+      { type: 'heading', text: '三、閉櫃前的回頭' },
+      { type: 'paragraph', text: '下午將近兩時，客人漸漸去了。老黃生把關櫃的鑰匙收起來——這一晚，他又要在門口等下一個不肯說自己姓甚麼、也有自己一筆帳的客人。' },
+      { type: 'cards', title: '擺押局可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「灣仔 擺押」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

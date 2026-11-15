@@ -172,6 +172,31 @@ export default async function InsightsPage() {
           </div>
         </section>
 
+        <section aria-labelledby="insights-actions" className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface">
+          <h2 id="insights-actions" className="border-b border-line bg-canvas px-5 py-3 text-2xs font-semibold uppercase tracking-wide text-accent">
+            {t.actionsTitle}
+          </h2>
+          <p className="border-b border-line px-5 py-2.5 text-2xs leading-relaxed text-ink-faint">{t.actionsHint}</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-2xs uppercase tracking-wide text-ink-faint">
+                <tr>
+                  <th className="px-5 py-2">{t.colProfile}</th>
+                  <th className="px-5 py-2">{t.colAction}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {t.actions.map((a) => (
+                  <tr key={a.profile} className="border-t border-line align-top">
+                    <td className="whitespace-nowrap px-5 py-2.5 font-medium text-ink-strong">{a.profile}</td>
+                    <td className="px-5 py-2.5 text-sm leading-relaxed text-ink-muted">{a.action}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section className="mt-8 rounded-2xl border border-accent-line bg-accent-soft p-5">
           <h2 className="text-2xs font-semibold uppercase tracking-wide text-accent">{t.nextTitle}</h2>
           <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-strong">{snap.recommendation}</p>
