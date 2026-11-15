@@ -14,15 +14,15 @@
 # and "config you can flip on the monolith without a restart" (a plane you can run on).
 #
 # Usage:  scripts/cloud_monolith_refresh.sh
-# Env:    NEXUS_SMOKE_CONFIG_PORT, NEXUS_SMOKE_PLATFORM_PORT — default 18888/18098 (the module's
-#         declared port values and a throwaway monolith port, never the demo's 18888/8090)
+# Env:    NEXUS_SMOKE_CONFIG_PORT, NEXUS_SMOKE_PLATFORM_PORT — default 24889/18098 (the module's
+#         declared port values and a throwaway monolith port, never the demo's 24889/8090)
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLOUD="$ROOT/services/cloud"
 PLATFORM="$ROOT/services/platform"
 MVN="${MVN:-mvn}"
-CONFIG_PORT="${NEXUS_SMOKE_CONFIG_PORT:-18888}"
+CONFIG_PORT="${NEXUS_SMOKE_CONFIG_PORT:-24889}"
 MONOLITH_PORT="${NEXUS_SMOKE_PLATFORM_PORT:-18098}"
 TMP_REPO="$(mktemp -d /tmp/nexus-monolith-refresh.XXXXXX 2>/dev/null || mktemp -d)"
 LOG_DIR="${TMPDIR:-/tmp}/nexus-cloud-monolith-refresh"

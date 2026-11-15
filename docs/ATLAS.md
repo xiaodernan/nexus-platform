@@ -28,11 +28,11 @@ browser ── apps/web (Next.js :3002) ── BFF /api/nexus/**
    │                                     v
    │                        Postgres 16 + pgvector (:5433) / Redis (:6380)
    │
-   └── (cloud profile, opt-in) ──> nexus-gateway :18088 ── lb:// by Eureka name
+   └── (cloud profile, opt-in) ──> nexus-gateway :24089 ── lb:// by Eureka name
                                         │
                     ┌───────────────────┼───────────────────┐
                     v                   v                   v
-          nexus-eureka :18761  nexus-config :18888  nexus-admin :19444
+          nexus-eureka :24761  nexus-config :24889  nexus-admin :25445
           (registry)           (native repo)         (watches only)
 ```
 
@@ -210,10 +210,10 @@ Infrastructure | `infra/docker-compose.yml`, `infra/db/migrations`, `infra/confi
 | 3002 · 8090 · 8010 | web · platform · AI | `Makefile`, `README.md` |
 | 5433 · 6380 | Postgres · Redis (CI/dev) | `infra/docker-compose.yml` |
 | `apps/ai/Dockerfile` | D1065: 2-stage uv builder, `nexus/ai:dev` — the recipe the `full` profile never had; boot not claimed (host hygiene wiped the seeded plane) |
-| 18761 | `nexus-eureka` | `services/cloud/eureka-server/src/main/resources/application.yaml` |
-| 18888 | `nexus-config` | `services/cloud/config-server/src/main/resources/application.yaml` |
-| 18088 | `nexus-gateway` | `services/cloud/gateway/src/main/resources/application.yaml` |
-| 19444 | `nexus-admin` | `services/cloud/admin-server/src/main/resources/application.yaml` |
+| 24761 | `nexus-eureka` | `services/cloud/eureka-server/src/main/resources/application.yaml` |
+| 24889 | `nexus-config` | `services/cloud/config-server/src/main/resources/application.yaml` |
+| 24089 | `nexus-gateway` | `services/cloud/gateway/src/main/resources/application.yaml` |
+| 25445 | `nexus-admin` | `services/cloud/admin-server/src/main/resources/application.yaml` |
 | 19555 | `nexus-insight` (D885) | `services/cloud/insight-service/src/main/resources/application.yaml` |
 | 18961 / 18962 | D894's throwaway HA pair (loopback aliases, not in the cloud profile) | `docs/CLOUD.md` |
 

@@ -4,7 +4,7 @@
 # cloud-profile route lb://NEXUS-PLATFORM can find it instead of a hardcoded host:port.
 #
 # The defaultZone is the SAME env name and the SAME port the gateway and D847's plane use
-# (services/cloud/eureka-server defaults to 18761 on this machine — the canonical 8761 belongs to
+# (services/cloud/eureka-server defaults to 24761 on this machine — the canonical 8761 belongs to
 # another checkout's registry). One port map: scripts/check_cloud_discovery.mjs R3 compares this
 # number with the eureka module's own default and reddens if they drift apart.
 spring:
@@ -12,7 +12,7 @@ spring:
     # D872: the monolith resolves its OWN config from the same config server the edge uses —
     # OPTIONAL on purpose: if the config server is down the monolith still boots and serves with
     # the defaults it already ships. Fail-fast belongs to production overlays.
-    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:24889}
   cloud:
     # Flips the base `application.yml` block (enabled: false) — under the `cloud` profile the
     # import check expects exactly this and the optional import, both of which are present.
@@ -32,7 +32,7 @@ eureka:
   client:
     enabled: true
     service-url:
-      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:24761/eureka/}
     register-with-eureka: true
     # The monolith calls nothing by discovery — it only needs to BE found. Fetching the registry
     # would add a startup dependency on the plane for a service that does not use it.

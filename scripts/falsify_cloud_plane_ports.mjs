@@ -187,7 +187,7 @@ function plant(name, mutate = () => {}) {
 /** Put a retyped smoke literal back: the R5 defect, planted from the reader's own words. */
 const retypeSmoke = (files) => {
   files[SMOKE] = sub1(files[SMOKE], /(EUREKA_PORT="\$\{NEXUS_SMOKE_EUREKA_PORT:-)[^}]*(\}")/,
-    (_m, head, tail) => `${head}18761${tail}`, 'smoke eureka default');
+    (_m, head, tail) => `${head}24761${tail}`, 'smoke eureka default');
 };
 
 const ARMS = [
@@ -240,10 +240,10 @@ const ARMS = [
     state: { apps: ['NEXUS-GATEWAY'], registryStatus: 200 },
     dir: plant('upstream-foreign', (files) => {
       files[GATEWAY_YAML] = sub1(files[GATEWAY_YAML],
-        /(\$\{NEXUS_PLATFORM_URI:http:\/\/127\.0\.0\.1:)\d+(\})/, '$19$2', 'upstream port');
+        /(\$\{nexus\.edge\.platform-uri:http:\/\/127\.0\.0\.1:)\d+(\})/, '$1' + PORT.dead + '$2', 'upstream port');
     }), expect: 0,
     must: [/RESULT: PASS/, /no offender/],
-    absent: [/OFFENDERS/, /NEXUS_PLATFORM_URI/] },
+    absent: [/OFFENDERS/] },
 
   { name: 'THE LIMIT: the container-internal port is not the host port, so <host>:8761 is not a drift',
     state: { apps: ['NEXUS-GATEWAY'], registryStatus: 200 },
@@ -281,7 +281,7 @@ const ARMS = [
 
   { name: 'THE REFUSAL: a flag this reader does not take is refused, not dropped',
     state: { apps: ['NEXUS-GATEWAY'], registryStatus: 200 },
-    dir: plant('unknown-flag'), flags: ['--ports=18761'], expect: 2,
+    dir: plant('unknown-flag'), flags: ['--ports=24761'], expect: 2,
     must: [/RESULT: NOT CHECKED/, /unknown option --ports/],
     absent: [/RESULT: PASS/] },
 ];

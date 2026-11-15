@@ -185,7 +185,7 @@ echo "  NEXUS-GATEWAY registered"
 assert_registry_is_ours
 
 echo "== the admin server lists the registered services =="
-export NEXUS_ADMIN_PORT="${NEXUS_ADMIN_SMOKE_PORT:-19444}"
+export NEXUS_ADMIN_PORT="${NEXUS_ADMIN_SMOKE_PORT:-25445}"
 start admin "$CLOUD/admin-server/target/app.jar" --server.port="$NEXUS_ADMIN_PORT"
 wait_health admin "$NEXUS_ADMIN_PORT"
 admin_found=0

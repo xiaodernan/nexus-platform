@@ -6,7 +6,7 @@ take and *why*. HTTP/data invariants live in the contracts, not here.
 The Phase-1 sidecar plane (Spring Cloud) sits beside this monolith without changing it. It is NOT a microservice
 migration and it does not replace the BFF. `services/cloud/*` ships four modules — Eureka registry, native Config
 Server, an edge gateway (path routes with resilience4j breakers, a per-client token bucket, X-Request-Id
-propagation and dedup), and a Spring Boot Admin window at `:19444`. Discovery for the platform is opt-in
+propagation and dedup), and a Spring Boot Admin window at `:25445`. Discovery for the platform is opt-in
 (`dev,cloud`), for the AI service is opt-in (`NEXUS_AI_EUREKA_ENABLED=true`); the single-process boot registers
 nothing. See [`CLOUD.md`](CLOUD.md).
 

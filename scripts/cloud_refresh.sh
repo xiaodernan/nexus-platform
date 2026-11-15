@@ -98,7 +98,7 @@ wait_health config "http://127.0.0.1:$CONFIG_PORT/actuator/health"
 
 echo "== start gateway against it =="
 export NEXUS_CONFIG_URI="http://127.0.0.1:$CONFIG_PORT"
-export NEXUS_EUREKA_URI="http://127.0.0.1:18761/eureka/"
+export NEXUS_EUREKA_URI="http://127.0.0.1:24761/eureka/"
 export NEXUS_PLATFORM_URI="http://127.0.0.1:9"
 export NEXUS_AI_URI="http://127.0.0.1:9"
 export NEXUS_WEB_URI="http://127.0.0.1:9"

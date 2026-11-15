@@ -4095,7 +4095,7 @@ red at HEAD with `556×2`, and `check_ledger_citations.mjs --worktree` now reads
 
 The plane exists (§845): Eureka registry, Config Server and a WebFlux gateway, proven by
 `scripts/cloud_smoke.sh`. D847 (§847) moved its host face off another project's registry to the
-measured-free 18761/18888/18088 block and left `scripts/check_cloud_plane_ports.mjs` asking who owns every
+measured-free block (18761/18888/18088 at the time; re-ported to 24761/24889/24089/25445 in D1191 — a foreign suite took 18761 and 18888 on this host), leaving `scripts/check_cloud_plane_ports.mjs` asking who owns every
 coordinate on each run. The queue below is the order the evidence justifies; each step keeps the monolith's
 normal boot unchanged unless a profile opts in.
 
@@ -4147,13 +4147,13 @@ normal boot unchanged unless a profile opts in.
   (cloud_smoke / lb / refresh PASS). The HA item stays open with the measured evidence, not as a claim.
 - **D859 (§859): the plane's one window — Spring Boot Admin, live.** `services/cloud/admin-server`
   (new module, spring-boot-admin 3.5.11 against Boot 3.5.16) discovers every Eureka-registered service
-  and presents live health, endpoints, metrics — `:19444/actuator/health` 200, `:19444/instances` returns
+  and presents live health, endpoints, metrics — `:25445/actuator/health` 200, `:19444/instances` returns
   NEXUS-GATEWAY discovered through the registry (status UP, endpoints health/refresh/gateway/info). The
   admin server watches: `register-with-eureka: false` — a window must not widen the doorway. Trust-hop
   posture matches the edge (no auth on this dev plane, same ruling as D850 reserved for the deployment
   ingress). `cloud_smoke.sh` proves it end-to-end (started after the gateway, discovered it, showed it UP;
   PASS with the admin member), compose's `cloud` profile gains the `admin-server` service on
-  `127.0.0.1:19444`, CI's `cloud` job covers it through the same smoke.
+  `127.0.0.1:25445`, CI's `cloud` job covers it through the same smoke.
 - **D861 (§861): the merchant's own question lives in the merchant's own inbox.** The consumer asked
   `有BB椅嗎` against basil-leaf-0419, the agent found grounded chunks, the answer was written back through
   the platform's internal door, and the merchant's conversation detail page renders it: 200, 54,817 bytes,

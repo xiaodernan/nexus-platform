@@ -19,7 +19,7 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLOUD="$ROOT/services/cloud"
 AI_PORT="${LAUNCH_AI_PORT:-8012}"
-EUREKA_PORT="${NEXUS_SMOKE_EUREKA_PORT:-18761}"
+EUREKA_PORT="${NEXUS_SMOKE_EUREKA_PORT:-24761}"
 ADMIN_PORT="${NEXUS_SMOKE_AI_ADMIN_PORT:-19451}"
 LOG_DIR="${TMPDIR:-/tmp}/nexus-cloud-ai-admin"
 mkdir -p "$LOG_DIR"

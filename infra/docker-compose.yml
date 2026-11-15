@@ -183,7 +183,7 @@ services:
     environment:
       NEXUS_EUREKA_PORT: 8761
     ports:
-      - "127.0.0.1:${NEXUS_EUREKA_HOST_PORT:-18761}:8761"
+      - "127.0.0.1:${NEXUS_EUREKA_HOST_PORT:-24761}:8761"
 
   config-server:
     image: nexus/config:dev
@@ -198,7 +198,7 @@ services:
     environment:
       NEXUS_CONFIG_PORT: 8888
     ports:
-      - "127.0.0.1:${NEXUS_CONFIG_HOST_PORT:-18888}:8888"
+      - "127.0.0.1:${NEXUS_CONFIG_HOST_PORT:-24889}:8888"
 
   gateway:
     image: nexus/gateway:dev
@@ -225,7 +225,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "127.0.0.1:${NEXUS_GATEWAY_HOST_PORT:-18088}:8088"
+      - "127.0.0.1:${NEXUS_GATEWAY_HOST_PORT:-24089}:8088"
 
   # D859: Spring Boot Admin — the plane's one window. Every Eureka-registered service
   # (gateway + platform/AI under opt-in) is shown live with health, metrics and loggers.
@@ -246,7 +246,7 @@ services:
       NEXUS_ADMIN_REGISTER: "false"
       TZ: Asia/Hong_Kong
     ports:
-      - "127.0.0.1:${NEXUS_ADMIN_HOST_PORT:-19444}:8080"
+      - "127.0.0.1:${NEXUS_ADMIN_HOST_PORT:-25445}:8080"
 
   # D885: the plane's first independent service. It joins the registry, calls the monolith and AI
   # by name through OpenFeign + Spring Cloud LoadBalancer, and reports `unavailable` when a name

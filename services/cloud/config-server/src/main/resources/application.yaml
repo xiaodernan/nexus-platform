@@ -1,8 +1,9 @@
 server:
-  # D847: the host face of the plane is one documented block (18761/18888/18088), not three canonical
+  # D1191 (re-engineered from D847's 18888 face, after the co-located registry took it): the host
+  # face of the plane is one documented block (24761/24889/24089), not three canonical
   # numbers each free by luck. :8888 was free when measured, but it is the default every other Spring
   # Cloud stack on this machine reaches for, and :8761 already proved that one of them gets there first.
-  port: ${NEXUS_CONFIG_PORT:18888}
+  port: ${NEXUS_CONFIG_PORT:24889}
 
 spring:
   application:

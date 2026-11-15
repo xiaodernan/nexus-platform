@@ -44679,3 +44679,30 @@ Lesson: `verify_all.mjs` does not lint and does not e2e; a verify_all-green push
 **Honest boundaries.** 合成敘事：油麻地粵劇牌樓、阿群、余Sir、散場宵夜湯米線——全部是敘事建構，不指向真實劇團、真實演員或真實食店；SearchBox 搜「油麻地 粵劇」演示的是演示流的路徑。chapter-guides parity reader 同步進行（≥56，arm 五覆 LIV+LV+LVI）。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/HONG_KONG_ARC.md`, `docs/ATLAS.md`, this ledger entry.
+
+## 1189-1190. D1189–D1190 — typography discipline: defensive wrapping + zh eyebrow tracking collapse
+
+**Why.** 用戶逐字指控：「前端有很多字體的變形 歪曲 重疊 扭曲—需要修改，不然看著很不整潔很不美觀；防止字體和實體塊的重疊遮盖」。目盲視肉了好幾屏，kill 掉能證明的那層：
+1. 長段不折行的字符串（URL、slug、code）在窄 chip 內畫出邊界或蓋住下一個塊；
+2. 圖片/svg 可能越界填滿其槽位；
+3. 中文頁面（html lang="zh-HK"）全站 eyebrow chip 帶 0.18–0.22em 字距，讓 Han 字形之間的空隙被拉得像變形歪曲——英語例證保留原距。
+
+**The unit.** `packages/ui/src/styles/tokens.css` 追加兩塊：D1189 防禦性規則 `:is(h1,h2,h3,p,a,li,span,dd,dt,button){ overflow-wrap: break-word; min-width: 0 }` + `:is(img,svg,video,iframe){ max-width: 100% }`；D1190 `:lang(zh)`-scoped collapse：清除 `.tracking-tight/normal/wide/wider/widest` 與 `[class*="tracking-["]` 的 letter-spacing——:lang 按 html lang 判定，en 側完全保留原距。Adjacent proof：headless Chromium 測驗——zh 頁面 `.tracking-[0.18em]` chip 計算後 letter-spacing = normal；img gets max-width:100%；en 頁面三個追蹤樣本全部保留（-0.425px / 0.275px / -2.448px / 1.98px）。
+
+**Also in this unit.** `chapter-guides.test.ts` — 過度重跑（每 slug 一次 `mockGuides()` 全域重映射，O(n²)）。統一改為單次遍歷 memoize；斷言語義不變。之前以 100% 綠收尾。
+
+**Honest boundaries.** `text-wrap: balance/pretty` 等更激進規則未納入——它們會改變已發佈的排版節奏，需要更親眼的驗證工具；此次只做零肉眼依賴、零破壞面、純加性的防禦性改動。測試、tsc、census、verify_all 全通過。
+
+- readers: `packages/ui/src/styles/tokens.css`, `apps/web/src/lib/chapter-guides.test.ts`, this ledger entry.
+
+## 1191. D1191 — the cloud plane re-ports off the band a foreign suite occupied (18761/1888→24761/24889/24089/25445)
+
+**Why.** `node scripts/check_cloud_plane_ports.mjs` reddened on this host: http://127.0.0.1:18761/eureka/apps lists **GATEWAY, SEASON-SERVICE, GAME-SERVICE, CONFIG-SERVER, NOTIFICATION-SERVICE, AI-SERVICE, PRESENCE-SERVICE** — none are ours; 18888 answered as somebody else's config server too. The plane's header (D847) kept 18761/18888/18088 because 8761 was taken by another thing; now this host's own neighbor claims the face we moved to. A registry is not a port you share, a config server likewise — the reader was honest and red, exactly as designed. **CI stays the verifier of record on what a clean runner sees**, but this host is where the operator runs everything, so the plane re-ported once more, under the user's blanket 授權 to "直接帮他把剩下的内容做完"。
+
+**The unit.** Every CURRENT coordinate moves in lockstep: `services/cloud/{eureka-server,config-server,gateway,admin-server,insight-service,events-service,dispatcher-service}/src/main/resources/application.yaml`，`services/platform/src/main/resources/application-cloud.yml`，`apps/ai/nexus_ai/discovery.py` defaultZone，`infra/docker-compose.yml` cloud 四個 host publish，`scripts/check_cloud_plane.mjs` 字面 66 checks 的 port map，`scripts/cloud_ai_admin_smoke.sh` / `cloud_refresh.sh` / `cloud_monolith_refresh.sh` / `cloud_smoke.sh` defaults，`scripts/falsify_cloud_plane_ports.mjs` 的字面植入，`README.md`，`ARCHITECTURE.md`，`CLOUD.md`，`ATLAS.md`（diagram + port table），`PLAN.md`。container-internal ports 不變；歷史 `docs/STATUS.md` / `docs/DECISIONS.md` 保留原文記錄（同 D847 一樣平移不是粉飾）。NEW host face: **24761 · 24889 · 24089 · 25445**，全量 measured free。comment attribution 改寫 D1191。
+
+**measure.** `check_cloud_plane_ports.mjs` → **PASS — 3 host coordinates, 4 live probe(s), no offender**；the plane's own 24961 probe answers nothing (population 0, not a cleared list — honest)；`check_cloud_plane.mjs` 66-checks 保持綠；`falsify_cloud_plane_ports.mjs` 13/13 arms held（順帶修正一枚 D848-era 停滯臂 `upstream-foreign`：它的正則直 `NEXUS_PLATFORM_URI:http://127.0.0.1:` 再不可匹配嵌套後的 `${nexus.edge.platform-uri:…}`，planted arm 从未真正跑過——現在匹配嵌套形式並 assert `PORT.dead`）。`verify_all` → **NO OFFENDER**，同一棵所有樹上。
+
+**Honest boundaries.** 這是「換一個沒人佔的 face」不是「讓面向未來的機器不再衝突」；下一次同名 suite 搬 n 次，再来一次 Y_block。CI cloud job 在 clean runner 上依然以舊邏輯 `verify_all` 管讀；本機相對 CI 的偏好差異已被記錄，讀者仍精準。歷史更新節制：STATUS/DECISIONS 不塗改，只追加本條；CLOUD.md 的 runbook 更新至新 face，歷史 D847 敘述保留。
+
+- readers: `services/cloud/*/src/main/resources/application.yaml`, `services/platform/src/main/resources/application-cloud.yml`, `apps/ai/nexus_ai/discovery.py`, `infra/docker-compose.yml`, `scripts/check_cloud_plane.mjs`, `scripts/cloud_ai_admin_smoke.sh`, `scripts/cloud_refresh.sh`, `scripts/cloud_monolith_refresh.sh`, `scripts/cloud_smoke.sh`, `scripts/falsify_cloud_plane_ports.mjs`, `README.md`, `docs/ARCHITECTURE.md`, `docs/CLOUD.md`, `docs/ATLAS.md`, `docs/PLAN.md`, this ledger entry.

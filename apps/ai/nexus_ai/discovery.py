@@ -6,8 +6,8 @@ answer to the same question. Registration is OFF by default — the single-proce
 the product today, and a registry call on every startup is a change nobody asked for.
 
 Opt-in: `NEXUS_AI_EUREKA_ENABLED=true` plus (optionally) `NEXUS_EUREKA_URI`
-(default `http://127.0.0.1:18761/eureka/` — the D847 measured-free block, never the foreign
-8761), `NEXUS_EUREKA_HOST` (default `127.0.0.1`), `NEXUS_AI_APP_NAME` (default `NEXUS-AI`),
+(default `http://127.0.0.1:24761/eureka/` — the D1191 re-ported block, never the foreign 8761 or the
+taken 18761), `NEXUS_EUREKA_HOST` (default `127.0.0.1`), `NEXUS_AI_APP_NAME` (default `NEXUS-AI`),
 `NEXUS_AI_HOST_PORT` (the port start_ai.py binds; default `8010`).
 
 The service registers to be FOUND; it fetches nothing (`should_discover=False`), the same
@@ -88,7 +88,7 @@ async def maybe_register_eureka() -> Registration | None:
         return None
     from py_eureka_client import eureka_client as ec  # type: ignore[import-untyped]
 
-    server = os.environ.get("NEXUS_EUREKA_URI", "http://127.0.0.1:18761/eureka/")
+    server = os.environ.get("NEXUS_EUREKA_URI", "http://127.0.0.1:24761/eureka/")
     host = os.environ.get("NEXUS_EUREKA_HOST", "127.0.0.1")
     # start_ai.py binds NEXUS_AI_HOST_PORT (default 8010); register THAT port, not a drift copy.
     port = int(os.environ.get("NEXUS_AI_HOST_PORT", os.environ.get("NEXUS_AI_PORT", "8010")))

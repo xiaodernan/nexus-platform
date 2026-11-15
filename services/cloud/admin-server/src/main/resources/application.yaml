@@ -1,5 +1,5 @@
 server:
-  port: ${NEXUS_ADMIN_PORT:19444}
+  port: ${NEXUS_ADMIN_PORT:25445}
 
 spring:
   application:
@@ -14,7 +14,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:24761/eureka/}
     # The admin server WATCHES; it does not register. Everything it knows it learns from the
     # registry (NEXUS-GATEWAY, and NEXUS-PLATFORM / NEXUS-AI under opt-in) — it adds nothing
     # to it. A window must not widen the doorway.

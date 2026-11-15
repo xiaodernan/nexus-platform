@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1187",
-  "milestone_full": "香港系列第五十六章 · 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 · Layer G 夜場",
+  "milestone": "D1191",
+  "milestone_full": "雲端側門再遷址 · 被佔用的微服務帶整體平移——co-located foreign registry 佔了 18761/18888，plane 遷至 24761/24889/24089/25445；連帶 typography D1189–D1190",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-15",
   "updated_at_commit": "current-master",
   "features": [
     "HK series: fifty-six Traditional chapters — 00:30→22:45 full day arc · 112-chip clock both locales",
     "Edition LVI — 晚上八點半：油麻地粵劇牌樓老倌的散場宵夜 (20:30) · Layer G continues past the finale",
-    "Layer G full tract: LVI 油麻地粵劇散場宵夜 · LV 落馬洲禁區通勤前哨 · LIV 深水埗零頭布 · LIII 安樹堂 · LII 九龍灣製衣廠 · LI 觀塘曙光報紙 · XLIX 羅湖手車 · XLVIII 萬象天地 · XLVII 皇崗 · XLVI 羅湖",
-    "D1184: fine-pointer wheel bridge — desktop wheel advances every horizontal rail & the arc clock; ends release to the page; the OS keeps the axis sign",
-    "/command — demo operator desk, unlock with 123: six counters · top phrases · chapter heat · retention proxy · next moves. Synthetic-only, badged on screen",
-    "/stamp passport game · /try five-step walkthrough · /hong-kong continue-CTA · /daily ritual · /handbook · /hk-type",
-    "D1187: chapter LVI 油麻地粵劇散場 · D1186: chapter LV 落馬洲 · D1185: 深水埗零頭布 · D1184: wheel bridge · D1183: /command demo console · D1182: LIII 安樹堂"
+    "D1191 cloud plane re-ported off a co-located registry (24761/24889/24089/25445); gates unchanged, CI stays the verifier of record; D1189–D1190 typography & truncation discipline",
+    "Spring Cloud sidecar — Eureka registry · Config Server · WebFlux Gateway · Spring Boot Admin :25445 · nexus-insight fifth service (live every verifier)",
+    "D1184: wheel bridge — desktop wheel advances rails & arc clock; D1183: /command demo console; D1187: LVI chapter; D1186: LV 落馬洲禁區; D1185: LIV 深水埗零頭布",
+    "/stamp passport game · /try walkthrough · /hong-kong · /daily ritual · /handbook · /hk-type",
+    "D1191: plane re-port + typography gates · D1188: e2e focus flake fix · D1187: chapter LVI 油麻地粵劇散場"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented."
 }

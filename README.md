@@ -70,9 +70,9 @@ thread — and the consumer sees it on reload. One command proves it: `bash scri
 Latest units shipped (master): merchant reply + rollback-fix relay (`D861`, `D871`), monolith hot-refresh
 off the config server (`D872`), consumer conversation history hydration closes the loop, anonymous
 visitor sees nothing (`D874`), edge circuit-breaker + retry + honest fallback (`D850`, `D875`), the whole
-**Spring Cloud sidecar plane** — Eureka (`:18761`) · Config Server (`:18888`, src + refresh) · Gateway
-(`:18088`, `lb://` routes, limiter, X-Request-Id, five restart-free proofs) · Spring Boot Admin
-(`:19444`, platform/AI/gateway all UP) — plus `scripts/cloud_*_smoke.sh` in CI and `docs/CLOUD.md` with
+**Spring Cloud sidecar plane** — Eureka (`:24761`) · Config Server (`:24889`, src + refresh) · Gateway
+(`:24089`, `lb://` routes, limiter, X-Request-Id, five restart-free proofs) · Spring Boot Admin
+(`:25445`, platform/AI/gateway all UP) — plus `scripts/cloud_*_smoke.sh` in CI and `docs/CLOUD.md` with
 the explicit "not claimed" list. Every host coordinate was measured free (D9); `check_cloud_plane.mjs`
 verifies the whole plane, 51 checks.
 

@@ -7,7 +7,7 @@ spring:
   application:
     name: nexus-events
   config:
-    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:24889}
 
 management:
   endpoints:
@@ -26,7 +26,7 @@ eureka:
     register-with-eureka: ${NEXUS_EVENTS_EUREKA_ENABLED:true}
     fetch-registry: false
     service-url:
-      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:24761/eureka/}
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}

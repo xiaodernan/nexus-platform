@@ -24,7 +24,7 @@
  *      cloud_refresh, cloud_monolith_refresh, cloud_retry_smoke, cloud_ai_admin_smoke) and the three
  *      readers (ports, discovery, edge). The `required` job feeds it into the merge gate.
  *   5. docs/CLOUD.md lists exactly these smokes in its gate table and carries the `not claimed` section
- *      (the honesty clause) and the port map 18761/18888/18088/19444.
+ *      (the honesty clause) and the port map 24761/24889/24089/25445.
  *
  * Cheap to run; precise about what it reads. Exit 1 on ANY red row.
  */
@@ -65,17 +65,17 @@ check('reactor carries insight-service (D885)', 'services/cloud/pom.xml',
 /* 2 ━ each module still carries the load-bearing token */
 const EU = 'services/cloud/eureka-server/src/main/resources/application.yaml';
 mustContain('eureka app name', EU, 'name: nexus-eureka');
-mustContain('eureka host coordinates', EU, 'port: ${NEXUS_EUREKA_PORT:18761}');
+mustContain('eureka host coordinates', EU, 'port: ${NEXUS_EUREKA_PORT:24761}');
 mustContain('eureka HA-collide guard', EU, 'instance-id: ${spring.application.name}:${server.port}');
 mustContain('eureka peer opt-in default-off', EU, 'register-with-eureka: ${NEXUS_EUREKA_PEER:false}');
 
 const CFG = 'services/cloud/config-server/src/main/resources/application.yaml';
 mustContain('config app name', CFG, 'name: nexus-config');
-mustContain('config host coordinates', CFG, 'port: ${NEXUS_CONFIG_PORT:18888}');
+mustContain('config host coordinates', CFG, 'port: ${NEXUS_CONFIG_PORT:24889}');
 
 const GW = 'services/cloud/gateway/src/main/resources/application.yaml';
 mustContain('gateway app name', GW, 'name: nexus-gateway');
-mustContain('gateway host coordinates', GW, 'port: ${NEXUS_GATEWAY_PORT:18088}');
+mustContain('gateway host coordinates', GW, 'port: ${NEXUS_GATEWAY_PORT:24089}');
 mustContain('gateway refresh needs /actuator/refresh', GW, 'include: health,info,gateway,refresh,metrics');
 // retry GETs (D875) / never POSTs; three breakers (D850)
 const gwText = read(GW);
@@ -87,7 +87,7 @@ check('gateway routes lb platform + ai present', GW,
 
 const ADM = 'services/cloud/admin-server/src/main/resources/application.yaml';
 mustContain('admin app name', ADM, 'name: nexus-admin');
-mustContain('admin host coordinates', ADM, 'port: ${NEXUS_ADMIN_PORT:19444}');
+mustContain('admin host coordinates', ADM, 'port: ${NEXUS_ADMIN_PORT:25445}');
 mustContain('admin watches but never widens the doorway', ADM, 'register-with-eureka: false');
 mustContain('admin exposure stays health+info', ADM, 'include: health,info');
 
@@ -120,7 +120,7 @@ for (const smoke of [
   check(`CLOUD.md lists smoke ${smoke}`, 'docs/CLOUD.md', cm.includes(smoke));
 }
 check('CLOUD.md carries the honesty clause (not claim)', 'docs/CLOUD.md', /not claim/i.test(cm));
-for (const p of ['18761', '18888', '18088', '19444']) {
+for (const p of ['24761', '24889', '24089', '25445']) {
   check(`CLOUD.md port map carries ${p}`, 'docs/CLOUD.md', cm.includes(p));
 }
 

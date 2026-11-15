@@ -11,7 +11,7 @@ spring:
     # D889: optional on purpose, exactly like the edge. When the Config Server is up this service
     # resolves `nexus.insight.label` from config-repo/nexus-insight.yml; when it is down the local
     # default ("local") keeps the observer bootable and the /insight/config view honest about it.
-    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}
+    import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:24889}
   cloud:
     openfeign:
       circuitbreaker:
@@ -41,7 +41,7 @@ eureka:
     # false so the fallback path can be proven with no registry running at all.
     enabled: ${NEXUS_INSIGHT_EUREKA_ENABLED:true}
     service-url:
-      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:18761/eureka/}
+      defaultZone: ${NEXUS_EUREKA_URI:http://127.0.0.1:24761/eureka/}
     register-with-eureka: ${NEXUS_INSIGHT_EUREKA_ENABLED:true}
     fetch-registry: ${NEXUS_INSIGHT_EUREKA_ENABLED:true}
   instance:

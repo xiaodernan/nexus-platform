@@ -14,7 +14,7 @@ browser / BFF
       v
 POST /api/v1/**  /ai/v1/**       (the gateway's doors, path-based)
       |
-  nexus-gateway :18088 ──traceparent──> both (D884)
+  nexus-gateway :24089 ──traceparent──> both (D884)
       |            |                   (cloud profile resolves both by name)
       v            v
   lb://NEXUS-PLATFORM   lb://NEXUS-AI
@@ -31,12 +31,19 @@ POST /api/v1/**  /ai/v1/**       (the gateway's doors, path-based)
 
 ## The port map (measured free)
 
+> **D1191 — the plane re-ported once, for the same reason D847 chose 18761 over 8761:** a foreign
+> microservice suite took 18761 and 18888 on this host (its registry lists
+> `GATEWAY, SEASON-SERVICE, GAME-SERVICE, CONFIG-SERVER, NOTIFICATION-SERVICE, AI-SERVICE,
+> PRESENCE-SERVICE` — none are ours). The host face is now **24761/24889/24089/25445**; the canonical
+> container-internal ports (8761/8888/8088/8080) are untouched. `verify_all` red right after the takeover
+> is precisely `check_cloud_plane_ports.mjs` telling the truth: a registry is not a port you can share.
+
 | port | service | image / jar |
 |---|---|---|
-| 18761 | `nexus-eureka` (single node) | `services/cloud/eureka-server/target/app.jar` |
-| 18888 | `nexus-config` (native file repo) | `services/cloud/config-server/target/app.jar` |
-| 18088 | `nexus-gateway` (reactive WebFlux) | `services/cloud/gateway/target/app.jar` |
-| 19444 | `nexus-admin` (Spring Boot Admin) | `services/cloud/admin-server/target/app.jar` |
+| 24761 | `nexus-eureka` (single node) | `services/cloud/eureka-server/target/app.jar` |
+| 24889 | `nexus-config` (native file repo) | `services/cloud/config-server/target/app.jar` |
+| 24089 | `nexus-gateway` (reactive WebFlux) | `services/cloud/gateway/target/app.jar` |
+| 25445 | `nexus-admin` (Spring Boot Admin) | `services/cloud/admin-server/target/app.jar` |
 | 19555 | `nexus-insight` (independent service, D885) | `services/cloud/insight-service/target/app.jar` |
 | 19561 | `nexus-dispatcher` (independent webhook consumer, D973) | `services/cloud/dispatcher-service/target/app.jar` |
 | 18961/18962 | D894's throwaway HA pair (loopback aliases 127.0.0.1 / 127.0.0.2); NOT in the cloud profile | `scripts/eureka_ha_smoke.sh` |
@@ -51,19 +58,19 @@ The planes above the registry do NOT move when the monolith's dev ports change (
 mvn -B -q -f services/cloud/pom.xml -DskipTests clean package
 
 # 2. run each jar (defaults = the port map above)
-java -jar services/cloud/eureka-server/target/app.jar    # :18761
-java -jar services/cloud/config-server/target/app.jar    # :18888
-java -jar services/cloud/admin-server/target/app.jar     # :19444
-java -jar services/cloud/gateway/target/app.jar          # :18088 (plain URI routes)
+java -jar services/cloud/eureka-server/target/app.jar    # :24761
+java -jar services/cloud/config-server/target/app.jar    # :24889
+java -jar services/cloud/admin-server/target/app.jar     # :25445
+java -jar services/cloud/gateway/target/app.jar          # :24089 (plain URI routes)
 
 # 3. bring the services online under the cloud profile (opt-in)
 #    platform registers as NEXUS-PLATFORM; AI registers as NEXUS-AI
 cd services/platform && mvn -Dspring-boot.run.profiles=dev,cloud spring-boot:run   # :8090
 cd apps/ai && NEXUS_AI_EUREKA_ENABLED=true NEXUS_AI_HOST_PORT=8010 \
-            NEXUS_EUREKA_URI=http://127.0.0.1:18761/eureka/ \
+            NEXUS_EUREKA_URI=http://127.0.0.1:24761/eureka/ \
             uv run python start_ai.py                                       # :8010
 # 4. (optional) the dispatcher joins the registry for the admin window (D1004)
-NEXUS_DISPATCHER_EUREKA_ENABLED=true NEXUS_EUREKA_URI=http://127.0.0.1:18761/eureka/ NEXUS_DISPATCHER_URL=redis://127.0.0.1:6380/0 \
+NEXUS_DISPATCHER_EUREKA_ENABLED=true NEXUS_EUREKA_URI=http://127.0.0.1:24761/eureka/ NEXUS_DISPATCHER_URL=redis://127.0.0.1:6380/0 \
     java -jar services/cloud/dispatcher-service/target/app.jar --server.port=19561 --spring.profiles.active=dev,cloud
 ```
 
@@ -89,7 +96,7 @@ D1140 is opt-in and off by default — the D850 local default stands.
 - **Eureka (`nexus-eureka`)** — the registry. Self-preservation OFF, eviction every 5s. Same artifact for every node; `instance-id` is port-suffixed so two nodes can co-exist. `NEXUS_EUREKA_PEER=true` and a comma-separated `NEXUS_EUREKA_ZONE` are the D858 opt-in that did NOT converge. **D894 found a shape that does:** an explicit `region=nexus` with one `availability-zones` entry per node, each naming a DIFFERENT zone whose `service-url` is the OTHER node's loopback URL, plus `register-with-eureka=false` on both server nodes so no self entries can be evicted. `scripts/eureka_ha_smoke.sh` boots that pair, asserts neither node logs an empty replica set, and registers one fixture into each node — each peer must then show the OTHER's instance as `UP` with `actionType=ADDED`. `scripts/falsify_eureka_ha_smoke.sh` removes the peer wiring and requires the same assertion to FAIL. Nothing in the default boot or compose profile turns this pair on.
 - **Config Server (`nexus-config`, native)** — serves `nexus-gateway.yml` from the file `config-repo/`; the gateway resolves `nexus.edge.label` from it (`/cloud/info`). One live edit to that file is picked up without a restart via `POST /actuator/refresh` (proven by `scripts/cloud_refresh.sh`).
 - **Gateway (`nexus-gateway`)** — reactive WebFlux edge: path routes (`/api/v1/**` → platform, `/ai/v1/**` → AI, `/**` → web), `@RefreshScope` for config-bound beans, resilience4j breakers per upstream (platform/ai/web) with an honest `edge_upstream_unavailable` 503 fallback + `request_id`, per-client token bucket rate limiter with `429 Retry-After: 1 + edge_rate_limited` (management paths exempt), X-Request-Id honored end-to-end and deduped at the first hop.
-- **Admin (`nexus-admin`)** — Spring Boot Admin at `:19444`: every Eureka-registered service is listed live with health, endpoints and metrics. Watches only: `register-with-eureka=false`. Same trusted-hop boundary as the edge (no auth on this dev plane; a deployment ingress owns the door). **D892** boots this window against `nexus-insight` and asserts `/instances` reports THAT instance's own `statusInfo` as UP — parsed per instance, not a body-wide grep. `scripts/insight_admin_smoke.sh` first proves a clean baseline, then boots the member; `scripts/falsify_insight_admin_smoke.sh` runs the same smoke with the member deliberately absent and requires it to FAIL while Eureka and Admin are both up. Registration alone was never proof of visibility.
+- **Admin (`nexus-admin`)** — Spring Boot Admin at `:25445`: every Eureka-registered service is listed live with health, endpoints and metrics. Watches only: `register-with-eureka=false`. Same trusted-hop boundary as the edge (no auth on this dev plane; a deployment ingress owns the door). **D892** boots this window against `nexus-insight` and asserts `/instances` reports THAT instance's own `statusInfo` as UP — parsed per instance, not a body-wide grep. `scripts/insight_admin_smoke.sh` first proves a clean baseline, then boots the member; `scripts/falsify_insight_admin_smoke.sh` runs the same smoke with the member deliberately absent and requires it to FAIL while Eureka and Admin are both up. Registration alone was never proof of visibility.
 - **Discovery** — platform registers only under `dev,cloud` (`application-cloud.yml`, pomer imports the BOM); AI registers only under `NEXUS_AI_EUREKA_ENABLED=true` (`apps/ai/nexus_ai/discovery.py`). Both OFF by default.
 - **`nexus-insight` as a trace PARTICIPANT (D900)** — D884 made the edge the plane's trace-id origin and the FastAPI service a participant; D900 adds the fifth, `nexus-insight`, the one service that CALLS others. `InsightTraceConfig` parses the inbound `traceparent` with the SAME strict grammar as the edge (lowercase hex; all-zero ids refused), mints a NEW child span for itself, stores the child in a REQUEST-scope attribute (never a thread-local — this module is servlet/blocking, but the Feign boundary runs on a different thread than the servlet filter), sets `X-Trace-Id` / `X-Trace-Span-Id` on the response, and a `RequestInterceptor` registered as `@EnableFeignClients(defaultConfiguration = InsightTraceConfig.Defaults.class)` propagates that context onto EVERY client declared in the module — D900 wired the default configuration explicitly because Spring Cloud does NOT auto-adopt loosely-registered interceptor beans, and because the servlet filter's attribute is what survives the invocation-handler boundary. `scripts/insight_trace_smoke.sh` sends ONE traceparent through `/insight/plane` and asserts both live fixtures log the propagated child context; `scripts/falsify_insight_trace_smoke.sh` disables participation and requires the same wire assertion to FAIL while the registry, both fixtures and the 200 `all_up=true` plane view stay healthy. Propagation is not export — there is no collector, no span storage, no backend anyone can query.
 
@@ -97,7 +104,7 @@ D1140 is opt-in and off by default — the D850 local default stands.
 
 - **`nexus-insight` (D885)** — the plane's first genuinely separate service, and the first component that CALLS another service declaratively. It is a servlet/blocking Spring Boot jar (OpenFeign is blocking; putting it in the WebFlux edge would be a lie about the threading model) with `@EnableDiscoveryClient` + `@EnableFeignClients`. `@FeignClient(name = "NEXUS-PLATFORM")` and `@FeignClient(name = "NEXUS-AI")` resolve through Eureka + Spring Cloud LoadBalancer — no host or port literal on either interface. `spring-cloud-starter-circuitbreaker-resilience4j` gives Feign's `fallback=` a real `CircuitBreakerFactory`; each fallback returns an explicit `insight_fallback: true` marker and `status: unavailable`, **never** `UP`. `GET /insight/plane` aggregates only the upstream's own `status` (the rest of its payload is not forwarded), calls a status-less answer `unknown`, reports exceptions as `unavailable`, and sets `all_up` true only when both rows answered exactly `UP`. It owns no database and writes nothing — this is a sidecar observer, not a decomposition of the monolith. Java: 4 tests (`PlaneControllerTest`); `scripts/insight_smoke.sh` boots it with Eureka **disabled** and proves both rows are reported unavailable with no faked health. **D895** adds `circuitbreakers` to the actuator exposure: `scripts/insight_circuit_smoke.sh` drives 12 calls with no registry, then asserts a Feign breaker's REAL state is `OPEN` on `/actuator/circuitbreakers` while `/insight/plane` still reports both rows `unavailable`; `scripts/falsify_insight_circuit_smoke.sh` removes the driving calls and requires the same assertion to FAIL. D895's measured surprise was that the yaml declared instances under the REGISTRY names (`NEXUS-PLATFORM` / `NEXUS-AI`) while Feign actually opened `PlatformHealthClienthealth` / `AiHealthClienthealth`, so the per-name tuning was unused declarative config. **D899 reconciled it**: the instances are now declared under the REAL Feign names with different `minimumNumberOfCalls` (platform 5, AI 3) and visible `failureRateThreshold` (60 / 40). `scripts/insight_breaker_config_smoke.sh` reads those values from the actuator on the SAME instances, then drives exactly five calls — AI opens on call 3, platform on call 5 — while `scripts/falsify_insight_breaker_config_smoke.sh` raises both thresholds to 10 and requires the call-3 assertion to FAIL. A config edit that only looks right cannot pass.
 - **W3C trace propagation (D884)** — the edge is the plane's only trace-id origin. `EdgeTracingFilter` (`HIGHEST_PRECEDENCE + 1`, immediately after `X-Request-Id`) parses a strict, lowercase version-00 `traceparent` (`00-<32 hex>-<16 hex>-<2 hex>`, all-zero ids refused), continues a valid caller's trace-id and flags under a NEW child span-id, and mints a fresh context when the header is absent or malformed. It injects `traceparent` + `X-Trace-Id` downstream and echoes `X-Trace-Id` / `X-Trace-Span-Id` to the caller — it deliberately does NOT echo `traceparent` on responses, because W3C propagates that header on requests only. The FastAPI AI service is a **participant, not an origin**: `apps/ai/nexus_ai/api/tracing.py` uses the same strict grammar, echoes the edge-minted trace id on `x-trace-id` / `x-trace-parent-id`, and mints nothing when a caller reached it directly with no header. `/actuator/info` declares `role: participant`, `mints_trace_ids: false`, `exports_spans: false` so the admin window cannot be read as a claim of instrumentation. Java: 6 tests (`EdgeTracingFilterTest`); Python: 6 tests (`apps/ai/tests/test_tracing.py`). `scripts/cloud_trace_smoke.sh` proves all three arms on the wire against `scripts/fixture_trace_echo.py`, which echoes exactly what the downstream received. **D896** extends that measurement to DEGRADED answers: `scripts/cloud_trace_fallback_smoke.sh` sends the same inbound `traceparent` through a 200 (healthy fixture), a 503 (`edge_upstream_unavailable`, dead AI upstream + breaker) and a 429 (`edge_rate_limited`, one-token edge), and reads the same caller trace id plus a fresh child span off all three response headers; `scripts/falsify_cloud_trace_fallback_smoke.sh` points the AI route at the healthy fixture and requires the unchanged 503 assertion to FAIL. The tracing filter runs at `+1` and the limiter at `+10`, so a 429 is emitted AFTER the trace headers are already on the response — `scripts/check_cloud_trace_fallback.mjs` asserts that ordering rather than trusting the comment.
-- **Monolith config (opt-in, D872)** — the platform resolves its OWN config from the same config server, only under `dev,cloud`: `spring.config.import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:18888}` and `spring.cloud.config.enabled=true`; the base `application.yml` carries `spring.cloud.config.enabled=false` so the normal boot ignores the config starter entirely (Boot's import check would refuse to start otherwise — found the hard way, fixed in the same unit). The `nexus-platform.yml` in the native repo carries a demo banner marker; `GET /api/v1/cloud/info` shows the banner the monolith resolved, `POST /actuator/refresh` (exposed under `cloud` only) hot-reloads it via `@RefreshScope` (proven by `scripts/cloud_monolith_refresh.sh`: v1 → rewrite repo → POST refresh → v2, same pid). Without the config server the monolith boots normally with local defaults.
+- **Monolith config (opt-in, D872)** — the platform resolves its OWN config from the same config server, only under `dev,cloud`: `spring.config.import: optional:configserver:${NEXUS_CONFIG_URI:http://127.0.0.1:24889}` and `spring.cloud.config.enabled=true`; the base `application.yml` carries `spring.cloud.config.enabled=false` so the normal boot ignores the config starter entirely (Boot's import check would refuse to start otherwise — found the hard way, fixed in the same unit). The `nexus-platform.yml` in the native repo carries a demo banner marker; `GET /api/v1/cloud/info` shows the banner the monolith resolved, `POST /actuator/refresh` (exposed under `cloud` only) hot-reloads it via `@RefreshScope` (proven by `scripts/cloud_monolith_refresh.sh`: v1 → rewrite repo → POST refresh → v2, same pid). Without the config server the monolith boots normally with local defaults.
 
 ## The gates that hold this honest
 
