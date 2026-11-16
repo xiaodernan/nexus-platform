@@ -45559,3 +45559,15 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **Honest boundaries.** 南丫島 and 榕樹灣 are real; 德興陶、他的二更起蒸、每一盒背過的名字——全部 合成敘事. No real steam house owes this craft or this fiction anything.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1253. D1253 — chapter XCVIII （香港仔黃道盛街，06:10） — the yeet long before the dawn
+
+**Why.** The hour between 06:00 and 06:15 is the day’s first incision — the cha chaan teng is warmed, the crossing is busy; yet no one on the arc had the keeper of the first pot of oil. The arc gains its 06:10 beat, the opening scent of the day.
+
+**The unit.** `DEMO_GUIDES` gains `hk-aberdeen-pier-yeetlong-chronicle`, 「早上六點十分：香港仔——黃道盛街——阿德的最後一沓油條（香港系列 · 第九十八章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、這是凌晨第一個現場 · 二、油條要熱氣十足 · 三、阿德的收工）, 後記 + SearchBox pointer （「香港仔 油條」）. Arc clock gains 06:10 between 茶餐廳（06:00）與落馬洲通勤前哨（06:15）— **196 chips across both locales**; handbook reading order updated to ninety-eight; `chapter-icons` gains `'hk-aberdeen-pier-yeetlong-chronicle': 'navigation'`; e2e floors ≥98; `/world` copy 97→98 everywhere; partition test now **16+19+17+19+9+10+8 = 98**.
+
+**Verification (host).** `tsc` clean · web **401/401** · census 0 simplified / **2,495** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 11.2s · SSR curls both locales: chapter renders with 阿德/黃道盛街/油條/香港仔 markers, `/hong-kong` carries the chip and 第九十八章， `/world` returns **98 distinct guide links in each arm**.
+
+**Honest boundaries.** 香港仔 and 黃道盛街 are real; 阿德、油鍋、二十八年的攤位、祖上的位子——全部合成敘事. No real stall cooks for this fiction; the steam belongs to fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

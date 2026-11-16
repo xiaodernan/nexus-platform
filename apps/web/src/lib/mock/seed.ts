@@ -2780,4 +2780,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-aberdeen-pier-yeetlong-chronicle', title: '早上六點十分：香港仔——黃道盛街——阿德的最後一沓油條（香港系列 · 第九十八章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：早上六點十分的香港仔——阿德的油條攤最後一份油條，劈落油鍋的熱氣還在上揚。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上六點十分。香港仔黃道盛街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿德的油條攤還亮着燈。' },
+      { type: 'heading', text: '一、這是凌晨第一個現場' },
+      { type: 'paragraph', text: '凌晨六點十分，黃道盛街只剩阿德的爐還熱着。他每天這個時間在同一個攤位——祖上定位了二十八年的位子。' },
+      { type: 'cards', title: '黃道盛街可見', items: [] },
+      { type: 'heading', text: '二、油條要熱氣十足' },
+      { type: 'paragraph', text: '阿德面孔熟每一個每天早來的人——清掃員、通宵當班的員工、隔壁士多老闆的弟弟。「最像金仔的從來不是油條本身，而是熱氣——早來，免得涼晒。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '黃道盛街可聽', items: [] },
+      { type: 'heading', text: '三、阿德的收工' },
+      { type: 'paragraph', text: '六點十分過半，阿德關火，把今天剩下的油條用豆漿浸着放涼。他要回家瞓覺——店到七點才開門給早餐伙計。這個攤又是一個不能寫的故事。' },
+      { type: 'cards', title: '黃道盛街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「香港仔 油條」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
