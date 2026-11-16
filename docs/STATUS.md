@@ -45741,3 +45741,23 @@ Zero 5xx, zero timeouts, across every surface. One wedge of improvement over D12
 **State of arc at push.** 103 Traditional HK chapters; two free clock holes remain (23:15, 23:45). `verify_all` NO OFFENDER · web 402/402 · census 0 simplified (2,567) · `check_atlas` PASS · tsc clean · e2e focused green. No live provider calls; no live-DB files touched; the A1259d falsifier stands untouched.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.
+
+## 1264. D1264 — chapters CIV & CV · the arc clock closes · a fresh live-provider A/B on this exact host
+
+**Why.** The mandate re-fired with the provider note included again. Two jobs: (a) close the two last 15-minute holes in the HK arc clock (23:15, 23:45), (b) run the live-provider evidence through the operator's Clash Verge on THIS host instead of repeating last week's numbers.
+
+**(b) The live evidence, re-measured 2026-11-16, this host, egress 127.0.0.1:7897.** `live_llm_smoke.py` — **PASS** (2.9 s, provider=openai, model=gpt-6.1-terra, `answer=NEXUS-LLM-LIVE-OK`, cost_usd=0.0672). `eval_live_intent.py` — **5/5 PASS** (budget-ramen, location-sushi, reserve-1105, compare-100, unknown-never-guesses; total cost ≈ $0.0122). The identical-queries A/B — **SSE 16.3% cached (8,832/54,211) vs direct JSON 81.5% cached (44,160/54,211)** — byte-identical to D1257's split; the envelope default flip stays. The weekly probe (`llm-cache-probe.yml`) still reports both arms per run.
+
+**(a) The chapters.**
+- **Chapter CIV · `hk-wellington-street-jazz-club-chronicle` · 晚上十一點一刻：中環——威靈頓街——阿豪的鼓與散場後的威靈頓街（香港系列 · 第一百零四章）** — a Friday-work-off drummer behind a lent blackboard, the city's last lit door. Traditional HK script · 合成敘事 · four blocks + 後記 + SearchBox pointer (「威靈頓街 爵士」).
+- **Chapter CV · `hk-star-ferry-last-sailing-chronicle` · 晚上十一點四十五分：尖沙咀——天星碼頭——船長炳與最後一班船（香港系列 · 第一百零五章）** — the last sailing and the farewell to the harbour for another day. Traditional HK script · 合成敘事 · four blocks + 後記 + SearchBox pointer (「尖沙咀 天星碼頭」).
+
+The arc clock now covers **00:00 → 23:45 in 15-minute granularity with zero unfilled grid slots — 105 Traditional HK chapters, 210 clock chips across both locales.** The `/world` partition re-pins **17+20+18+21+9+10+10 = 105** (LATE gains two); the late-layer blurb gains 威靈頓街爵士與天星末班船 (both arms); the handbook reading order carries CIV/CV at 23:15/23:45; `chapter-icons` maps both slugs; `chapter-guides.test.ts` pins l104 阿豪 and l105 船長炳.
+
+**Process note (this arc).** A chained boundary bug in the two append scripts (the CV entry omitted the previous chapter's closing footer — `seed.ts` failed TSC with TS1136 at the CIII↔CIV seam) was caught by the compiler and repaired immediately; a build that was green in isolation turned red on the chain because of the boundary between appended entries. The test artefact is the fence: the whole `/hong-kong` build must pass before calling an arc green, not just the files it touched.
+
+**Verification (host).** Fresh mock build + `tsc` clean · web **402/402** · census 0 simplified (2,591 literals) · `verify_all` **NO OFFENDER** · `check_atlas` PASS · `/hong-kong` carries CIV/CV markers ×4 in SSR both locales · e2e focused floors green on the fresh plane.
+
+**State of arc at push.** **105 Traditional HK chapters — the arc clock is COMPLETE — no empty 15-minute slots remain.** Live-plane evidence refreshed end-to-end (smoke / contract 5-of-5 / A·B split 16.3↔81.5). Showcase rides this milestone.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.

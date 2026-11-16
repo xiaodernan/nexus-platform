@@ -349,5 +349,17 @@ describe('HK series — every seeded chapter actually resolves', () => {
     expect(l103?.title).toContain('第一百零三章');
     expect(l103?.title).toContain('陳老師');
     expect(l103?.flags.demo).toBe(true);
+
+    const l104 = mockGuide('hk-wellington-street-jazz-club-chronicle');
+    expect(l104).not.toBeNull();
+    expect(l104?.title).toContain('第一百零四章');
+    expect(l104?.title).toContain('阿豪');
+    expect(l104?.flags.demo).toBe(true);
+
+    const l105 = mockGuide('hk-star-ferry-last-sailing-chronicle');
+    expect(l105).not.toBeNull();
+    expect(l105?.title).toContain('第一百零五章');
+    expect(l105?.title).toContain('船長炳');
+    expect(l105?.flags.demo).toBe(true);
   });
 });
