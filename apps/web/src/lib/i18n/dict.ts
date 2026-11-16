@@ -1019,6 +1019,7 @@ export interface Dict {
     nextTitle: string;
     screenshotNote: string;
     quickLinks: Array<{ href: string; label: string }>;
+    askManual: { eyebrow: string; title: string; placeholder: string; submit: string; degradedNote: string; noMatch: string };
   };
   /** D1246: the /stategraph runbook page — the orchestrator graph explained in-app. */
   stategraph: {
@@ -2860,6 +2861,14 @@ const zhHK: Dict = {
     },
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
+    askManual: {
+      eyebrow: '問手冊 · 不需要 AI',
+      title: '問手冊一個問題',
+      placeholder: '用小步問問題：「預算 500」、「拉麵」、「滑鼠滾輪是不是反了」？',
+      submit: '問',
+      degradedNote: '——不是 AI 複述，這是由說明書直接檢索摘錄的段落，附章節 ID。',
+      noMatch: '找不到對應的章節——試試輸入像「拉麵」「預算」「錯誤」這類名詞。',
+    },
     quickLinks: [
       { href: '/search', label: '智能搜索' },
       { href: '/hong-kong', label: '香港終日' },
@@ -4840,6 +4849,14 @@ const en: Dict = {
     },
     nextTitle: 'Want more?',
     screenshotNote: 'Screenshots lag the running build; this handbook is refreshed on every shipped milestone.',
+    askManual: {
+      eyebrow: 'ASK THE MANUAL · NO AI',
+      title: 'Ask the manual one question',
+      placeholder: 'Small steps: “budget 500”, “ramen”, “is my wheel reversed”?',
+      submit: 'Ask',
+      degradedNote: '— Not an AI paraphrase — excerpts retrieved from this leaflet, with section IDs.',
+      noMatch: 'No matching section — try nouns like “ramen”, “budget”, “error”.',
+    },
     quickLinks: [
       { href: '/search', label: 'Search' },
       { href: '/hong-kong', label: 'Hong Kong' },

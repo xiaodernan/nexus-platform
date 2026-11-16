@@ -4,6 +4,7 @@ import { Container, Icon, Badge } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
+import { answerManual } from '@/lib/manual-rag';
 
 /**
  * `/handbook` — the product's own instruction booklet, in HK Traditional at one door and
@@ -21,10 +22,15 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function HandbookPage() {
+export default async function HandbookPage(props: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const copy = dict.handbook;
+  const params = await props.searchParams;
+  const askQ = typeof params.ask === 'string' ? params.ask.slice(0, 400).trim() : '';
+  const askAnswer = askQ ? answerManual(askQ, locale) : null;
 
   const quickLinks = dict.handbook.quickLinks;
 
@@ -69,6 +75,42 @@ export default async function HandbookPage() {
               ))}
             </ul>
           </div>
+        </Container>
+      </section>
+
+      {/* §七 — the manual teaches itself: deterministic lexical retrieval over its own corpus.
+          No model, no network, never lies — the answer is a verbatim excerpt or nothing. */}
+      <section aria-labelledby="handbook-ask" className="border-b border-line bg-canvas">
+        <Container size="shell" className="py-8">
+          <h2 id="handbook-ask" className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">{copy.askManual.eyebrow}</h2>
+          <h3 className="mt-2 max-w-[38ch] text-balance text-2xl font-semibold leading-tight tracking-tight text-ink-strong">{copy.askManual.title}</h3>
+          <form method="get" action="/handbook" className="mt-4 flex flex-wrap items-center gap-3">
+            <input
+              type="search"
+              name="ask"
+              defaultValue={askQ}
+              placeholder={copy.askManual.placeholder}
+              aria-label={copy.askManual.title}
+              className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink-strong placeholder:text-ink-faint focus-visible:border-accent focus-visible:outline-none"
+            />
+            <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-hover">
+              {copy.askManual.submit}
+              <Icon name="search" size={14} aria-hidden="true" />
+            </button>
+          </form>
+          {askAnswer && (
+            <div className="mt-5 flex flex-col gap-3 rounded-xl border border-accent-line bg-canvas p-5">
+              <p className="max-w-prose text-sm leading-relaxed text-ink-strong">{askAnswer.answer}</p>
+              {askAnswer.citations.length > 0 && (
+                <ul className="grid gap-1.5 text-xs text-ink-muted">
+                  {askAnswer.citations.map((c) => (
+                    <li key={c.id}>§ <a href={`#${c.id}`} className="underline underline-offset-2 hover:text-accent">{c.title}</a></li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-2xs text-ink-faint">{copy.askManual.degradedNote}</p>
+            </div>
+          )}
         </Container>
       </section>
 

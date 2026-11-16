@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1268",
-  "milestone_full": "第一百零五章 · day arc complete → /chronicle: the macro-epic frame for the whole series — one city, one day, three acts, one hundred and five chapters",
+  "milestone": "D1269",
+  "milestone_full": "第一百零五章 · day arc complete → /handbook asks back: the manual answers questions about itself with verbatim excerpts and section citations (lexical RAG, no model required)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "New route: /chronicle — the HK-series framing codex: one city, one day, 105 chapters — three acts (the night-shift haze · the morning engine · the closing discipline) with real chapter numbers and real timestamps",
+    "New consumer feature: /handbook?ask= — ask the product’s own manual a question and get a verbatim excerpt with a section citation back — deterministic, offline, zero model calls, zero embeddings",
+    "The RAG core (apps/web/src/lib/manual-rag.ts): zh char-bigram idf / en word-token idf retrieval over the shipped handbook corpus; top-3 sections always degraded-and-grounded; answers drill into the exact section they came from",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
-    "§九 delivered: docs/evidence/user-journey-2026-11-16.md — twelve real Playwright journeys (impatient-close → chapter reader) with zero console errors; the probe caught a live BFF 422 and it was fixed in D1267",
-    "/llm-ops (measured envelope A/B 81.5% vs 16.3%) · /stategraph · handbook REAL-HK VIII (Hang Seng Index: base 100 → ATH 33,223.58 · 2025 close 25,630.54 +27.77%) · REAL-HK VII ding-ding (1904)",
-    "Live provider re-verified fresh: smoke PASS 2.9s · intent 5/5 · envelope A/B unchanged since D1257",
-    "D1268: /chronicle ships · D1267: user-journey evidence · D1266: embedding-lane probe · D1265: /llm-ops"
+    "§九 delivered: docs/evidence/user-journey-2026-11-16.md — twelve real Playwright journeys, zero console errors; the probe caught a live BFF 422 and it was fixed in D1267",
+    "/llm-ops (operator runbook — measured envelope A/B 81.5% vs 16.3%) · /stategraph · /chronicle (the 105-chapter macro-epic frame) · REAL-HK VIII (Hang Seng Index: base 100 → ATH 33,223.58)",
+    "D1269: /handbook asks back · D1268: /chronicle · D1267: user-journey evidence · D1266: embedding-lane probe"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

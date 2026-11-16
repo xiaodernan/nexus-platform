@@ -45837,3 +45837,19 @@ The copy is minimum-viable, not metaphor: every act beat quotes a real chapter f
 **Verification (host).** Fresh mock build; `tsc` clean; web **409/409** (56 files); `verify_all` **NO OFFENDER**; `check_atlas` PASS (394 cited paths — chronicle's row included); census **0 simplified** (2,673); SSR curls both locales return 200 with every act/beat marker; canonical `/chronicle` correctly 301s/renders; footer suite green; ask endpoints untouched.
 
 - readers: `apps/web/app/chronicle/page.tsx`, `apps/web/src/lib/i18n/dict.ts` (`chronicle:` both arms, interface both arms), `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/chronicle-page.test.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1269. D1269 — `/handbook?ask=` : the product's manual answers questions about itself, deterministically, offline
+
+**Why.** Mandate §三/§四 asks for RAG applied to the product with real chain mechanics. The account's provider serves no embedding model (D1266 — every candidate 503/404), so a vector lane is out until the operator opens one. In between, the product had only *a manual*; it had no ability to answer questions about itself. The honest RAG core that works today is lexical, offline and guaranteed grounded: it quotes the manual's own words back, with the section id, and decorates nothing. Wiring an LLM into a fake lane would have been a lie; this is the thing that actually ships.
+
+**The unit.** New `apps/web/src/lib/manual-rag.ts` — the RAG core for the manual, pure functions, zero env, zero network, zero fetch:
+
+- `retrieve(question, locale, limit = 3)` — scores every handbook section by inverse-corpus-frequency weighted overlap with the question. zh ranks on char bigrams (plus single chars for one-char queries); en ranks on whole word tokens minus a hand stop list. Union of both token sets keeps zh pages with English keywords honest (e.g. "滑鼠滾輪" 中英雙讀). Bigram/token counts live in a corpus cache — the retriever is deterministic: same question → same sections → same order (ties broken by id, never by memory address).
+- `answerManual(question, locale)` — answers with the top section's verbatim paragraphs joined under the answer text; citations carry `id` + `title` so every claim drills into the exact section it came from. No match → a hand-written bilingual no-match guidance line ("try nouns like ramen/budget/error"). The answer is always `degraded: true` and says so in the UI copy — the page promises you nothing it can’t guarantee.
+- The `/handbook` page gains an ask block (eyebrow → question form → answer panel) whose `GET /handbook?ask=<q>` is shareable, server-rendered and testable; the answer quotes the exact FAQ opener (+ citation block with anchor links to `#<section id>`).
+
+**What the user sees.** Ask the manual `滑鼠滾輪`（zh-HK）— the "is my wheel reversed?" answer appears above the FAQ, with a § link to the FAQ section it came from. Ask `try ramen`（en）— the manual answers from its own search/route sections, never from model vibes. The page carries zero runtime JS beyond the existing chrome; `ask=` flows are SSR and cacheable.
+
+**Verification (host).** Fresh mock build; `tsc` clean; web **414/414** (+4); census 0 simplified (2,679); `verify_all` **NO OFFENDER**; SSR curls zh/en both return 200 with every marker（問手冊 title, answer, citation sigils, degradedNote); no env/fetch/http/embeddings anywhere in the module; CI stays offline (tests: deterministic + grep-contract pins).
+
+- readers: `apps/web/src/lib/manual-rag.ts`, `apps/web/src/lib/manual-rag.test.ts`, `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/i18n/dict.ts` (`handbook.askManual` both arms), this ledger entry.
