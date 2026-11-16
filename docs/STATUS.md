@@ -45368,3 +45368,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** 觀塘工業區 is a real estate; 創新工廈、周廠長、校錶、時間的甜度——全部 合成敘事. No real factory exists here; the precision in the hour is the fiction's.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1238. D1238 — chapter XC （深水埗元州街，04:10） — the sweeper who finishes before dawn
+
+**Why.** The hour between 04:00 and 04:15 is the hand that arrives before the day: the night sweeper, the quietest form of beginning the same harbour-side work the city runs on. This chapter sits at 04:10 — the hinge between the pre-dawn work floors and the morning readers — the exact hour this ledger used to skip.
+
+**The unit.** `DEMO_GUIDES` gains `hk-sham-shui-po-night-sweeper-chronicle`, 「凌晨四點十分：深水埗——元州街——黃叔掃路的夜更（香港系列 · 第九十章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、元州街的夜更 · 二、掃帚到掃帚 · 三、夜更的尾班）, 後記 + SearchBox pointer （「深水埗 元州街」）. Arc clock gains 04:10 between 抹窗師傅（04:00）與春花姨（04:15）— **180 chips across both locales**; handbook reading order updated to ninety; `chapter-icons` gains `'hk-sham-shui-po-night-sweeper-chronicle': 'navigation'`; e2e floors ≥90; `/world` copy 89→90 everywhere; partition test now **16+17+16+15+8+10+8 = 90**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,362** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 14.0s · SSR curls both locales: chapter renders with 黃叔/元州街/夜更 markers, `/hong-kong` carries the chip and 第九十章， `/world` returns **90 distinct guide links in each arm**.
+
+**Honest boundaries.** 元州街 and 深水埗 are real; 黃叔、四十七年夜更、那不分公私家傳的三把掃帚——全部合成敘事構建. No real street-cleaner feeds this fiction; the alignment with the city's real dawn sweepers is by design, not by truth.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

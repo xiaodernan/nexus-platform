@@ -2612,4 +2612,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-sham-shui-po-night-sweeper-chronicle', title: '凌晨四點十分：深水埗——元州街——黃叔掃路的夜更（香港系列 · 第九十章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：凌晨四點十分的深水埗元州街——黃叔掃路最後一趟，天未亮，元州街卻亮過。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨四點十分。深水埗元州街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——黃叔把最後一筲掃上路邊。' },
+      { type: 'heading', text: '一、元州街的夜更' },
+      { type: 'paragraph', text: '凌晨四點十分，元州街只剩黃叔的掃帚聲和一盞路燈。他守了四十七年夜更——黃叔說他最重要的一件事，是讓第二天第一個返工的人有個乾淨的地方落腳。' },
+      { type: 'cards', title: '元州街可見', items: [] },
+      { type: 'heading', text: '二、掃帚到掃帚' },
+      { type: 'paragraph', text: '黃叔把每一把掃帚分成三條：去葉、去紙、去砂石。沒有一把帚是私有家傳的，他說掃街掃的是大家要走的路。' },
+      { type: 'cards', title: '元州街可聽', items: [] },
+      { type: 'heading', text: '三、夜更的尾班' },
+      { type: 'paragraph', text: '天未亮，換好膠手套的黃叔望了一眼貨車進站的方向，把掃帚在圍欄上拍三下——元州街今晚收工了。' },
+      { type: 'cards', title: '元州街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「深水埗 元州街」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
