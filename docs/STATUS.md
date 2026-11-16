@@ -45446,3 +45446,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Verification (host).** `tsc` clean · web **397/397** · census 0 simplified / **2,404** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 19.1s · SSR curls both locales: `/handbook` renders the figure with its atoms (title, lane labels, serial row, `NEXUS_AI_ENGINE`) in each arm.
 
 - readers: `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/handbook.test.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1245. D1245 — chapter XCIV （鰂魚涌建華街，14:45） — the roastery's afternoon shift
+
+**Why.** The afternoon of a harbour-side roastery belongs to texture — the smell of bean-blending before anyone notices the day is rounding out. The arc gains its 14:45 anchor, preceding the bombardier Exchange bell.
+
+**The unit.** `DEMO_GUIDES` gains `hk-quarry-bay-coffee-roastery-chronicle`, 「下午二點三刻：鰂魚涌——建華街——阿郭的咖啡烘焙的午後（香港系列 · 第九十四章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、東風下午的烘焙目標 · 二、一袋豆子的火候 · 三、剩下的試豆）, 後記 + SearchBox pointer （「鰂魚涌 咖啡」）. Arc clock gains 14:45 between 羅湖站雙向貨幣（14:30）與九龍公園雀籠房（15:00）— **188 chips across both locales**; handbook reading order updated to ninety-four; `chapter-icons` gains `'hk-quarry-bay-coffee-roastery-chronicle': 'navigation'`; e2e floors ≥94; `/world` copy 93→94 everywhere; partition test now **16+17+17+17+9+10+8 = 94**.
+
+**Verification (host).** `tsc` clean · web **397/397** · census 0 simplified / **2,413** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER (fixes the `check_atlas` offender this cycle: D1244's ATLAS row cited `handbook.test.ts` as a bare filename — now `apps/web/src/lib/handbook.test.ts`) · mock build compiled 12.5s · SSR curls both locales: chapter renders with 阿郭/鰂魚涌/烘焙 markers, `/hong-kong` carries the chip and 第九十四章， `/world` returns **94 distinct guide links in each arm**.
+
+**Honest boundaries.** 鰂魚涌 and 建華街 are real; 阿郭、他的烘豆曲線、每晚報一頭的香港豆——synthetic. No real roastery cooks for this fiction; the city’s roasters have names we will never see here.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

@@ -2696,4 +2696,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-quarry-bay-coffee-roastery-chronicle', title: '下午二點三刻：鰂魚涌——建華街——阿郭的咖啡烘焙的午後（香港系列 · 第九十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：下午二點三刻的鰂魚涌建華街——阿郭將今日第十九袋豆子移出爐溫；每一袋都有一種火候。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午二點三刻。鰂魚涌建華街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿郭把今日第十九袋豆子移出爐溫。' },
+      { type: 'heading', text: '一、東風下午的烘焙目標' },
+      { type: 'paragraph', text: '下午二點三刻，鰂魚涌建華街只聞到咖啡的焦香。阿郭守着長排烤爐——他說自己首先是揀豆的人，其次才是咖啡師傅。「烘焙是練習認真，少一秒的烘焙就是過火的命運。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '建華街可見', items: [] },
+      { type: 'heading', text: '二、一袋豆子的火候' },
+      { type: 'paragraph', text: '阿郭在豆子裡頭寫上每位客戶的火候：誰要石板味，誰要乾燥酸——沒有一個人的口味是他不認識的。他說咖啡只是對生活的一匙，建議另一匙要帶去。' },
+      { type: 'cards', title: '建華街可聽', items: [] },
+      { type: 'heading', text: '三、剩下的試豆' },
+      { type: 'paragraph', text: '阿郭關了爐溫氣，把今日剩下的烘焙試豆倒進袋裡。打烊時間到了。他說烘焙的理由是守很多人選擇的平穩，不是顯示自己的手藝。' },
+      { type: 'cards', title: '建華街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「鰂魚涌 咖啡」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

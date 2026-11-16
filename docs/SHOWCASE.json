@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1244",
-  "milestone_full": "StateGraph runbook figure — the orchestrator's execution graph rendered inline on /handbook, both locales · 93 chapters · 7 REAL-HK blocks",
+  "milestone": "D1245",
+  "milestone_full": "第九十四章 · 鰂魚涌——建華街——阿郭的咖啡烘焙的午後（14:45）· /world 九十四章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: ninety-three Traditional chapters — 00:00→24:00 full day arc · 186-chip clock both locales",
-    "Edition XCIII — 下午三點三刻：觀塘——友諒工業大廈——阿莊的包裹處 (15:45) · the parcel room that knows every destination",
+    "HK series: ninety-four Traditional chapters — 00:00→24:00 full day arc · 188-chip clock both locales",
+    "Edition XCIV — 下午二點三刻：鰂魚涌——建華街——阿郭的咖啡烘焙的午後 (14:45) · the roastery's afternoon shift",
     "D1240/D1241 — StateGraph ENGINE: handbook carries the orchestrator graph (make_plan → route → fanout → emit) · 18 fingerprint pins pass on-host",
     "handbook REAL-HK I/II/III/IV/V/VI/VII — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) · Tai Kwun · ding-ding (1904) — inline URLs",
-    "/world atlas reads 93 chips (16+17+17+16+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (93 chapters) · /world (93 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123",
-    "D1243: XCIII · D1242: XCII · D1241: StateGraph verified 18/18 · D1240: ENGINE block · D1239: XCI · D1238: XC",
-    "handbook StateGraph runbook figure (D1244) — inline SVG execution graph in-app, both locales"
+    "/world atlas reads 94 chips (16+17+17+17+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
+    "/hong-kong (94 chapters) · /world (94 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123",
+    "D1245: XCIV · D1244: StateGraph runbook figure · D1243: XCIII · D1242: XCII · D1241: StateGraph verified 18/18 · D1240: ENGINE block",
+    "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · handbook StateGraph runbook figure (inline SVG execution graph in-app, both locales)"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
