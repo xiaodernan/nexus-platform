@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1276",
-  "milestone_full": "简体中文 joins as a first-class locale — the whole product answers in zh-CN (three-state zh-HK→zh-CN→en toggle, generated opencc fold, CI-locked lockstep) · the closed arc keeps its 105 Traditional chapters · /command carries the live-model reality",
-  "headline": "NEXUS Platform — Hong Kong's table, one sentence away. 现在也能说简体中文。",
+  "milestone": "D1278",
+  "milestone_full": "简体中文 completes the corpus — the 105 chapters + collections now answer in Simplified Chinese (generated opencc twin, CI-locked) · Simplified stays the first-class locale from D1276 · /command carries the live model reality",
+  "headline": "NEXUS Platform — Hong Kong's table, one sentence away. 现在完整支持简体中文。",
   "as_of": "2026-11-17",
   "updated_at_commit": "current-master",
   "features": [
-    "D1276: Simplified Chinese is a first-class locale — one toggle cycles 繁體中文 → 简体中文 → EN; every user-facing string is generated from the Traditional arm via opencc (hk2s+t2s) and CI-locked in lockstep; painted SSR verified Simplified end-to-end (lang, chrome, footer doors, 404 boundary)",
-    "D1276: the seeded ghost-replay insights, manual-RAG answers, starter prompts and mock card-explanations localize per locale — the old silent Simplified-for-everyone fallback is gone",
+    "D1278: the 105-chapter corpus folds in — DEMO_GUIDES/DEMO_COLLECTIONS generated in Simplified via opencc (hk2s+t2s); slug-identical, order-preserved, fold-idempotent; the zh-CN arm now carries every chapter end-to-end",
+    "D1276: Simplified Chinese is a first-class locale — one toggle cycles 繁體中文 → 简体中文 → EN; SSR verified Simplified across /, /hong-kong, /handbook, the chapter pages and the 404 boundary",
+    "D1276: seeded ghost-replay insights, entity cards, starter prompts, manual-RAG answers all localize per locale; the old silent Simplified-for-everyone fallback is gone",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · /world 105 chips · /afterward tail · /chronicle codex",
-    "§十一 pressure re-verified (six routes × 128×32 — zero 5xx) · §伍 geometry census clean at 1280×800",
-    "/command: LIVE-PROVIDER panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope default · identical-burst cache 81.5% vs SSE 16.3% · intent 5/5 (measured, 2026-11-16/17, operator egress)",
-    "HK REAL-HK blocks carry inline Wikipedia sources (Octopus, Hang Seng Index, MTR …) — retrieve-or-silence rule, no invented figures"
+    "§十一 pressure re-verified on the post-D1276 build — zero 5xx across seven SSR routes at 128×32",
+    "/command: LIVE-PROVIDER panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope default · identical-burst cache 81.5% vs SSE 16.3% · intent 5/5 (measured, operator egress)"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
