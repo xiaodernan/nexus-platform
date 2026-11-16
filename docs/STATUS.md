@@ -45392,3 +45392,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** 香港仔 and Boat Bay are real; 黃生、他的船屋、三點半的停餐——全部合成敘事. No real boat or dock knows this kitchen exists.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1240. D1240 — the handbook teaches the agent's graph: StateGraph in-app, both locales
+
+**Why.** The user asked for StateGraph knowledge content to live inside the product, not only in the repo's engineering ledger. The product already *runs* a real compiled StateGraph — D1142's opt-in execution plane (`make_plan → route → fanout → emit`, NEXUS_AI_ENGINE=graph, 18 fingerprint pins) — but no surface a visitor (or client) can read names it. This change puts the honest architecture in the handbook, the one in-app doc anyone opens, with the same Traditional HK / English parity the REAL-HK blocks carry.
+
+**The unit.** `dict.handbook.sections` gains `stategraph` (kicker `ENGINE`, title `17 · StateGraph——智能代理的脊柱：make_plan → route → fanout → emit` / `17 · StateGraph — the agent's spine: make_plan → route → fanout → emit`) in both locales, after ding-ding. The block names the real graph exactly as compiled: no LLM in the nodes, fan-out only for v1 independent reads under §10, asyncio.wait_for + idempotency keys unchanged from the serial path, audit events re-ordered but the assembled ExecutionReport byte-identical, the env branch lives in one call site (routes_agent.py), default stays planner until NEXUS_AI_ENGINE=graph is set, and the 18-pin fingerprint corpus is cited. zh carries Traditional HK script with engine names in code font; en is the mirror. Nothing else in the manual moves (nine core ids unchanged; quick rail stays 10 surfaces).
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,381** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 14.2s · SSR curls both locales: `/handbook` renders the StateGraph block with the graph atoms (make_plan/route/fanout/emit, NEXUS_AI_ENGINE, fingerprint citation) in each arm.
+
+**Honest boundaries.** The block documents what is shipped and tested since D1142 — it does not claim LangGraph is embedded in every request, nor that wkapi.pro is reachable from this host (it isn't — 401; the engine path defaults to the serial planner). The 'ENGINE' kicker keeps it distinguishable from the REAL-HK sourced-data blocks. It is engineering teaching material, not user instructions; the user-facing tour still teaches search/search/sprint, not compilers.
+
+- readers: `apps/web/src/lib/i18n/dict.ts` (StateGraph ENGINE block zh + en), `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

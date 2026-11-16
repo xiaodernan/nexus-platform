@@ -2715,6 +2715,16 @@ const zhHK: Dict = {
         '直流 550 伏特架空電纜，單極受電弓受電；全車約 165 輛雙層電車；120 個車站；每日乘客約 18 萬（2015 年數字）',
         '現由 RATP Dev Asia 營運——不是私人商戶，是一種活着的城市節拍',
       ] },
+      { id: 'stategraph', kicker: 'ENGINE', title: '17 · StateGraph——智能代理的脊柱：make_plan → route → fanout → emit', paragraphs: [
+        'NEXUS 的智能代理不是一個黑箱，它是一張圖。make_plan —— 把輸入交給與序列路徑完全相同的確定性 plan_tools；route —— 規劃被拒絕時直落 emit，否則 fanout；fanout —— 獨立讀取的工具以 asyncio.gather 並發派發，再按計劃順序排回去；emit —— 組裝與序列路徑逐字節一致的 ExecutionReport。',
+        '啟用開關：環境變量 NEXUS_AI_ENGINE=graph（預設 planner——啟用之前一切不動）。這不是對模型能力的包裝：這張圖沒有 LLM、沒有新工具，只是把計劃的形狀顯式化——獨立讀可以並發，行動者的承諾不變。',
+      ], bullets: [
+        '與序列路徑共用同一個 §10 守則；並發只在 gather 之內——冪等鍵與 asyncio.wait_for 全部沿用',
+        'HTTP 路徑的分支只在 routes_agent.py 一處出現——預設關閉，意念可疊代，隨時可退回',
+        '審計事件來自並發協程——觀察順序可能與序列路徑不同，但組裝後的報告逐字一致',
+        'fingerprint 測試 18 針（tests/test_langgraph_engine_fingerprint.py）——拒絕、missing-context、上限截斷、多規則回合，串行與圖兩引擎逐字對拍',
+        'LangGraph 0.3.34；狀態只帶 text／context／subject／max_steps／plan／report 六件',
+      ] },
     ],
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
@@ -4447,6 +4457,16 @@ const en: Dict = {
         'Mainline 13.3 km, plus the Happy Valley loop 2.6 km; about 30 km of track in total; 1,067 mm gauge',
         '550 V DC overhead with a single trolley pole; 165 double-decker cars; 120 stops; ~180,000 passengers a day (2015 figures)',
         'Operated by RATP Dev Asia (the official operator of Hongkong Tramways) — not a private vendor; a city’s living metronome',
+      ] },
+      { id: 'stategraph', kicker: 'ENGINE', title: '17 · StateGraph — the agent’s spine: make_plan → route → fanout → emit', paragraphs: [
+        'NEXUS’s agent is not a black box; it is a graph. Node one — make_plan — hands the text to the identical deterministic plan_tools the serial path uses; node two — route — branches a refusal straight to emit, otherwise to fanout; node three — fanout — dispatches the v1 independent reads concurrently via asyncio.gather, re-sorts outcomes into plan order; node four — emit — assembles the byte-identical ExecutionReport the serial path renders.',
+        'Enable with NEXUS_AI_ENGINE=graph (default planner — nothing changes until you do). The graph is not a wrapper over model capability: no LLM, no new tools, just the plan’s shape made explicit — independent reads may run concurrently; the caller’s promises do not move.',
+      ], bullets: [
+        'Same §10 contract as the serial path — fan-out only inside gather; idempotency keys and asyncio.wait_for carry over unchanged',
+        'The env branch lives in exactly one call site (routes_agent.py) — default off; the opt-in is instantaneous and reversible',
+        'Audit events fan out of concurrent coroutines — observed order may differ from the serial path; the assembled report is identical',
+        'Fingerprint: 18 pins in tests/test_langgraph_engine_fingerprint.py — refused, missing-context, max-steps truncation, multi-rule turns — serial and graph engines pinned byte-identical',
+        'LangGraph 0.3.34; the graph state carries text / context / subject / max_steps / plan / report — and nothing else',
       ] },
     ],
     nextTitle: 'Want more?',
