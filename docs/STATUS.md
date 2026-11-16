@@ -45583,3 +45583,15 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **Honest boundaries.** 東涌 and 機場快線 are real; 阿藍、竹籃、父親碼頭工——全部合成敘事. No real rail line owes this scene or this fiction anything.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1255. D1255 — chapter C （將軍澳唐宮裡，06:40） — the hundredth sweet bun
+
+**Why.** A round number in an infinite world. The Hong Kong series reaches its one-hundredth chapter here, on a street anyone could name from memory, with a baker who does not count numbers but only order.
+
+**The unit.** `DEMO_GUIDES` gains `hk-tseung-kwan-o-100-bakery-chronicle`, 「早上六點四十分：將軍澳——唐宮裡——阿強的百番甜麵包（香港系列 · 第一百章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、糖油與夜班 · 二、九個數字背後的人 · 三、第九十九的尾巴）, 後記 + SearchBox pointer （「將軍澳 甜麵包」）. Arc clock gains 06:40 between 鯉魚門（06:30）與冰室（06:45）— **200 chips across both locales**; handbook reading order updated to one hundred; `chapter-icons` gains `'hk-tseung-kwan-o-100-bakery-chronicle': 'navigation'`; e2e floors ≥100; `/world` copy 99→100 everywhere; partition test now **16+20+18+19+9+10+8 = 100**.
+
+**Verification (host).** `tsc` clean · web **401/401** · census 0 simplified / **2,513** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 12.1s · SSR curls both locales: chapter renders with 阿強/唐宮裡/甜麵包 markers, `/hong-kong` carries the chip and 第一百章， `/world` returns **100 distinct guide links in each arm**.
+
+**Honest boundaries.** 將軍澳 and 唐宮裡 are real; 阿強、四十個甜麵包、每一個故事——全部 合成敘事. No real bakery owes this existence anything; the number 100 belongs only to the fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

@@ -113,6 +113,7 @@ export const CHAPTER_ICONS: Readonly<Record<string, IconName>> = {
   'hk-namdir-bay-pot-steamed-rice-chronicle': 'navigation',
   'hk-aberdeen-pier-yeetlong-chronicle': 'navigation',
   'hk-tsim-shui-po-dawn-tricycle-chronicle': 'navigation',
+  'hk-tseung-kwan-o-100-bakery-chronicle': 'navigation',
 };
 
 export const chapterIcon = (slug: string): IconName | undefined => CHAPTER_ICONS[slug];

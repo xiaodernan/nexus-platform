@@ -2822,4 +2822,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-tseung-kwan-o-100-bakery-chronicle', title: '早上六點四十分：將軍澳——唐宮裡——阿強的百番甜麵包（香港系列 · 第一百章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：早上六點四十分的將軍澳唐宮裡——阿強把今天第九十九個甜麵包發好，第九十九之後，是又一輪。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上六點四十分。將軍澳唐宮裡（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿強把今天第九十九個甜麵包發好、上架。' },
+      { type: 'heading', text: '一、糖油與夜班' },
+      { type: 'paragraph', text: '早上六點四十分，唐宮裡只剩烤箱的暖光和甜麵包的甜香。阿強賣了四十個麵包——來的是整個夜班班次的人，每天同一時間同一批——沒有一個客人叫過自己的名字。' },
+      { type: 'cards', title: '唐宮裡可見', items: [] },
+      { type: 'heading', text: '二、九個數字背後的人' },
+      { type: 'paragraph', text: '阿強說每一番麵包背後都有一個「買完還沒有話咳嗽」的人——有人替爺爺買包，有人走老路過來只買一籠小的，有人一趟又一趟。「不是生意人做生意，是老夥計在老位子等老消息。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '唐宮裡可聽', items: [] },
+      { type: 'heading', text: '三、第九十九的尾巴' },
+      { type: 'paragraph', text: '阿強把第九十九個裝進紙袋的時候做錯了一次，他重覆第九十八遍——他不信數字，但信排好順序的麵包。' },
+      { type: 'cards', title: '唐宮裡可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「將軍澳 甜麵包」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
