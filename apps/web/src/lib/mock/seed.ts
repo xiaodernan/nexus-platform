@@ -2717,4 +2717,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-tseung-kwan-o-typewriter-chronicle', title: '下午四點一刻：將軍澳——和德商場——李阿忠的打字機行（香港系列 · 第九十五章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：下午四點一刻的將軍澳——李阿忠將今日最後一台樣機從紙箱拿出來驗收。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午四點一刻。將軍澳和德商場（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——李阿忠把今日最後一台樣機從紙箱拿出來。' },
+      { type: 'heading', text: '一、未收檔的下午' },
+      { type: 'paragraph', text: '下午四點一刻，將軍澳和德商場二樓——李阿忠把今日的第一台樣機從紙箱捧出來，仍套着棉布、紅墨，放在最亮的位置。' },
+      { type: 'cards', title: '和德商場可見', items: [] },
+      { type: 'heading', text: '二、一字一句的真誠' },
+      { type: 'paragraph', text: '李阿忠說打字的人不是機器，他們是這城的構思。每台樣機都是駛往下一份合同的次線——備忘、紙箱、終章、確認。這一城仍有人買紙。他捨不得關門。（合成對話，非真實人物）' },
+      { type: 'cards', title: '和德商場可聽', items: [] },
+      { type: 'heading', text: '三、驗收的一字' },
+      { type: 'paragraph', text: '李阿忠啟動樣機，用按鍵在紙帶留下一行「收」字，然後闔上盒子，把銘牌夾入抽屜。四點時間推到了收檔邊緣。他說這一單生意是給守信的人做的，不是給搶收的人做的。' },
+      { type: 'cards', title: '和德商場可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「將軍澳 打字機」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

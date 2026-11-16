@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1245",
-  "milestone_full": "第九十四章 · 鰂魚涌——建華街——阿郭的咖啡烘焙的午後（14:45）· /world 九十四章",
+  "milestone": "D1246",
+  "milestone_full": "第九十五章 · 將軍澳——和德商場——李阿忠的打字機行（16:15）· /world 九十五章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: ninety-four Traditional chapters — 00:00→24:00 full day arc · 188-chip clock both locales",
-    "Edition XCIV — 下午二點三刻：鰂魚涌——建華街——阿郭的咖啡烘焙的午後 (14:45) · the roastery's afternoon shift",
-    "D1240/D1241 — StateGraph ENGINE: handbook carries the orchestrator graph (make_plan → route → fanout → emit) · 18 fingerprint pins pass on-host",
+    "HK series: ninety-five Traditional chapters — 00:00→24:00 full day arc · 190-chip clock both locales",
+    "Edition XCV — 下午四點一刻：將軍澳——和德商場——李阿忠的打字機行 (16:15) · the last typewriter sample before evening close",
+    "wkapi.pro 2026-11-16: HTTP 403 insufficient_user_quota (¥0.000088 remaining) — provider balance drained, NOT an adapter fault (D1247)",
+    "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · StateGraph runbook figure (inline SVG in-app) · 18 accept-probe pins green",
     "handbook REAL-HK I/II/III/IV/V/VI/VII — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) · Tai Kwun · ding-ding (1904) — inline URLs",
-    "/world atlas reads 94 chips (16+17+17+17+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (94 chapters) · /world (94 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123",
-    "D1245: XCIV · D1244: StateGraph runbook figure · D1243: XCIII · D1242: XCII · D1241: StateGraph verified 18/18 · D1240: ENGINE block",
-    "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · handbook StateGraph runbook figure (inline SVG execution graph in-app, both locales)"
+    "/world atlas reads 95 chips (16+17+17+18+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
+    "/hong-kong (95 chapters) · /world (95 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123",
+    "D1246: XCV · D1245: XCIV · D1244: StateGraph figure · D1242: XCII · D1241: StateGraph 18/18 · D1240: ENGINE block"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

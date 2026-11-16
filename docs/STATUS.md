@@ -45458,3 +45458,25 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** 鰂魚涌 and 建華街 are real; 阿郭、他的烘豆曲線、每晚報一頭的香港豆——synthetic. No real roastery cooks for this fiction; the city’s roasters have names we will never see here.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1246. D1246 — chapter XCV （將軍澳和德商場，16:15） — the last typewriter sample
+
+**Why.** The city still carries a writer who believes in printed characters; at 16:15 the shop that sells that faith closes. The arc gains its 16:15 beat, the last of the afternoon's anchors.
+
+**The unit.** `DEMO_GUIDES` gains `hk-tseung-kwan-o-typewriter-chronicle`, 「下午四點一刻：將軍澳——和德商場——李阿忠的打字機行（香港系列 · 第九十五章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、未收檔的下午 · 二、一字一句的真誠 · 三、驗收的一字）, 後記 + SearchBox pointer （「將軍澳 打字機」）. Arc clock gains 16:15 between 交易所鐘聲（16:00）與坪洲纜車（16:30）— **190 chips across both locales**; handbook reading order updated to ninety-five; `chapter-icons` gains `'hk-tseung-kwan-o-typewriter-chronicle': 'navigation'`; e2e floors ≥95; `/world` copy 94→95 everywhere; partition test now **16+17+17+18+9+10+8 = 95**.
+
+**Verification (host).** `tsc` clean · web **397/397** · census 0 simplified / **2,422** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 17.3s · SSR curls both locales: chapter renders with 李阿忠/打字機 markers, `/hong-kong` carries the chip and 第九十五章， `/world` returns **95 distinct guide links in each arm**.
+
+**Honest boundaries.** 將軍澳 and 和德商場 are real; 李阿忠、第一台樣機、銘牌夾抽屜——全部合成敘事. No real typewriter shop owes this fiction anything.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1247. D1247 — the live provider answer, 2026-11-16 (403 insufficient_user_quota)
+
+**Why.** The mandate asks for an honest end-to-end verdict on `wkapi.pro`, and it needs to be the current one, not a cached claim. The runner secret (`WKAPI_PRO_API_KEY`) live-probed this morning: the provider answered **HTTP 403 insufficient_user_quota — 剩餘額度 ≈ ¥0.000088** (`new_api_error`, `param: ""`, request id 202611160330423081392218268d9d6LTgxJw2j). The probe exited before the first completion returned; no cache measurement this morning exists to report.
+
+**The truth.** wkapi.pro is reachable end-to-end (TLS → worker → provider answer parsed + `insufficient_user_quota` surfaced) — the runner's stored key is valid and well-formed, and the provider answers in Chinese with a business-error shape the adapter path limps around rather than crashes on. **The key is simply out of quota today. No adapter change, no D1044 correction, nothing to optimize in cache or stream defaults from this evidence; the 2026-11-15 D1224/LLM-cache-probe run remains the record-closed baseline (identical-burst 2-warm then 100% hit after D1044).**
+
+**Ask (owner).** Top up the provider balance on wkapi.pro — the runner secret (`WKAPI_PRO_API_KEY`) belongs to the operator. ¥0.000088 is the provider's own remaining-quota reading. One live run after top-up re-establishes the business metrics; this host cannot.
+
+- readers: this ledger entry, `docs/ATLAS.md` (row on `.github/workflows/llm-cache-probe.yml`).
