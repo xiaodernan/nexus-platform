@@ -46,20 +46,20 @@ class _FakeClient:
 
 def _adapter(client: _FakeClient) -> OpenAIAdapter:
     return OpenAIAdapter(base_url="https://proxy.example/v1", api_key="sk-test",
-                         models={"cheap": "m", "mid": "gpt-6-sol", "reason": "m"},
+                         models={"cheap": "m", "mid": "gpt-6.1-terra", "reason": "m"},
                          client=client)
 
 
 def _sse(usage: dict | None, text: str = "ok") -> str:
     lines = [
-        "data: " + json.dumps({"model": "gpt-6-sol",
+        "data: " + json.dumps({"model": "gpt-6.1-terra",
                                "choices": [{"index": 0, "delta": {"content": text},
                                             "finish_reason": None}]}),
-        "data: " + json.dumps({"model": "gpt-6-sol",
+        "data: " + json.dumps({"model": "gpt-6.1-terra",
                                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}]}),
     ]
     if usage is not None:
-        lines.append("data: " + json.dumps({"model": "gpt-6-sol", "choices": [], "usage": usage}))
+        lines.append("data: " + json.dumps({"model": "gpt-6.1-terra", "choices": [], "usage": usage}))
     lines.append("data: [DONE]")
     return "\n\n".join(lines) + "\n\n"
 
@@ -72,7 +72,7 @@ async def _complete(monkeypatch, usage_in_body: dict | None, *, stream: bool):
     else:
         client = _FakeClient(_FakeResponse(json_body={
             "choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}],
-            "model": "gpt-6-sol",
+            "model": "gpt-6.1-terra",
             "usage": usage,
         }))
     adapter = _adapter(client)

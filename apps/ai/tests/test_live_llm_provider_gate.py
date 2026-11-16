@@ -3,7 +3,7 @@ the key (NEXUS_LLM_PROVIDER+BASE_URL+API_KEY, never committed). Otherwise skippe
 
 CI stays on `mock` by conftest (offline_env); this module is the project's opt-in seam to
 ask *today's* model whether it still works — the probe that catches silent provider/model
-rot (wkapi at v1, gpt-6-sol answering now).
+rot (the operator's live provider, currently answering).
 
 Re-runs of `apps/ai/live_llm_smoke.py` produce the same proof without pytest; this file is
 the in-suite mirror for whoever runs a CI with secrets wired by hand.
@@ -28,9 +28,9 @@ def _live_env() -> dict[str, str] | None:
         return None
     return {"provider": provider, "base_url": base,
             "api_key": key,
-            "cheap": (os.environ.get("NEXUS_LLM_MODEL_CHEAP") or "gpt-6-sol").strip(),
-            "mid": (os.environ.get("NEXUS_LLM_MODEL_MID") or "gpt-6-sol").strip(),
-            "reason": (os.environ.get("NEXUS_LLM_MODEL_REASON") or "gpt-6-sol").strip()}
+            "cheap": (os.environ.get("NEXUS_LLM_MODEL_CHEAP") or "gpt-6.1-terra").strip(),
+            "mid": (os.environ.get("NEXUS_LLM_MODEL_MID") or "gpt-6.1-terra").strip(),
+            "reason": (os.environ.get("NEXUS_LLM_MODEL_REASON") or "gpt-6.1-terra").strip()}
 
 
 live = _live_env()

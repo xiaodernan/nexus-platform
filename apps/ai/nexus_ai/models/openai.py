@@ -5,7 +5,7 @@ Credentials come from `NEXUS_LLM_BASE_URL` / `NEXUS_LLM_API_KEY` only.
 `NEXUS_LLM_STREAM` controls the transport envelope. Since D1044 it defaults to the SSE envelope
 with `stream_options.include_usage=true`: the app still consumes a complete response (no stream
 is ever exposed to callers of complete(), and the §1 wire contract is untouched) — only the wire
-between this adapter and the proxy changes. Measured live against wkapi.pro (`gpt-6-sol`,
+between this adapter and the proxy changes. Measured live against api.aizzz.xyz/v1 (`gpt-6.1-terra`,
 2026-11-13, identical byte-stable prefix): the SSE envelope surfaced provider usage
 (`usage.prompt_tokens_details.cached_tokens`) on 100% of calls in a 6-call wave, while the direct
 JSON envelope served 68% of prompt tokens from cache in the same window — the "always non-stream,

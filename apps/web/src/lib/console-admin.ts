@@ -1555,7 +1555,7 @@ function demoAiCache(): AdminAiCache {
       cache_hit_rate: cacheHitRate(52_400, 55_000),
     },
     by_model: [
-      { provider: 'openai', model: 'gpt-6-sol', calls: 40, prompt_tokens: 59_000,
+      { provider: 'openai', model: 'gpt-6.1-terra', calls: 40, prompt_tokens: 59_000,
         cached_tokens: 52_400, cache_hit_calls: 31, replay_calls: 6, reporting_calls: 37,
         reporting_prompt_tokens: 55_000, reporting_cached_tokens: 52_400,
         cache_hit_rate: cacheHitRate(52_400, 55_000) },

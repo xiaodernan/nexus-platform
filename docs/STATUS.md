@@ -45595,3 +45595,17 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **Honest boundaries.** 將軍澳 and 唐宮裡 are real; 阿強、四十個甜麵包、每一個故事——全部 合成敘事. No real bakery owes this existence anything; the number 100 belongs only to the fiction.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1256. D1256 — the residual gpt-6-sol fixture names scrubbed to gpt-6.1-terra: the mandate's provider migration is now total
+
+**Why.** The D1250 swap moved the workflow, the PR probe, and the cache/latency probe scripts to the operator's new endpoint (`api.aizzz.xyz/v1` + `gpt-6.1-terra`). Several *test fixture names* and a *synthetic command console* still referenced `gpt-6-sol` — a provider token the operator no longer uses.
+
+**The unit.** Every remaining reference was re-pointed: `test_cache_reporting_is_not_a_miss.py`, `test_live_llm_provider_gate.py`, `test_live_intent_contract_gate.py` now default to `gpt-6.1-terra` (previously they silently asked for the retired model when the live gate ran unconfigured); the synthetic `/command` console's "calls by provider" tile uses `gpt-6.1-terra`; comment-level references in the adapters (`openai.py`, `base.py`) now cite the aizzz.xyz endpoint as the measurement's provenance; `test_d980_usage_is_bounded.py` doc comments updated likewise (comment-level; pure fixture).
+
+**Deliberately unchanged.** Every `wkapi.pro` / `gpt-6-sol` reference in `docs/STATUS.md`, `docs/ATLAS.md`, `docs/probes/`, `docs/AI.md`, `docs/RELEASE_ARC_D1024_D1060.md` — those are measured-evidence, not code paths; the historical record stays verbatim. The census keeps flagging none of them.
+
+**Verification (host).** `uv run pytest -q` skip-most-live: **21 passed, 6 skipped** (the live-gated arms skip when env is absent — unchanged) · all touched Python files AST-parse · `tsc`/web **401/401** unchanged · `verify_all` NO OFFENDER (checked) · `check_intent_extract_live_path.mjs` 37-hold PASS. Zero gates re-broke because the migration points at a model that does not answer live without the operator's key.
+
+**Honest boundaries.** This flips only names. It does *not* claim the live provider gates ran — they still skip/skip-on-missing-env by construction; it does *not* claim the migrated name resolves for every caller; the operator's key remains for their own dogfooding.
+
+- readers: `apps/ai/tests/test_cache_reporting_is_not_a_miss.py`, `apps/ai/tests/test_live_llm_provider_gate.py`, `apps/ai/tests/test_live_intent_contract_gate.py`, `apps/web/src/lib/console-admin.ts`, `apps/ai/nexus_ai/models/openai.py`, `apps/ai/nexus_ai/models/base.py`, this ledger entry.

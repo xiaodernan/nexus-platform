@@ -32,9 +32,9 @@ def _live_env() -> dict[str, str] | None:
     if provider in ("", "mock") or not base or not key:
         return None
     return {"provider": provider, "base_url": base, "api_key": key,
-            "cheap": (os.environ.get("NEXUS_LLM_MODEL_CHEAP") or "gpt-6-sol").strip(),
-            "mid": (os.environ.get("NEXUS_LLM_MODEL_MID") or "gpt-6-sol").strip(),
-            "reason": (os.environ.get("NEXUS_LLM_MODEL_REASON") or "gpt-6-sol").strip()}
+            "cheap": (os.environ.get("NEXUS_LLM_MODEL_CHEAP") or "gpt-6.1-terra").strip(),
+            "mid": (os.environ.get("NEXUS_LLM_MODEL_MID") or "gpt-6.1-terra").strip(),
+            "reason": (os.environ.get("NEXUS_LLM_MODEL_REASON") or "gpt-6.1-terra").strip()}
 
 
 def _settings(env: dict[str, str]) -> Settings:
