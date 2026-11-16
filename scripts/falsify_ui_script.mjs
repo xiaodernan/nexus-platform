@@ -276,7 +276,7 @@ const ARMS = [
     apply: () => {},
     expect: 0,
     must: [/RESULT: PASS/,
-      /block BY_LOCALE — apps\/web\/src\/lib\/prompts\.ts:\d+-\d+ {2}LOCALE-MAP \(keys zh-HK, en/],
+      /block BY_LOCALE — apps\/web\/src\/lib\/prompts\.ts:\d+-\d+ {2}LOCALE-MAP \(keys zh-HK, zh-CN, en/],
   },
   {
     name: 'a Simplified character planted in a dict literal',

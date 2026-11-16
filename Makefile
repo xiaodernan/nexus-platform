@@ -153,3 +153,11 @@ ps: ## Raw compose ps
 clean: ## Remove build output (does not touch data volumes)
 	rm -rf apps/web/.next apps/web/out dist coverage test-results playwright-report
 	find . -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
+
+# D1276 — the Simplified-Chinese arms (apps/web/src/lib/i18n/{dict-cn,trust-labels-cn}.ts) are a
+# one-way fold of the Traditional arms via opencc (hk2s+t2s). A zh-HK copy edit without a regen
+# silently ships a stale zh-CN dictionary; the parity test cannot see it (structure is unaffected)
+# and the script census cannot see it (declared-Simplified carriers are trusted by name). This is
+# the lockstep check, as scripts/check_simplified_mirror.mjs reports it.
+simplify: ## Check the zh-CN arms are in lockstep with zh-HK (opencc fold; UNCHECKED without opencc)
+	node scripts/check_simplified_mirror.mjs
