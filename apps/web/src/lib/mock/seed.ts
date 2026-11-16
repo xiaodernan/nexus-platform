@@ -2465,4 +2465,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-wan-chai-night-court-chronicle', title: '晚上九點四十五分：灣仔——軒尼詩道——書記官黃姐關小法庭前的最後幾分鐘（香港系列 · 第八十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上九點四十五分的軒尼詩道——灣仔小法庭每晚最後四件事情、書記官黃姐三十年關燈的儀式。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上九點四十五分。軒尼詩道（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——書記官黃姐關小法庭前最後四件事情。' },
+      { type: 'heading', text: '一、黃姐的關燈儀式' },
+      { type: 'paragraph', text: '黃姐在軒尼詩道做了三十年的書記——最後四件事情早就記在骨頭裏：關燈、關機、關閉文件櫃、點一下自己的老闆。還可以三分鐘能撐。' },
+      { type: 'cards', title: '軒尼詩道可見', items: [] },
+      { type: 'heading', text: '二、最後四件事情' },
+      { type: 'paragraph', text: '今天最後四個案件。一個欠薪的兄弟、一個快要謝幕的阿姨的遺囑小事、一個被認定為應該停業的小攤——和一張他再也不會看到的收據。「有時候我覺得我這個職位就是關燈的人。」' },
+      { type: 'cards', title: '軒尼詩道可聽', items: [] },
+      { type: 'heading', text: '三、關燈的最後一盞' },
+      { type: 'paragraph', text: '黃姐關燈的時候，她望著燈一柱一柱暗下去。三十、四十、五十年。人不一定記得每個人的案件，而黃姐記得每人的呼吸。' },
+      { type: 'cards', title: '軒尼詩道可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「灣仔 黃姐」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

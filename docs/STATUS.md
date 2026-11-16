@@ -45236,3 +45236,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** 雪廠街是真實的中環街道；但每一個人——阿良、女兒、他所有的客人——全部是合成敘事構建。這裡沒有一座神龕、沒有任何神聖儀式；這只是一間虛構的西裝舖，寫下來讓讀者看看一位街上的女兒如何照看一位老裁縫。沒有真實商戶。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1227. D1227 — chapter LXXXIII （灣仔軒尼詩道，21:45） — the Registrar's last light
+
+**Why.** The eighty-third opens a new register — the clerk who closes the bureaucratic day, sealing documents by lamplight while the Wan Chai traffic outside finds its sleep. The world is not only cafe and shop — it also ends in an honest man's ledger.
+
+**The unit.** `DEMO_GUIDES` gains `hk-wan-chai-night-court-chronicle`, 「晚上九點四十五分：灣仔——軒尼詩道——書記官黃姐（香港系列 · 第八十三章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、黃姐的關燈儀式 · 二、最後四件事情 · 三、關燈的最後一盞）, 後記 + SearchBox pointer （「灣仔 黃姐」）. Arc clock gains 21:45 between 屋邨紙箱老伯（21:30）與菲律賓中環（22:00）— **166 chips across both locales**; handbook reading order updated to eighty-three; `chapter-icons` gains `'hk-wan-chai-night-court-chronicle': 'navigation'`; e2e floors ≥83; `/world` copy 82→83 everywhere; partition test now **12+16+16+15+8+9+7 = 83**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,281** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 17.5s · SSR curls both locales: chapter renders with 書記官黃姐/第八十三章 markers, `/hong-kong` carries the chip and 第八十三章， `/world` returns **83 distinct guide links in each arm**.
+
+**Honest boundaries.** 軒尼詩道是真實的灣仔街道；但黃姐、她的三十四年書記生涯、今晚的最後四件案件——全部合成敘事構建，與任何真實書記官或法庭全無關聯。冇一個真實機構被反映；攏是敘事建構。
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
