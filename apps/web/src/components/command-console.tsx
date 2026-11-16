@@ -17,11 +17,20 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Badge, Icon } from '@nexus/ui';
+import type { RealTraceRow, RealTraceSummary } from '@/lib/real-trace';
 
 export interface CommandConsoleCopy {
   eyebrow: string;
   title: string;
   intro: string;
+  realTraceTitle: string;
+  realTraceNote: string;
+  realTraceCols: {
+    journey: string;
+    duration: string;
+    outcome: string;
+    landed: string;
+  };
   unlocked: string;
   unlockedHint: string;
   passwordLabel: string;
@@ -74,7 +83,15 @@ const setUnlocked = (value: boolean): void => {
   }
 };
 
-export function CommandConsoleClient({ copy }: { copy: CommandConsoleCopy }) {
+export function CommandConsoleClient({
+  copy,
+  traceRows = [],
+  traceTotals,
+}: {
+  copy: CommandConsoleCopy;
+  traceRows?: ReadonlyArray<RealTraceRow>;
+  traceTotals?: RealTraceSummary['totals'];
+}) {
   const [unlocked, setUnlockedClient] = useState(false);
   const [attempt, setAttempt] = useState('');
   const [shake, setShake] = useState(false);
@@ -268,6 +285,40 @@ export function CommandConsoleClient({ copy }: { copy: CommandConsoleCopy }) {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section aria-labelledby="cmd-realtrace" className="flex flex-col gap-3 rounded-2xl border border-accent-line bg-canvas p-5">
+        <h2 id="cmd-realtrace" className="text-2xs font-semibold uppercase tracking-wide text-accent">
+          {copy.realTraceTitle}
+        </h2>
+        <p className="max-w-prose text-2xs leading-relaxed text-ink-muted">{copy.realTraceNote}</p>
+        {traceTotals && (
+          <p className="font-mono text-2xs text-ink-faint">
+            {traceTotals.journeys} journeys · {traceTotals.completed} completed · {traceTotals.crashed} crashed · {traceTotals.totalMs} ms
+          </p>
+        )}
+        <div className="overflow-x-auto">
+          <table className="mt-1 w-full text-left text-2xs">
+            <thead className="uppercase tracking-wide text-ink-faint">
+              <tr>
+                <th className="px-3 py-2">{copy.realTraceCols.journey}</th>
+                <th className="px-3 py-2">{copy.realTraceCols.duration}</th>
+                <th className="px-3 py-2">{copy.realTraceCols.outcome}</th>
+                <th className="px-3 py-2">{copy.realTraceCols.landed}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {traceRows.map((row) => (
+                <tr key={row.idx} className="border-t border-line">
+                  <td className="px-3 py-2">{row.idx}. {row.name}</td>
+                  <td className="px-3 py-2 font-mono">{row.duration_ms}</td>
+                  <td className="px-3 py-2 font-mono">{row.outcome}</td>
+                  <td className="px-3 py-2 font-mono">{row.end_url || '/'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-2xs text-ink-faint">

@@ -76,6 +76,9 @@ export interface Dict {
     eyebrow: string;
     title: string;
     intro: string;
+    realTraceTitle: string;
+    realTraceNote: string;
+    realTraceCols: { journey: string; duration: string; outcome: string; landed: string };
     unlocked: string;
     unlockedHint: string;
     passwordLabel: string;
@@ -1118,6 +1121,9 @@ export interface Dict {
     actionsHint: string;
     colAction: string;
     actions: Array<{ profile: string; action: string }>;
+    realTraceTitle: string;
+    realTraceNote: string;
+    realTraceCols: { journey: string; duration: string; outcome: string; landed: string };
   };
   /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
   world: {
@@ -1168,6 +1174,9 @@ const zhHK: Dict = {
     eyebrow: '管理員儀錶板 · 演示後台',
     title: '港灣指揮中心',
     intro: '過去兩星期的合成數據攤開來看——哪些商舖排在前、哪些章節流量最大、我們現在最該做什麼。本畫面的一切全部出自本 demo 內置資料，與真實 AI 後端無關。',
+    realTraceTitle: 'REAL-TRACE · 真實行為',
+    realTraceNote: '本 build 2026-11-16 實測十二套 Playwright 瀏覽器旅程——不是 fixture，不是 SLA：impatient-close 3s、focused-search 拉麵、wheel-scroller 到 2000px——每條列出時長、結果與落地 URL。',
+    realTraceCols: { journey: '旅程', duration: '耗時 (ms)', outcome: '結果', landed: '落地' },
     unlocked: '已解鎖',
     unlockedHint: '撳一下重新上鎖',
     passwordLabel: '隨便試試的密碼',
@@ -3086,6 +3095,9 @@ const zhHK: Dict = {
     funnelHigh: '高',
     nextTitle: '營運者下一步',
     disclaimer: '合成示意：這頁沒有單一真實讀者的資料，全部出自一套確定性的重放程式。給營運者閱讀用，不是監控。2026-11-16 起，本 build 另附 12 套真實 Playwright 行為軌跡（impatient-close、stray-clicker、merchant-browser 等，12/12 completed，零 console error）——見 docs/evidence/user-journey-2026-11-16.md；觀察值不是 SLA。',
+    realTraceTitle: 'REAL-TRACE · 真實旅程',
+    realTraceNote: '本 build 2026-11-16 實測的十二套 Playwright 瀏覽器記賬本——不是 fixture、不是 SLA：一套實測就一條；每條列出時序、結果與落地 URL。合同與自身操作系統的事實。',
+    realTraceCols: { journey: '旅程', duration: '耗時 (ms)', outcome: '結果', landed: '落地' },
     fmtDwell: (sec: number) => `${sec} 秒`,
     weekTitle: '過去七天——誰來、誰留',
     weekHint: '按香港日期重放過去一週：每一格是一日的全幽靈數與平均掉拍率；底全是本地數據，不是監控。',
@@ -3162,6 +3174,9 @@ const en: Dict = {
     eyebrow: 'Command desk · Demo superuser',
     title: 'Harbour Command',
     intro: 'Synthetic two-week view — search trends, chapter heat, returns per visitor window and where to prod next. All numbers below come from a baked-in sample; nothing reaches a real operator dashboard or the AI service.',
+    realTraceTitle: 'REAL-TRACE · Real behaviour',
+    realTraceNote: 'Twelve Playwright browser journeys were actually executed against this build on 2026-11-16 — not fixtures, not SLAs: impatient-close 3s, focused-search 拉麵, wheel-scroller to 2000px; every row lists duration, outcome and landing URL.',
+    realTraceCols: { journey: 'Journey', duration: 'Duration (ms)', outcome: 'Outcome', landed: 'Landed on' },
     unlocked: 'Unlocked',
     unlockedHint: 'Lock again',
     passwordLabel: 'Made-up passphrase',
@@ -5084,6 +5099,9 @@ const en: Dict = {
     funnelHigh: 'high',
     nextTitle: 'Next optimisation this week',
     disclaimer: 'Synthetic replay only. Zero real reader data — this is the operator’s mirror, not surveillance. Since 2026-11-16 this build also carries twelve real Playwright behaviour traces (impatient-close, stray-clicker, merchant-browser, and more — 12/12 completed, zero console errors) — see docs/evidence/user-journey-2026-11-16.md; observations, not SLAs.',
+    realTraceTitle: 'REAL-TRACE · Real journeys',
+    realTraceNote: 'Twelve Playwright browser journeys actually executed against this build on 2026-11-16 — not fixtures, not SLAs; each row is one measured run with duration, outcome and landing URL.',
+    realTraceCols: { journey: 'Journey', duration: 'Duration (ms)', outcome: 'Outcome', landed: 'Landed on' },
     fmtDwell: (sec: number) => `${sec}s`,
     weekTitle: 'Seven days — who came, who stayed',
     weekHint: 'Replay of the last seven HK dates: each cell is a day’s ghost total and average drop-off. All local, no tracking.',

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1270",
-  "milestone_full": "第一百零五章 · day arc complete → REAL-HK IX: the Octopus card joins the handbook (REAL data, inline URL, every HK hand carrying one since 1997)",
+  "milestone": "D1271",
+  "milestone_full": "第一百零五章 · day arc complete → /insights and /command now show the operator the REAL user journeys (twelve Playwright runs on this build — impatient-close → closed-but-curious, zero console errors), not only the deterministic ghost replay",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "REAL-HK IX: the Octopus card (八達通， 1 Sep 1997) — the world’s second contactless smart card joins the handbook: 98% coverage 15–64; 33M+ cards in circulation (≈99% of residents); 14M+ transactions per day; HK$180M+ daily stake; HK$3,000 load ceiling; inline Wikipedia URL with 2026-11-16 retrieval",
+    "§九 in-product: REAL-TRACE panel — twelve actual Playwright journeys (impatient-close, focused-search, stray-clicker, handbook-tour, chapter-reader, locale-swapper, theme-toggle, wheel-scroller, strip-bridge, merchant-browser, never-gets-comfort, closed-but-curious) with measured durations, outcomes and landing URLs, surfaced on /insights and inside /command (admin/123)",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
-    "§九 delivered: docs/evidence/user-journey-2026-11-16.md — twelve real Playwright journeys, zero console errors; the probe caught a live BFF 422 and it was fixed in D1267",
-    "/handbook?ask= — the manual answers its own questions with verbatim excerpts and section citations (lexical RAG, deterministic, offline)",
-    "/chronicle — the macro-epic frame for the 105-chapter series · /llm-ops (measured A/B: direct JSON 81.5% vs SSE 16.3%) · /stategraph · REAL-HK VIII (Hang Seng Index)",
-    "D1270: REAL-HK IX octopus ships · D1269: /handbook asks back · D1268: /chronicle · D1267: user-journey evidence"
+    "§九 delivered twice: docs/evidence/user-journey-2026-11-16.md — twelve real behaviour journeys, zero console errors; the probe caught a live BFF 422 and it was fixed in D1267; D1271 surfaces the same rows inside both operator surfaces",
+    "/handbook?ask= — the manual answers its own questions with verbatim excerpts and section citations (lexical RAG, deterministic, offline) · /chronicle (105-chapter macro-epic)",
+    "/llm-ops (measured envelope A/B 81.5% vs 16.3%) · /stategraph engine runbook · REAL-HK IX (Octopus card: 98% coverage of HK residents 15-64; 33M+ cards; 14M+ tx/day)",
+    "D1271: REAL-TRACE in both operator surfaces · D1270: REAL-HK Octopus · D1269: /handbook asks back · D1268: /chronicle"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

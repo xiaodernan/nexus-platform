@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { currentLocale } from '@/lib/i18n/server';
 import { getDict } from '@/lib/i18n';
 import { simulateJourneys, simulateWeek, explainSnapshot } from '@/lib/user-journeys';
+import { realTrace } from '@/lib/real-trace';
 import { Container, Icon } from '@nexus/ui';
 import Link from 'next/link';
 
@@ -32,6 +33,7 @@ export default async function InsightsPage() {
   const hkDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' });
   const snap = simulateJourneys(hkDate, locale);
   const week = simulateWeek(hkDate, locale);
+  const trace = realTrace();
   const band: Record<string, string> = { low: t.funnelLow, mid: t.funnelMid, high: t.funnelHigh };
 
   return (
@@ -141,6 +143,43 @@ export default async function InsightsPage() {
             {' · '}{t.nextTitle}: {week.advice}
           </p>
         </section>
+
+        {/* REAL-TRACE — the operator's mirror, with the real Playwright traces that shipped this build */}
+        {trace.rows.length > 0 && (
+          <section aria-labelledby="insights-real" className="mt-8 overflow-hidden rounded-2xl border border-accent-line bg-canvas">
+            <h2 id="insights-real" className="border-b border-line bg-accent-soft px-5 py-3 text-2xs font-semibold uppercase tracking-wide text-accent">
+              {t.realTraceTitle}
+            </h2>
+            <div className="p-5">
+              <p className="max-w-prose text-2xs leading-relaxed text-ink-muted">{t.realTraceNote}</p>
+              <p className="mt-2 font-mono text-2xs text-ink-faint">
+                {trace.totals.journeys} journeys · {trace.totals.completed} completed · {trace.totals.crashed} crashed · {trace.totals.totalMs} ms
+              </p>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full text-left text-2xs">
+                  <thead className="uppercase tracking-wide text-ink-faint">
+                    <tr>
+                      <th className="px-4 py-2">{t.realTraceCols.journey}</th>
+                      <th className="px-4 py-2">{t.realTraceCols.duration}</th>
+                      <th className="px-4 py-2">{t.realTraceCols.outcome}</th>
+                      <th className="px-4 py-2">{t.realTraceCols.landed}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trace.rows.map((row) => (
+                      <tr key={row.idx} className="border-t border-line">
+                        <td className="px-4 py-2.5">{row.idx}. {row.name}</td>
+                        <td className="px-4 py-2.5 font-mono">{row.duration_ms}</td>
+                        <td className="px-4 py-2.5 font-mono">{row.outcome}</td>
+                        <td className="px-4 py-2.5 font-mono">{row.end_url || '/'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
 
         <section aria-labelledby="insights-table" className="mt-8 overflow-hidden rounded-2xl border border-line bg-surface">
           <h2 id="insights-table" className="border-b border-line bg-canvas px-5 py-3 text-2xs font-semibold uppercase tracking-wide text-accent">
