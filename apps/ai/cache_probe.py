@@ -14,8 +14,8 @@ stream arm shows the provider streams the same prefix the same way (the user's n
 
 Run:
 
-    NEXUS_LLM_PROVIDER=openai NEXUS_LLM_BASE_URL=https://wkapi.pro/v1 NEXUS_LLM_API_KEY=sk-... \
-    NEXUS_LLM_MODEL_CHEAP=gpt-6-sol NEXUS_LLM_MODEL_MID=gpt-6-sol NEXUS_LLM_MODEL_REASON=gpt-6-sol \
+    NEXUS_LLM_PROVIDER=openai NEXUS_LLM_BASE_URL=https://api.aizzz.xyz/v1 NEXUS_LLM_API_KEY=sk-... \
+    NEXUS_LLM_MODEL_CHEAP=gpt-6.1-terra NEXUS_LLM_MODEL_MID=gpt-6.1-terra NEXUS_LLM_MODEL_REASON=gpt-6.1-terra \
     uv run python cache_probe.py
 
 Never run in CI; honors the same opt-in discipline as the other live tools.

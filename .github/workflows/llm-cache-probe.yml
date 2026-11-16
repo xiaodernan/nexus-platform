@@ -1,5 +1,7 @@
 name: llm-cache-probe
-# On-demand provider-cache probe against the wkapi.pro (OpenAI-compatible) endpoint.
+# On-demand provider-cache probe against the gpt-6.1-terra endpoint (OpenAI-compatible).
+# The provider now serves from api.aizzz.xyz; previously this workflow measured wkapi.pro/gpt-6-sol
+# until the operator swapped endpoints/keys (2026-11-16).
 #
 # The intent of running this in CI rather than on a developer laptop: the provider
 # refuses some egress IPs and accepts others, so a scheduled run on a neutral runner
@@ -12,7 +14,9 @@ name: llm-cache-probe
 # Gate: this workflow never runs on forks or on pushes; dispatch and schedule only.
 # Cost: roughly 30 requests below 128k prompt tokens each; measured total ~2.5k tokens this design.
 #
-# Secrets required: WKAPI_PRO_API_KEY (the wkapi.pro key; set via gh from the operator's machine).
+# Secrets required: WKAPI_PRO_API_KEY (the api.aizzz.xyz key for the gpt-6.1-terra endpoint;
+#   set via gh from the operator's machine — the secret name kept for cache continuity, the value
+#   now points at the new provider).
 on:
   schedule:
     - cron: '0 0 * * 2'   # Tuesdays at 00:00 UTC
@@ -43,7 +47,7 @@ jobs:
           {
             echo "## Live provider-cache probe (Tuesday cron + dispatch)"
             echo ""
-            echo "Runs the AI lane's own probe script against wkapi.pro with the production-default SSE-with-usage envelope."
+            echo "Runs the AI lane's own probe script against https://api.aizzz.xyz/v1 (\`gpt-6.1-terra\`) with the production-default SSE-with-usage envelope."
             echo "Each burst reports cached_tokens and prompt_tokens so the hit rate is measured, not asserted."
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -51,11 +55,11 @@ jobs:
         shell: bash
         env:
           NEXUS_LLM_PROVIDER: openai
-          NEXUS_LLM_BASE_URL: https://wkapi.pro/v1
+          NEXUS_LLM_BASE_URL: https://api.aizzz.xyz/v1
           NEXUS_LLM_API_KEY: ${{ secrets.WKAPI_PRO_API_KEY }}
-          NEXUS_LLM_MODEL_CHEAP: gpt-6-sol
-          NEXUS_LLM_MODEL_MID: gpt-6-sol
-          NEXUS_LLM_MODEL_REASON: gpt-6-sol
+          NEXUS_LLM_MODEL_CHEAP: gpt-6.1-terra
+          NEXUS_LLM_MODEL_MID: gpt-6.1-terra
+          NEXUS_LLM_MODEL_REASON: gpt-6.1-terra
           NEXUS_LLM_STREAM: 'true'
         run: |
           cd apps/ai && uv run python cache_probe.py | tee cache-probe.txt
