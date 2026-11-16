@@ -2987,6 +2987,7 @@ const zhHK: Dict = {
     honestyTitle: '六、真話',
     honestyBody: [
       '這一頁的幾乎每一個數字都來自 2026-11-16 的真機實測（Clash Verge egress；本機 geo-blocked）。provider 換了？模型變了？prefix 動了一個字？——這些數字會過期，而且 docs 不會自動更新。',
+      'vector lane 現在全是 lexical hashing——這台主機的 provider 帳戶組不提供任何 embedding 模型（2026-11-16 全試：text-embedding-3-small／text-embedding-3-large／text-embedding-ada-002／nexus-embed-1024 一律 HTTP 503 model_not_found，gpt-6.1-terra 404）；`make ai-embed` 暫時無法落地，等 operator 在 console 開放後重跑 `uv run python live_embedding_probe.py`。',
       '更新路徑：任何人給我們帶新數字 → 同 probe PR（改 D1257 pointer + measured blocks）→ 翻 adapter default（若 A/B 倒轉）→ update this page + handbook + stategraph measure block + ledger。',
       '成本：你不想重跑的話——每週 prode artifact 裡有現成的表。',
     ],
@@ -4927,6 +4928,7 @@ const en: Dict = {
     honestyTitle: 'VI · The truth',
     honestyBody: [
       'Nearly every number on this page comes from a live run on 2026-11-16 (Clash Verge egress from this host; geo-blocked direct). Provider migrated? Model bumped? Prefix touched by one character? — these numbers go stale and the docs will NOT auto-update.',
+      'the vector lane runs lexical-hashing today — this host’s provider account serves NO embedding model (measured 2026-11-16: text-embedding-3-small/-large/ada-002/nexus-embed-1024 all answer HTTP 503 model_not_found; gpt-6.1-terra 404); `make ai-embed` stays unrunnable until the operator enables one in the console — re-run `uv run python live_embedding_probe.py` when they do.',
       'Update path: whoever hands us fresh numbers → the same probe PR (updated D1257 pointers + measured blocks) → adapter default flip if A·B flipped → this page + handbook + stategraph measured blocks + ledger all rev together.',
       'Cost: if you never want to re-run it yourself — the weekly artifact already carries the tables.',
     ],

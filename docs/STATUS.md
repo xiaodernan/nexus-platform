@@ -45784,3 +45784,28 @@ Plus an inline SVG bar chart of the two envelopes; the footer gains the door (la
 **Honest boundaries.** This surface is operator-facing and honest about its age — the figures go stale by design when a provider migrates; nothing redraws or re-measures on its own. The page is not linked from the consumer rails (footer only); it is an operator runbook, not consumer onboarding. The `/world` 105-chapter footer fix rides because it was the same staleness class.
 
 - readers: `apps/web/app/llm-ops/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/llmops-page.test.ts`, `apps/web/src/components/site-chrome.tsx`, `docs/ATLAS.md`, this ledger entry.
+
+## 1266. D1266 — the embedding lane, live-probed for the first time: the account serves no embedding model
+
+**Why.** Mandate §三/§四 asks for the RAG lane to be exercised against the real provider, not left documented as "real 1024-d model would work". Until this unit, the embedding adapter (`nexus_ai/models/embeddings.py`) has never been pointed at the operator's live endpoint — only at the dev-only hashing adapter whose `semantic = False` has always been surfaced but never measured. This unit answers the question the docs kept hand-waving about.
+
+**The measurement (2026-11-16, this host, egress via Clash Verge at 127.0.0.1:7897).** `GET /v1/models` → the account's distributor serves seven chat ids — `codex-auto-review`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-6-astra`, `gpt-6-sol`, `gpt-6.1-sol`, `gpt-6.1-terra` — **no embedding id**. `POST /v1/embeddings` with `dimensions: 1024` × six candidates:
+
+| candidate | result |
+| -------- | ------ |
+| `text-embedding-3-small` | HTTP 503 `model_not_found` — "分组 GPT特价 下模型 text-embedding-3-small 无可用渠道(distributor)" |
+| `text-embedding-3-large` | HTTP 503 (same) |
+| `text-embedding-ada-002` | HTTP 503 (same) |
+| `text-embedding-3` | HTTP 503 (same) |
+| `nexus-embed-1024` (adapter default) | HTTP 503 (same) |
+| `gpt-6.1-terra` | HTTP 404 — "Model is not supported by any configured account in this group" |
+
+**Verdict.** The `HttpEmbedding` seam is sound but the account has no distributor for any embedding model; the semantic vector lane stays unusable and the docs now say so instead of implying otherwise. `make ai-embed` cannot run against this provider today; the deterministic keyword lane stays the search floor. If the operator enables an embedding model in the provider's console (or a different distributor group), `apps/ai/live_embedding_probe.py` (new, opt-in, never CI) re-verifies in one command and prints the same matrix.
+
+**The unit.** New `apps/ai/live_embedding_probe.py` — the same sealed pattern as `live_llm_smoke.py`/`eval_live_intent.py`: env-gated, key never committed, prints a full matrix, exit 1 when no candidate passes (current state), exit 0 with "AN EMBEDDING MODEL IS AVAILABLE" otherwise. `apps/ai/.env.example` documents the four `NEXUS_EMBEDDING_*` knobs with the 503/404 evidence inline (not aspired values). `/llm-ops` section VI honesty carries the same paragraph in both locales with today's date. `docs/ATLAS.md` gains the probe's row.
+
+**What is deliberately NOT changed.** `HttpEmbedding` is left exactly as written: once an embedding model exists on the account, `NEXUS_EMBEDDING_PROVIDER=http` + base_url + key + model-id is the only change — no code. The hashing default stays; `semantic=False` keeps the cosine from claiming meaning.
+
+**Verification (host).** Probe script runs clean (idempotent output, exit 1 as designed); `.env.example` AST-none (pure env text); `/llm-ops` SSR still carries all pins; census 0 simplified; web 406/406; `verify_all` NO OFFENDER.
+
+- readers: `apps/ai/live_embedding_probe.py`, `apps/ai/.env.example`, `apps/web/src/lib/i18n/dict.ts` (`llmops` honesty block), `docs/ATLAS.md`, this ledger entry.
