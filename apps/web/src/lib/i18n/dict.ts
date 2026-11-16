@@ -1047,6 +1047,32 @@ export interface Dict {
     resetCta: string;
     stepLabel: string;
   };
+  /** D1265: the /llm-ops route — the operator's read of the model plane: measured, not asserted. */
+  llmops: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    figureTitle: string;
+    figureNote: string;
+    envelopeTitle: string;
+    envelopeBody: string[];
+    envelopeBullets: string[];
+    prefixTitle: string;
+    prefixBody: string[];
+    prefixBullets: string[];
+    routerTitle: string;
+    routerBody: string[];
+    routerBullets: string[];
+    costTitle: string;
+    costBody: string[];
+    costBullets: string[];
+    probeTitle: string;
+    probeBody: string[];
+    probeBullets: string[];
+    honestyTitle: string;
+    honestyBody: string[];
+    ctaHandbook: string;
+  };
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
   insights: {
     eyebrow: string;
@@ -2894,6 +2920,77 @@ const zhHK: Dict = {
     nextCta: '下一步',
     resetCta: '重設',
     stepLabel: '第 {current} 步（共 {total}）',
+  },
+  /** D1265: the /llm-ops route — the operator's read of the model plane: measured, not asserted. */
+  llmops: {
+    eyebrow: '引擎 · llm-ops',
+    title: '模型手術枱——真實數字，不是標語',
+    intro: '這一頁把模型在產品裡怎樣流轉攤開講清楚：哪條快取贏了、前綴怎麼凍結、一次請求怎麼走路由、每週探針看什麼——每個數字都來自一次真機實測，沒有一個是修辭。',
+    figureTitle: '把兩條信封按 tokens 畫出來',
+    figureNote: 'identical burst · production intent_extract prompt · 2026-11-16 · host 出口經 Clash Verge :7897',
+    envelopeTitle: '一、實測的線——兩條信封的現實',
+    envelopeBody: [
+      '2026-11-16，同一組網絡出口、同一套 production intent_extract 產線、temperature 0、json_object——只有信封換了。SSE：8,832 / 54,211 tokens 從快取讀出（16.3%）；direct JSON：44,160 / 54,211（81.5%）。兩者相差一個數量級的倍數，不是急轉彎。',
+      '今日複測結果完全一致（identical arms 4/6 vs SSE 1/6；tiny-system cold 95.5%）。從 2026-11-16 起，direct JSON 是生產預設（D1257）；SSE 保留為 opt-in — 供只在 SSE 下回報 usage 的 provider 使用。',
+    ],
+    envelopeBullets: [
+      'direct JSON = 生產預設（D1257）——快取 prefix 先到齊，80% 以上是 cache hit',
+      'SSE = opt-in（NEXUS_LLM_STREAM=true）——provider 只在 SSE 下回報 cached_tokens 時用',
+      'diverse bursts：0%——全新查詢沒有共用前綴，這是數學不是失敗',
+      'tiny-system cold：第一個 warm call 即 95.5%——每次部署的冷啟頭',
+      '每週探針：.github/workflows/llm-cache-probe.yml——每輪兩條信封都跑',
+    ],
+    prefixTitle: '二、前綴才是一切——快取率是 prefix 的函數',
+    prefixBody: [
+      'INTENT_EXTRACT_SYSTEM 是字節穩定的：模型、D1050 凍結的頭、merchant clarifier——每一個位元都凍結。你改動過 system prompt 的任何一個字符，快取就整個報廢——改 prompt 走版本號，不原地編輯。',
+      'contract prefix（含 merchant clarifier）有到 100% 的 cache-hit on contract arm（identical repeat）。這就是為什麼每個生產請求，不管上游怎樣轉，都能共享這條 prefix——這才是 live 81.5% 的物理基礎。',
+    ],
+    prefixBullets: [
+      'INTENT_EXTRACT_SYSTEM（nexus_ai/api/pipeline.py）——只讀不寫',
+      'contract arm 8/12 @ 100% cached——生產自己跑出來的採樣',
+      'temperature 0 + json_hint="json_object"——byte-identical 是 cache 的前置條件',
+      'prefix 動一次 = cache invalidation = 整天賬單 ×  tokens × call count',
+    ],
+    routerTitle: '三、路由——一個請求怎麼走',
+    routerBody: [
+      'router.run(LLMRequest(...)) → budget 檢查 → idempotency key → adapter pool（openai / mock）→ response + usage（含 cached_tokens）。任何步驟失敗（budget 溢、provider 429/5xx、網絡逾時）→ deterministic rule floor — 永遠有答案，而且 degraded=True 會被上方回傳連帶標記。',
+      '退路永遠站著：mock adapter 在 CI 永遠接管，720+ tests 不花一分錢；cache 兩層：D1050 frozen prefix（provider 側）+ cache_probe.py 每週驗證；rails replay (D1047, opt-in, default off）只在 byte-identical 且 temperature 0 時命中。',
+    ],
+    routerBullets: [
+      'intent_extract live：≈ $0.0025/call（2026-11-16 實測 5/5 eval_live_intent 全過）',
+      'reason lane live：≈ $0.0672/call（2026-11-16 smoke，whole route）',
+      'BudgetExceeded → rule floor（degraded=True）——不會崩潰，也不會假裝',
+      'NEXUS_CACHE_COST_FACTOR：預設 1.0；設為 0.5 才把 cached tokens 半價計入 cost_usd',
+    ],
+    costTitle: '四、token 經濟學',
+    costBody: [
+      'cost_usd ≈ prompt_tokens × input_price + completion_tokens × output_price + cached_factor × cached_tokens。D1037 引入 NEXUS_CACHE_COST_FACTOR=1.0——這個 repo 預設 cached tokens 仍按 input 計價（保守）；你想把省下的成本顯式做出來，就設 0.5。',
+      'intent_extract 5 條 contract cases 實測 ≈ $0.0122——一天 10,000 次 ≈ $24；cache 從 SSE 的 16% 換成 JSON 的 81.5%，同一個流量帳單少走 ≈ 一倍還多。',
+    ],
+    costBullets: [
+      '這個 provider 目前不對 cached tokens 折價（input-equivalents）',
+      '最劃算的打法：intent_extract 永遠走 JSON + frozen prefix',
+      'week cache report（llm-cache-probe.yml）→ 直接看，不用人肉重跑',
+      '任何一次 provider 遷移都必須重做 A/B ——預設不承襲舊結論',
+    ],
+    probeTitle: '五、每週探針——不是一次性驗收',
+    probeBody: [
+      '.github/workflows/llm-cache-probe.yml：Monday 00:00 UTC + workflow_dispatch。每跑都跑兩條信封——direct JSON（production）和 SSE（opt-in）——同一主機、同一 secret、不同輸出表。',
+      '你自己也能跑：HTTPS_PROXY=http://127.0.0.1:7897 uv run python cache_probe.py（預設 direct arm）；先探 SSE：HTTPS_PROXY=http://127.0.0.1:7897 NEXUS_LLM_STREAM=true uv run python cache_probe.py',
+    ],
+    probeBullets: [
+      'identical bursts（warm the prefix then keep）+ diverse bursts（dashboard 最差情況）+ tiny-system（adapter 預設 system）+ contract 四組都出表',
+      'interpret：direct JSON arm 永遠是 production default；SSE arm 是規範驗證，不是交通工具',
+      '若 A·B 倒轉了——D1257 判決條件早已寫好：哪個 arm 贏就在 adapter 預設設為那個',
+      '探針結果走 artifacts，不 commit key、不 commit prompt 原文',
+    ],
+    honestyTitle: '六、真話',
+    honestyBody: [
+      '這一頁的幾乎每一個數字都來自 2026-11-16 的真機實測（Clash Verge egress；本機 geo-blocked）。provider 換了？模型變了？prefix 動了一個字？——這些數字會過期，而且 docs 不會自動更新。',
+      '更新路徑：任何人給我們帶新數字 → 同 probe PR（改 D1257 pointer + measured blocks）→ 翻 adapter default（若 A/B 倒轉）→ update this page + handbook + stategraph measure block + ledger。',
+      '成本：你不想重跑的話——每週 prode artifact 裡有現成的表。',
+    ],
+    ctaHandbook: '回到說明書 › /handbook',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
   insights: {
@@ -4763,6 +4860,77 @@ const en: Dict = {
     nextCta: 'Next step',
     resetCta: 'Reset',
     stepLabel: 'Step {current} of {total}',
+  },
+  /** D1265: the /llm-ops route — the operator's read of the model plane: measured, not asserted. */
+  llmops: {
+    eyebrow: 'ENGINE · llm-ops',
+    title: 'The model operations table — numbers, not slogans',
+    intro: 'This page puts how the model moves through the product in the open: which envelope wins, how the prefix stays frozen, how one request rides the router, what the weekly probe watches — every number here is a measurement you could re-run, none is rhetoric.',
+    figureTitle: 'The two envelopes, drawn in tokens',
+    figureNote: 'identical burst · production intent_extract prompt · 2026-11-16 · host egress via Clash Verge :7897',
+    envelopeTitle: 'I · The measured wire — two envelopes, reality',
+    envelopeBody: [
+      '2026-11-16, identical network path, identical production intent_extract prompt, temperature 0, json_object — only the envelope moved. SSE: 8,832 / 54,211 tokens read from cache (16.3%); direct JSON: 44,160 / 54,211 (81.5%). A factor-of-five gap, not a needle move.',
+      'Re-measured on this host today: identical arms 4/6 vs SSE 1/6; tiny-system cold 95.5%. Since 2026-11-16, direct JSON is the production default (D1257); SSE stays as the opt-in — for providers that only report usage through it.',
+    ],
+    envelopeBullets: [
+      'direct JSON = production default (D1257) — the prefix lands first, so 80%+ of the work rides cache',
+      'SSE = opt-in (NEXUS_LLM_STREAM=true) — only when a provider reports cached_tokens solely over SSE',
+      'diverse bursts: 0% — fresh queries share no prefix; that is math, not failure',
+      'tiny-system cold: 95.5% on the first warm call — the cold head of every deploy',
+      'weekly probe: .github/workflows/llm-cache-probe.yml — both envelopes, every run',
+    ],
+    prefixTitle: 'II · The prefix — cache rate is a function of prefix',
+    prefixBody: [
+      'INTENT_EXTRACT_SYSTEM is byte-stable: the model, the D1050-frozen head, the merchant clarifier — every single bit is frozen. Editing system prompt text by one character invalidates the whole cache; prompt changes ride version bumps, never in-place edits.',
+      'The contract prefix (incl. the merchant clarifier) hits 100% cache on contract arm (identical repeat). That is the whole reason every production request, no matter which probe fired it, can share this prefix — the physical root of the live 81.5%.',
+    ],
+    prefixBullets: [
+      'INTENT_EXTRACT_SYSTEM (nexus_ai/api/pipeline.py) — read, never patched',
+      'contract arm 8/12 @ 100% cached — the sample the product itself ran',
+      'temperature 0 + json_hint="json_object" — byte-identical is the cache’s precondition',
+      'prefix touched once = cache invalidation = a day of the bill × tokens × call count',
+    ],
+    routerTitle: 'III · The router — how one request moves',
+    routerBody: [
+      'router.run(LLMRequest(...)) → budget check → idempotency key → adapter pool (openai / mock) → response + usage (incl. cached_tokens). Any step that fails — budget, provider 429/5xx, network timeout — drops to the deterministic rule floor: there is always an answer, marked degraded=True.',
+      'The floor never leaves the building: the mock adapter carries all of CI (no cents spent); two cache layers stand — D1050 frozen prefix (provider side) + cache_probe.py weekly verification; rails replay (D1047, opt-in, default off) only hits on byte-identical temperature-0 requests.',
+    ],
+    routerBullets: [
+      'intent_extract live: ≈ $0.0025/call (2026-11-16, 5/5 eval_live_intent green)',
+      'reason lane live: ≈ $0.0672/call (2026-11-16, whole smoke through the adapter)',
+      'BudgetExceeded → rule floor (degraded=True) — never crash, never fabricate',
+      'NEXUS_CACHE_COST_FACTOR: default 1.0; set 0.5 to re-cost cached tokens at discount',
+    ],
+    costTitle: 'IV · Token economics',
+    costBody: [
+      'cost_usd ≈ prompt_tokens × input price + completion_tokens × output price + cached_factor × cached tokens. D1037 introduced NEXUS_CACHE_COST_FACTOR=1.0 — cached tokens still bill as input by default (conservative); set 0.5 to write the savings into cost_usd explicitly.',
+      'The five contract eval cases measured ≈ $0.0122 — a day of 10,000 calls ≈ $24; swap the envelope from SSE’s 16% hit to JSON’s 81.5% and the same bill shrinks by more than half.',
+    ],
+    costBullets: [
+      'this provider does not discount cached tokens (input-equivalents)',
+      'best bang: intent_extract always rides JSON + the frozen prefix',
+      'weekly cache report (llm-cache-probe.yml) — read the artifact, never re-run by hand',
+      'every provider migration must re-measure the A/B — never inherit the old default',
+    ],
+    probeTitle: 'V · The weekly probe — not a one-off acceptance',
+    probeBody: [
+      '.github/workflows/llm-cache-probe.yml: Monday 00:00 UTC + workflow_dispatch. Every run exercises both envelopes — direct JSON (production) and SSE (opt-in) — one subject, one secret, two report tables.',
+      'You can run it too: HTTPS_PROXY=http://127.0.0.1:7897 NEXUS_LLM_STREAM=true uv run python cache_probe.py',
+    ],
+    probeBullets: [
+      'identical bursts (warm then hold) + diverse bursts (the dashboard’s worst case) + tiny-system + contract — four boards per run',
+      'interpret: direct JSON arm is always the production default; the SSE arm is verification, not transport',
+      'if A·B flips back — the D1257 verdict clause already exists: whichever arm wins becomes the adapter default',
+      'artifacts only — no keys, no prompts ever committed',
+    ],
+    honestyTitle: 'VI · The truth',
+    honestyBody: [
+      'Nearly every number on this page comes from a live run on 2026-11-16 (Clash Verge egress from this host; geo-blocked direct). Provider migrated? Model bumped? Prefix touched by one character? — these numbers go stale and the docs will NOT auto-update.',
+      'Update path: whoever hands us fresh numbers → the same probe PR (updated D1257 pointers + measured blocks) → adapter default flip if A·B flipped → this page + handbook + stategraph measured blocks + ledger all rev together.',
+      'Cost: if you never want to re-run it yourself — the weekly artifact already carries the tables.',
+    ],
+    ctaHandbook: 'Back to the handbook › /handbook',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
   insights: {

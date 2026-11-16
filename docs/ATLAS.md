@@ -144,6 +144,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1233: the eighty-eighth HK chapter (hk-sai-ying-pun-locksmith-chronicle, 晚上七點半・西營盤——第三街——梁師傅鎖匠鋪的最後一單) — 19:30, the locksmith's final key |
 | `apps/web/src/lib/mock/seed.ts` | D1231: the eighty-seventh HK chapter (hk-tai-po-market-dye-factory-chronicle, 半夜二點一刻・大埔墟——黃先生的染廠) — 02:15, the Tai Po dye factory |
 | `apps/web/app/stategraph/page.tsx` | D1248: the runbook route — SSR, dict-carried, canonical /stategraph; four sections （讀本 / 演練 / 開關 / 真話） + /handbook back-link |
+| `apps/web/app/llm-ops/page.tsx` | D1265: the operator's model-plane route — canonical /llm-ops, SSR, dict-carried, six sections with an inline SVG bar chart of the two live envelopes (direct JSON 81.5% vs SSE 16.3%, production intent_extract prompt, 2026-11-16, host via Clash Verge); the /llm-ops page carries only figures from real 2026-11-16 runs (smoke, intent 5/5, identical/diverse/tiny-system/contract arms), no client island, /handbook back-link |
 | `apps/web/src/components/stategraph-island.tsx` | D1248: the rehearsal island — client-only, local state, no fetch/storage/timers/no custom key handlers; start → 4 step buttons → reset |
 | `apps/web/src/lib/stategraph-page.test.ts` | D1248: four pins — page SSR/canonical/dict-driven; both locales carry the five-step rehearsal; island local-only contract; handbook CTA + footer door |
 | `apps/web/src/components/site-chrome.tsx` | D1248: footer gains the engine door — `/stategraph`, label zh「引擎讀本」/ en「The engine」 |

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1264",
-  "milestone_full": "第一百零五章 — the HK day arc closes completely: every 15-minute slot from 00:00 to 23:45 is filled (105 Traditional chapters) · the live provider re-verified through the operator’s own egress (smoke PASS · intent 5/5 · direct JSON 81.5% vs SSE 16.3%)",
+  "milestone": "D1265",
+  "milestone_full": "第一百零五章 · day arc complete → /llm-ops: the model plane explained in-product — direct JSON 81.5% vs SSE 16.3% pinned live, the weekly probe, and the economics operators need",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: one hundred and five Traditional chapters — the day arc is COMPLETE: 00:00→23:45, every 15-minute slot now filled, 210-chip clock across both locales",
-    "D1264: the 105th chapter is 船長炳與最後一班船 (Star Ferry Pier, 23:45) · 第 104 章 is 威靈頓街阿豪的鼓 (Wellington Street, 23:15) — the day ends on the harbour, not on a high note",
-    "Live provider re-verified fresh on the user’s host through Clash Verge 127.0.0.1:7897 (host geo-blocked): smoke PASS (2.9s) · eval_live_intent 5/5 · the identical-queries A/B: SSE 16.3% (8,832/54,211) vs direct JSON 81.5% (44,160/54,211) — the D1257 envelope flip stands",
+    "New operator route: /llm-ops — the model plane in the open: measured envelope A/B (2026-11-16, this host) · the frozen INTENT_EXTRACT_SYSTEM prefix · the router/budget/floor ladder · token economics · the weekly probe · the honesty strip",
+    "HK series: one hundred and five Traditional chapters — the day arc is COMPLETE (00:00→23:45) · 210-chip clock across both locales",
+    "Live provider re-verified fresh: smoke PASS (2.9s) · eval_live_intent 5/5 · identical-queries A/B: SSE 16.3% (8,832/54,211) vs direct JSON 81.5% (44,160/54,211)",
     "D1261-era fixes ride forward: handbook mobile rail (113px → 0) · scroll-axis contract e2e on both projects · REAL-HK VIII (Hang Seng Index: base 100 → ATH 33,223.58 · 2025 close 25,630.54 +27.77%) · /stategraph section V “The measured wire”",
-    "/hong-kong (105 chapters) · /world (105 chips · 17+20+18+21+9+10+10 asserted) · /stamp passport · /handbook (10-surface rail + 8 REAL-HK + ENGINE) · /command 123 · /stategraph",
-    "D1264: day-arc complete · D1263: CIII 陳老師 · D1262: CII 阿陳的舊書攤 · D1261: CI 唐伯的N巴士 + HSI + measured wire + handbook fix"
+    "/hong-kong (105 chapters) · /world (105 chips) · /stamp passport · /handbook · /command 123 · /stategraph · /llm-ops",
+    "D1265: /llm-ops ships · D1264: day arc complete · D1263: CIII · D1262: CII · D1261: CI + HSI + measured wire + handbook fix"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

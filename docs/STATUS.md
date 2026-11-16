@@ -45761,3 +45761,26 @@ The arc clock now covers **00:00 → 23:45 in 15-minute granularity with zero un
 **State of arc at push.** **105 Traditional HK chapters — the arc clock is COMPLETE — no empty 15-minute slots remain.** Live-plane evidence refreshed end-to-end (smoke / contract 5-of-5 / A·B split 16.3↔81.5). Showcase rides this milestone.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.
+
+## 1265. D1265 — `/llm-ops` lands: the model plane explained in the product, with the live A/B pinned in the open
+
+**Why.** The mandate's §四 asks the model's role in the product's intelligent flow to be *剖析* deeply, not shallowly touched. The numbers answering it already exist (D1257's live A/B), but they lived only in the ledger and the /stategraph measured block. An operator reading the product needs the same truth inside the product: which envelope wins, why the prefix is frozen, how one request rides the router, what the weekly probe watches — and what is not yet re-measured.
+
+**The unit.** New SSR route `apps/web/app/llm-ops/page.tsx` (dict-carried, canonical `/llm-ops`, no client island), with six sections both locales:
+
+1. **The measured wire** — identical-queries A/B 2026-11-16 on this host (Clash Verge :7897 egress): **direct JSON 81.5% (44,160 / 54,211 tokens) vs SSE 16.3% (8,832 / 54,211)** — plus today's confirmation rerun (identical arms 4/6 vs SSE 1/6).
+2. **The prefix** — why INTENT_EXTRACT_SYSTEM is byte-stable and you never patch it in place (the merchant clarifier stays to keep contract prefixes at 100% cache).
+3. **The router** — `router.run` → budget → idempotency → adapter pool (openai or mock) → response+usage; failure paths drop to the deterministic rule floor with `degraded=True` (never fabricate, never crash).
+4. **Token economics** — `NEXUS_CACHE_COST_FACTOR=1.0` conservative default; 0.5 writes the savings into `cost_usd`; intent_extract ≈ $0.0025/call, reason lane ≈ $0.0672/call; SSE→JSON flip more than halves the same bill.
+5. **The weekly probe** — `llm-cache-probe.yml` (Mon 00:00 UTC + dispatch), both envelopes every run, four boards (identical / diverse / tiny-system / contract); never re-run by hand; the artifact carries the tables.
+6. **The truth** — every number is 2026-11-16-host live-measured; when providers migrate, the whole block must re-measure and all five surfaces (adapter default, .env.example, handbook, stategraph, handbook-measured) rev together — nothing auto-updates.
+
+Plus an inline SVG bar chart of the two envelopes; the footer gains the door (label zh「模型手術枱」/ en「LLM ops」); handbook back-link; `docs/ATLAS.md` row; `llmops-page.test.ts` pins both locales + the exact A/B literals; census clean over 2,637 literals (one simplified 劃/划 slip caught and fixed by the census, not by review).
+
+**Also fixed in the same unit.** The footer's `/world` hint still claimed **68 chapters** — now says 105 (both locales); the previous "not this arc" hide is gone (a real staleness the rail-check never caught because no test pinned that copy).
+
+**Verification (host).** Fresh mock build · `tsc` clean · web **406/406** · census 0 simplified (2,637) · `verify_all` NO OFFENDER · `check_atlas` PASS (390 cited paths) · SSR curls zh/en both return 200 with every marker; the model planes' live evidence re-confirmed 2026-11-16T12:52Z run prior to the unit.
+
+**Honest boundaries.** This surface is operator-facing and honest about its age — the figures go stale by design when a provider migrates; nothing redraws or re-measures on its own. The page is not linked from the consumer rails (footer only); it is an operator runbook, not consumer onboarding. The `/world` 105-chapter footer fix rides because it was the same staleness class.
+
+- readers: `apps/web/app/llm-ops/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/llmops-page.test.ts`, `apps/web/src/components/site-chrome.tsx`, `docs/ATLAS.md`, this ledger entry.

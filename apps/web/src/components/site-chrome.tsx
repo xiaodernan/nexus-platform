@@ -150,7 +150,8 @@ export function SiteFooter({ locale }: { locale: string }) {
     { href: '/command', label: locale === 'zh-HK' ? '指揮台' : 'Command desk', title: locale === 'zh-HK' ? '管理員 demo 頁 — 輸入 123 解鎖，看兩個星期的合成數據' : 'Demo operator view — unlock with 123 to read the synthetic two-week ledger' },
     { href: '/insights', label: locale === 'zh-HK' ? '營運掃描' : 'Operator scan', title: locale === 'zh-HK' ? '虛擬讀者的每日鬼影分析 — 一頁看完，不存數據' : 'Daily ghost-readers from a deterministic replay — one screen, zero stored data' },
     { href: '/stategraph', label: locale === 'zh-HK' ? '引擎讀本' : 'The engine', title: locale === 'zh-HK' ? '一張圖講清楚智能代理怎麼走 — make_plan → route → fanout → emit' : 'One graph, four nodes: make_plan → route → fanout → emit' },
-    { href: '/world', label: locale === 'zh-HK' ? '世界地圖' : 'World atlas', title: locale === 'zh-HK' ? '全景地圖 — 全系列 68 章按時辰攤開，七層一次讀完' : 'The whole series — 68 chapters, seven layers, one read' },
+    { href: '/llm-ops', label: locale === 'zh-HK' ? '模型手術枱' : 'LLM ops', title: locale === 'zh-HK' ? '大模型怎麼在產品裡流轉 — envelope A/B · prefix cache · router · weekly probe（真機實測）' : 'How the model actually moves through the product — envelope A/B · prefix cache · router · weekly probe (live-measured)' },
+    { href: '/world', label: locale === 'zh-HK' ? '世界地圖' : 'World atlas', title: locale === 'zh-HK' ? '全景地圖 — 全系列 105 章按時辰攤開，七層一次讀完' : 'The whole series — 105 chapters, seven layers, one read' },
     { href: '/hong-kong', label: dict.home.hkHub.seriesLink, title: dict.nav.hints.hongKong },
   ];
   return (
