@@ -45404,3 +45404,11 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** The block documents what is shipped and tested since D1142 — it does not claim LangGraph is embedded in every request, nor that wkapi.pro is reachable from this host (it isn't — 401; the engine path defaults to the serial planner). The 'ENGINE' kicker keeps it distinguishable from the REAL-HK sourced-data blocks. It is engineering teaching material, not user instructions; the user-facing tour still teaches search/search/sprint, not compilers.
 
 - readers: `apps/web/src/lib/i18n/dict.ts` (StateGraph ENGINE block zh + en), `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1241. D1241 — StateGraph verification on this host (D1240 addendum, real run)
+
+**Why.** The D1240 handbook block promised shippable, not aspirational, engineering. This entry records the verification run on the same master tree it documents — the one without this host reaching wkapi.pro, and the one where the graph has always defaulted to planner.
+
+**The run.** `uv run pytest tests/test_langgraph_engine_fingerprint.py -q` → **18 passed, 1 warning in 1.41s** (one langgraph checkpoint-base deprecation warning — no failures). Refused turn, missing-context, cap truncation and multi-rule corpus cases all byte-identical between the two engines, exactly as D1240 documents.
+
+- readers: this ledger entry only.
