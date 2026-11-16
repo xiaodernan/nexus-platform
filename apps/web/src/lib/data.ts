@@ -269,7 +269,7 @@ export async function offeringBySlug(slug: string): Promise<NexusResult<Offering
  */
 
 export async function guideBySlug(slug: string, locale: string): Promise<NexusResult<Guide | null>> {
-  if (IS_MOCK) return { data: mockGuide(slug), mocked: true };
+  if (IS_MOCK) return { data: mockGuide(slug, locale), mocked: true };
   try {
     // Projected, not cast: the platform serves `items` (stored blocks + a resolved `card` each) and the
     // view-model wants `body_blocks`, which it never served. A bare cast is what made this page throw
@@ -288,7 +288,7 @@ export async function guideBySlug(slug: string, locale: string): Promise<NexusRe
  * with its own empty state plus the reason (§105) rather than an error page behind a nav link.
  */
 export async function guideList(locale: string): Promise<NexusResult<CursorPage<Guide>>> {
-  if (IS_MOCK) return { data: pageOf(mockGuides()), mocked: true };
+  if (IS_MOCK) return { data: pageOf(mockGuides(locale)), mocked: true };
   try {
     const page = await nexusGet<CursorPage<Record<string, unknown>>>('platform', '/api/v1/guides');
     return { data: toGuidePage(page, locale), mocked: false };
@@ -298,7 +298,7 @@ export async function guideList(locale: string): Promise<NexusResult<CursorPage<
 }
 
 export async function collectionBySlug(slug: string, locale: string): Promise<NexusResult<Collection | null>> {
-  if (IS_MOCK) return { data: mockCollection(slug), mocked: true };
+  if (IS_MOCK) return { data: mockCollection(slug, locale), mocked: true };
   try {
     // Projected for the same reason as the guide read: the platform serves a localized title pair and
     // the resolved cards under `cards`, and the view-model wants a string and a list of `EntityCard`s.
@@ -311,7 +311,7 @@ export async function collectionBySlug(slug: string, locale: string): Promise<Ne
 }
 
 export async function collectionList(locale: string): Promise<NexusResult<CursorPage<Collection>>> {
-  if (IS_MOCK) return { data: pageOf(mockCollections()), mocked: true };
+  if (IS_MOCK) return { data: pageOf(mockCollections(locale)), mocked: true };
   try {
     const page = await nexusGet<CursorPage<Record<string, unknown>>>('platform', '/api/v1/collections');
     return { data: toCollectionPage(page, locale), mocked: false };

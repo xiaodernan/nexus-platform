@@ -1004,29 +1004,52 @@ export function mockLogin(email: string, display_name = '示例用戶'): User {
 
 /* ----------------------------------------------------------------- collections */
 
-export function mockCollections(): Collection[] {
-  const cards = allCards();
-  return DEMO_COLLECTIONS.map((collection, index) => ({
-    ...collection,
-    items: cards.slice(index * 2, index * 2 + 5),
-    updated_at: new Date(mockNow().getTime() - index * 86_400_000).toISOString(),
-  }));
+import { DEMO_COLLECTIONS_CN, DEMO_GUIDES_CN } from './seed-cn';
+
+/** The collection and guide fixtures are written in Traditional Chinese; a Simplified reader gets the generated arm. */
+const collectionsFor = (locale: string): Collection[] => (normalizeLocale(locale) === 'zh-CN' ? DEMO_COLLECTIONS_CN : DEMO_COLLECTIONS);
+const guidesFor = (locale: string): Guide[] => (normalizeLocale(locale) === 'zh-CN' ? DEMO_GUIDES_CN : DEMO_GUIDES);
+
+/** The decorated fixtures are rebuilt nowhere else; memoize per normalized locale.
+ *  `mockGuides()` in a loop made every chapter read O(n²) — one decoration per locale is the whole fix. */
+const DECORATED = new Map<string, { collections: Collection[]; guides: Guide[] }>();
+
+const decoratedFor = (locale: string) => {
+  const key = normalizeLocale(locale);
+  const hit = DECORATED.get(key);
+  if (hit) return hit;
+  const cards = allCards({ locale });
+  const fresh = {
+    collections: collectionsFor(locale).map((collection, index) => ({
+      ...collection,
+      items: cards.slice(index * 2, index * 2 + 5),
+      updated_at: new Date(mockNow().getTime() - index * 86_400_000).toISOString(),
+    })),
+    guides: guidesFor(locale).map((guide, index) => ({
+      ...guide,
+      body_blocks: guide.body_blocks.map((block) => (block.type === 'cards' ? { ...block, items: cards.slice(index, index + 3) } : block)),
+    })),
+  };
+  DECORATED.set(key, fresh);
+  return fresh;
+};
+
+/* ----------------------------------------------------------------- collections */
+
+export function mockCollections(locale = 'zh-HK'): Collection[] {
+  return decoratedFor(locale).collections;
 }
 
-export function mockCollection(slug: string): Collection | null {
-  return mockCollections().find((collection) => collection.slug === slug) ?? null;
+export function mockCollection(slug: string, locale = 'zh-HK'): Collection | null {
+  return mockCollections(locale).find((collection) => collection.slug === slug) ?? null;
 }
 
-export function mockGuides(): Guide[] {
-  const cards = allCards();
-  return DEMO_GUIDES.map((guide, index) => ({
-    ...guide,
-    body_blocks: guide.body_blocks.map((block) => (block.type === 'cards' ? { ...block, items: cards.slice(index, index + 3) } : block)),
-  }));
+export function mockGuides(locale = 'zh-HK'): Guide[] {
+  return decoratedFor(locale).guides;
 }
 
-export function mockGuide(slug: string): Guide | null {
-  return mockGuides().find((guide) => guide.slug === slug) ?? null;
+export function mockGuide(slug: string, locale = 'zh-HK'): Guide | null {
+  return mockGuides(locale).find((guide) => guide.slug === slug) ?? null;
 }
 
 /* ------------------------------------------------------- programmatic SEO (§29) */

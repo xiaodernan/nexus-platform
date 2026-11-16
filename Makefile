@@ -161,3 +161,4 @@ clean: ## Remove build output (does not touch data volumes)
 # the lockstep check, as scripts/check_simplified_mirror.mjs reports it.
 simplify: ## Check the zh-CN arms are in lockstep with zh-HK (opencc fold; UNCHECKED without opencc)
 	node scripts/check_simplified_mirror.mjs
+	node scripts/check_simplified_seed.mjs

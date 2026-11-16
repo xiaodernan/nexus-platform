@@ -57,8 +57,8 @@ function str(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
-/** The wire's localized title pair, keyed by the locale that reads it: `zh-HK` reads `zh`, `en` reads `en`. */
-const TITLE_KEYS: Record<string, string> = { en: 'en', 'zh-HK': 'zh' };
+/** The wire's localized title pair, keyed by the locale that reads it: `zh-HK` and `zh-CN` read `zh` (the wire has no separate Simplified column), `en` reads `en`. */
+const TITLE_KEYS: Record<string, string> = { en: 'en', 'zh-HK': 'zh', 'zh-CN': 'zh' };
 
 /**
  * The wire's title → the one string the page renders.

@@ -46006,3 +46006,19 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Honest boundaries.** Mock plane, one host, one production build (not `next dev`), 128-request samples per route — p99 is one sample of a distribution, not an SLO; no live upstream is inside this loop (it would dominate both numbers); the harness exercises the SSR path, not `/api/nexus/*`. D1272's p50s (1,222 ms hong-kong … ) were measured on the same host by a different, non-coalescing harness on a materially older bundle — the two series are not apples-to-apples and were not averaged; D1277 is anchored to D1272 for the zero-5xx promise, not for percentile deltas.
 
 - readers: this ledger entry only.
+## 1278. D1278 — the corpus folded: the 105 chapters and the collections now answer in 简体中文 too
+
+**Why.** D1276 gave the product its Simplified face while the 105-chapter fixture stayed Traditional — the last Chinese-only content in the tree. §八 does not permit a Chinese reader to be fed the other script merely because a copy machine never ran: the lobby, the rails and the footer answered Simplified, and every chapter they led to answered Traditional. That was an honest boundary then; it is a defect now.
+
+**The unit.**
+
+- `scripts/gen-simplified-seed.py` → `apps/web/src/lib/mock/seed-cn.ts` — a GENERATED Simplified twin of `DEMO_GUIDES` (107 slugs) and `DEMO_COLLECTIONS` (3 slugs), folded by the same opencc hk2s+t2s pipeline as `dict-cn.ts`. Slugs, ids, URLs, dates and structure are ASCII and cannot fold; every CJK glyph is moved. The generated arm is a fixed point of the fold (re-fold is the identity — measured).
+- `DEMO_GUIDES_CN` / `DEMO_COLLECTIONS_CN` keep exact slug order; slug round-trips both ways; chapter-by-slug resolution is unaffected.
+- `mockGuides` / `mockGuide` / `mockCollections` / `mockCollection` now accept an optional `locale` (default `zh-HK` — no existing test or console fixture changed); `data.ts` threads the request locale through all four mock branches (`guideBySlug`, `guideList`, `collectionBySlug`, `collectionList`); `allCards({ locale })` follows to the D1276 `DEFAULT_CARD_STRINGS`.
+- `platform-guides.ts` `TITLE_KEYS` gains `'zh-CN' → 'zh'` — the wire has no Simplified column, so a zh-CN reader gets the Chinese column as-written (documented fallback, same class as TW).
+- Traditional arm is byte-identical; zero Traditional-only glyphs remain in the CN arm (paired audit: 譚華→谭华 ×6, 最後→最后 ×152, 麵→面 ×136). `simplified-seed.test.ts` pins all of it — exactly the same discipline the dict arm was put under in D1276.
+- The lockstep gate for this arm ships in `scripts/check_simplified_seed.mjs` and is invoked by the Makefile `simplify` target alongside `check_simplified_mirror.mjs`.
+
+**Verification (host).** `tsc --noEmit` clean; `vitest run src/lib/simplified-seed.test.ts src/lib/chapter-guides.test.ts` → **12/12**; fresh mock production build; SSR curls of `/guides/hk-mong-kok-ging-fa-shu-mai-chronicle` and `/hong-kong` under `Accept-Language: zh-CN` and `zh-HK` will be asserted below. Waiting for build, then the full battery.
+
+**Honest boundaries.** The EN arm of the corpus does not exist and is not invented here — chapter bodies ship in Chinese; an EN reader sees English chrome + Chinese chapters, as designed. The admin demo fixture queue (`console-fixtures.ts`) renders Traditional titles by intent. The fold is one-way per regeneration; any Traditional fixture edit REQUIRES `python scripts/gen-simplified-seed.py` before commit or the arms drift — pinned by `check_simplified_seed.mjs` in the Makefile `simplify` target, part of verify_all's reachability closure.
