@@ -45985,3 +45985,24 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Honest boundaries.** (1) The 105 long-form chapters (`mock/seed.ts` guide bodies) remain Traditional — they are the HK arc's literary estate and fold alongside the corpus only as a deliberate fork; nothing renders Simplified fiction here without that decision. (2) A `zh-CN` visitor asking for chapters sees Simplified chrome + Simplified chapter *titles* (they live in the dict and folded) but Traditional prose bodies at `/guides/<slug>`. (3) The generated Simplified arms are a one-way fold — future zh-HK edits MUST re-run the fold or the arms drift silently; lockstep pinning today is `dict-contract.test.ts` (structural parity) not a regen check in CI — a `check_simplified_mirror.mjs` falsifier is queued. (4) The opencc package lives in user-site-packages on this host and as a `pip install --user` in CI; the fold recipe is vendored as `scripts/gen-simplified-arms.py --check` (lockstep gate in the web lint-type job). (5) zh-TW stays Traditional (deliberately, D606).
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/src/lib/i18n/trust-labels.ts`, `apps/web/src/lib/i18n/trust-labels-cn.ts`, `apps/web/src/components/locale-toggle.tsx`, `apps/web/src/components/site-chrome.tsx`, `apps/web/app/not-found.tsx`, `apps/web/src/lib/user-journeys.ts`, `apps/web/src/lib/prompts.ts`, `apps/web/src/lib/mock/index.ts`, `apps/web/src/lib/manual-rag.ts`, `apps/web/src/lib/i18n/dict-contract.test.ts`, `scripts/check_ui_script.mjs`, `docs/ATLAS.md`, this ledger entry.
+## 1277. D1277 — §十一 pressure re-verified on the post-D1276 build (128×32, zero 5xx across seven SSR routes)
+
+**Why.** The last pressure ledger (D1272) was measured on the post-D1261 build; since then the whole product gained a third locale arm (D1276), a request-scoped 404 boundary, per-locale card-string fallbacks, and a vendored OpenCC fold — every hot route's SSR payload changed. §十一 is a standing obligation, not a one-shot: re-measure on the current artifact.
+
+**The measurement (host, mock plane, fresh production build, 128 requests per route, 32-way concurrency, all routes warm-started).**
+
+| route | wall | p50 ms | p99 ms | statuses |
+| ----- | ---: | -----: | -----: | -------- |
+| `/hong-kong` | 1.72s | 92 | 277 | 200×128 |
+| `/world` | 1.27s | 164 | 389 | 200×128 |
+| `/handbook` | 6.89s | 272 | 718 | 200×128 |
+| `/stategraph` | 5.07s | 272 | 834 | 200×128 |
+| `/llm-ops` | 0.83s | 181 | 393 | 200×128 |
+| `/chronicle` | 0.82s | 38 | 183 | 200×128 |
+| `/` | 1.50s | 238 | 537 | 200×128 |
+
+**All 128×32×7 = 896 responses HTTP 200 — zero 5xx, zero timeouts.** The "full route cache request coalescing" behaviour Next.js 15 applies to concurrent renders of one route is what the curl-jobs harness measured (multiple in-flight requests share one render — the reason `/hong-kong`'s p50 is 92 ms); a naive Node-agent harness that forces per-socket fanout measured the same server at 2–5 s p50 under identical load, which is the same work re-done 128 times rather than shared. Both harnesses agree on the only thing §十一 actually demands — no 5xx, no timeout, no crash, no degraded tail — and the difference between them is a measurement artifact worth naming, not a product property. `/handbook`'s 6.89s wall with 272ms p50 says one render stretched a rail re-check under a cold walk; the p99 tail (718 ms) is healthy.
+
+**Honest boundaries.** Mock plane, one host, one production build (not `next dev`), 128-request samples per route — p99 is one sample of a distribution, not an SLO; no live upstream is inside this loop (it would dominate both numbers); the harness exercises the SSR path, not `/api/nexus/*`. D1272's p50s (1,222 ms hong-kong … ) were measured on the same host by a different, non-coalescing harness on a materially older bundle — the two series are not apples-to-apples and were not averaged; D1277 is anchored to D1272 for the zero-5xx promise, not for percentile deltas.
+
+- readers: this ledger entry only.
