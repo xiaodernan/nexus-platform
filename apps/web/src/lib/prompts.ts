@@ -25,6 +25,13 @@ const BY_LOCALE: Record<Locale, ExamplePrompt[]> = {
     { key: 'rainy_shoes', query: '我想買一雙適合香港下雨天穿的鞋' },
     { key: 'late_gym', query: '幫我找一個晚上 10 點後還營業的健身房' },
   ],
+  'zh-CN': [
+    { key: 'friends_dinner', query: '帮我找附近适合朋友聚会的餐厅' },
+    { key: 'japanese_budget', query: '预算 300 港币，想吃日料' },
+    { key: 'date_weekend', query: '周末找一个适合情侣约会的地方' },
+    { key: 'rainy_shoes', query: '我想买一双适合香港下雨天穿的鞋' },
+    { key: 'late_gym', query: '帮我找一个晚上 10 点后还营业的健身房' },
+  ],
   en: [
     { key: 'friends_dinner', query: 'restaurants near me for a group dinner' },
     { key: 'japanese_budget', query: 'japanese food under HK$300' },

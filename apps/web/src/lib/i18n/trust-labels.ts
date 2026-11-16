@@ -10,6 +10,7 @@
 import type { TrustLabels } from '@nexus/ui';
 import { formatDistance, formatRelativeDay, formatTravelMinutes } from '../format';
 import { normalizeLocale, type Locale } from './dict';
+import { zhCNLabels } from './trust-labels-cn';
 
 /**
  * `CompareTable` needs three more strings than a card does, plus the row names the compare
@@ -24,7 +25,7 @@ export type UiLabels = TrustLabels & {
 
 export function trustLabels(locale: string | null | undefined): UiLabels {
   const lang = normalizeLocale(locale);
-  return lang === 'en' ? enLabels : zhLabels;
+  return lang === 'zh-CN' ? zhCNLabels : lang === 'en' ? enLabels : zhLabels;
 }
 
 const zhLabels: UiLabels = {

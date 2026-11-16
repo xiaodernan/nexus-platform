@@ -20,6 +20,8 @@ const read = (rel: string) => readFileSync(join(repoRoot, rel), 'utf8');
 
 const PAGE = 'apps/web/app/world/page.tsx';
 const CHROME = 'apps/web/src/components/site-chrome.tsx';
+const DICT = 'apps/web/src/lib/i18n/dict.ts';
+const DICT_CN = 'apps/web/src/lib/i18n/dict-cn.ts';
 
 const BOUNDS = [225, 465, 720, 1020, 1140, 1290];
 const layerOf = (time: string): number => {
@@ -77,9 +79,13 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
 
   it('footer chrome carries the world atlas link (both locales, hint attached)', () => {
     const chrome = read(CHROME);
-    expect(chrome).toContain("href: '/world'");
-    expect(chrome).toContain('世界地圖');
-    expect(chrome).toContain('World atlas');
+    const dict = read(DICT);
+    const dictCn = read(DICT_CN);
+    expect(chrome).toContain('dict.footer.extraLinks');
+    expect(dict).toContain("href: '/world'");
+    expect(dict).toContain('世界地圖');
+    expect(dict).toContain('World atlas');
+    expect(dictCn).toContain('世界地图');
   });
 
   it('handbook quickLinks covers every shipped surface, bilingual', () => {

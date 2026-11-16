@@ -32,6 +32,7 @@ import type {
 } from '../types';
 import type { AvailabilitySlot } from '../types';
 import { MIN_LISTINGS_FOR_INDEX } from '../env';
+import { normalizeLocale } from '../i18n/dict';
 
 /**
  * Mock data plane. Same function signatures and same payload shapes as `lib/api/*`, so
@@ -71,11 +72,17 @@ export interface CardBuildOptions {
   strings?: { budget: string; price: string; rating: string; distance: string; hours: string; availability: string; match: string };
 }
 
+const DEFAULT_CARD_STRINGS = {
+  'zh-HK': { budget: '預算', price: '價格', rating: '評分', distance: '距離', hours: '營業時間', availability: '位況', match: '匹配' },
+  'zh-CN': { budget: '预算', price: '价格', rating: '评分', distance: '距离', hours: '营业时间', availability: '位况', match: '匹配' },
+  en: { budget: 'Budget', price: 'Price', rating: 'Rating', distance: 'Distance', hours: 'Hours', availability: 'Seats', match: 'Match' },
+} as const;
+
 /** EntityCard builder: the mock equivalent of what the AI service returns. */
 export function buildCard(seed: SeedMerchant, options: CardBuildOptions = {}): EntityCard {
   const now = mockNow();
   const detail = buildMerchantDetail(seed, now);
-  const strings = options.strings ?? { budget: '预算', price: '价格', rating: '评分', distance: '距离', hours: '营业时间', availability: '位况', match: '匹配' };
+  const strings = options.strings ?? DEFAULT_CARD_STRINGS[normalizeLocale(options.locale)];
   const facts = detail.facts;
   const priceFact = pickFact(facts, 'price');
   const ratingFact = pickFact(facts, 'rating');

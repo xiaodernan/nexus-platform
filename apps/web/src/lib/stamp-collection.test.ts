@@ -21,6 +21,7 @@ const COMPONENT = 'apps/web/src/components/stamp-collection.tsx';
 const PAGE = 'apps/web/app/stamp/page.tsx';
 const DICT = 'apps/web/src/lib/i18n/dict.ts';
 const CHROME = 'apps/web/src/components/site-chrome.tsx';
+const DICT_CN = 'apps/web/src/lib/i18n/dict-cn.ts';
 
 describe('D1177 /stamp collection island', () => {
   it('stamp source-of-truth is the same nexus.hk-series.read the progress strip uses', () => {
@@ -54,9 +55,13 @@ describe('D1177 /stamp collection island', () => {
 
   it('footer points to /stamp in both locales', () => {
     const chrome = read(CHROME);
-    expect(chrome).toContain("'/stamp'");
-    expect(chrome).toContain('印章收集');
-    expect(chrome).toContain('Passport stamps');
+    const dict = read(DICT);
+    const dictCn = read(DICT_CN);
+    expect(chrome).toContain('dict.footer.extraLinks');
+    expect(dict).toContain("'/stamp'");
+    expect(dict).toContain('印章收集');
+    expect(dict).toContain('Passport stamps');
+    expect(dictCn).toContain('印章收集');
   });
 
   it('dict carries the printable certificate blocks in both locales', () => {

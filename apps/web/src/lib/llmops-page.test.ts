@@ -17,6 +17,7 @@ const read = (rel: string) => readFileSync(join(repoRoot, rel), 'utf8');
 const PAGE = 'apps/web/app/llm-ops/page.tsx';
 const DICT = 'apps/web/src/lib/i18n/dict.ts';
 const CHROME = 'apps/web/src/components/site-chrome.tsx';
+const DICT_CN = 'apps/web/src/lib/i18n/dict-cn.ts';
 const ATLAS = 'docs/ATLAS.md';
 
 describe('D1265 the /llm-ops operator page', () => {
@@ -58,9 +59,13 @@ describe('D1265 the /llm-ops operator page', () => {
 
   it('the footer chrome carries the door (both locales)', () => {
     const chrome = read(CHROME);
-    expect(chrome).toContain("href: '/llm-ops'");
-    expect(chrome).toContain('模型手術枱');
-    expect(chrome).toContain('LLM ops');
+    const dict = read(DICT);
+    const dictCn = read(DICT_CN);
+    expect(chrome).toContain('dict.footer.extraLinks');
+    expect(dict).toContain("href: '/llm-ops'");
+    expect(dict).toContain('模型手術枱');
+    expect(dict).toContain('LLM ops');
+    expect(dictCn).toContain('模型手术台');
   });
 
   it('ATLAS names the route and the page carries its figures', () => {

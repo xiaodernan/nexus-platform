@@ -6,6 +6,8 @@
  * your readers" ink in the operator dashboard the mandate asked for (第九条 — 联网搜索模拟真实用户行为).
  */
 
+import type { Locale } from './i18n/dict';
+
 export interface JourneyBucket {
   profile: string;
   count: number;
@@ -40,21 +42,27 @@ const cyrb53 = (str: string, seed = 0): number => {
 
 const mix = (seed: number, tag: string): number => cyrb53(`${tag}:${String(seed)}`, 0xfeed);
 
-export function simulateJourneys(dateKey: string, locale: 'zh-HK' | 'en'): InsightsSnapshot {
-  const zh = locale === 'zh-HK';
+export function simulateJourneys(dateKey: string, locale: Locale): InsightsSnapshot {
+  const simplified = locale === 'zh-CN';
+  const zh = locale !== 'en';
 
-  const PROFILE_ZH = ['匆匆客', '細讀生', '漫遊者', '瞎點黨', '靜默離場', '收藏家'];
+  const PROFILE_ZH_TRAD = ['匆匆客', '細讀生', '漫遊者', '瞎點黨', '靜默離場', '收藏家'];
+  const PROFILE_ZH_SIMP = ['匆匆客', '细读生', '漫游者', '瞎点党', '静默离场', '收藏家'];
   const PROFILE_EN = ['impatient glance', 'slow reader', 'window shopper', 'random tapper', 'silent bounce', 'bookmarker'];
-  const profiles = zh ? PROFILE_ZH : PROFILE_EN;
+  const profiles = zh ? (simplified ? PROFILE_ZH_SIMP : PROFILE_ZH_TRAD) : PROFILE_EN;
 
   const snapshot: InsightsSnapshot = {
     date: dateKey,
     total: 0,
     hourRamp: new Array(24).fill(0),
     buckets: [],
-    headline: zh ? '當今營業的幽靈 — 22 位看不見的讀者' : 'Today’s spectral readers — 22 ghosts walked in and out',
+    headline: zh
+      ? (simplified ? '当今营业的幽灵 — 22 位看不见的读者' : '當今營業的幽靈 — 22 位看不見的讀者')
+      : 'Today’s spectral readers — 22 ghosts walked in and out',
     recommendation: zh
-      ? '提高回流：讓讀者多看 30 秒，勝過把首頁 CTA 改得越吵越好。'
+      ? (simplified
+          ? '提高回流：让读者多看 30 秒，胜过把首页 CTA 改得越吵越好。'
+          : '提高回流：讓讀者多看 30 秒，勝過把首頁 CTA 改得越吵越好。')
       : 'Dwell beats volume. A reader who stays 30s longer beats a louder hero CTA every time.',
   };
 
@@ -99,8 +107,8 @@ export function simulateJourneys(dateKey: string, locale: 'zh-HK' | 'en'): Insig
   return snapshot;
 }
 
-export const hourLabel = (hour: number, locale: 'zh-HK' | 'en'): string =>
-  locale === 'zh-HK' ? `${String(hour).padStart(2, '0')}點` : `${String(hour).padStart(2, '0')}:00`;
+export const hourLabel = (hour: number, locale: Locale): string =>
+  locale !== 'en' ? `${String(hour).padStart(2, '0')}${locale === 'zh-CN' ? '点' : '點'}` : `${String(hour).padStart(2, '0')}:00`;
 
 export interface WeekPoint {
   date: string;
@@ -126,14 +134,14 @@ const shiftDay = (dateKey: string, offset: number): string => {
   return t.toISOString().slice(0, 10);
 };
 
-const weekdayLabel = (dateKey: string, locale: 'zh-HK' | 'en'): string => {
+const weekdayLabel = (dateKey: string, locale: Locale): string => {
   const [y = 0, m = 1, d = 1] = dateKey.split('-').map(Number);
   const t = new Date(Date.UTC(y, m - 1, d, 12));
-  const localeTag = locale === 'zh-HK' ? 'zh-HK' : 'en-GB';
+  const localeTag = locale === 'zh-HK' ? 'zh-HK' : locale === 'zh-CN' ? 'zh-CN' : 'en-GB';
   const wd = t.toLocaleDateString(localeTag, { weekday: 'short', timeZone: 'UTC' });
   const mm = String(m).padStart(2, '0');
   const dd = String(d).padStart(2, '0');
-  return locale === 'zh-HK' ? `${wd} · ${mm}/${dd}` : `${wd} · ${mm}/${dd}`;
+  return `${wd} · ${mm}/${dd}`;
 };
 
 /**
@@ -141,8 +149,9 @@ const weekdayLabel = (dateKey: string, locale: 'zh-HK' | 'en'): string => {
  * truth about: who arrived, whether fewer are leaving early, and the slope across the week.
  * Deterministic from the HK date; replay-only, zero tracked bytes.
  */
-export function simulateWeek(dateKey: string, locale: 'zh-HK' | 'en'): WeekTrend {
-  const zh = locale === 'zh-HK';
+export function simulateWeek(dateKey: string, locale: Locale): WeekTrend {
+  const simplified = locale === 'zh-CN';
+  const zh = locale !== 'en';
   const points: WeekPoint[] = [];
   let weeklyTotal = 0;
 
@@ -174,10 +183,16 @@ export function simulateWeek(dateKey: string, locale: 'zh-HK' | 'en'): WeekTrend
 
   const advice = zh
     ? adviseKind === 'rising'
-      ? '訪客在變多——但別先叫更多人進來，先把「首屏三十秒」修得讓人留得住，否則人只是路過。'
+      ? (simplified
+          ? '访客在变多——但别先叫更多人进来，先把「首屏三十秒」修得让人留得住，否则人只是路过。'
+          : '訪客在變多——但別先叫更多人進來，先把「首屏三十秒」修得讓人留得住，否則人只是路過。')
       : adviseKind === 'cooling'
-        ? '訪客在流失——先修「進站三十秒內的去處指引」，新手最常在這裡離場；轉化不是第一步，留存才是。'
-        : '此週訪客平穩——適合把收藏與分享做重，讓常看的人常看，而不是逼更多人進來。'
+        ? (simplified
+            ? '访客在流失——先修「进站三十秒内的去处指引」，新手最常在这里离场；转化不是第一步，留存才是。'
+            : '訪客在流失——先修「進站三十秒內的去處指引」，新手最常在這裡離場；轉化不是第一步，留存才是。')
+        : (simplified
+            ? '此周访客平稳——适合把收藏与分享做重，让常看的人常看，而不是逼更多人进来。'
+            : '此週訪客平穩——適合把收藏與分享做重，讓常看的人常看——而不是逼更多人進來。')
     : adviseKind === 'rising'
       ? 'Footfall is climbing — don’t fix the funnel first, fix the first thirty seconds. More arrivals only help if the first screen holds attention.'
       : adviseKind === 'cooling'
@@ -198,15 +213,22 @@ export interface JourneyExplanation {
   body: string;
 }
 
-export const explainSnapshot = (snap: InsightsSnapshot, locale: 'zh-HK' | 'en'): JourneyExplanation => {
+export const explainSnapshot = (snap: InsightsSnapshot, locale: Locale): JourneyExplanation => {
+  const simplified = locale === 'zh-CN';
+  const zh = locale !== 'en';
   const sorted = [...snap.buckets].sort((a, b) => b.count - a.count);
-  const read = sorted.find((b) => b.profile.includes(locale === 'zh-HK' ? '細讀' : 'slow')) ??
+  const read = sorted.find((b) => b.profile.includes(locale === 'en' ? 'slow' : simplified ? '细读' : '細讀')) ??
     sorted[0] ?? { profile: '', count: 0, avgDwellSec: 0, dropRate: 0, headOfFunnel: 'low' as const };
-  if (locale === 'zh-HK') {
-    return {
-      headline: '哪個時段最吵，哪段留得住',
-      body: `今天的最高峰在下午五至八點，全場最沉默的細讀讀者佔 ${read.count} 份。對他們說的耳語，比對匆忙客的大聲更有用。`,
-    };
+  if (zh) {
+    return simplified
+      ? {
+          headline: '哪个时段最吵，哪段留得住',
+          body: `今天的最高峰在下午五至八点，全场最沉默的细读读者占 ${read.count} 份。对他们说的耳语，比对匆忙客的大声更有用。`,
+        }
+      : {
+          headline: '哪個時段最吵，哪段留得住',
+          body: `今天的最高峰在下午五至八點，全場最沉默的細讀讀者佔 ${read.count} 份。對他們說的耳語，比對匆忙客的大聲更有用。`,
+        };
   }
   return {
     headline: 'Where the day bites, and where it lets go',

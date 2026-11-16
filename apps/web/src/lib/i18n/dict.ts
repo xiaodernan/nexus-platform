@@ -8,10 +8,11 @@
  */
 
 import type { StreamStage } from '../types';
+import { zhCN } from './dict-cn';
 
-export type Locale = 'zh-HK' | 'en';
+export type Locale = 'zh-HK' | 'zh-CN' | 'en';
 
-export const LOCALES: readonly Locale[] = ['zh-HK', 'en'] as const;
+export const LOCALES: readonly Locale[] = ['zh-HK', 'zh-CN', 'en'] as const;
 export const DEFAULT_LOCALE: Locale = 'zh-HK';
 export const LOCALE_COOKIE = 'nexus_locale';
 
@@ -19,11 +20,17 @@ export function isLocale(value: string | null | undefined): value is Locale {
   return !!value && (LOCALES as readonly string[]).includes(value);
 }
 
-/** The browser sends `zh-HK`, `zh`, `zh-CN`… all CJK variants collapse to the one HK dictionary. */
+/**
+ * Locale routing: `zh-HK` and any HK/MO/TW traditional hint map to the Traditional arm;
+ * `zh-CN`/`zh-Hans`/`zh-SG`/bare `zh` hint to the Simplified arm; everything else → English.
+ * The mandated zh-TW behavior (render in Standard Traditional) reads as DEFAULT_LOCALE the
+ * same way before — the census never declared it Simplified-specific.
+ */
 export function normalizeLocale(value: string | null | undefined): Locale {
   if (!value) return DEFAULT_LOCALE;
   const lowered = value.toLowerCase();
   if (lowered.startsWith('en')) return 'en';
+  if (lowered.startsWith('zh-cn') || lowered.startsWith('zh-hans') || lowered.startsWith('zh-sg')) return 'zh-CN';
   if (lowered.startsWith('zh')) return 'zh-HK';
   return DEFAULT_LOCALE;
 }
@@ -48,6 +55,10 @@ export interface Dict {
     /** The theme switch's accessible name, per direction: the theme it moves TO. */
     themeToDark: string;
     themeToLight: string;
+    /* D1276: the three destination glyphs of the locale cycle zh-HK → zh-CN → en. */
+    toHk: string;
+    toCn: string;
+    toEn: string;
     /** D1095: the /hk-type archetype quiz link, shown in the footer. */
     hkType: string;
     handbook: string;
@@ -1008,6 +1019,8 @@ export interface Dict {
     trustTitle: string;
     trustText: string;
     rights: string;
+    /** D1276: the arena links with their own tooltips — label + aria/title copy, all locales. */
+    extraLinks: Array<{ href: string; label: string; title: string }>;
   };
   /** D1119: the /handbook page — the complete usage manual, new-user tour and game tutorial. */
   handbook: {
@@ -1168,6 +1181,9 @@ const zhHK: Dict = {
     backToTop: '回到頁首',
     themeToDark: '切換至深色主題',
     themeToLight: '切換至淺色主題',
+    toHk: '切換到香港繁體中文 — 整頁一鍵互換',
+    toCn: '切換到簡體中文 — 整頁一鍵互換',
+    toEn: '切換到英文版 — 整頁一鍵互換',
     hkType: '香港人格',
     handbook: '說明書',
     daily: '今日',
@@ -2729,6 +2745,17 @@ const zhHK: Dict = {
     trustTitle: '信任與安全',
     trustText: '任何結論都可追溯到來源事實；模型不會直接寫入數據庫，商戶資料修改由商戶決定。',
     rights: '© 2026 NEXUS',
+    extraLinks: [
+      { href: '/try', label: '新手試試', title: '五步直通 · 一分鐘試用產品' },
+      { href: '/stamp', label: '印章收集', title: '已讀章節集印 — 每讀一章，護照就多一個章印' },
+      { href: '/command', label: '指揮台', title: '管理員 demo 頁 — 輸入 123 解鎖，看兩個星期的合成數據' },
+      { href: '/insights', label: '營運掃描', title: '虛擬讀者的每日鬼影分析 — 一頁看完，不存數據' },
+      { href: '/stategraph', label: '引擎讀本', title: '一張圖講清楚智能代理怎麼走 — make_plan → route → fanout → emit' },
+      { href: '/llm-ops', label: '模型手術枱', title: '大模型怎麼在產品裡流轉 — envelope A/B · prefix cache · router · weekly probe（真機實測）' },
+      { href: '/chronicle', label: '系列全書', title: '一座城的一天 — 一百零五章、三幕、一段史詩的全書錨位' },
+      { href: '/afterward', label: '收工之後', title: '第二十四版全書的尾巴——零點到天亮之間的五個守夜瞬間' },
+      { href: '/world', label: '世界地圖', title: '全景地圖 — 全系列 105 章按時辰攤開，七層一次讀完' },
+    ],
   },
   handbook: {
     eyebrow: 'NEXUS · 簡明說明書',
@@ -3201,6 +3228,9 @@ const en: Dict = {
     backToTop: 'Back to top',
     themeToDark: 'Switch to the dark theme',
     themeToLight: 'Switch to the light theme',
+    toHk: 'Switch to Traditional Chinese — one click',
+    toCn: 'Switch to Simplified Chinese — one click',
+    toEn: 'Switch to English — one click',
     hkType: 'HK quiz',
     handbook: 'Handbook',
     daily: 'Daily',
@@ -4763,6 +4793,17 @@ const en: Dict = {
     trustTitle: 'Trust and safety',
     trustText: 'Every claim traces back to a source fact. The model never writes to the database, and merchants control their own data.',
     rights: '© 2026 NEXUS',
+    extraLinks: [
+      { href: '/try', label: 'Quick try', title: 'Five steps · one minute to feel the product' },
+      { href: '/stamp', label: 'Passport stamps', title: 'Every read chapter earns a stamp — 50 stamps to a complete passport' },
+      { href: '/command', label: 'Command desk', title: 'Demo operator view — unlock with 123 to read the synthetic two-week ledger' },
+      { href: '/insights', label: 'Operator scan', title: 'Daily ghost-readers from a deterministic replay — one screen, zero stored data' },
+      { href: '/stategraph', label: 'The engine', title: 'One graph, four nodes: make_plan → route → fanout → emit' },
+      { href: '/llm-ops', label: 'LLM ops', title: 'How the model actually moves through the product — envelope A/B · prefix cache · router · weekly probe (live-measured)' },
+      { href: '/chronicle', label: 'The Chronicle', title: 'One city, one day — the 105-chapter, three-act codex of this arc' },
+      { href: '/afterward', label: 'The Afterward', title: 'The tail of the closed day — five flashes between midnight and dawn' },
+      { href: '/world', label: 'World atlas', title: 'The whole series — 105 chapters, seven layers, one read' },
+    ],
   },
   handbook: {
     eyebrow: 'NEXUS · THE HANDBOOK',
@@ -5225,7 +5266,7 @@ const en: Dict = {
 };
 
 
-const DICTS: Record<Locale, Dict> = { 'zh-HK': zhHK, en };
+const DICTS: Record<Locale, Dict> = { 'zh-HK': zhHK, 'zh-CN': zhCN, en };
 
 export function getDict(locale: string | null | undefined): Dict {
   return DICTS[normalizeLocale(locale)];

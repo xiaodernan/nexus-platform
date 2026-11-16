@@ -145,18 +145,28 @@ export function answerManual(question: string, locale: string): ManualAnswer {
   }
   const sections = retrieve(trimmed, locale, 3);
   const top = sections[0];
+  const isZhCN = locale.toLowerCase().startsWith('zh-cn') || locale.toLowerCase().startsWith('zh-hans') || locale.toLowerCase().startsWith('zh-sg');
+  const isZh = locale.startsWith('zh');
   if (!top) {
     return {
       degraded: true,
-      answer: locale.startsWith('zh') ? '找不到對應的章節——試試輸入「拉麵」、「漫畫」、「預算」或「錯誤」之類的詞。' : 'No matching section — try simple nouns like “ramen”, “saving”, “budget”.',
+      answer: isZh
+        ? isZhCN
+          ? '找不到对应的章节——试试输入「拉面」、「漫画」、「预算」或「错误」之类的词。'
+          : '找不到對應的章節——試試輸入「拉麵」、「漫畫」、「預算」或「錯誤」之類的詞。'
+        : 'No matching section — try simple nouns like “ramen”, “saving”, “budget”.',
       citations: [],
       sections: [],
     };
   }
   const quote = [top.excerpt[0], top.excerpt[1]].filter(Boolean).join(' ');
   const answer = quote.length > 0
-    ? (locale.startsWith('zh') ? `看「${top.title}」：${quote}` : `Read “${top.title}”: ${quote}`)
-    : (locale.startsWith('zh') ? `看「${top.title}」——裡面詳細講了你要的事。` : `Read “${top.title}” — it covers what you asked.`);
+    ? (isZh ? `看「${top.title}」：${quote}` : `Read “${top.title}”: ${quote}`)
+    : (isZh
+        ? isZhCN
+          ? `看「${top.title}」——里面详细讲了你要的事。`
+          : `看「${top.title}」——裡面詳細講了你要的事。`
+        : `Read “${top.title}” — it covers what you asked.`);
   return {
     degraded: true,
     answer,

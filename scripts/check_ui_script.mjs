@@ -107,7 +107,7 @@ export const EXCLUSIONS = {
 /** A `zh…` key that names a locale the product writes Simplified ON PURPOSE is not zh-HK copy. The
  *  `Locale` union has exactly one zh member today, so this is the boundary for the day a zh-CN map
  *  joins the same population — D483 repaired the AI's zh-CN bank and deliberately left it Simplified. */
-export const SIMPLIFIED_LOCALES = /^zh-(CN|SG)$/i;
+export const SIMPLIFIED_LOCALES = /^zh-(CN|SG|Hans)(-|$)|^zhCN$/i;
 
 /**
  * Read the two tables the product already keeps.
@@ -194,7 +194,15 @@ export function zhBlocks(src, file) {
       if (/^\};/.test(lines[j])) { end = j; break; }
     }
     if (end < 0) return { blocks, problems: [`${file}: const ${m[1]} at line ${i + 1} has no closing }; in column 0`] };
-    blocks.push({ name: m[1], from: i + 1, to: end + 1, lines: lines.slice(i + 1, end) });
+    // Simplified arms (zhCN / zhLabels-cn) declare their own htmlLang in the block; they must
+    // not be judged as Hong Kong Traditional copy. The block's own htmlLang decides.
+    const simplified = lines.slice(i + 1, end + 1).some((l) => {
+      const m = /htmlLang:\s*'([^']+)'/.exec(l);
+      return m ? SIMPLIFIED_LOCALES.test(m[1]) : false;
+    });
+    if (!simplified) {
+      blocks.push({ name: m[1], from: i + 1, to: end + 1, lines: lines.slice(i + 1, end) });
+    }
   }
   return { blocks, problems: [] };
 }

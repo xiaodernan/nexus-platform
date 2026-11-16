@@ -15,6 +15,7 @@ const read = (rel: string) => readFileSync(join(repoRoot, rel), 'utf8');
 const PAGE = 'apps/web/app/afterward/page.tsx';
 const DICT = 'apps/web/src/lib/i18n/dict.ts';
 const CHROME = 'apps/web/src/components/site-chrome.tsx';
+const DICT_CN = 'apps/web/src/lib/i18n/dict-cn.ts';
 
 describe('D1273 the /afterward tail', () => {
   it('the page is server-rendered, dict-carried, canonical /afterward', () => {
@@ -44,8 +45,12 @@ describe('D1273 the /afterward tail', () => {
 
   it('the footer carries the door (both locales)', () => {
     const chrome = read(CHROME);
-    expect(chrome).toContain("href: '/afterward'");
-    expect(chrome).toContain('收工之後');
-    expect(chrome).toContain('The Afterward');
+    const dict = read(DICT);
+    const dictCn = read(DICT_CN);
+    expect(chrome).toContain('dict.footer.extraLinks');
+    expect(dict).toContain("href: '/afterward'");
+    expect(dict).toContain('收工之後');
+    expect(dict).toContain('The Afterward');
+    expect(dictCn).toContain('收工之后');
   });
 });

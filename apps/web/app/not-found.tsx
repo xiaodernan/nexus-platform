@@ -1,16 +1,18 @@
 import Link from 'next/link';
 import { Container, Icon, buttonVariants } from '@nexus/ui';
 
-import { DEFAULT_LOCALE } from '@/lib/env';
 import { getDict } from '@/lib/i18n';
+import { currentLocale } from '@/lib/i18n/server';
 
 /**
- * Static by design: a 404 boundary must not depend on request-scoped state (Next may prerender it),
- * so the copy falls back to the market default locale rather than reading a cookie.
+ * The 404 boundary resolves the reader's locale at request time — a Simplified-Chinese reader
+ * who lands on a dead route is told why in the same script they were just reading in (D1276:
+ * zh-CN / Traditional / en). Reading cookies() opts the boundary out of the build-time
+ * prerender; 404s are rare and this keeps the one dead-end page honest for every locale.
  */
-const dict = getDict(DEFAULT_LOCALE);
-
-export default function NotFound() {
+export default async function NotFound() {
+  const locale = await currentLocale();
+  const dict = getDict(locale);
   return (
     <Container size="shell" className="flex flex-col items-start gap-4 py-16 sm:py-24">
       <span className="text-2xs font-semibold uppercase tracking-wide text-ink-faint">404</span>

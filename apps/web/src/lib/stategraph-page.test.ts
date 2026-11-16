@@ -18,6 +18,7 @@ const PAGE = 'apps/web/app/stategraph/page.tsx';
 const ISLAND = 'apps/web/src/components/stategraph-island.tsx';
 const DICT = 'apps/web/src/lib/i18n/dict.ts';
 const CHROME = 'apps/web/src/components/site-chrome.tsx';
+const DICT_CN = 'apps/web/src/lib/i18n/dict-cn.ts';
 const HANDBOOK = 'apps/web/app/handbook/page.tsx';
 
 describe('D1246 the /stategraph runbook page', () => {
@@ -81,10 +82,13 @@ describe('D1246 the /stategraph runbook page', () => {
     expect(handbook).toContain('href="/stategraph"');
     expect(handbook).toContain('copy.stategraphDiagram.runbookCta');
     const chrome = read(CHROME);
-    expect(chrome).toContain("href: '/stategraph'");
-    expect(chrome).toContain('引擎讀本');
-    expect(chrome).toContain('The engine');
     const dict = read(DICT);
+    const dictCn = read(DICT_CN);
+    expect(chrome).toContain('dict.footer.extraLinks');
+    expect(dict).toContain("href: '/stategraph'");
+    expect(dict).toContain('引擎讀本');
+    expect(dict).toContain('The engine');
+    expect(dictCn).toContain('引擎读本');
     expect(dict).toContain('stategraphDiagram');
     expect(dict).toContain('runbookCta');
   });
