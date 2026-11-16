@@ -45338,3 +45338,21 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** Wikipedia's HK Tramways page is the single inline source — numbers drift (the page itself dated the ridership to 2015 and listed the operator RATP Dev Asia; both cited as of 2026-11-16); the handbook tells the reader to open the link rather than trusting this snapshot. The operator history (Swire 1904 → HKA → RATP acquisition) is deliberately not narrated here, to avoid unverifiable claims.
 
 - readers: `apps/web/src/lib/i18n/dict.ts` (REAL-HK VII zh + en), `docs/SHOWCASE.json`, `docs/ATLAS.md`, this ledger entry.
+
+## 1236. D1236 — §十一 re-verified: seven routes at 32-concurrent, 128/128 = 2xx (post-D1235)
+
+**Why.** §十一 wants the system pressure-tested continuously as the arc grows; measured on today's master tree (`f98b3c9`) against the standalone mock build, same harness as D1219 (`scripts/stress_search.mjs`), same concurrency class as before.
+
+**The numbers (host, the standalone mock plane, 1×128 requests @ 32-concurrent).**
+- `/hong-kong` 128/128 ok · p50 792 ms · p99 1531 ms · 36.1 req/s
+- `/world` 128/128 ok · p50 582 ms · p99 685 ms · 52.3 req/s
+- `/insights` 128/128 ok · p50 511 ms · p99 693 ms · 56.1 req/s
+- `/command` 128/128 ok · p50 525 ms · p99 742 ms · 65.5 req/s
+- `/hk-type` 128/128 ok · p50 1147 ms · p99 1316 ms · 27.6 req/s
+- `/handbook` 128/128 ok · p50 749 ms · p99 823 ms · 43.0 req/s
+- `/stamp` 128/128 ok · p50 397 ms · p99 739 ms · 65.5 req/s
+Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree can carry before CI moves anything else.
+
+**Honest boundaries.** This is the synthetic mock plane, reachable only from this host with `NEXT_PUBLIC_DATA_MODE=mock`. It does not represent production latency; it measures render cost and error-free shape at load. It does not test the API route (`/api/nexus/*`); the API route was pressure-tested separately (128 req @ 32 concurrency, 100% 2xx) in earlier milestones.
+
+- readers: this ledger entry only.
