@@ -373,6 +373,23 @@ class ImportExtractRequest(_Strict):
     raw_text: str
 
 
+class HandbookAskSection(_Strict):
+    """One manual section, exactly as the retrieval lane believes relevant (API_CONTRACT §7)."""
+
+    id: str = Field(min_length=1, max_length=48)
+    kicker: str = Field(default="", max_length=80)
+    title: str = Field(min_length=1, max_length=200)
+    body: str = Field(default="", max_length=2400)
+
+
+class HandbookAskRequest(_Strict):
+    """The manual-phrase lane's request — question + the top sections; the model owns nothing else."""
+
+    question: str = Field(min_length=1, max_length=400)
+    sections: list[HandbookAskSection] = Field(min_length=1, max_length=8)
+    locale: str = Field(default="zh-HK", max_length=16)
+
+
 class SearchRequest(_Strict):
     intent: Optional[Intent] = None
     query: Optional[str] = None

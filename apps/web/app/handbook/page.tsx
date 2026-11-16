@@ -5,6 +5,7 @@ import { Container, Icon, Badge } from '@nexus/ui';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { answerManual } from '@/lib/manual-rag';
+import { HandbookAskLive } from '@/components/handbook-ask-live';
 
 /**
  * `/handbook` — the product's own instruction booklet, in HK Traditional at one door and
@@ -109,6 +110,14 @@ export default async function HandbookPage(props: {
                 </ul>
               )}
               <p className="text-2xs text-ink-faint">{copy.askManual.degradedNote}</p>
+              {/* D1279: if the live model lane is enabled server-side, it phrases the same manual client-side.
+                  When the provider is missing or anything in the contract fails, this renders nothing. */}
+              <HandbookAskLive
+                question={askQ}
+                locale={locale}
+                pendingLabel={copy.askManual.livePending}
+                provenLabel={copy.askManual.liveProven}
+              />
             </div>
           )}
         </Container>

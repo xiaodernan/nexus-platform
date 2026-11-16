@@ -79,6 +79,20 @@ jobs:
           cd apps/ai && uv run python cache_probe.py | tee -a cache-probe.txt
           echo '## Cache probe (SSE arm — hotfix envelope, measured worse on this provider)' >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY" && tail -40 cache-probe.txt >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run the handbook phrase probe (answer must carry in-corpus citations)
+        shell: bash
+        env:
+          NEXUS_LLM_PROVIDER: openai
+          NEXUS_LLM_BASE_URL: https://api.aizzz.xyz/v1
+          NEXUS_LLM_API_KEY: ${{ secrets.WKAPI_PRO_API_KEY }}
+          NEXUS_LLM_MODEL_CHEAP: gpt-6.1-terra
+          NEXUS_LLM_MODEL_MID: gpt-6.1-terra
+          NEXUS_LLM_MODEL_REASON: gpt-6.1-terra
+          NEXUS_LLM_STREAM: 'false'
+        run: |
+          cd apps/ai && uv run python handbook_probe.py | tee -a cache-probe.txt
+          echo '## Handbook phrase probe (grounded manual phrasing, low temperature, direct-JSON)' >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY" && tail -20 cache-probe.txt >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload probe log as an artefact
         if: always()
         uses: actions/upload-artifact@v4

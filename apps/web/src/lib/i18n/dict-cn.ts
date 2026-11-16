@@ -1775,6 +1775,8 @@ export const zhCN: Dict = {
       submit: '问',
       degradedNote: '——不是 AI 复述，这是由说明书直接检索摘录的段落，附章节 ID。',
       noMatch: '找不到对应的章节——试试输入像「拉面」「预算」「错误」这类名词。',
+      livePending: '大模型正在用说明书措辞…',
+      liveProven: '模型润饰自说明书 · 出处如下',
     },
     quickLinks: [
       { href: '/search', label: '智能搜索' },

@@ -13,9 +13,12 @@
  *     manual itself, every time, offline — that is the product's promise to the reader.
  *   - there is deliberately NO model call in this path today: hand-rolled BM25-free lexical
  *     search is strictly weaker than a retrieval read but strictly better than an invented
- *     answer. Wiring an LLM into `ask=` is an operator decision once a live-model surface
- *     with a working /v1/embeddings or tool-call contract exists for the account; the
- *     retrieval core is the exact shape that path will consume, so nothing here is wasted.
+ *     answer. Wiring an LLM into `ask=` was an operator decision reserved for when a live-model
+ *     surface with a working contract exists; D1279 shipped that lane as an optional
+ *     client-side phrasing pass over this module's retrieval output (see the BFF route
+ *     `/api/nexus/ai/handbook-ask` and `components/handbook-ask-live.tsx`) — this module stays
+ *     model-free by design, and the page always renders its deterministic answer first,
+ *     with the model lane progressive on top.
  *
  * Tests exercise only this deterministic layer; the module touches no env and no network.
  */

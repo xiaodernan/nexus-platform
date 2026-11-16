@@ -1039,7 +1039,7 @@ export interface Dict {
     nextTitle: string;
     screenshotNote: string;
     quickLinks: Array<{ href: string; label: string }>;
-    askManual: { eyebrow: string; title: string; placeholder: string; submit: string; degradedNote: string; noMatch: string };
+    askManual: { eyebrow: string; title: string; placeholder: string; submit: string; degradedNote: string; noMatch: string; livePending: string; liveProven: string };
   };
   /** D1246: the /stategraph runbook page — the orchestrator graph explained in-app. */
   stategraph: {
@@ -2941,6 +2941,8 @@ const zhHK: Dict = {
       submit: '問',
       degradedNote: '——不是 AI 複述，這是由說明書直接檢索摘錄的段落，附章節 ID。',
       noMatch: '找不到對應的章節——試試輸入像「拉麵」「預算」「錯誤」這類名詞。',
+      livePending: '大模型正在用說明書措辭…',
+      liveProven: '模型潤飾自說明書 · 出處如下',
     },
     quickLinks: [
       { href: '/search', label: '智能搜索' },
@@ -4992,6 +4994,8 @@ const en: Dict = {
       submit: 'Ask',
       degradedNote: '— Not an AI paraphrase — excerpts retrieved from this leaflet, with section IDs.',
       noMatch: 'No matching section — try nouns like “ramen”, “budget”, “error”.',
+      livePending: 'The model is phrasing from the manual…',
+      liveProven: 'Model-phrased from the manual',
     },
     quickLinks: [
       { href: '/search', label: 'Search' },
