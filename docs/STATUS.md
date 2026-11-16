@@ -45571,3 +45571,15 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **Honest boundaries.** 香港仔 and 黃道盛街 are real; 阿德、油鍋、二十八年的攤位、祖上的位子——全部合成敘事. No real stall cooks for this fiction; the steam belongs to fiction.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1254. D1254 — chapter XCIX （東涌機場快線，08:05） — the empty basket on the airport express
+
+**Why.** The airport hour — routine and silent, one basket held by the one who waits before the world's longest people-carrier. The arc gains its 08:05 beat between the clinic's opening and Ho Ming's second truck.
+
+**The unit.** `DEMO_GUIDES` gains `hk-tsim-shui-po-dawn-tricycle-chronicle`, 「早上八點零五分：東涌——機場快線——阿藍的空籃（香港系列 · 第九十九章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、天空只是欄杆的反光 · 二、阿藍不是司機，他是引路人 · 三、空籃就是名片）, 後記 + SearchBox pointer （「東涌 空籃」）. Arc clock gains 08:05 between 安樹堂（08:00）與浩明第二輛米車（08:15）— **198 chips across both locales**; handbook reading order updated to ninety-nine; `chapter-icons` gains `'hk-tsim-shui-po-dawn-tricycle-chronicle': 'navigation'`; e2e floors ≥99; `/world` copy 98→99 everywhere; partition test now **16+19+18+19+9+10+8 = 99**.
+
+**Verification (host).** `tsc` clean · web **401/401** · census 0 simplified / **2,504** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 14.5s · SSR curls both locales: chapter renders with 阿藍/機場快線/空籃 markers, `/hong-kong` carries the chip and 第九十九章， `/world` returns **99 distinct guide links in each arm**.
+
+**Honest boundaries.** 東涌 and 機場快線 are real; 阿藍、竹籃、父親碼頭工——全部合成敘事. No real rail line owes this scene or this fiction anything.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

@@ -2801,4 +2801,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-tsim-shui-po-dawn-tricycle-chronicle', title: '早上八點零五分：東涌——機場快線——阿藍的空籃（香港系列 · 第九十九章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：早上八點零五分的東涌航展——阿藍的空籃飄過機場快線的玻璃，留下一串光。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點零五分。東涌機場快線（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿藍用一隻竹籃掛住了這輛車。' },
+      { type: 'heading', text: '一、天空只是欄杆的反光' },
+      { type: 'paragraph', text: '八點零五分，東涌機場快線最後一站前的光只剩玻璃的反光。阿藍站在欄杆旁，拿着一隻空竹籃——他父親是碼頭工人——每天這個時候就是欄杆旁等待。這裏除了早班的人，就是他。' },
+      { type: 'cards', title: '東涌可見', items: [] },
+      { type: 'heading', text: '二、阿藍不是司機，他是引路人' },
+      { type: 'paragraph', text: '阿藍一句話就讓動物成立——他不是說話的人，他是讓鳥看見這片海的引線。今天的第一个口令：「飛機來。」飛機沒有回聲，人們站在欄杆旁應了聲。' },
+      { type: 'cards', title: '東涌可聽', items: [] },
+      { type: 'heading', text: '三、空籃就是名片' },
+      { type: 'paragraph', text: '阿藍收回竹籃，他說竹籃從來不是給人看的，是給人記住的。八點零五分他收工，因為八點六分下一個紅眼開始——那是第二班，不是他的也不是我的，但籃留下。' },
+      { type: 'cards', title: '東涌可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「東涌 空籃」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1253",
-  "milestone_full": "第九十八章 · 香港仔——黃道盛街——阿德的最後一沓油條（06:10）· /world 九十八章",
+  "milestone": "D1254",
+  "milestone_full": "第九十九章 · 東涌——機場快線——阿藍的空籃（08:05）· /world 九十九章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: ninety-eight Traditional chapters — 00:00→24:00 full day arc · 196-chip clock both locales",
-    "Edition XCVIII — 早上六點十分：香港仔——黃道盛街——阿德的最後一沓油條 (06:10) · the first yeet long before dawn cracks",
-    "D1251: provider swap live-verified — api.aizzz.xyz/v1 + gpt-6.1-terra · live smoke PASS · intent extractor 5/5 live — through Clash Verge egress 127.0.0.1:7897 (host geo-locked direct)",
+    "HK series: ninety-nine Traditional chapters — 00:00→24:00 full day arc · 198-chip clock both locales",
+    "Edition XCIX — 早上八點零五分：東涌——機場快線——阿藍的空籃 (08:05) · the empty basket at the airport rail",
+    "D1251: provider swap live-verified — api.aizzz.xyz/v1 + gpt-6.1-terra · live smoke PASS · intent extractor 5/5 live — Clash Verge egress (this host geo-locked direct)",
     "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · StateGraph runbook route (/stategraph, inline SVG) · 18 accept-probe pins green",
-    "/world atlas reads 98 chips (16+19+17+19+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (98 chapters) · /world (98 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123 · /stategraph",
-    "D1253: XCVIII · D1252: XCVII · D1251: provider live-verified · D1250: the swap lands · D1249: XCVI · D1248: /stategraph"
+    "/world atlas reads 99 chips (16+19+18+19+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
+    "/hong-kong (99 chapters) · /world (99 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123 · /stategraph",
+    "D1254: XCIX · D1253: XCVIII · D1252: XCVII · D1251: provider live-verified · D1250: the swap lands · D1249: XCVI · D1248: /stategraph"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
