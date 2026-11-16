@@ -45326,3 +45326,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / 2,335 literals · `verify_all` NO OFFENDER.
 
 - readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.
+
+## 1235. D1235 — handbook REAL-HK VII （叮叮車， sourced from Wikipedia HK Tramways)
+
+**Why.** The handbook's real-data strip already carries six blocks; §九's mandate wants the city's Thursday, its stubborn metronome, before the next heavy milestone. The ding-ding is the most lived-in number in the product (the arc copy, the hints, the ch. details all reference it) — it deserved its own verifiable source rather than an embedded anecdote.
+
+**The unit.** `dict.handbook.sections` gains `dingding` (kicker `REAL-HK`, title `16 · 叮叮車——1904 年的慢拍（不是演示數據）`) in both locales, after Tai Kwun. Source: Wikipedia — Hong Kong Tramways (https://en.wikipedia.org/wiki/Hong_Kong_Tramways, retrieved 2026-11-16; URL inline in both blocks). Figures as the page itself records: 30 July 1904 opening; mainline 13.3 km + Happy Valley loop 2.6 km; ~30 km total track; gauge 1,067 mm; 550 V DC overhead with a single trolley pole; 165 double-decker cars; 120 stops; ~180,000 passengers per day (2015 figure); operated by RATP Dev Asia. zh carries Traditional HK script with the URL inline; en is the mirror. `docs/SHOWCASE.json` gains VII in the REAL-HK line (7 blocks).
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,344** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 10.7s · SSR curls both locales: `/handbook` renders its own ding-ding block with the inline Wikipedia URL.
+
+**Honest boundaries.** Wikipedia's HK Tramways page is the single inline source — numbers drift (the page itself dated the ridership to 2015 and listed the operator RATP Dev Asia; both cited as of 2026-11-16); the handbook tells the reader to open the link rather than trusting this snapshot. The operator history (Swire 1904 → HKA → RATP acquisition) is deliberately not narrated here, to avoid unverifiable claims.
+
+- readers: `apps/web/src/lib/i18n/dict.ts` (REAL-HK VII zh + en), `docs/SHOWCASE.json`, `docs/ATLAS.md`, this ledger entry.

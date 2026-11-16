@@ -2697,6 +2697,15 @@ const zhHK: Dict = {
         '1995 年，舊中環警署、中央裁判司署與域多利監獄被列為法定古蹟；2008 年特區政府與香港賽馬會宣佈非牟利活化計劃；2018 年 5 月大館分階段向公眾開放；2019 年獲 UNESCO 亞太區文物古蹟保護獎卓越獎',
         '大館由香港賽馬會旗下的 Jockey Club CPS Limited 全權擁有並營運——不是私人商戶，是一組法定古蹟的常青企劃',
       ] },
+      { id: 'dingding', kicker: 'REAL-HK', title: '16 · 叮叮車——1904 年的慢拍（不是演示數據）', paragraphs: [
+        '港島北岸、中環到筲箕灣沿線——叮叮車仍是這座城市最顯眼的「慢下來」。下面這幾筆同樣是公開來源的真實刻度，不屬本站演示資料。',
+        '資料來源：Wikipedia——Hong Kong Tramways（https://en.wikipedia.org/wiki/Hong_Kong_Tramways，2026-11-16 網頁查閱）。數字與細節按該頁 infobox／正文記錄；點開連結可核對現況。',
+      ], bullets: [
+        '1904 年 7 月 30 日首班叮叮車——一條跨港島西至東的電車路，一個獨特姿態走到今天',
+        '主線 13.3 公里，加上跑馬地環線（Happy Valley Loop）2.6 公里；全線軌道約 30 公里；軌距 1,067 毫米',
+        '直流 550 伏特架空電纜，單極受電弓受電；全車約 165 輛雙層電車；120 個車站；每日乘客約 18 萬（2015 年數字）',
+        '現由 RATP Dev Asia 營運——不是私人商戶，是一種活着的城市節拍',
+      ] },
     ],
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
@@ -4411,6 +4420,15 @@ const en: Dict = {
         '1864 — the first-generation Central Police Station (relocated from Wellington Street) and the Barrack Block are completed; 1914 — third-generation Central Magistracy built, first hearing April 1915; 1919 — Police Headquarters block, its Hollywood Road façade built to project authority',
         '1995 — the former Central Police Station, the Central Magistracy and Victoria Prison listed as Declared Monuments; 2008 — HKSAR Government and The Hong Kong Jockey Club announce a not-for-profit revitalisation plan; May 2018 — Tai Kwun opens to the public in phases; 2019 — Award of Excellence, UNESCO Asia-Pacific Awards for Cultural Heritage Conservation',
         'Tai Kwun is owned and operated by The Jockey Club CPS Limited (The Hong Kong Jockey Club) — not a private vendor; a standing assembly of declared monuments, alive again',
+      ] },
+      { id: 'dingding', kicker: 'REAL-HK', title: '16 · The ding-ding — Hong Kong’s slow beat, running since 1904 (not demo figures)', paragraphs: [
+        'The ding-ding still rolls down the north shore of Hong Kong Island — a slow, twice-deck beat that never asks to hurry. The numbers below come from public sources too; they are not demo data.',
+        'Source: Wikipedia — Hong Kong Tramways (https://en.wikipedia.org/wiki/Hong_Kong_Tramways, retrieved 2026-11-16). The figures are as recorded there; open the link to check the current fleet and fares.',
+      ], bullets: [
+        'Began operation 30 July 1904 — the tramway that has been sewing Hong Kong Island together for 122 years',
+        'Mainline 13.3 km, plus the Happy Valley loop 2.6 km; about 30 km of track in total; 1,067 mm gauge',
+        '550 V DC overhead with a single trolley pole; 165 double-decker cars; 120 stops; ~180,000 passengers a day (2015 figures)',
+        'Operated by RATP Dev Asia (the official operator of Hongkong Tramways) — not a private vendor; a city’s living metronome',
       ] },
     ],
     nextTitle: 'Want more?',
