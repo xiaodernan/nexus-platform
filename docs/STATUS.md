@@ -45436,3 +45436,13 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** 觀塘工業區 is real; 友諒工業大廈、阿莊、七年午盤、承生蛋糕的那位——全部合成敘事. No real parcel leaves this fiction.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1244. D1244 — the StateGraph runbook figure on /handbook (both locales)
+
+**Why.** StateGraph lives in the agent's spine (D1142) and in the handbook's ENGINE section (D1240), but text alone does not let a visitor *see* the machine. The handbook is the one in-app page anyone opens; an inline runbook figure — the actual graph compiled — was the missing piece.
+
+**The unit.** `dict.handbook` gains `stategraphDiagram` (zh + en, all Traditional HK copy in the zh arm). `apps/web/app/handbook/page.tsx` renders a 620×236 inline SVG only inside `section.id === 'stategraph'`: two lanes — the graph path (`make_plan` → `route` → dashed `fanout` burst → `emit`, with the refuse arrow bypassing `fanout` straight to `emit`) and the serial path beneath (`make_plan` → `serial loop` → `emit`), plus the graph/serial labels, the caption and the `NEXUS_AI_ENGINE=graph` default-note. No client island — pure server-side SVG, one tap to the document. `handbook.test.ts` gains four pins (figure title both locales, zh default-note, dict block presence, page source pins: `stategraphDiagram`, `make_plan`, `fanout`, `serial loop`).
+
+**Verification (host).** `tsc` clean · web **397/397** · census 0 simplified / **2,404** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 19.1s · SSR curls both locales: `/handbook` renders the figure with its atoms (title, lane labels, serial row, `NEXUS_AI_ENGINE`) in each arm.
+
+- readers: `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/handbook.test.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

@@ -1015,6 +1015,7 @@ export interface Dict {
     tourTitle: string;
     tour: Array<{ title: string; text: string }>;
     sections: Array<{ id: string; kicker: string; title: string; paragraphs: string[]; bullets?: string[] }>;
+    stategraphDiagram: { title: string; caption: string; graphLabel: string; serialLabel: string; defaultNote: string };
     nextTitle: string;
     screenshotNote: string;
     quickLinks: Array<{ href: string; label: string }>;
@@ -2732,6 +2733,13 @@ const zhHK: Dict = {
         'LangGraph 0.3.34；狀態只帶 text／context／subject／max_steps／plan／report 六件',
       ] },
     ],
+    stategraphDiagram: {
+      title: '引擎執行圖——StateGraph 的真圖',
+      caption: '同一個確定性 plan_tools 驅動兩條路徑：拒絕時直落 emit；否則 fanout 並發派發獨立讀取，再按計劃順序排回去。這張圖的實作於 D1142 落地（18 針指紋測試逐字對拍）。',
+      graphLabel: 'graph 路徑（並發）',
+      serialLabel: 'planner 路徑（預設 · 序列）',
+      defaultNote: '預設 planner。升到 graph 路徑：在伺服器設 NEXUS_AI_ENGINE=graph。',
+    },
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
     quickLinks: [
@@ -4481,6 +4489,13 @@ const en: Dict = {
         'LangGraph 0.3.34; the graph state carries text / context / subject / max_steps / plan / report — and nothing else',
       ] },
     ],
+    stategraphDiagram: {
+      title: 'The engine’s execution graph — the real StateGraph',
+      caption: 'One deterministic plan_tools drives both paths: a refusal goes straight to emit; otherwise fanout dispatches the independent reads concurrently and re-sorts outcomes into plan order. Landed as D1142 (18 fingerprint pins, byte-identical).',
+      graphLabel: 'graph path (concurrent)',
+      serialLabel: 'planner path (default · serial)',
+      defaultNote: 'Default is planner. To ride the graph: set NEXUS_AI_ENGINE=graph on the server.',
+    },
     nextTitle: 'Want more?',
     screenshotNote: 'Screenshots lag the running build; this handbook is refreshed on every shipped milestone.',
     quickLinks: [

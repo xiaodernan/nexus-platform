@@ -47,6 +47,21 @@ describe('D1119 the /handbook manual', () => {
     expect(page).not.toContain('analytics');
   });
 
+  it('the StateGraph runbook figure renders under the ENGINE section, dict-carried both locales', () => {
+    const dict = read(DICT);
+    expect(dict).toContain("stategraphDiagram: {");
+    expect(dict).toContain('引擎執行圖——StateGraph 的真圖');
+    expect(dict).toContain('The engine’s execution graph — the real StateGraph');
+    expect(dict).toContain('預設 planner');
+    expect(dict).toContain('Default is planner');
+    const page = read(PAGE);
+    expect(page).toContain("section.id === 'stategraph'");
+    expect(page).toContain('stategraphDiagram');
+    expect(page).toContain('make_plan');
+    expect(page).toContain('fanout');
+    expect(page).toContain('serial loop');
+  });
+
   it('the footer chrome links the handbook for both locales via dict.nav.handbook', () => {
     const chrome = read('apps/web/src/components/site-chrome.tsx');
     expect(chrome).toContain("href: '/handbook'");

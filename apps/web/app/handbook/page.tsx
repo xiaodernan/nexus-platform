@@ -165,6 +165,51 @@ export default async function HandbookPage() {
                     ))}
                   </ul>
                 ) : null}
+                {section.id === 'stategraph' && copy.stategraphDiagram ? (
+                  <figure className="mt-6 max-w-prose rounded-xl border border-accent-line bg-canvas p-5">
+                    <figcaption className="text-2xs font-semibold uppercase tracking-[0.22em] text-accent">
+                      {copy.stategraphDiagram.title}
+                    </figcaption>
+                    <svg viewBox="0 0 620 236" role="img" aria-label={copy.stategraphDiagram.title} className="mt-3 w-full text-ink-strong">
+                      <text x="0" y="22" fontSize="10" fontWeight="700" letterSpacing="0.2em" fill="currentColor">
+                        {copy.stategraphDiagram.graphLabel}
+                      </text>
+                      <rect x="0" y="34" width="124" height="48" rx="10" fill="rgb(var(--nexus-accent-rgb) / 0.12)" stroke="rgb(var(--nexus-accent-rgb) / 0.55)" strokeWidth="1" />
+                      <text x="62" y="63" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">make_plan</text>
+                      <path d="M124 58 L156 58" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <path d="M154 54 L161 58 L154 62" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <rect x="164" y="34" width="96" height="48" rx="10" fill="rgb(var(--nexus-accent-rgb) / 0.12)" stroke="rgb(var(--nexus-accent-rgb) / 0.55)" strokeWidth="1" />
+                      <text x="212" y="63" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">route</text>
+                      <path d="M260 58 L292 58" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <path d="M290 54 L297 58 L290 62" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <text x="276" y="48" fontSize="8" textAnchor="middle" fill="currentColor" opacity="0.8">ok</text>
+                      <rect x="300" y="34" width="104" height="48" rx="10" fill="rgb(var(--nexus-accent-rgb) / 0.2)" stroke="rgb(var(--nexus-accent-rgb) / 0.8)" strokeWidth="1.4" strokeDasharray="4 3" />
+                      <text x="352" y="63" fontSize="12" fontWeight="700" textAnchor="middle" fill="currentColor">fanout</text>
+                      <path d="M404 58 L436 58" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <path d="M434 54 L441 58 L434 62" stroke="currentColor" strokeWidth="1.6" fill="none" />
+                      <rect x="444" y="34" width="104" height="48" rx="10" fill="rgb(var(--nexus-accent-rgb) / 0.12)" stroke="rgb(var(--nexus-accent-rgb) / 0.55)" strokeWidth="1" />
+                      <text x="496" y="63" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">emit</text>
+                      <path d="M212 82 C212 128 168 142 124 142" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" fill="none" opacity="0.65" />
+                      <path d="M124 142 L148 142 L148 210 L212 210" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" fill="none" opacity="0.65" />
+                      <text x="210" y="118" fontSize="8" textAnchor="end" fill="currentColor" opacity="0.75">refused →</text>
+                      <text x="0" y="152" fontSize="10" fontWeight="700" letterSpacing="0.2em" fill="currentColor">
+                        {copy.stategraphDiagram.serialLabel}
+                      </text>
+                      <rect x="0" y="162" width="124" height="44" rx="10" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+                      <text x="62" y="189" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">make_plan</text>
+                      <path d="M124 184 L188 184" stroke="currentColor" strokeWidth="1.6" fill="none" opacity="0.65" />
+                      <path d="M186 180 L193 184 L186 188" stroke="currentColor" strokeWidth="1.6" fill="none" opacity="0.65" />
+                      <rect x="200" y="162" width="126" height="44" rx="10" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+                      <text x="263" y="189" fontSize="11" fontWeight="600" textAnchor="middle" fill="currentColor">serial loop</text>
+                      <path d="M326 184 L500 184 L496 189" stroke="currentColor" strokeWidth="1.6" fill="none" opacity="0.65" />
+                      <path d="M500 182 L510 184 L500 186" stroke="currentColor" strokeWidth="1.6" fill="none" opacity="0.65" />
+                      <rect x="514" y="162" width="104" height="44" rx="10" fill="rgb(var(--nexus-accent-rgb) / 0.12)" stroke="rgb(var(--nexus-accent-rgb) / 0.55)" strokeWidth="1" />
+                      <text x="566" y="189" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">emit</text>
+                    </svg>
+                    <p className="mt-3 text-2xs leading-relaxed text-ink-muted">{copy.stategraphDiagram.caption}</p>
+                    <p className="mt-2 font-mono text-[11px] text-ink-faint">{copy.stategraphDiagram.defaultNote}</p>
+                  </figure>
+                ) : null}
               </article>
             ))}
           </div>
