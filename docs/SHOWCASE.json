@@ -1,18 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1228",
-  "milestone_full": "第八十四章 · 旺角——金花街——譚華阿婆的最後一鍋燒賣（23:30）· /world 八十四章",
+  "milestone": "D1229",
+  "milestone_full": "第八十五章 · 佐敦道——謝老人的深夜糖水（00:15）· /world 八十五章",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: eighty-four Traditional chapters — 00:00→23:00 full day arc · 168-chip clock both locales",
-    "Edition LXXXIV — 晚上十一點半：旺角——金花街——譚華阿婆的最後一鍋燒賣 (23:30) · closing chapter of the night stall",
-    "D1227 — LXXXIII 灣仔軒尼詩道黃姐 · D1226 — LXXXII 中環雪廠街阿良 · D1225 — LXXXI 黃大仙祠 · D1224 — REAL-HK V Peak Tram",
+    "HK series: eighty-five Traditional chapters — 00:00→24:00 full day arc · 170-chip clock both locales",
+    "Edition LXXXV — 半夜十二點一刻：九龍——佐敦道——謝老人的深夜糖水 (00:15) · the quiet lamp after midnight",
+    "D1228 — LXXXIV 金花街譚華阿婆 · D1227 — LXXXIII 軒尼詩道黃姐 · D1226 — LXXXII 雪廠街阿良 · D1225 — LXXXI 黃大仙祠 · D1224 — REAL-HK V Peak Tram",
     "handbook REAL-HK I/II/III/IV/V — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) — inline URLs",
-    "/world atlas reads 84 chips (12+16+16+15+8+9+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (84 chapters) · /world (84 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 5 REAL-HK) · /command 123",
-    "D1228: LXXXIV · D1227: LXXXIII · D1226: LXXXII · D1225: LXXXI · D1224: REAL-HK V · D1223: LXXX"
+    "/world atlas reads 85 chips (13+16+16+15+8+9+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
+    "/hong-kong (85 chapters) · /world (85 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 5 REAL-HK) · /command 123",
+    "D1229: LXXXV · D1228: LXXXIV · D1227: LXXXIII · D1226: LXXXII · D1225: LXXXI · D1224: REAL-HK V"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

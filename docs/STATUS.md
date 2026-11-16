@@ -45260,3 +45260,13 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** 金花街 is a real Mong Kok street; the story inside譚華阿婆 — her thirty-two street-fern shu mai, the door-to-door mahjong rotations, the pot that outlived two people — all construction is fiction. No real shop named譚華賣anything. That is the point.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1229. D1229 — chapter LXXXV （佐敦道，00:15） — the midnight sugar-water lamp
+
+**Why.** The eighty-fifth chapter starts a brand-new north-pole — the clock now opens with a new night-time scene at 00:15, before the taxi stand, before the dawn market, before the one drop-in. The world is wider tonight.
+
+**The unit.** `DEMO_GUIDES` gains `hk-jordan-way-shu-lao-sugar-water-chronicle`, 「半夜十二點一刻：九龍——佐敦道——謝老人的深夜糖水（香港系列 · 第八十五章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、深夜的一盞燈 · 二、黑糖水的四十一年 · 三、這一夜沒有客）, 後記 + SearchBox pointer （「佐敦道 糖水」）. Arc clock gains 00:15 between 販賣機（00:00）與的士站最後一客（00:30）— **170 chips across both locales**; handbook reading order updated to eighty-five; `chapter-icons` gains `'hk-jordan-way-shu-lao-sugar-water-chronicle': 'navigation'`; e2e floors ≥85; `/world` copy 84→85 everywhere; partition test now **13+16+16+15+8+9+8 = 85**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,299** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 9.8s · SSR curls both locales: chapter renders with 謝老人/佐敦道 markers, `/hong-kong` carries the chip and 第八十五章， `/world` returns **85 distinct guide links in each arm**.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

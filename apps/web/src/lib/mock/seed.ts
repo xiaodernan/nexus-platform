@@ -2507,4 +2507,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-jordan-way-shu-lao-sugar-water-chronicle', title: '半夜十二點一刻：九龍——佐敦道——謝老人的深夜糖水（香港系列 · 第八十五章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：半夜十二點一刻的佐敦道——謝老人把最後一鍋黑糖水打下去，還是給自己和媽媽，讓自己不要睡。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：半夜十二點一刻。佐敦道（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——謝老人把最後一勺黑糖水打下去。' },
+      { type: 'heading', text: '一、深夜的一盞燈' },
+      { type: 'paragraph', text: '佐敦道即便睡了，也很少有人聽得到糖水的聲響。謝老人一直站著，直到收拾鍋。他說整條佐敦道最忠實的，是那一盞半夜才亮的燈。' },
+      { type: 'cards', title: '佐敦道可見', items: [] },
+      { type: 'heading', text: '二、黑糖水的四十一年' },
+      { type: 'paragraph', text: '謝老人小時候跟著媽媽在糖水店裡面，從七歲開始學打勺。四十餘年，他走到哪裡，夜總是走到那裡。他說自己最準的不是糖水的味度，而是整碗東西的順序。' },
+      { type: 'cards', title: '佐敦道可聽', items: [] },
+      { type: 'heading', text: '三、這一夜沒有客' },
+      { type: 'paragraph', text: '這一夜沒有客人。謝老人一手端碗、一手拉鍋，替自己留好今晚的這一碗。他不上頭的人，但他知道這碗糖水如果留給客，一夜之後就消失了——關係從這一碗開始。' },
+      { type: 'cards', title: '佐敦道可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「佐敦道 糖水」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
