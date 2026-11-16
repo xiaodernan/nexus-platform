@@ -1,18 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1255",
-  "milestone_full": "第一百章 · 將軍澳——唐宮裡——阿強的百番甜麵包（06:40）· /world 一百章",
+  "milestone": "D1259",
+  "milestone_full": "第一百章 — the hundredth Traditional HK chapter · live provider swap fully re-wired · envelope default flips to direct JSON (2026-11-16 measured A/B)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: one hundred Traditional chapters — 00:00→24:00 full day arc · 200-chip clock both locales — the hundredth edition lands",
-    "Edition C — 早上六點四十分：將軍澳——唐宮裡——阿強的百番甜麵包 (06:40) · the hundredth sweet bun in the warm oven",
-    "D1251: provider swap live-verified — api.aizzz.xyz/v1 + gpt-6.1-terra · live smoke PASS · intent extractor 5/5 live — through Clash Verge egress 127.0.0.1:7897 (geo-locked direct host)",
+    "HK series: one hundred Traditional chapters — 00:00→24:00 full day arc · 200-chip clock both locales — the hundred-edition milestone lands",
+    "D1259: live provider swap complete — every live-code/test path points to api.aizzz.xyz/v1 + gpt-6.1-terra · live smoke PASS (~8.4s) · intent extract 5/5 live",
+    "D1257: envelope default flipped — adapter and .env.example ship direct JSON; weekly probe reports both arms (production default + SSE opt-in); 81.5% cached direct vs 16.3% SSE (2026-11-16)",
     "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · StateGraph runbook route (/stategraph, inline SVG) · 18 accept-probe pins green",
     "/world atlas reads 100 chips (16+20+18+19+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (100 chapters) · /world (100 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK + ENGINE) · /command 123 · /stategraph",
-    "D1255: C · D1254: XCIX · D1253: XCVIII · D1252: XCVII · D1251: provider swap · D1250: the swap lands · D1249: XCVI"
+    "/hong-kong (100 chapters) · /world (100 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (7 REAL-HK + ENGINE) · /command 123 · /stategraph",
+    "Chapters LXXXVI → C (91 → 100) landed in this arc; every chapter Traditional · flags demo:true · 合成敘事",
+    "D1259: the milestone · D1257: envelope direct-JSON · D1250: provider lands · D1248: /stategraph"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
