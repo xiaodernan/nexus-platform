@@ -1,6 +1,8 @@
 """LIVE provider-cache probe — env-gated, never CI, never commits anything about the key.
 
-Measures what the wkapi.pro dashboard is looking at, with today's adapter code on both arms:
+Measures the upstream prefix cache once per envelope arm — the direct JSON arm (production default since D1257, 81.5% measured on 2026-11-16) and the SSE arm (set NEXUS_LLM_STREAM=true; 16.3% same day on the identical queries). When invoked twice — direct and then with NEXUS_LLM_STREAM=true — this file's output carries both arms back to the operator.
+
+The operator's dashboard is what the provider reads; this file tracks the same bytes under the two envelopes so the CI record matches the command line an operator actually sets.
 
   1. identical bursts   — 6 identical small prompts against the live provider
   2. big-prefix bursts  — 6 identical large prompts (the intent-extraction shape)

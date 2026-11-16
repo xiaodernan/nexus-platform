@@ -51,7 +51,21 @@ jobs:
             echo "Each burst reports cached_tokens and prompt_tokens so the hit rate is measured, not asserted."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Run the cache probe
+      - name: Run the cache probe (direct JSON, production envelope)
+        shell: bash
+        env:
+          NEXUS_LLM_PROVIDER: openai
+          NEXUS_LLM_BASE_URL: https://api.aizzz.xyz/v1
+          NEXUS_LLM_API_KEY: ${{ secrets.WKAPI_PRO_API_KEY }}
+          NEXUS_LLM_MODEL_CHEAP: gpt-6.1-terra
+          NEXUS_LLM_MODEL_MID: gpt-6.1-terra
+          NEXUS_LLM_MODEL_REASON: gpt-6.1-terra
+          NEXUS_LLM_STREAM: 'false'
+        run: |
+          cd apps/ai && uv run python cache_probe.py | tee cache-probe.txt
+          echo '## Cache probe (direct JSON — the production default since D1257)' >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY" && tail -40 cache-probe.txt >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run the cache probe (SSE arm comparison)
         shell: bash
         env:
           NEXUS_LLM_PROVIDER: openai
@@ -62,8 +76,8 @@ jobs:
           NEXUS_LLM_MODEL_REASON: gpt-6.1-terra
           NEXUS_LLM_STREAM: 'true'
         run: |
-          cd apps/ai && uv run python cache_probe.py | tee cache-probe.txt
-          echo "## Cache probe" >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY" && tail -40 cache-probe.txt >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cd apps/ai && uv run python cache_probe.py | tee -a cache-probe.txt
+          echo '## Cache probe (SSE arm — hotfix envelope, measured worse on this provider)' >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY" && tail -40 cache-probe.txt >> "$GITHUB_STEP_SUMMARY" && echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload probe log as an artefact
         if: always()

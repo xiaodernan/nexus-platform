@@ -45609,3 +45609,33 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **Honest boundaries.** This flips only names. It does *not* claim the live provider gates ran — they still skip/skip-on-missing-env by construction; it does *not* claim the migrated name resolves for every caller; the operator's key remains for their own dogfooding.
 
 - readers: `apps/ai/tests/test_cache_reporting_is_not_a_miss.py`, `apps/ai/tests/test_live_llm_provider_gate.py`, `apps/ai/tests/test_live_intent_contract_gate.py`, `apps/web/src/lib/console-admin.ts`, `apps/ai/nexus_ai/models/openai.py`, `apps/ai/nexus_ai/models/base.py`, this ledger entry.
+
+## 1257. D1257 — the envelope default flips: direct JSON before SSE, measured on aizzz.xyz/gpt-6.1-terra
+
+**Why.** The operator's standing question (valid since D1044, unchanged in 2026-05) — "calls cache badly and everything rides SSE; surely the calling method is wrong" — deserved a measured answer on the **new provider**. The prior default was set on 2026-11-13 when the only reachable endpoint (wkapi.pro/v1) served more cached_tokens over SSE; the operator has since migrated the provider to aizzz.xyz/v1 (`gpt-6.1-terra`). Nobody had re-measured the envelope on the new provider before D1257.
+
+**The experiment.** Live through Clash Verge egress (127.0.0.1:7897 — this host is geo-locked out of the origin; the probe only happens through the operator's own trust fabric), 6 identical-rate-design calls per arm against the production intent-extraction prompt (`INTENT_EXTRACT_SYSTEM` via `contract_for("intent_extract", ...)` incl. the D1251 merchant-vs-offering clarifier), `temperature=0`, `json_hint="json_object"`:
+
+```
+SSE arm   (the D1044 default, now the opt-in):  0, 0, 0, 0, 0, 8832  → 8832/54211 = 16.3%
+direct    (the new default):                   8832, 0, 8832, 8832, 8832, 8832 → 44160/54211 = 81.5%
+```
+
+Both arms serve the same prefix cache; the envelope decides which prompts clear the provider's cacheable floor first. The direct JSON arm reaches the prefix cache for a far larger fraction of the workload than the SSE arm does on this provider — the exact inverse of the 2026-11-13 finding on the retired proxy.
+
+**The flip.** `apps/ai/nexus_ai/models/openai.py::complete` now defaults to direct JSON:
+
+- `stream_mode = setting in {"1","true","yes","on"}` (opt-in SSE, no longer opt-out).
+- Docstring rewritten with the A/B table + the flip.
+- `apps/ai/.env.example` documents `NEXUS_LLM_STREAM=false` as THE default and `true` as the opt-in.
+- `apps/ai/*.py` probe scripts (`cache_probe.py`, `live_review_probe.py`, `cache_latency_probe.py`) keep both arms available by env.
+- `apps/ai/tests/test_openai_stream.py` pins: default body carries NO stream key, `NEXUS_LLM_STREAM=true` enables the full SSE arm with `include_usage`, content+usage+cached_tokens reassemble noise-free in both orderings.
+- `.github/workflows/llm-cache-probe.yml` probes BOTH arms per run (direct JSON step → tee cache-probe.txt, then SSE step → `tee -a`); both tables now land in the same artifact.
+
+**Numbers beyond the split-second A/B (full probe, 2026-11-16).** Direct-JSON arm against the production prompt: identical 4/6 @100%; diverse 0/6 @0% (expected; per-query different); tiny-system arm 1/3 @95.5%; contract arm 8/12 @100%. SSE arm: identical 3/6 @100%; contract 7/12 @100%.
+
+**Verification (host).** `uv run pytest -q` → **37806 passed, 502 skipped, 49 warnings** in 285.84s (zero regression, including `test_openai_stream.py` 5/5). All reader gates pass; all census still 0 simplified. The 37-hold intent-extract wired-path probe `check_intent_extract_live_path.mjs` passes as-is (it pins none of the envelope). `test_cache_reporting_is_not_a_miss.py` exits green now (the D1256-aware fixture).
+
+**Honest boundaries.** The flip is measured on ONE Clash-Verge node, ONE model, ONE prompt class (intent_extract). No identical-burst A/B was ever measured on a moving prefix (that arm is unachievable by construction). The SSE envelope stays the correct opt-in for providers that only expose `cached_tokens` through it — the adapter still defaults to direct JSON because THIS operator's provider reports better over JSON today. Every live settlement in the repo is to be re-measured per provider migration, not assumed.
+
+- readers: `apps/ai/nexus_ai/models/openai.py`, `apps/ai/.env.example`, `apps/ai/tests/test_openai_stream.py`, `apps/ai/cache_probe.py`, `.github/workflows/llm-cache-probe.yml`, this ledger entry.

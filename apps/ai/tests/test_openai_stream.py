@@ -1,9 +1,15 @@
-"""D1044 — SSE envelope is the default `complete()` transport; the §1 contract is untouched.
+"""The default `complete()` transport is the direct JSON path; the §1 wire contract is untouched.
 
-The adapter still returns one complete `LLMResponse` to callers. These tests pin (a) the
-default request body carries `stream` + `stream_options.include_usage`, (b) an explicit
-`NEXUS_LLM_STREAM=false` restores the direct JSON shape, (c) `_reassemble_sse` assembles
-content, usage, finish_reason and model from an unordered-line stream.
+Since D1257 (2026-11-16) the operator's migrated provider — api.aizzz.xyz/v1 ("gpt-6.1-terra") —
+served MORE prefix-cache hits over direct JSON than over the SSE envelope the prior provider
+needed for the same `cached_tokens` visibility (the two arms are pinned by two separate tests
+below and by the identical-burst live-run A/B recorded in D1257's ledger). The previous default
+(SSE) protected a silent-JSON provider that never saw those tokens at all.
+
+These tests pin (a) the default request body carries NO `stream`/`stream_options`, (b) an explicit
+`NEXUS_LLM_STREAM=true` enables the SSE envelope with include_usage, (c) `_reassemble_sse` assembles
+content, usage, finish_reason and model from an unordered-line stream, (d) the default body decodes
+a direct-JSON response with provider-verbatim `cached_tokens`.
 """
 
 from __future__ import annotations
@@ -41,7 +47,7 @@ class _FakeClient:
 
 def _adapter(client: _FakeClient) -> OpenAIAdapter:
     return OpenAIAdapter(base_url="https://proxy.example/v1", api_key="sk-test",
-                         models={"cheap": "m", "mid": "gpt-6-sol", "reason": "m"},
+                         models={"cheap": "m", "mid": "gpt-6.1-terra", "reason": "m"},
                          client=client)
 
 
@@ -50,15 +56,15 @@ def _sse_body(pieces: list[str], finish: str = "stop",
     lines = []
     for piece in pieces:
         lines.append("data: " + json.dumps(
-            {"id": "chatcmpl-x", "model": "gpt-6-sol",
+            {"id": "chatcmpl-x", "model": "gpt-6.1-terra",
              "choices": [{"index": 0, "delta": {"content": piece},
                           "finish_reason": None}]}))
     lines.append("data: " + json.dumps(
-        {"id": "chatcmpl-x", "model": "gpt-6-sol",
+        {"id": "chatcmpl-x", "model": "gpt-6.1-terra",
          "choices": [{"index": 0, "delta": {}, "finish_reason": finish}]}))
     if usage is not None:
         lines.append("data: " + json.dumps(
-            {"id": "chatcmpl-x", "model": "gpt-6-sol", "choices": [],
+            {"id": "chatcmpl-x", "model": "gpt-6.1-terra", "choices": [],
              "usage": usage}))
     lines.append("data: [DONE]")
     return "\n\n".join(lines) + "\n\n"
@@ -69,8 +75,23 @@ _USAGE = {"prompt_tokens": 100, "completion_tokens": 30,
 
 
 @pytest.mark.asyncio
-async def test_stream_envelope_is_the_default(monkeypatch):
+async def test_direct_json_is_the_default(monkeypatch):
     monkeypatch.delenv("NEXUS_LLM_STREAM", raising=False)
+    client = _FakeClient(_FakeResponse(json_body={
+        "choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}],
+        "model": "gpt-6.1-terra",
+        "usage": {"prompt_tokens": 10, "completion_tokens": 5,
+                  "prompt_tokens_details": {"cached_tokens": 7}}}))
+    adapter = _adapter(client)
+    await adapter.complete(LLMRequest(task_class="summary", system="s",
+                                      payload={"records": []}))
+    assert "stream" not in client.last_body
+    assert client.last_body.get("stream_options") is None
+
+
+@pytest.mark.asyncio
+async def test_explicit_true_restores_sse(monkeypatch):
+    monkeypatch.setenv("NEXUS_LLM_STREAM", "true")
     client = _FakeClient(_FakeResponse(text=_sse_body(["hello"], usage=_USAGE)))
     adapter = _adapter(client)
     await adapter.complete(LLMRequest(task_class="summary", system="s",
@@ -80,25 +101,8 @@ async def test_stream_envelope_is_the_default(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_explicit_false_restores_direct_json(monkeypatch):
-    monkeypatch.setenv("NEXUS_LLM_STREAM", "false")
-    client = _FakeClient(_FakeResponse(json_body={
-        "choices": [{"message": {"content": "hi"}, "finish_reason": "stop"}],
-        "model": "gpt-6-sol",
-        "usage": {"prompt_tokens": 10, "completion_tokens": 5,
-                  "prompt_tokens_details": {"cached_tokens": 7}}}))
-    adapter = _adapter(client)
-    resp = await adapter.complete(LLMRequest(task_class="summary", system="s",
-                                             payload={"records": []}))
-    assert "stream" not in client.last_body
-    assert client.last_body.get("stream_options") is None
-    assert resp.text == "hi"
-    assert resp.cached_tokens == 7 and resp.prompt_tokens == 10
-
-
-@pytest.mark.asyncio
 async def test_sse_envelope_end_to_end_content_and_usage(monkeypatch):
-    monkeypatch.delenv("NEXUS_LLM_STREAM", raising=False)
+    monkeypatch.setenv("NEXUS_LLM_STREAM", "true")
     body = _sse_body(["找到 ", "2 個", "選擇"], usage=_USAGE)
     client = _FakeClient(_FakeResponse(text=body))
     adapter = _adapter(client)
@@ -109,7 +113,7 @@ async def test_sse_envelope_end_to_end_content_and_usage(monkeypatch):
     assert resp.provider == "openai" and resp.degraded is False
     assert resp.prompt_tokens == 100 and resp.completion_tokens == 30
     assert resp.cached_tokens == 80 and resp.cache_hit is True
-    assert resp.model == "gpt-6-sol"
+    assert resp.model == "gpt-6.1-terra"
 
 
 def test_reassemble_sse_skips_noise_and_keeps_order():

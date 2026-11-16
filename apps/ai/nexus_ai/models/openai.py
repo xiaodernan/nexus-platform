@@ -2,15 +2,24 @@
 
 Credentials come from `NEXUS_LLM_BASE_URL` / `NEXUS_LLM_API_KEY` only.
 
-`NEXUS_LLM_STREAM` controls the transport envelope. Since D1044 it defaults to the SSE envelope
-with `stream_options.include_usage=true`: the app still consumes a complete response (no stream
-is ever exposed to callers of complete(), and the §1 wire contract is untouched) — only the wire
-between this adapter and the proxy changes. Measured live against api.aizzz.xyz/v1 (`gpt-6.1-terra`,
-2026-11-13, identical byte-stable prefix): the SSE envelope surfaced provider usage
-(`usage.prompt_tokens_details.cached_tokens`) on 100% of calls in a 6-call wave, while the direct
-JSON envelope served 68% of prompt tokens from cache in the same window — the "always non-stream,
-low hit-rate" the operator saw in the dashboard. Set `NEXUS_LLM_STREAM=false` (or `0`/`no`/`off`)
-to fall back to the direct JSON path on proxies that do not emit a terminal usage chunk.
+`NEXUS_LLM_STREAM` controls the transport envelope. The default is the direct JSON path.
+This was the D1044 fix for wkapi.pro, which only reported cached_tokens reliably through
+the SSE envelope; it is reversed here because the current operator provider
+(api.aizzz.xyz/v1, `gpt-6.1-terra`) shows the opposite shape on the same prompts.
+
+Measured on the operator's migrated provider (2026-11-16, `gpt-6.1-terra`, HTTP proxies
+to 127.0.0.1:7897): identical-queries burst —
+
+  | arm                | cached_tokens / call | total cached / prompt |
+  | ------------------ | --------------------- | ---------------------- |
+  | SSE (D1044 default)   | 0, 0, 0, 0, 0, 8832 (only the last call) | 8832 / 54211 = 16.3%   |
+  | direct JSON (this default) | 8832, 0, 8832, 8832, 8832, 8832 | 44160 / 54211 = 81.5%  |
+
+The two arms serve the same prefix cache; the difference sits in the envelope's byte
+ordering only. Set `NEXUS_LLM_STREAM=true` (or `1`/`yes`/`on`) to opt into the SSE wire
+for providers that only report `cached_tokens` through it; the app still consumes a
+complete response — no stream is ever exposed to callers of complete(), and the §1 wire
+contract is untouched.
 """
 
 from __future__ import annotations
@@ -52,9 +61,10 @@ class OpenAIAdapter(HttpLLMAdapter):
         }
         if req.json_hint:
             body["response_format"] = {"type": "json_object"}
-        # D1044: SSE-with-include_usage is the default envelope (see module docstring).
+        # Default: direct JSON. The SSE envelope is opt-in (`NEXUS_LLM_STREAM=true|1|yes|on`).
+        # See the module docstring for the 2026-11-16 measurement that flipped the default.
         stream_setting = os.environ.get("NEXUS_LLM_STREAM", "").strip().lower()
-        stream_mode = stream_setting not in {"0", "false", "no", "off"}
+        stream_mode = stream_setting in {"1", "true", "yes", "on"}
         if stream_mode:
             body["stream"] = True
             body["stream_options"] = {"include_usage": True}
