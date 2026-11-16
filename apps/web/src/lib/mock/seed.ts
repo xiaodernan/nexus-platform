@@ -2633,4 +2633,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-aberdeen-boat-house-dinner-chronicle', title: '晚上六點一刻：香港仔——船灣——黃生的船屋晚飯（香港系列 · 第九十一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上六點一刻的香港仔——黃生在船屋上鋪好晚飯，等今天的最後一位採購。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上六點一刻。香港仔的船灣（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——黃生把茶壺燒開，碼好最後一檯菜。' },
+      { type: 'heading', text: '一、三點半的收工潮' },
+      { type: 'paragraph', text: '晚上六點一刻，船仔陸陸續續歸碼。黃生守着自己的船屋——每天下午他在甲板鋪好魚乾、菜板、桌上的筷子。他說這是為忙碌的海許的一個停頓——這一張桌子，是給辛苦的人的剎車。' },
+      { type: 'cards', title: '船灣可見', items: [] },
+      { type: 'heading', text: '二、黃生的魚頭湯' },
+      { type: 'paragraph', text: '黃生推開大鍋，倒出一鍋魚頭白湯。今晚等來的是最後一位——一位鮮魚採購員。「你拖拖拉拉，湯還是趁熱。」兩個人對望一眼，在船灣最後的那點光裏笑了。（合成對話，非真實人物）' },
+      { type: 'cards', title: '船灣可聽', items: [] },
+      { type: 'heading', text: '三、收工落柴' },
+      { type: 'paragraph', text: '黃生關上船屋的鐵閘，把白湯煮好的料放進冰箱。船灣微微有浪，晚晚的搖着。下一趟醒來，要麼是明天，要麼是更壞的日子。他說「做完一天，就是值得。」' },
+      { type: 'cards', title: '船灣可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「香港仔 船屋」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

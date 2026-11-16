@@ -45380,3 +45380,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** 元州街 and 深水埗 are real; 黃叔、四十七年夜更、那不分公私家傳的三把掃帚——全部合成敘事構建. No real street-cleaner feeds this fiction; the alignment with the city's real dawn sweepers is by design, not by truth.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1239. D1239 — chapter XCI （香港仔船灣，18:15） — the boat-house dinner
+
+**Why.** The dock at Aberdeen closes quietly; around 18:15 the boats come home in single file. The day-arc deserved that exact hour — a quiet counterpart to the market, the tong sui and the fishball stalls.
+
+**The unit.** `DEMO_GUIDES` gains `hk-aberdeen-boat-house-dinner-chronicle`, 「晚上六點一刻：香港仔——船灣——黃生的船屋晚飯（香港系列 · 第九十一章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、三點半的收工潮 · 二、黃生的魚頭湯 · 三、收工落柴）, 後記 + SearchBox pointer （「香港仔 船屋」）. Arc clock gains 18:15 between 潮州話旺角菜市場（18:00）與寫字樓落地鐵（18:30）— **182 chips across both locales**; handbook reading order updated to ninety-one; `chapter-icons` gains `'hk-aberdeen-boat-house-dinner-chronicle': 'navigation'`; e2e floors ≥91; `/world` copy 90→91 everywhere; partition test now **16+17+16+15+9+10+8 = 91**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,371** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 19.6s · SSR curls both locales: chapter renders with 黃生/船灣/船屋 markers, `/hong-kong` carries the chip and 第九十一章， `/world` returns **91 distinct guide links in each arm**.
+
+**Honest boundaries.** 香港仔 and Boat Bay are real; 黃生、他的船屋、三點半的停餐——全部合成敘事. No real boat or dock knows this kitchen exists.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
