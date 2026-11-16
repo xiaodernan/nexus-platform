@@ -124,6 +124,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1229: the eighty-fifth HK chapter (hk-jordan-way-shu-lao-sugar-water-chronicle, 半夜十二點一刻・九龍——佐敦道——謝老人的深夜糖水) — 00:15, the night sugar water lamp |
 | `apps/web/src/lib/mock/seed.ts` | D1230: the eighty-sixth HK chapter (hk-yauma-tei-midnight-pharmacy-chronicle, 半夜一點四十五分・油麻地——廟街——蕭哥藥房還在開) — 01:45, the midnight pharmacy |
 | `apps/web/src/lib/i18n/dict.ts` | D1232: REAL-HK VI — Tai Kwun （大館） block, zh + en, sourced from taikwun.hk's Historical Timeline (retrieved 2026-11-16, URL inline) — 1841 Caine · 1864 Barrack Block · 1914 Magistracy · 1995 Declared Monuments · 2008 revitalisation plan · May 2018 public · 2019 UNESCO Award of Excellence; /stamp + /world intro copy resynced to 87 chapters |
+| `apps/web/src/lib/i18n/dict.ts` | D1234: the arc rail teaches its own wheel — `home.hkHub.clockHint` (zh + en) now carries the desktop hint line; zh range anchor 00:30 → 00:15 |
 | `apps/web/src/lib/mock/seed.ts` | D1233: the eighty-eighth HK chapter (hk-sai-ying-pun-locksmith-chronicle, 晚上七點半・西營盤——第三街——梁師傅鎖匠鋪的最後一單) — 19:30, the locksmith's final key |
 | `apps/web/src/lib/mock/seed.ts` | D1231: the eighty-seventh HK chapter (hk-tai-po-market-dye-factory-chronicle, 半夜二點一刻・大埔墟——黃先生的染廠) — 02:15, the Tai Po dye factory |
 | `apps/web/app/handbook/page.tsx` | D1220: handbook quickLinks now carry the full 10-surface rail (/search→/me), both locales — every shipped page reachable, gated by tests |

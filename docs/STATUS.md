@@ -45316,3 +45316,13 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** 西營盤 and 第三街 are real; 梁師傅, his 27-year notebook of every lock on the street, the mother-of-the-aunt's late call — the entire scene is 合成敘事. No real shop exists behind the story; the charm belongs to fiction.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1234. D1234 — the strip teaches its own wheel: desktop hint on the /hong-kong rail
+
+**Why.** §五's teach-the-controls requirement: the arc rail answers to a desktop mouse wheel (the D1184 bridge), but nothing on the rail itself told a mouse user so — before this change, the only documentation of that behaviour lived in the handbook FAQ. One sentence on the rail closes the loop.
+
+**The unit.** `dict.home.hkHub.clockHint` (both locales) now reads '桌面：垂直滾輪在此橫列上=橫向滑動（到兩端自動還給頁面）' / 'Desktop: vertical wheel over the strip = sideways track (hands back to the page at both ends)'; zh also re-anchors the range start to 00:15 謝老人 (the current north-pole anchor) from the stale 00:30 wording. Static per-request SSR copy only — no new client logic, no re-ordering.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / 2,335 literals · `verify_all` NO OFFENDER.
+
+- readers: `apps/web/src/lib/i18n/dict.ts`, this ledger entry.

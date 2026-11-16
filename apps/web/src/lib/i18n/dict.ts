@@ -1385,7 +1385,7 @@ const zhHK: Dict = {
       intro: '從凌晨四點半的魚市與果欄，到廟街的車仔麵、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
       chaptersTitle: '八十八章反覆走完一個香港',
       clockTitle: '香港一日的讀法：照時間讀',
-      clockHint: '由 00:30 的士站最後一客到 22:45 車仔麵 — 照順序讀這座城的一整天',
+      clockHint: '由 00:15 謝老人的深夜糖水到 00:00 紙包飲品販賣機——照順序讀這座城的一整天。桌面：垂直滾輪在此橫列上=橫向滑動（到兩端自動還給頁面）',
       continueReading: {
         startTitle: '這個系列由第一章開始',
         continueTitle: '你上次讀到呢裏',
@@ -3097,7 +3097,7 @@ const en: Dict = {
       intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the cart-noodles at Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
       chaptersTitle: 'Eighty-eight chapters through one Hong Kong',
       clockTitle: 'Reading the day in Hong Kong — clock order',
-      clockHint: 'Every chapter, one time of day — from 00:30 through 22:45',
+      clockHint: 'Every chapter, one time of day — from 00:15 through 00:00, all around the clock. Desktop: vertical wheel over the strip = sideways track (hands back to the page at both ends)',
       continueReading: {
         startTitle: 'Start from the first chapter',
         continueTitle: 'Pick up where you left off',
