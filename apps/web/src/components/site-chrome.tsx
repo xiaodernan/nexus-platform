@@ -152,6 +152,7 @@ export function SiteFooter({ locale }: { locale: string }) {
     { href: '/stategraph', label: locale === 'zh-HK' ? '引擎讀本' : 'The engine', title: locale === 'zh-HK' ? '一張圖講清楚智能代理怎麼走 — make_plan → route → fanout → emit' : 'One graph, four nodes: make_plan → route → fanout → emit' },
     { href: '/llm-ops', label: locale === 'zh-HK' ? '模型手術枱' : 'LLM ops', title: locale === 'zh-HK' ? '大模型怎麼在產品裡流轉 — envelope A/B · prefix cache · router · weekly probe（真機實測）' : 'How the model actually moves through the product — envelope A/B · prefix cache · router · weekly probe (live-measured)' },
     { href: '/chronicle', label: locale === 'zh-HK' ? '系列全書' : 'The Chronicle', title: locale === 'zh-HK' ? '一座城的一天 — 一百零五章、三幕、一段史詩的全書錨位' : 'One city, one day — the 105-chapter, three-act codex of this arc' },
+    { href: '/afterward', label: locale === 'zh-HK' ? '收工之後' : 'The Afterward', title: locale === 'zh-HK' ? '第二十四版全書的尾巴——零點到天亮之間的五個守夜瞬間' : 'The tail of the closed day — five flashes between midnight and dawn' },
     { href: '/world', label: locale === 'zh-HK' ? '世界地圖' : 'World atlas', title: locale === 'zh-HK' ? '全景地圖 — 全系列 105 章按時辰攤開，七層一次讀完' : 'The whole series — 105 chapters, seven layers, one read' },
     { href: '/hong-kong', label: dict.home.hkHub.seriesLink, title: dict.nav.hints.hongKong },
   ];

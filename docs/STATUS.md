@@ -45906,3 +45906,21 @@ The copy is minimum-viable, not metaphor: every act beat quotes a real chapter f
 **Honest boundaries.** This is the same single-host mock plane, not production infrastructure; p99 is one sample of the distribution, not an SLO; no live AI upstream is inside the loop (it would dominate both numbers); the harness hits the SSR path, not `/api/nexus/*`. Any regression that merely shifted percentile inside 2xx would need a deeper histogram than this harness produces.
 
 - readers: this ledger entry only.
+
+## 1273. D1273 — `/afterward`: the tail of the closed arc, five flashes after midnight
+
+**Why.** The day arc closed at 105 chapters (00:00→23:45, no clock holes left). Mandate §一 macro-epic framing still wanted the last word — the footage the clock cannot hold. `/chronicle` closes with the last sail; `/afterward` is the room the lights come on in after everyone has put their tools down. It introduces no new merchants, no new verbs from the series — it walks back five of the corpus's own chips in the order they follow one another after 00:00.
+
+**The unit.** New SSR route `apps/web/app/afterward/page.tsx` — canonical /afterward, dict-carried, zero island, zero fetch, five flashes through the same Traditional HK lens the rest of the corpus uses:
+
+- **00:00 · the vending machine** — a Tsim Sha Tsui cold drink still lit; the hospital waits for Captain Ping's sail to close.
+- **01:15 · the N-bus shelter** — Mr. Tong and A-syun (Chapter CI) finished the last service ride to Kowloon Tong and are waiting at the stop, steady-yellow underneath.
+- **03:10 · the fruit market** — Master Lu (Chapter VIII territory) closes his ledger near the pier end.
+- **05:00 · the dawn dispatch** — Kwun Tong's news-courier ties tomorrow's bundles to the cart nobody has yet claimed.
+- **06:40 · the hundred-and-first sweet bun** — Ah Keung (Chapter C) opens the ovens again for the people who kept the night shift running.
+
+**Full parity and no new fake corners.** zh arm carries Traditional HK script (廣東話語態 crystallised), en is the same five beats re-said. Every flash cites a real chapter reachable from `/world` (when the reader taps it, the day arc is exactly the one it always was). The five flashes render as a series of bordered act cards inside the same amber dot-grid backdrop as /chronicle. Finale CTAs backfire to /chronicle and /hong-kong.
+
+**Verification (host).** Fresh mock build; `tsc` clean; web **422/422** (+3 — the pin also guards against a dictionary `time:` colliding with the arc's `time: '` regex, which reddened one test first and was fixed by renaming the flash key to `at:`); census 0 simplified (**2,726** literals); `verify_all` **NO OFFENDER**; `check_console_i18n` PASS; SSR curls both locales return 200 with every marker; footer door visible in both locales.
+
+- readers: `apps/web/app/afterward/page.tsx`, `apps/web/src/lib/i18n/dict.ts` (`afterward:` both arms + interface), `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/afterward-page.test.ts`, this ledger entry, `docs/ATLAS.md`.

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1271",
-  "milestone_full": "第一百零五章 · day arc complete → /insights and /command now show the operator the REAL user journeys (twelve Playwright runs on this build — impatient-close → closed-but-curious, zero console errors), not only the deterministic ghost replay",
+  "milestone": "D1273",
+  "milestone_full": "第一百零五章 · day arc complete → /afterward: the tail of the closed day — five flashes after midnight ending on Ah Keung’s hundred-and-first sweet bun",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "§九 in-product: REAL-TRACE panel — twelve actual Playwright journeys (impatient-close, focused-search, stray-clicker, handbook-tour, chapter-reader, locale-swapper, theme-toggle, wheel-scroller, strip-bridge, merchant-browser, never-gets-comfort, closed-but-curious) with measured durations, outcomes and landing URLs, surfaced on /insights and inside /command (admin/123)",
+    "New route: /afterward — the tail of the closed arc: five flashes after midnight (vending machine → Lung Cheung Road bus → fruit market → dawn dispatch → Ah Keung’s hundred-and-first bun), all citing the real corpus, bilingual, SSR, no island",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
-    "§九 delivered twice: docs/evidence/user-journey-2026-11-16.md — twelve real behaviour journeys, zero console errors; the probe caught a live BFF 422 and it was fixed in D1267; D1271 surfaces the same rows inside both operator surfaces",
-    "/handbook?ask= — the manual answers its own questions with verbatim excerpts and section citations (lexical RAG, deterministic, offline) · /chronicle (105-chapter macro-epic)",
+    "§九 delivered: docs/evidence/user-journey-2026-11-16.md — twelve real behaviour journeys; the probe caught a live BFF 422 and it was fixed in D1267; D1271 surfaced the same rows in /insights and /command (admin/123)",
+    "/chronicle — the macro-epic frame for the 105-chapter series · /handbook?ask= — the manual answers its own questions with verbatim excerpts and section citations",
     "/llm-ops (measured envelope A/B 81.5% vs 16.3%) · /stategraph engine runbook · REAL-HK IX (Octopus card: 98% coverage of HK residents 15-64; 33M+ cards; 14M+ tx/day)",
-    "D1271: REAL-TRACE in both operator surfaces · D1270: REAL-HK Octopus · D1269: /handbook asks back · D1268: /chronicle"
+    "D1273: /afterward ships · D1272: section eleven re-verified · D1271: REAL-TRACE panels · D1270: Octopus"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

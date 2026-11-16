@@ -1051,6 +1051,18 @@ export interface Dict {
     resetCta: string;
     stepLabel: string;
   };
+  /** D1273: the /afterward route — the after-midnight codex for a closed day. */
+  afterward: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    actTitle: string;
+    flashes: Array<{ at: string; kicker: string; body: string }>;
+    finaleTitle: string;
+    finaleBody: string[];
+    ctaChronicle: string;
+    ctaStory: string;
+  };
   /** D1265: the /llm-ops route — the operator's read of the model plane: measured, not asserted. */
   llmops: {
     eyebrow: string;
@@ -3035,6 +3047,28 @@ const zhHK: Dict = {
     ctaHandbook: '回到說明書 › /handbook',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  /** D1273: the /afterward route — the after-midnight codex for a closed day. */
+  afterward: {
+    eyebrow: 'HK 系列 · 後記',
+    title: '收工之後——那一盞燈還在',
+    intro: '第二十四版的全書攤開之後，城市熄燈了大半。錨位還在——這一章站在《船長炳》的尾巴上，寫從零點到天亮之間的五個瞬間。每一個瞬間都是同一天的另一邊；同樣是 HK，同樣是 105 章，只是它們不被寫在鐘點表裡。',
+    actTitle: '五個瞬間',
+    flashes: [
+      { at: '00:00', kicker: '紙包飲品販賣機', body: '尖沙嘴一台紙包飲品販賣機仍然亮著，賣了一夜的飲料罐靠在酒吧列燈旁。船長炳收起掌舵，收船回碼頭——全市只有它在聽靜默價格。' },
+      { at: '01:15', kicker: 'N 巴士', body: '龍翔道候車亭的黃燈比車還耐用。阿璇將默書攤在膝蓋上，母親替她撐著一把細細的雨傘，抬頭看車燈即將抄彎——夜裡最後一班 N 巴士走了，候車亭還會多暖一刻鐘。' },
+      { at: '03:10', kicker: '果欄', body: '凌晨三點零五分，渡船街的果欄棚下第一批卡車已經停好；早山竹、水蜜桃、青檸全部由手拍完級——比天亮更早的分級，是這座城市最早的禮儀。' },
+      { at: '05:00', kicker: '曙光', body: '觀塘『曙光報紙』的分送員邱哥把一疊報紙捆上布——還沒有人上班聞報紙油墨的香氣，但這座城明天的第一版已經在手車上成形。' },
+      { at: '06:40', kicker: '百番甜麵包', body: '百番甜麵包出爐的第五輪——夜班的人仍然排著，隔著唐宮裡的玻璃相信一件肉香。' },
+    ],
+    finaleTitle: '後記',
+    finaleBody: [
+      '第二十四版的全書沒有一個角色空缺。收工之後是螢幕另一邊的終結——不是新的故事，只是全書以靜靜退場的方式亮著燈。記帳本與夜班守夜員那把鎖，全部屬於這座城市的無數個日子。',
+      '合成敘事：所有商戶與人物均為虛構，架空真實構造。每一段守夜場景都不代表真實場景——這是純文學，same engine / same premise。',
+      '讀到此處，點擊 /hong-kong 回頭讀一個完整日子，或點擊 /chronicle 看整條故事弧如何開合——選項與長短，全部由你。',
+    ],
+    ctaChronicle: '看故事弧開合 › /chronicle',
+    ctaStory: '回到系列目錄 › /hong-kong',
+  },
   /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
   chronicle: {
     eyebrow: '香港系列 · 全書',
@@ -5039,6 +5073,28 @@ const en: Dict = {
     ctaHandbook: 'Back to the handbook › /handbook',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  /** D1273: the /afterward route — the after-midnight codex for a closed day. */
+  afterward: {
+    eyebrow: 'HK SERIES · THE AFTERWARD',
+    title: 'After the last sail — still one light on',
+    intro: 'Once the closing page of the day arc relaxes, the city dims most of its lights. Anchors still in harbour — this chapter sits on Captain Ping’s tail, painting five flashes between midnight and dawn. Each is the same day, but seen from the other side; same HK, same 105 chapters — these five do not get their slots on the clock.',
+    actTitle: 'Five flashes',
+    flashes: [
+      { at: '00:00', kicker: 'the vending machine', body: 'A vending machine in Tsim Sha Tsui still hums; its light lattices a thin skin of silver over Sham Shui Po’s lanes. As Captain Ping returns to the pier, his shadow curls back into itself.' },
+      { at: '01:15', kicker: 'the N-bus', body: 'Lung Cheung Road’s shelter yellow outlives its bus. A-syun keeps the worksheet on her knee; her mother folds two rain umbrellas under her arm — the last N-bus is gone, the shelter holds the light a quarter-hour more.' },
+      { at: '03:10', kicker: 'the fruit market', body: 'Three-ten a.m., the first trucks are under the gas lamps at the far end of Temple Street — mangosteen, peaches, limes — the wholesalers grade them by eye before the city is awake to receive the boxes.' },
+      { at: '05:00', kicker: 'dawn', body: 'Kwun Tong’s news-dispatcher ties his bundled morning onto the handcart — nobody has come yet to breathe the bare ink, though tomorrow’s first edition is already bound.' },
+      { at: '06:40', kicker: 'the hundred-and-first bun', body: 'The fifth round out of the oven — the night shift queues again at the bakery, trusting pastry behind glass like a prayer still warm.' },
+    ],
+    finaleTitle: 'Finale',
+    finaleBody: [
+      'The closing page of the day arc leaves no characters out. After the last sail is the quiet the whole book steps away from — not a new story, only the old one holding the light. Every ledger, every gate, every overtime flag, belongs to this city’s thousand quiet days.',
+      'Synthetic narrative: all merchants and characters are fictional; hours are narrative construction, not schedules. No real shop, no real person — the same engine, the same rupees of premise.',
+      'Reach here and the only choices left are the same shape the day always offered: reread the arc at /hong-kong, or open the macro frame at /chronicle and walk through how the arc unfolded. Choice is yours.',
+    ],
+    ctaChronicle: 'See the arc unfold › /chronicle',
+    ctaStory: 'Back to the series index › /hong-kong',
+  },
   /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
   chronicle: {
     eyebrow: 'HK SERIES · THE CODEX',
