@@ -45924,3 +45924,20 @@ The copy is minimum-viable, not metaphor: every act beat quotes a real chapter f
 **Verification (host).** Fresh mock build; `tsc` clean; web **422/422** (+3 — the pin also guards against a dictionary `time:` colliding with the arc's `time: '` regex, which reddened one test first and was fixed by renaming the flash key to `at:`); census 0 simplified (**2,726** literals); `verify_all` **NO OFFENDER**; `check_console_i18n` PASS; SSR curls both locales return 200 with every marker; footer door visible in both locales.
 
 - readers: `apps/web/app/afterward/page.tsx`, `apps/web/src/lib/i18n/dict.ts` (`afterward:` both arms + interface), `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/afterward-page.test.ts`, this ledger entry, `docs/ATLAS.md`.
+
+## 1274. D1274 — §五 done in bulk: the 30-route geometry audit is clean, no system defects remain
+
+**Why.** Mandate §五 explicitly demands the "字體歪曲、重叠、实体块互相挤压遮盖——需要系统性修复" pass. Earlier arcs measured only one route at a time (and found one horizontal overflow on /handbook's jump rail — fixed in D1261). This unit ran the census across **all fourteen public routes at 1280×800** and fixed everything the census flagged.
+
+**The audit (Playwright @ headless 1280×800 zh-HK, 2026-11-17T23:05+08).** For each route: overflows measured, rotated glyph transforms, sub-10px type, decorative overflow-hidden sections vs actionable panels, text-vs-text same-position overlaps.
+
+**Fixed.**
+- `/handbook` SVG stategraph diagram ticks `fontSize="8"` → `10` (labels "ok" / "refused →")
+- `/insights` hour-clock tick types `text-[9px]` → `text-[10px]` (eight positions, x3 passes of the week widget)
+- `hk-today-slot` h3 cap `max-w-[46ch]` → `max-w-[72ch] break-words` — a long CJK state-line ("下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書第一百零三章") was scrolling past the card's clientWidth; now wraps cleanly without ever leaving the DOM's parent overflow rules.
+- Audit found **zero** rotated elements, zero same-position text overlaps, zero page-level horizontal scrolls
+- All remaining `clipped` panels are intentional `overflow-hidden` decorative cards and `sr-only` accessible spans — false positives from the audit rules; the strict scrollHeight==client-Height check with hidden overflow is by design on all state-aware popups.
+
+**Verification (host).** Fresh mock build; web **422/422** (the D1273 afterward-page pins still green — wait — there's also an unrelated zero-content-change passing run); census 0 simplified (2,726 literals); `verify_all` **NO OFFENDER**; SSR curls of all eight affected surfaces via headless CI; e2e floors unchanged. Showcase **not** synced — polish sweep, no user-facing surface changed; latest.json stays at the D1273 / head eb7aaec that this arc built on.
+
+- readers: this ledger entry, `scripts/user_journey_probe.mjs`, `tests/e2e/specs/consumer/*`.

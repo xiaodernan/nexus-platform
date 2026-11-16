@@ -29,7 +29,7 @@ export function HkTodaySlotCard({ slot, copy }: { slot: HkTodaySlot; copy: HkTod
           <Icon name="star" size={12} className="shrink-0" />
           {copy.eyebrow}
         </span>
-        <h3 className="max-w-[46ch] text-balance text-xl font-semibold leading-snug tracking-tight text-ink-strong sm:text-2xl">
+        <h3 className="max-w-[72ch] break-words text-balance text-xl font-semibold leading-snug tracking-tight text-ink-strong sm:text-2xl">
           {slot.label}
         </h3>
         <p className="max-w-prose text-sm leading-relaxed text-ink-muted">

@@ -225,7 +225,7 @@ export default async function HandbookPage(props: {
                       <text x="212" y="63" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">route</text>
                       <path d="M260 58 L292 58" stroke="currentColor" strokeWidth="1.6" fill="none" />
                       <path d="M290 54 L297 58 L290 62" stroke="currentColor" strokeWidth="1.6" fill="none" />
-                      <text x="276" y="48" fontSize="8" textAnchor="middle" fill="currentColor" opacity="0.8">ok</text>
+                      <text x="276" y="48" fontSize="10" textAnchor="middle" fill="currentColor" opacity="0.8">ok</text>
                       <rect x="300" y="34" width="104" height="48" rx="10" fill="rgb(var(--nexus-accent-rgb) / 0.2)" stroke="rgb(var(--nexus-accent-rgb) / 0.8)" strokeWidth="1.4" strokeDasharray="4 3" />
                       <text x="352" y="63" fontSize="12" fontWeight="700" textAnchor="middle" fill="currentColor">fanout</text>
                       <path d="M404 58 L436 58" stroke="currentColor" strokeWidth="1.6" fill="none" />
@@ -234,7 +234,7 @@ export default async function HandbookPage(props: {
                       <text x="496" y="63" fontSize="12" fontWeight="600" textAnchor="middle" fill="currentColor">emit</text>
                       <path d="M212 82 C212 128 168 142 124 142" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" fill="none" opacity="0.65" />
                       <path d="M124 142 L148 142 L148 210 L212 210" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" fill="none" opacity="0.65" />
-                      <text x="210" y="118" fontSize="8" textAnchor="end" fill="currentColor" opacity="0.75">refused →</text>
+                      <text x="210" y="118" fontSize="10" textAnchor="end" fill="currentColor" opacity="0.75">refused →</text>
                       <text x="0" y="152" fontSize="10" fontWeight="700" letterSpacing="0.2em" fill="currentColor">
                         {copy.stategraphDiagram.serialLabel}
                       </text>

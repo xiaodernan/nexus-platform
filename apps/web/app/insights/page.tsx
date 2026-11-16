@@ -108,7 +108,7 @@ export default async function InsightsPage() {
                     className="rounded-sm bg-accent"
                     style={{ height: `${Math.max(4, intensity)}px`, opacity: 0.22 + (intensity / 100) * 0.78 }}
                   />
-                  <span className="text-[9px] text-ink-faint">{i}</span>
+                  <span className="text-[10px] text-ink-faint">{i}</span>
                 </div>
               );
             })}
@@ -128,12 +128,12 @@ export default async function InsightsPage() {
               const intensity = Math.round((p.total / maxTotal) * 100);
               return (
                 <div key={p.date} className="flex flex-col items-center gap-1.5 rounded-xl border border-line bg-canvas p-2">
-                  <span className="text-[9px] uppercase text-ink-faint">{p.label}</span>
+                  <span className="text-[10px] uppercase text-ink-faint">{p.label}</span>
                   <span className="font-mono text-xl font-semibold leading-none text-ink-strong">{p.total}</span>
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
                     <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(6, intensity)}%` }} />
                   </div>
-                  <span className="text-[9px] font-mono text-ink-faint">{i === 0 ? '—' : delta === 0 ? '=' : delta > 0 ? `+${delta}` : `${delta}`}</span>
+                  <span className="text-[10px] font-mono text-ink-faint">{i === 0 ? '—' : delta === 0 ? '=' : delta > 0 ? `+${delta}` : `${delta}`}</span>
                 </div>
               );
             })}
