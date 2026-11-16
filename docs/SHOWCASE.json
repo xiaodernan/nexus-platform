@@ -1,7 +1,7 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1233",
-  "milestone_full": "第八十八章 · 西營盤——第三街——梁師傅鎖匠鋪的最後一單（19:30）· /world 八十八章",
+  "milestone": "D1235",
+  "milestone_full": "REAL-HK VII · 叮叮車 — Hong Kong Tramways, running since 1904 (sourced) · handbook seven blocks verified",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
@@ -12,7 +12,8 @@
     "handbook REAL-HK I/II/III/IV/V/VI/VII — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) · Tai Kwun · ding-ding (1904) — inline URLs",
     "/world atlas reads 88 chips (15+16+16+15+8+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
     "/hong-kong (88 chapters) · /world (88 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123",
-    "D1233: LXXXVIII · D1232: REAL-HK VI 大館 · D1231: LXXXVII · D1230: LXXXVI · D1229: LXXXV · D1228: LXXXIV"
+    "D1235: REAL-HK VII 叮叮車 (1904, Wikipedia HK Tramways) · D1234: rail wheel-hint · D1233: LXXXVIII 西營盤鎖匠鋪",
+    "D1232: REAL-HK VI 大館 · D1231: LXXXVII 大埔墟 · D1230: LXXXVI 廟街 · D1229: LXXXV 佐敦道 · D1228: LXXXIV 金花街"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
