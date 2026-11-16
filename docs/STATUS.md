@@ -45547,3 +45547,15 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **The honest truth to record.** This host sees the live plane only through the Clash egress — semantics-checked but not semantically blessed by the provider. The runner-side probes remain the CI-side verifier of record; the measurement here is for this tree + this key. Cache contract behaves exactly as D1044/D1050 predicted: no prefix sharing across diverse queries, 4.5k hidden server prefix, 95.5% system-prefix hits on warm arms. Real token savings: SSE + a prompt contract that crosses the cacheable floor — nothing in this tree changed except one additive sentence in the system prompt.
 
 - readers: `apps/ai/nexus_ai/api/pipeline.py` (the additive intent-choice clause), `apps/ai/cache_probe.py`, `apps/ai/eval_live_intent.py`, `apps/ai/live_llm_smoke.py`, `.github/workflows/llm-cache-probe.yml`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1252. D1252 — chapter XCVII （南丫島榕樹灣，07:05） — the pot-steamed rice box
+
+**Why.** The day-arc had an entire pre-dawn wedge untouched between the ferry’s call and Ho Ming’s truck — a slot where a smell, not a sound, marks the hour. The arc gains its 07:05 beat, the steamer-house door swinging in the dark.
+
+**The unit.** `DEMO_GUIDES` gains `hk-namdir-bay-pot-steamed-rice-chronicle`, 「早上七點零五分：南丫島——榕樹灣——德興陶的蒸飯盒（香港系列 · 第九十七章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、二更起蒸的蒸飯盒 · 二、一碗蒸飯盒的分量 · 三、九香的一天）, 後記 + SearchBox pointer （「榕樹灣 蒸飯盒」）. Arc clock gains 07:05 between 隔水渡輪（07:00）與浩明第三班折返（07:15）— **194 chips across both locales**; handbook reading order updated to ninety-seven; `chapter-icons` gains `'hk-namdir-bay-pot-steamed-rice-chronicle': 'navigation'`; e2e floors ≥97; `/world` copy 96→97 everywhere; partition test now **16+18+17+19+9+10+8 = 97**.
+
+**Verification (host).** `tsc` clean · web **401/401** · census 0 simplified / **2,486** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 22.0s · SSR curls both locales: chapter renders with 德興陶/榕樹灣/蒸飯盒 markers, `/hong-kong` carries the chip and 第九十七章， `/world` returns **97 distinct guide links in each arm**.
+
+**Honest boundaries.** 南丫島 and 榕樹灣 are real; 德興陶、他的二更起蒸、每一盒背過的名字——全部 合成敘事. No real steam house owes this craft or this fiction anything.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

@@ -2759,4 +2759,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-namdir-bay-pot-steamed-rice-chronicle', title: '早上七點零五分：南丫島——榕樹灣——德興陶的蒸飯盒（香港系列 · 第九十七章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：早上七點零五分的南丫島榕樹灣——德興陶把半夜十點起蒸的第一籠蒸飯盒，從開經的南丫小客船帶到渡口。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上七點零五分。南丫島榕樹灣（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——德興陶開第一籠蒸飯盒。' },
+      { type: 'heading', text: '一、二更起蒸的蒸飯盒' },
+      { type: 'paragraph', text: '榕樹灣德興陶的爐子在午夜十點燒成，把第一籠小米蓋好上蓋；到七點零五分，第一籠蒸飯盒剛剛好出爐，他把每一盒用絲帶綁緊。' },
+      { type: 'cards', title: '榕樹灣可見', items: [] },
+      { type: 'heading', text: '二、一碗蒸飯盒的分量' },
+      { type: 'paragraph', text: '德興陶說真正的陶不來自哪個師父——它是黏土與四十七年等待——每一盒都背過別人寄託過的名字。「蒸飯盒不是碗，它是一家人今晚的歸宿。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '榕樹灣可聽', items: [] },
+      { type: 'heading', text: '三、九香的一天' },
+      { type: 'paragraph', text: '上午七點零五分，德興陶把第一盒遞給漁家姑娘——小陳的女兒，她提得那麼輕，德興陶說今天這籠一定是城裏最香的。「巷子裏都是陶炊飯的氣味，知道你今日很幸福。」' },
+      { type: 'cards', title: '榕樹灣可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「榕樹灣 蒸飯盒」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
