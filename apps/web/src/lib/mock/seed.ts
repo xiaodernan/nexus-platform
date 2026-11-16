@@ -2654,4 +2654,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-causeway-bay-newsstand-closing-chronicle', title: '上午十點一刻：銅鑼灣——記利佐治街——李阿打烊的報紙檔（香港系列 · 第九十二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：上午十點一刻的銅鑼灣記利佐治街——李阿把一扎舊報綑好，稍作收拾，打烊。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：上午十點一刻。銅鑼灣記利佐治街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——李阿把今日一賣剩下的晚報夾在一起。' },
+      { type: 'heading', text: '一、今天剩下的舊報' },
+      { type: 'paragraph', text: '上午十點一刻，銅鑼灣記利佐治街。李阿的報紙檔今日沒有多少常客——剩下六份晚報，他一份份捲齊，疊成一扎，湊成一捆。' },
+      { type: 'cards', title: '記利佐治街可見', items: [] },
+      { type: 'heading', text: '二、六份舊報的脈搏' },
+      { type: 'paragraph', text: '李阿說他這束舊報是這條街的脈搏——樓市的起落、股票的位置、街坊餐桌上的事——每一頁都是真人讀過和做過的日子。他把其中兩張特別折好放進袋裡：「這兩頁是給我媽媽的。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '記利佐治街可聽', items: [] },
+      { type: 'heading', text: '三、打烊而不斷線' },
+      { type: 'paragraph', text: '李阿把晚報綑上麻繩，背起夾瓶，朝着大水坑的方向走。打烊從來不對外宣佈，但每個街坊都知道他下一趟什麼時候出現。第四段是今天最後一段要走完的街。' },
+      { type: 'cards', title: '記利佐治街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「銅鑼灣 報紙檔」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

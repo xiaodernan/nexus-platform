@@ -45412,3 +45412,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **The run.** `uv run pytest tests/test_langgraph_engine_fingerprint.py -q` → **18 passed, 1 warning in 1.41s** (one langgraph checkpoint-base deprecation warning — no failures). Refused turn, missing-context, cap truncation and multi-rule corpus cases all byte-identical between the two engines, exactly as D1240 documents.
 
 - readers: this ledger entry only.
+
+## 1242. D1242 — chapter XCII （銅鑼灣記利佐治街，10:15） — the newsstand's morning
+
+**Why.** The morning beat used to skip from fishball stall to Beijing writer's notes without pausing on Jardine's Bazaar — one of the last working newsstands. The arc gains its 10:15 beat, an honest mid-morning anchor for readers who commute mid-shift.
+
+**The unit.** `DEMO_GUIDES` gains `hk-causeway-bay-newsstand-closing-chronicle`, 「上午十點一刻：銅鑼灣——記利佐治街——李阿打烊的報紙檔（香港系列 · 第九十二章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、今天剩下的舊報 · 二、六份舊報的脈搏 · 三、打烊而不斷線）, 後記 + SearchBox pointer （「銅鑼灣 報紙檔」）. Arc clock gains 10:15 between 魚蛋檔（10:00）與北漂作家（10:30）— **184 chips across both locales**; handbook reading order updated to ninety-two; `chapter-icons` gains `'hk-causeway-bay-newsstand-closing-chronicle': 'navigation'`; e2e floors ≥92; `/world` copy 91→92 everywhere; partition test now **16+17+17+15+9+10+8 = 92**. Also repairs the Atlas row D1240 cited (bare filename → full path — the only `check_atlas` offender this cycle; verify_all back to NO OFFENDER).
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,390** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 18.1s · SSR curls both locales: chapter renders with 李阿/記利佐治街/報紙檔 markers, `/hong-kong` carries the chip and 第九十二章， `/world` returns **92 distinct guide links in each arm**.
+
+**Honest boundaries.** 銅鑼灣 and Jardine's Bazaar are real; 李阿、剩下六份晚報、給媽媽折的那兩張——全部合成敘事. No real newsstand owes this page anything; the charm belongs to fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
