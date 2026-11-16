@@ -2885,4 +2885,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-causeway-bay-teacher-chalkboard-chronicle', title: '下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書（香港系列 · 第一百零三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：下午二點一刻的謝斐道——粉筆將盡，仍然在寫的第三堂。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午二點一刻。銅鑼灣——謝斐道一間中學（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——第三堂還剩一刻鐘，黑板上的字還沒有寫完。陳老師（合成敘事，非真實人物）握著一截只剩半個指甲長的白粉筆，站在講台旁。' },
+      { type: 'heading', text: '一、粉筆快了也不歇' },
+      { type: 'cards', title: '謝斐道可見', items: [] },
+      { type: 'paragraph', text: '黑板右上角是今天的副題——「等待」。陳老師沒有抹掉任何一筆字。她把最後半截粉筆按自己的節奏寫成句號，連「要是可以」都寫得工整——這是她站了第十九年講台的手勢：筆短，字不短。' },
+      { type: 'heading', text: '二、三十個名字' },
+      { type: 'cards', title: '謝斐道可聽', items: [] },
+      { type: 'paragraph', text: '這一班三十個學生，每一個的名字她都念得出口。一個學生在鐘聲響前把一盒新粉筆放在講桌右側——又拿起，又放下——直到下課，抽屜裏只剩一盒全新的白粉筆，包裝袋糖色，像被誰悄悄收留。' },
+      { type: 'heading', text: '三、三點的鐘' },
+      { type: 'cards', title: '謝斐道可等', items: [] },
+      { type: 'paragraph', text: '三點落的時候，謝斐道的窗戶響了一下——下課了。陳老師沒有收書包，也沒有擦黑板：她把最後半截粉筆放在講台縫裏，留給明天的自己，新粉筆就在右側，等一個她自己都在等的答案。' },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「銅鑼灣 謝斐道 中學」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

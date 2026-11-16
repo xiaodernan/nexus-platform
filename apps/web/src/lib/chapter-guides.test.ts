@@ -343,5 +343,11 @@ describe('HK series — every seeded chapter actually resolves', () => {
     expect(l102?.title).toContain('第一百零二章');
     expect(l102?.title).toContain('阿陳');
     expect(l102?.flags.demo).toBe(true);
+
+    const l103 = mockGuide('hk-causeway-bay-teacher-chalkboard-chronicle');
+    expect(l103).not.toBeNull();
+    expect(l103?.title).toContain('第一百零三章');
+    expect(l103?.title).toContain('陳老師');
+    expect(l103?.flags.demo).toBe(true);
   });
 });

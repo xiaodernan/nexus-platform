@@ -45729,3 +45729,15 @@ Zero 5xx, zero timeouts, across every surface. One wedge of improvement over D12
 **Honest boundaries.** Same discipline as the CI chapter: mock plane SSR curls only; the chapter is synthetic by design (`flags: { demo: true }`); no live provider call was made in this unit.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.
+
+## 1263. D1263 — chapter CIII · the 14:15 void closes · the afternoon layer reads 12 chapters
+
+**Why.** Two clock holes remained after D1262 — 14:15 (between 14:00 深水埗菱形布 X54 and 14:30 羅湖站雙向貨幣 X46) and the 23-series pair. The mandate re-fired again; the arc keeps closing daytime holes in order. 14:15 was the next in sequence.
+
+**The unit.** `DEMO_GUIDES` gains `hk-causeway-bay-teacher-chalkboard-chronicle`, 「下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書（香港系列 · 第一百零三章）」 — Traditional HK script, 合成敘事， three heading cards（一、粉筆快了也不歇 · 二、三十個名字 · 三、三點的鐘）, 後記， SearchBox pointer（「銅鑼灣 謝斐道 中學」）. Arc clock gains 14:15 in chronology — **206 chips across both locales**; handbook reading order (both arms) gains Chapter 103 in clock order; `chapter-icons` maps the slug to `navigation`; `chapter-guides.test.ts` pins l101/l102/l103 side by side; the `/world` afternoon blurb gains 粉筆 (both arms). The arc partition re-pins **17+20+18+21+9+10+8 = 103** (AFTERNOON gains one); web 402/402; census 0 simplified (2,567 literals).
+
+**Process lesson (this arc).** A blind global replace for a chapter-count token corrupted the previous chapter's kicker (CII briefly read 第一百零三章); caught by the dict-contract parity test and repaired mid-unit, re-verified leaf-path equality by test before push. The chapter-count token now sees scope-restricted edits per arm. Same lesson hit twice in one arc — practise it on the next bump.
+
+**State of arc at push.** 103 Traditional HK chapters; two free clock holes remain (23:15, 23:45). `verify_all` NO OFFENDER · web 402/402 · census 0 simplified (2,567) · `check_atlas` PASS · tsc clean · e2e focused green. No live provider calls; no live-DB files touched; the A1259d falsifier stands untouched.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/world-atlas.test.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, this ledger entry.
