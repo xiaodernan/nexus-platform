@@ -45498,3 +45498,15 @@ Footer gains a door to it (zh「引擎讀本」/ en「The engine」). The handbo
 **Honest boundaries.** This is engineering material, not a user feature — it teaches, it does not run the graph; the graph runs behind `NEXUS_AI_ENGINE` only. No wkapi.pro dependency in the page at all (provider gates do not apply). The rehearsal is deterministic, not a live agent call.
 
 - readers: `apps/web/app/stategraph/page.tsx`, `apps/web/src/components/stategraph-island.tsx`, `apps/web/src/lib/stategraph-page.test.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/handbook/page.tsx`, `apps/web/src/components/site-chrome.tsx`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1249. D1249 — chapter XCVI （元朗鳳翔路，12:10） — the morning’s last parcels
+
+**Why.** The noon beat used to land on 12:00 and 12:15 — the Siu Mei stove and Executive Chef Chan's lunch-box — without a hinge between them. The art-supply store is the natural hinge: it hands over the day's teaching materials right when the office kitchens smell of roast pork and bills.
+
+**The unit.** `DEMO_GUIDES` gains `hk-yuen-long-art-supply-chronicle`, 「中午十二點十分：元朗——鳳翔路——阿雄的東風畫材行（香港系列 · 第九十六章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、畫材行的中午 · 二、寄件的次序 · 三、鳳翔路的墨）, 後記 + SearchBox pointer （「元朗 畫材」）. Arc clock gains 12:10 between 燒味（12:00）與陳總廚（12:15）— **192 chips across both locales**; handbook reading order updated to ninety-six; `chapter-icons` gains `'hk-yuen-long-art-supply-chronicle': 'navigation'`; e2e floors ≥96; `/world` copy 95→96 everywhere; partition test now **16+17+17+19+9+10+8 = 96**.
+
+**Verification (host).** `tsc` clean · web **401/401** · census 0 simplified / **2,477** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 34.8s · SSR curls both locales: chapter renders with 阿雄/鳳翔路/畫材 markers, `/hong-kong` carries the chip and 第九十六章， `/world` returns **96 distinct guide links in each arm**.
+
+**Honest boundaries.** 元朗 and 鳳翔路 are real; 阿雄、他的東風畫材行、隨身寄件——全部合成敘事. No real art-supply shop is reflected here; the craft belongs to fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

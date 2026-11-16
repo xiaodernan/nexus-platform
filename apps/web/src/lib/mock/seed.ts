@@ -2738,4 +2738,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-yuen-long-art-supply-chronicle', title: '中午十二點十分：元朗——鳳翔路——阿雄的東風畫材行（香港系列 · 第九十六章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：中午十二點十分的元朗鳳翔路——阿雄把今日最後一批寄出件一件件排好、綑好、寄走。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十二點十分。元朗鳳翔路（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿雄把今日最後一批寄出件放進紙箱。' },
+      { type: 'heading', text: '一、畫材行的中午' },
+      { type: 'paragraph', text: '中午十二點十分，鳳翔路只剩阿雄的燈還亮着。他今日收過的最後一筆訂單，是一位從來不喊價的美術老師——她說，教學比一幅畫值多了。' },
+      { type: 'cards', title: '鳳翔路可見', items: [] },
+      { type: 'heading', text: '二、寄件的次序' },
+      { type: 'paragraph', text: '阿雄把今日的寄出件一件件排好：紙、筆、墨、稻根草。每一件都對應一個學生——他全都記在售貨單頁的手寫附記裏。（合成對話，非真實人物）' },
+      { type: 'cards', title: '鳳翔路可聽', items: [] },
+      { type: 'heading', text: '三、鳳翔路的墨' },
+      { type: 'paragraph', text: '阿雄把收據夾入紙箱，把今天最後一件的墨蓋上。墨乾了，他按下鐵閘，闔上鳳翔路的今日。阿雄說畫材行這條路，準備繼續做下去。' },
+      { type: 'cards', title: '鳳翔路可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「元朗 畫材」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
