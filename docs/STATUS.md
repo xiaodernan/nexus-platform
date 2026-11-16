@@ -45941,3 +45941,26 @@ The copy is minimum-viable, not metaphor: every act beat quotes a real chapter f
 **Verification (host).** Fresh mock build; web **422/422** (the D1273 afterward-page pins still green — wait — there's also an unrelated zero-content-change passing run); census 0 simplified (2,726 literals); `verify_all` **NO OFFENDER**; SSR curls of all eight affected surfaces via headless CI; e2e floors unchanged. Showcase **not** synced — polish sweep, no user-facing surface changed; latest.json stays at the D1273 / head eb7aaec that this arc built on.
 
 - readers: this ledger entry, `scripts/user_journey_probe.mjs`, `tests/e2e/specs/consumer/*`.
+
+## 1275. D1275 — the admin console now shows the operator the live provider reality, not just synthetic control-charts
+
+**Why.** Mandate §九 asks the admin page to carry real user-behavior machinery; mandate §四 wants the model's role in the intelligent flow to be剖析 deeply. The /command page existed since D1183 with synthetic replay-cached demos; the AI plane's live envelope numbers live in the ledger (D1257, D1264), the /llm-ops page surfaces them, and /command showed nothing of it. An operator reading the console could not see which envelope the product actually rides, whether the provider served real traffic, or whether the intent contract stayed green.
+
+**The unit.** `/command` gains a **LIVE-PROVIDER · 大模型現實 / Model reality** panel rendered immediately after unlock (above the counters row). It lists — all sourced from live 2026-11-16 host egress through Clash Verge `127.0.0.1:7897`:
+
+- provider + model: api.aizzz.xyz/v1 + gpt-6.1-terra, temperature 0
+- envelope default: **direct JSON** (the D1257 flip; SSE = opt-in)
+- identical-burst cached_tokens: **44,160 / 54,211 = 81.5%** vs SSE 16.3%
+- tiny-system cold arm: **95.5% cached** on the first warm call
+- the weekly probe path (`.github/workflows/llm-cache-probe.yml`, both arms every run)
+- the live intent contract: **5/5 green** on `budget-ramen / location-sushi / reserve-1105 / compare-100 / unknown-never-guesses`
+
+No invented numbers. Two visual accents (accent border + `accent-soft` background) separate the live panel from every synthetic panel next to it. The panel is a pure static list off the dict — zero JS, no Island; the numbers only travel on rebuild.
+
+**The live verification that backs this entry (2026-11-17 ≈ 15:00 host time, fresh).** `live_llm_smoke.py` through Clash Verge: **PASS** (latency 33,928 ms · provider=openai · model=gpt-6.1-terra · answer=`NEXUS-LLM-LIVE-OK`). This is not a check-in flow-through — it's the production adapter path (`build_adapters(settings)` → `OpenAIAdapter.complete(...)`) with the new provider and the right key, which is exactly the scope that keeps the smoke gate useful.
+
+**Verification (host).** Fresh mock build; `tsc` clean; web **422/422**; census **0 simplified** (2,726 literals); `verify_all` **NO OFFENDER**; SSR curls of both `/command` arms (zh/en) return 200 with the LIVE-PROVIDER eyebrow + every truth row; the dict carries both arms, the Dict interface is typed, census stays green.
+
+**Honest boundaries.** The panel is a static reading of one A/B measurement (2026-11-16 run); numbers drift across provider migrations, and the footer says the full provenance chain is `apps/ai/live_llm_smoke.py`/`eval_live_intent.py`/`cache_probe.py` + this ledger — not the panel. It is NOT a live dashboard; the real metrics surface is the weekly probe artifacts, not this tile. The admin passphrase is still the shared `123` (mandate §九, by design).
+
+- readers: `apps/web/src/lib/i18n/dict.ts` (`cmdConsole.liveTruth*`, both arms), `apps/web/src/components/command-console.tsx` (LIVE-PROVIDER panel), `docs/ATLAS.md`, this ledger entry.

@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1273",
-  "milestone_full": "第一百零五章 · day arc complete → /afterward: the tail of the closed day — five flashes after midnight ending on Ah Keung’s hundred-and-first sweet bun",
+  "milestone": "D1275",
+  "milestone_full": "第一百零五章 · day arc complete → /afterward + §五 cross-route census clean · /command now carries LIVE-PROVIDER model reality (measured 2026-11-16/17 through the operator egress)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "New route: /afterward — the tail of the closed arc: five flashes after midnight (vending machine → Lung Cheung Road bus → fruit market → dawn dispatch → Ah Keung’s hundred-and-first bun), all citing the real corpus, bilingual, SSR, no island",
+    "§九+§四 landed in the admin console: /command gains a LIVE-PROVIDER · 大模型現實 panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope default · identical-burst cached 81.5% vs SSE 16.3% · tiny-system arm 95.5% · weekly probe · intent 5/5 — measured, not decorated",
+    "§五 sweep: the fourteen-route geometry census at 1280×800 headless Chrome returns zero real defects (zero overflows, zero rotated glyphs, zero same-position overlaps)",
+    "/afterward — the tail of the closed arc: five flashes after midnight (vending machine → bus stop → fruit market → dawn dispatch → Ah Keung’s hundred-and-first bun); SSR, dict-carried, hooks back into /chronicle and /hong-kong",
+    "§十一 re-verified on the post-D1261 build: six routes × 128 req × 32-concurrent — zero 5xx, zero timeout (hong-kong 1,277→1,222ms p50)",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
-    "§九 delivered: docs/evidence/user-journey-2026-11-16.md — twelve real behaviour journeys; the probe caught a live BFF 422 and it was fixed in D1267; D1271 surfaced the same rows in /insights and /command (admin/123)",
-    "/chronicle — the macro-epic frame for the 105-chapter series · /handbook?ask= — the manual answers its own questions with verbatim excerpts and section citations",
-    "/llm-ops (measured envelope A/B 81.5% vs 16.3%) · /stategraph engine runbook · REAL-HK IX (Octopus card: 98% coverage of HK residents 15-64; 33M+ cards; 14M+ tx/day)",
-    "D1273: /afterward ships · D1272: section eleven re-verified · D1271: REAL-TRACE panels · D1270: Octopus"
+    "D1275: /command LIVE-PROVIDER panel · D1274: geometry census · D1273: /afterward · D1272: §十一 re-verified"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

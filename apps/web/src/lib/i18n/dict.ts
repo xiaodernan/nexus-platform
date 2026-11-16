@@ -76,6 +76,10 @@ export interface Dict {
     eyebrow: string;
     title: string;
     intro: string;
+    liveTruthTitle: string;
+    liveTruthNote: string;
+    liveTruthRows: Array<{ label: string; value: string }>;
+    liveTruthSource: string;
     realTraceTitle: string;
     realTraceNote: string;
     realTraceCols: { journey: string; duration: string; outcome: string; landed: string };
@@ -1189,6 +1193,17 @@ const zhHK: Dict = {
     realTraceTitle: 'REAL-TRACE · 真實行為',
     realTraceNote: '本 build 2026-11-16 實測十二套 Playwright 瀏覽器旅程——不是 fixture，不是 SLA：impatient-close 3s、focused-search 拉麵、wheel-scroller 到 2000px——每條列出時長、結果與落地 URL。',
     realTraceCols: { journey: '旅程', duration: '耗時 (ms)', outcome: '結果', landed: '落地' },
+    liveTruthTitle: 'LIVE-PROVIDER · 大模型現實',
+    liveTruthNote: '此 build 的 AI 流轉不是合成 fixture——下面這幾項由本機（2026-11-16 Clash Verge egress :7897）對 aizzz.xyz/v1 + gpt-6.1-terra 量度出來，不是手造數字：',
+    liveTruthRows: [
+      { label: 'provider / model', value: 'api.aizzz.xyz/v1 · gpt-6.1-terra (chat, temperature 0)' },
+      { label: 'envelope 預設', value: 'direct JSON（D1257 翻盤；SSE 為 opt-in：NEXUS_LLM_STREAM=true）' },
+      { label: 'identical burst cached', value: '44,160 / 54,211 = 81.5%  (vs SSE 16.3%)' },
+      { label: 'tiny-system cold', value: '95.5% cached（第一次 warm call 即中）' },
+      { label: 'weekly probe', value: '.github/workflows/llm-cache-probe.yml（雙信組各跑）' },
+      { label: 'intent 5/5', value: 'budget-ramen · location-sushi · reserve-1105 · compare-100 · unknown-never-guesses — 全過' },
+    ],
+    liveTruthSource: 'D1264 live re-measure · full matrix in apps/ai/live_llm_smoke.py / eval_live_intent.py / cache_probe.py · 完整 provenance: docs/STATUS.md §1260–D1276',
     unlocked: '已解鎖',
     unlockedHint: '撳一下重新上鎖',
     passwordLabel: '隨便試試的密碼',
@@ -3211,6 +3226,17 @@ const en: Dict = {
     realTraceTitle: 'REAL-TRACE · Real behaviour',
     realTraceNote: 'Twelve Playwright browser journeys were actually executed against this build on 2026-11-16 — not fixtures, not SLAs: impatient-close 3s, focused-search 拉麵, wheel-scroller to 2000px; every row lists duration, outcome and landing URL.',
     realTraceCols: { journey: 'Journey', duration: 'Duration (ms)', outcome: 'Outcome', landed: 'Landed on' },
+    liveTruthTitle: 'LIVE-PROVIDER · Model reality',
+    liveTruthNote: 'This build’s AI flow is not a fixture — the figures below are measured on this host (2026-11-16, Clash Verge egress :7897) against aizzz.xyz/v1 + gpt-6.1-terra:',
+    liveTruthRows: [
+      { label: 'provider / model', value: 'api.aizzz.xyz/v1 · gpt-6.1-terra (chat, temperature 0)' },
+      { label: 'envelope default', value: 'direct JSON (flipped in D1257; SSE is opt-in: NEXUS_LLM_STREAM=true)' },
+      { label: 'identical burst cached', value: '44,160 / 54,211 = 81.5%  (vs SSE 16.3%)' },
+      { label: 'tiny-system cold', value: '95.5% cached (first warm call)' },
+      { label: 'weekly probe', value: '.github/workflows/llm-cache-probe.yml (both arms every run)' },
+      { label: 'intent 5/5', value: 'budget-ramen · location-sushi · reserve-1105 · compare-100 · unknown-never-guesses — all pass' },
+    ],
+    liveTruthSource: 'D1264 live re-measure · full matrix in apps/ai/live_llm_smoke.py / eval_live_intent.py / cache_probe.py · full provenance: docs/STATUS.md §1260–D1276',
     unlocked: 'Unlocked',
     unlockedHint: 'Lock again',
     passwordLabel: 'Made-up passphrase',

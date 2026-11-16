@@ -23,6 +23,10 @@ export interface CommandConsoleCopy {
   eyebrow: string;
   title: string;
   intro: string;
+  liveTruthTitle: string;
+  liveTruthNote: string;
+  liveTruthRows: Array<{ label: string; value: string }>;
+  liveTruthSource: string;
   realTraceTitle: string;
   realTraceNote: string;
   realTraceCols: {
@@ -285,6 +289,22 @@ export function CommandConsoleClient({
             </li>
           ))}
         </ol>
+      </section>
+
+      <section aria-labelledby="cmd-livetruth" className="flex flex-col gap-3 rounded-2xl border border-accent-line bg-accent-soft p-6">
+        <h2 id="cmd-livetruth" className="text-2xs font-semibold uppercase tracking-wide text-accent">
+          {copy.liveTruthTitle}
+        </h2>
+        <p className="max-w-prose text-xs leading-relaxed text-ink-muted">{copy.liveTruthNote}</p>
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {copy.liveTruthRows.map((row) => (
+            <div key={row.label} className="rounded-xl border border-line bg-canvas px-4 py-3">
+              <dt className="font-mono text-2xs uppercase tracking-wide text-ink-faint">{row.label}</dt>
+              <dd className="mt-1 text-xs leading-snug text-ink-strong">{row.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-2xs leading-relaxed text-ink-faint">{copy.liveTruthSource}</p>
       </section>
 
       <section aria-labelledby="cmd-realtrace" className="flex flex-col gap-3 rounded-2xl border border-accent-line bg-canvas p-5">
