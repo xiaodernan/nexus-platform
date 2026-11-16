@@ -390,6 +390,41 @@ class HandbookAskRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class InsightsWeekPoint(_Strict):
+    date: str = Field(min_length=10, max_length=10)
+    label: str = Field(default="", max_length=40)
+    total: int = Field(ge=0, le=100_000)
+    dropRate: int = Field(ge=0, le=100)
+    topProfile: str = Field(default="", max_length=32)
+
+
+class InsightsWeek(_Strict):
+    weeklyTotal: int = Field(ge=0, le=1_000_000)
+    slope: float
+    adviceKind: str = Field(default="flat", max_length=20)
+    points: list[InsightsWeekPoint] = Field(default_factory=list, max_length=14)
+
+
+class InsightsStats(_Strict):
+    """The seeded ghost-replay snapshot — the exact shape the web's simulator produces."""
+
+    date: str = Field(min_length=1, max_length=40)
+    total: int = Field(ge=0, le=100_000)
+    hourRamp: list[int] = Field(min_length=24, max_length=24)
+    headline: str = Field(default="", max_length=400)
+    recommendation: str = Field(default="", max_length=400)
+    profiles: list[dict] = Field(min_length=0, max_length=12)
+    week: InsightsWeek = Field(default_factory=lambda: InsightsWeek(weeklyTotal=0, slope=0.0, adviceKind='flat'))
+    slope: float = 0.0
+
+
+class InsightsNarrativeRequest(_Strict):
+    """The operator's ghost-replay, stats only — the model sees no store, no session, no identity."""
+
+    stats: InsightsStats
+    locale: str = Field(default="zh-HK", max_length=16)
+
+
 class SearchRequest(_Strict):
     intent: Optional[Intent] = None
     query: Optional[str] = None

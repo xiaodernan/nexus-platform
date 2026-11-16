@@ -1153,6 +1153,11 @@ export interface Dict {
     realTraceTitle: string;
     realTraceNote: string;
     realTraceCols: { journey: string; duration: string; outcome: string; landed: string };
+    /** D1280: the model's read-aloud of the same ghost replay — one paragraph, its provenance, its focus line. */
+    narrativeTitle: string;
+    narrativePending: string;
+    narrativeProven: string;
+    narrativeFocusLabel: string;
   };
   /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
   world: {
@@ -3176,6 +3181,10 @@ const zhHK: Dict = {
     realTraceTitle: 'REAL-TRACE · 真實旅程',
     realTraceNote: '本 build 2026-11-16 實測的十二套 Playwright 瀏覽器記賬本——不是 fixture、不是 SLA：一套實測就一條；每條列出時序、結果與落地 URL。合同與自身操作系統的事實。',
     realTraceCols: { journey: '旅程', duration: '耗時 (ms)', outcome: '結果', landed: '落地' },
+    narrativeTitle: 'AI 讀出的幽靈',
+    narrativePending: '大模型正在讀這頁的幽靈數據…',
+    narrativeProven: 'AI 措辭 · 只引用本 replay 數字',
+    narrativeFocusLabel: '下一步觀察',
     fmtDwell: (sec: number) => `${sec} 秒`,
     weekTitle: '過去七天——誰來、誰留',
     weekHint: '按香港日期重放過去一週：每一格是一日的全幽靈數與平均掉拍率；底全是本地數據，不是監控。',
@@ -5229,6 +5238,10 @@ const en: Dict = {
     realTraceTitle: 'REAL-TRACE · Real journeys',
     realTraceNote: 'Twelve Playwright browser journeys actually executed against this build on 2026-11-16 — not fixtures, not SLAs; each row is one measured run with duration, outcome and landing URL.',
     realTraceCols: { journey: 'Journey', duration: 'Duration (ms)', outcome: 'Outcome', landed: 'Landed on' },
+    narrativeTitle: 'AI-read ghosts',
+    narrativePending: 'The model is reading the ghost data…',
+    narrativeProven: 'AI phrasing · numbers only from this replay',
+    narrativeFocusLabel: 'Observe next',
     fmtDwell: (sec: number) => `${sec}s`,
     weekTitle: 'Seven days — who came, who stayed',
     weekHint: 'Replay of the last seven HK dates: each cell is a day’s ghost total and average drop-off. All local, no tracking.',

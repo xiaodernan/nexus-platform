@@ -6,6 +6,7 @@ import { simulateJourneys, simulateWeek, explainSnapshot } from '@/lib/user-jour
 import { realTrace } from '@/lib/real-trace';
 import { Container, Icon } from '@nexus/ui';
 import Link from 'next/link';
+import { InsightsNarrative } from '@/components/insights-narrative';
 
 /**
  * `/insights` — the operator's daily ghost scan. Everything on the page is rebuilt from the
@@ -143,6 +144,14 @@ export default async function InsightsPage() {
             {' · '}{t.nextTitle}: {week.advice}
           </p>
         </section>
+
+        {/* D1280 — the live-model read of the same deterministic replay; progressive, fail-closed. */}
+        <InsightsNarrative
+          locale={locale}
+          pendingLabel={t.narrativePending}
+          provenLabel={t.narrativeProven}
+          focusLabel={t.narrativeFocusLabel}
+        />
 
         {/* REAL-TRACE — the operator's mirror, with the real Playwright traces that shipped this build */}
         {trace.rows.length > 0 && (
