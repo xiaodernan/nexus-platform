@@ -2549,4 +2549,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-tai-po-market-dye-factory-chronicle', title: '半夜二點一刻：大埔墟——黃先生的染廠（香港系列 · 第八十七章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：半夜二點一刻的大埔墟——黃先生的九龍染廠趕出今早出港的最後一匹布，附上一生的承諾。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：半夜二點一刻。大埔墟（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——染缸裡的蒸氣還在往上冒。' },
+      { type: 'heading', text: '一、大埔的半夜染機' },
+      { type: 'paragraph', text: '半夜二點一刻，大埔墟只剩這一盞燈。黃先生的染廠從他母親手上接過來，三十餘年，每一批貨他都要親眼過目、親手驗色，才肯關機。' },
+      { type: 'cards', title: '大埔墟可見', items: [] },
+      { type: 'heading', text: '二、染布的顏色' },
+      { type: 'paragraph', text: '黃先生記得每一種顏色的名字——石板灰、麥芽黃、戎裝綠——全部是客戶指定的名，他說自己一生只染自己認得的那幾種。「顏色是承諾，不是裝飾。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '大埔墟可聽', items: [] },
+      { type: 'heading', text: '三、明早五點的貨車' },
+      { type: 'paragraph', text: '黃先生打開最後一本貨單，在備註欄蓋上章。明早五點，他會坐貨車到碼頭，把今晚驗好的貨交給回港的貨船。關掉染機的時候，他沒有回頭看。' },
+      { type: 'cards', title: '大埔墟可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「大埔墟 染廠」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

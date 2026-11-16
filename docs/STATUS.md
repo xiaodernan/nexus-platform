@@ -45280,3 +45280,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,308** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 13.7s · SSR curls both locales: chapter renders with 蕭哥/廟街 markers, `/hong-kong` carries the chip and 第八十六章， `/world` returns **86 distinct guide links in each arm**.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1231. D1231 — chapter LXXXVII （大埔墟，02:15） — the dye factory
+
+**Why.** The day-arc's last night-anchors belong to work, not rest — the factory that finishes its firings before the first ferry leaves for the city. The world is wider for the second wave at 02:15.
+
+**The unit.** `DEMO_GUIDES` gains `hk-tai-po-market-dye-factory-chronicle`, 「半夜二點一刻：大埔墟——黃先生的染廠（香港系列 · 第八十七章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、大埔的半夜染機 · 二、染布的顏色 · 三、明早五點的貨車）, 後記 + SearchBox pointer （「大埔墟 染廠」）. Arc clock gains 02:15 between 皮蛋瘦肉粥（02:00）與最後一鍋糖水（02:30）— **174 chips across both locales**; handbook reading order updated to eighty-seven; `chapter-icons` gains `'hk-tai-po-market-dye-factory-chronicle': 'navigation'`; e2e floors ≥87; `/world` copy 86→87 everywhere; partition test now **15+16+16+15+8+9+8 = 87**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,317** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 9.4s · SSR curls both locales: chapter renders with 黃先生/大埔墟 markers, `/hong-kong` carries the chip and 第八十七章， `/world` returns **87 distinct guide links in each arm**.
+
+**Honest boundaries.** 大埔墟 is a real market town; 黃先生's dye factory, his colour-list, his mother handing the keys down, the 02:15 firings — all 合成敘事. No real merchant fires anything at that hour; the dye factory belongs to the fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
