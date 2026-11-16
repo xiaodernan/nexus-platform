@@ -2486,4 +2486,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-mong-kok-ging-fa-shu-mai-chronicle', title: '晚上十一點半：旺角——金花街——譚華阿婆的最後一鍋燒賣（香港系列 · 第八十四章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上十一點半的金花街——譚華阿婆的最後一鍋燒賣、還是熱的、留給自己還是小孩子吃。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上十一點半。金花街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——譚華阿婆低頭看最後一鍋燒賣還在冒熱氣。' },
+      { type: 'heading', text: '一、金花街的尾聲' },
+      { type: 'paragraph', text: '金花街是幾家老字號藥坊散落的街坊。譚華阿婆壺燒賣賣了三十年的最後一晚。不是「收盤」是「這晚的最後一鍋」——阿婆只辨認到的兩種：溫的、不溫的。' },
+      { type: 'cards', title: '金花街可見', items: [] },
+      { type: 'heading', text: '二、她還沒數完' },
+      { type: 'paragraph', text: '譚華阿婆一直在自己的攤面前輕輕的碼杯。「還有兩個小孩子拖到半夜珊，但我老早知道這邊會給他們幾粒。」「這個不收到來、明天場就散了。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '金花街可聽', items: [] },
+      { type: 'heading', text: '三、還是溫的' },
+      { type: 'paragraph', text: '譚華阿婆笑笑的，打開竹籠點兩粒燒賣。「這一鍋是給我今天的。」她嚐了一口，她說做了一生的燒賣今天還是溫的：溫是她從一大早不搬離開來堅持的東西。' },
+      { type: 'cards', title: '金花街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「旺角 金花街」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

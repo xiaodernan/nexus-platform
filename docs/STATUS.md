@@ -45248,3 +45248,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** 軒尼詩道是真實的灣仔街道；但黃姐、她的三十四年書記生涯、今晚的最後四件案件——全部合成敘事構建，與任何真實書記官或法庭全無關聯。冇一個真實機構被反映；攏是敘事建構。
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1228. D1228 — chapter LXXXIV （旺角金花街，23:30） — the last pot
+
+**Why.** The eighty-fourth is the oldest-gutsy beat in the day-loop — closing too late to do it justice: the steamer never goes cold, suspicious instinct, roasted proper. The city sleeps on its own schedule.
+
+**The unit.** `DEMO_GUIDES` gains `hk-mong-kok-ging-fa-shu-mai-chronicle`, 「晚上十一點半：旺角——金花街——譚華阿婆的最後一鍋燒賣（香港系列 · 第八十四章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、金花街的尾聲 · 二、她還沒數完 · 三、還是溫的）, 後記 + SearchBox pointer （「旺角 金花街」）. Arc clock gains 23:30 between 麥當勞得來速（23:00）與紙包飲品販賣機（00:00）— **168 chips across both locales**; handbook reading order updated to eighty-four; `chapter-icons` gains `'hk-mong-kok-ging-fa-shu-mai-chronicle': 'navigation'`; e2e floors ≥84; `/world` copy 83→84 everywhere; partition test now **12+16+16+15+8+9+8 = 84**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,290** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 11.6s · SSR curls both locales: chapter renders with 譚華阿婆 markers, `/hong-kong` carries the chip and 第八十四章， `/world` returns **84 distinct guide links in each arm**.
+
+**Honest boundaries.** 金花街 is a real Mong Kok street; the story inside譚華阿婆 — her thirty-two street-fern shu mai, the door-to-door mahjong rotations, the pot that outlived two people — all construction is fiction. No real shop named譚華賣anything. That is the point.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
