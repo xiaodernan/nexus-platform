@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1275",
-  "milestone_full": "第一百零五章 · day arc complete → /afterward + §五 cross-route census clean · /command now carries LIVE-PROVIDER model reality (measured 2026-11-16/17 through the operator egress)",
-  "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
-  "as_of": "2026-11-16",
+  "milestone": "D1276",
+  "milestone_full": "简体中文 joins as a first-class locale — the whole product answers in zh-CN (three-state zh-HK→zh-CN→en toggle, generated opencc fold, CI-locked lockstep) · the closed arc keeps its 105 Traditional chapters · /command carries the live-model reality",
+  "headline": "NEXUS Platform — Hong Kong's table, one sentence away. 现在也能说简体中文。",
+  "as_of": "2026-11-17",
   "updated_at_commit": "current-master",
   "features": [
-    "§九+§四 landed in the admin console: /command gains a LIVE-PROVIDER · 大模型現實 panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope default · identical-burst cached 81.5% vs SSE 16.3% · tiny-system arm 95.5% · weekly probe · intent 5/5 — measured, not decorated",
-    "§五 sweep: the fourteen-route geometry census at 1280×800 headless Chrome returns zero real defects (zero overflows, zero rotated glyphs, zero same-position overlaps)",
-    "/afterward — the tail of the closed arc: five flashes after midnight (vending machine → bus stop → fruit market → dawn dispatch → Ah Keung’s hundred-and-first bun); SSR, dict-carried, hooks back into /chronicle and /hong-kong",
-    "§十一 re-verified on the post-D1261 build: six routes × 128 req × 32-concurrent — zero 5xx, zero timeout (hong-kong 1,277→1,222ms p50)",
-    "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
-    "D1275: /command LIVE-PROVIDER panel · D1274: geometry census · D1273: /afterward · D1272: §十一 re-verified"
+    "D1276: Simplified Chinese is a first-class locale — one toggle cycles 繁體中文 → 简体中文 → EN; every user-facing string is generated from the Traditional arm via opencc (hk2s+t2s) and CI-locked in lockstep; painted SSR verified Simplified end-to-end (lang, chrome, footer doors, 404 boundary)",
+    "D1276: the seeded ghost-replay insights, manual-RAG answers, starter prompts and mock card-explanations localize per locale — the old silent Simplified-for-everyone fallback is gone",
+    "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · /world 105 chips · /afterward tail · /chronicle codex",
+    "§十一 pressure re-verified (six routes × 128×32 — zero 5xx) · §伍 geometry census clean at 1280×800",
+    "/command: LIVE-PROVIDER panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope default · identical-burst cache 81.5% vs SSE 16.3% · intent 5/5 (measured, 2026-11-16/17, operator egress)",
+    "HK REAL-HK blocks carry inline Wikipedia sources (Octopus, Hang Seng Index, MTR …) — retrieve-or-silence rule, no invented figures"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
