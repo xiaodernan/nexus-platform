@@ -1,7 +1,7 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1246",
-  "milestone_full": "第九十五章 · 將軍澳——和德商場——李阿忠的打字機行（16:15）· /world 九十五章",
+  "milestone": "D1248",
+  "milestone_full": "StateGraph runbook — the complete in-app readbook of the orchestrator: the graph shape, the enable switch, the honest limits — /stategraph, both locales",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
@@ -13,7 +13,8 @@
     "handbook REAL-HK I/II/III/IV/V/VI/VII — MTR · Star Ferry · HKIA · Observatory (1883) · Peak Tram (1888) · Tai Kwun · ding-ding (1904) — inline URLs",
     "/world atlas reads 95 chips (16+17+17+18+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
     "/hong-kong (95 chapters) · /world (95 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123",
-    "D1246: XCV · D1245: XCIV · D1244: StateGraph figure · D1242: XCII · D1241: StateGraph 18/18 · D1240: ENGINE block"
+    "D1246: XCV · D1245: XCIV · D1244: StateGraph figure · D1242: XCII · D1241: StateGraph 18/18 · D1240: ENGINE block",
+    "D1248: /stategraph — the full runbook (why a graph, the click-through rehearsal, the NEXUS_AI_ENGINE switch, the honest limits) — both locales · handbook CTA + footer door"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

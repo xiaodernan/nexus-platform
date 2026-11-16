@@ -208,6 +208,13 @@ export default async function HandbookPage() {
                     </svg>
                     <p className="mt-3 text-2xs leading-relaxed text-ink-muted">{copy.stategraphDiagram.caption}</p>
                     <p className="mt-2 font-mono text-[11px] text-ink-faint">{copy.stategraphDiagram.defaultNote}</p>
+                    <Link
+                      href="/stategraph"
+                      className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-accent-line bg-accent-soft px-4 text-2xs font-medium text-accent transition-colors hover:border-accent"
+                    >
+                      {copy.stategraphDiagram.runbookCta}
+                      <Icon name="arrowRight" size={12} aria-hidden="true" />
+                    </Link>
                   </figure>
                 ) : null}
               </article>

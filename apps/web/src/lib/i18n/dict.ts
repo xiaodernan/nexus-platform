@@ -1015,10 +1015,34 @@ export interface Dict {
     tourTitle: string;
     tour: Array<{ title: string; text: string }>;
     sections: Array<{ id: string; kicker: string; title: string; paragraphs: string[]; bullets?: string[] }>;
-    stategraphDiagram: { title: string; caption: string; graphLabel: string; serialLabel: string; defaultNote: string };
+    stategraphDiagram: { title: string; caption: string; graphLabel: string; serialLabel: string; defaultNote: string; runbookCta: string };
     nextTitle: string;
     screenshotNote: string;
     quickLinks: Array<{ href: string; label: string }>;
+  };
+  /** D1246: the /stategraph runbook page — the orchestrator graph explained in-app. */
+  stategraph: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    runbookTitle: string;
+    runbookBody: string[];
+    runbookBullets: string[];
+    rehearsalTitle: string;
+    rehearsalNote: string;
+    steps: Array<{ title: string; node: string; body: string }>;
+    doneLine: string;
+    switchTitle: string;
+    switchBody: string[];
+    switchBullets: string[];
+    truthTitle: string;
+    truthBody: string[];
+    ctaTitle: string;
+    ctaHandbook: string;
+    startCta: string;
+    nextCta: string;
+    resetCta: string;
+    stepLabel: string;
   };
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
   insights: {
@@ -2745,6 +2769,7 @@ const zhHK: Dict = {
       graphLabel: 'graph 路徑（並發）',
       serialLabel: 'planner 路徑（預設 · 序列）',
       defaultNote: '預設 planner。升到 graph 路徑：在伺服器設 NEXUS_AI_ENGINE=graph。',
+      runbookCta: '打開引擎讀本 → /stategraph',
     },
     nextTitle: '想要更多？',
     screenshotNote: '截圖與實際畫面以現場部署為準；本說明書隨每次里程碑發佈更新。',
@@ -2760,6 +2785,55 @@ const zhHK: Dict = {
       { href: '/command', label: '指揮台' },
       { href: '/me', label: '我的' },
     ],
+  },
+  stategraph: {
+    eyebrow: '引擎 · stategraph',
+    title: '智能代理運行的一張圖——四節點，一次會話',
+    intro: 'NEXUS 的智能代理不是黑箱——它是一張確定性的圖。輸入進去，節奏就是 make_plan → route → fanout → emit。下面是讀本、演練、開關與真話。',
+    runbookTitle: '一、為什麼智能代理需要圖——而不是鏈',
+    runbookBody: [
+      '鏈（prompt chain）給你的是一條固定管道：每一步必須按順序執行完成，無法提早拒絕、無法並發獨立讀取。這張圖不同——plan 交付一個計劃，route 決定是否要拒絕，fanout 把互相獨立的讀取同時派出，最後 emit 組裝報告。',
+      '這就是 LangGraph 的 StateGraph：狀態是一等公民。每一個節點——把自己讀到的東西寫回共享 state，不設臨時默契；邊（edges）是契約，路由條件是 can-refuse-can-branch，沒有一件是隱晦約定。',
+    ],
+    runbookBullets: [
+      '狀態只帶 text／context／subject／max_steps／plan／report 六件——沒有一個運行時值守，也沒有一個不帶根據評估。',
+      '並發只在 gather 之內——asyncio.wait_for 上限與冪等鍵沿用序列路徑的守則。',
+      '這張圖不在模型之內——make_plan 是確定性的規則表。這張圖是計劃的形狀，不是 prompt 的形狀。',
+      '拒絕時直落 emit——與序列路徑一模相同的拒絕畫面。',
+      '報告逐字一致——兩引擎共用同一個 ExecutionReport 組裝器。',
+    ],
+    rehearsalTitle: '二、演練：走一遍 agent 的一條 turn',
+    rehearsalNote: '按「下一步」走——或按鍵盤 → 鍵。每一步顯示節點走到哪、準備什麼、輸出什麼。演練在本地，零網絡，隨時可以重來。',
+    steps: [
+      { title: '① 計劃 · make_plan', node: 'make_plan', body: 'plan_tools 接到查詢；它不是模型，是一個確定性的規則引擎：把 cuisine／排隊／時間／預算／菜種逐條對拍。產生有序號的步驟陣列；輸入超出範圍時直接返回 refused。' },
+      { title: '② 路由 · route', node: 'route', body: '規劃被拒絕（例如詞法外查詢）→ 直落 emit；其餘全部交 fanout。決定一切才是在圖的路徑、還是 planner 的序列路徑。' },
+      { title: '③ 扇出 · fanout（並發）', node: 'fanout', body: '對於每個互相獨立的讀取：asyncio.gather 並發派發——每個 dispatch 都有同一個 asyncio.wait_for 上限與同一把冪等鍵。總延遲被壓到最慢的那個工具。排序回 plan 之後才算數。' },
+      { title: '④ 組裝 · emit', node: 'emit', body: 'ExecutionReport 聚合——工具呼叫次序與序列引擎逐字一致；審計事件來自並發協程，因此觀察順序可能不同，但組裝後的報告相同。' },
+      { title: '⑤ 完成 · done', node: 'done', body: '產品對這個答案全然誠實：以下都是演練的形狀，不是私密的預言。真正的 instrument 在路徑裏，拍腳步跟計劃走；沒有任何一件是意會。做完就能走。' },
+    ],
+    doneLine: '演練完成。這條路徑就是 agent 的生命線——plan 產生，route 決定，fanout 並發，emit 組裝。沒有一件是隱喻。',
+    switchTitle: '三、開關：怎樣讓自己跑在 graph 路徑',
+    switchBody: [
+      '開關只有一個位置——環境變量 NEXUS_AI_ENGINE。預設 planner（序列路徑，快、可以一眼驗）。',
+      '要走 graph 路徑：在服務器上設 NEXUS_AI_ENGINE=graph。重啟後生效——即刻、即退回、無殘留。',
+    ],
+    switchBullets: [
+      '分支只在 routes_agent.py 一處出現——不東寫當南開。',
+      '同一套並發契約：並發只在 gather 之內；協調與逾時屬於序列路徑的 §10。',
+      '拒絕不是崩潰——它走相同的 emit 路徑。',
+      '無 LLM、無新工具——把計劃的形狀顯式化而已。',
+    ],
+    truthTitle: '四、真話：這張圖不會取代什麼',
+    truthBody: [
+      '這張圖不會：替代 LLM 做出判斷（make_plan 是規則）；讓工具產生副作用（只有獨立讀）；放寬 §10；只為演出而存在（實作於 D1142，裸機之下 18/18 指紋對拍在 D1241 實測）。',
+      '這張圖唯一能做的是：讓計劃可以看得見、可以並發獨立讀取、可以一眼復原。你要的每一件看似神奇的事，都是這條 invisible spine 在背後握的手。',
+    ],
+    ctaTitle: '想讀更多？',
+    ctaHandbook: '回到說明書 › /handbook',
+    startCta: '開始演練',
+    nextCta: '下一步',
+    resetCta: '重設',
+    stepLabel: '第 {current} 步（共 {total}）',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
   insights: {
@@ -4507,6 +4581,7 @@ const en: Dict = {
       graphLabel: 'graph path (concurrent)',
       serialLabel: 'planner path (default · serial)',
       defaultNote: 'Default is planner. To ride the graph: set NEXUS_AI_ENGINE=graph on the server.',
+      runbookCta: 'Open the engine runbook → /stategraph',
     },
     nextTitle: 'Want more?',
     screenshotNote: 'Screenshots lag the running build; this handbook is refreshed on every shipped milestone.',
@@ -4522,6 +4597,55 @@ const en: Dict = {
       { href: '/command', label: 'Command desk' },
       { href: '/me', label: 'Account' },
     ],
+  },
+  stategraph: {
+    eyebrow: 'ENGINE · stategraph',
+    title: 'One graph, four nodes, one turn — how the agent actually moves',
+    intro: 'NEXUS’s agent is not a black box — it is a deterministic graph. Input goes in; the rhythm is make_plan → route → fanout → emit. Below is the runbook, the rehearsal, the switch, the truth.',
+    runbookTitle: 'I · Why an agent needs a graph — not a chain',
+    runbookBody: [
+      'A chain (prompt chain) is a fixed pipe: every step must run in order, nothing refuses early, no independent reads run concurrently. This graph is different — plan hands over a plan, route decides whether to refuse, fanout dispatches the independent reads at the same time, emit assembles the report.',
+      'This is LangGraph’s StateGraph: state is the first-class citizen. Every node reads and writes against the shared state — never through ad-hoc handshakes; the edges are contracts, not conventions.',
+    ],
+    runbookBullets: [
+      'The state carries exactly text / context / subject / max_steps / plan / report — nothing more, nothing a provider judge anywhere knows.',
+      'Concurrency lives only inside gather — asyncio.wait_for caps and idempotency keys carry over from the serial path.',
+      'This graph is not a model — make_plan is a deterministic rule table. The graph is the shape of the plan, not the shape of a prompt.',
+      'Refusal goes straight to emit — exactly the same refusal the serial path renders.',
+      'The report is byte-identical — both engines share one ExecutionReport assembler.',
+    ],
+    rehearsalTitle: 'II · The walkthrough: one turn of the agent',
+    rehearsalNote: 'Press “next step” — or arrow-right on the keyboard. Each step shows which node you are in, what it is about to prepare, and what comes out. Everything is local, no network, restart as often as you like.',
+    steps: [
+      { title: '① Plan · make_plan', node: 'make_plan', body: 'plan_tools reads the text — not a model, but a deterministic rule engine: cuisine / party size / time / budget / dining checks fired in order. It returns an indexed step list; out-of-scope input returns refused.' },
+      { title: '② Route', node: 'route', body: 'Refusal (for example, out-of-lexicon phrasing) → straight to emit. Everything else continues to fanout. This is the only place the two engines part company.' },
+      { title: '③ Fan-out (concurrent)', node: 'fanout', body: 'For each independent read: asyncio.gather dispatches them at once — every dispatch bounded by the same asyncio.wait_for timeout and pinned under the same idempotency key. Total latency collapses to the slowest single call. Outcomes re-sort into plan order before counting as done.' },
+      { title: '④ Emit', node: 'emit', body: 'ExecutionReport aggregation — tool call order is byte-identical to the serial engine; audit events fan out of concurrent coroutines, so the observed order may differ, but the assembled report is identical.' },
+      { title: '⑤ Done', node: 'done', body: 'The product is entirely honest about this: this walkthrough shows you the shape, nothing more. The real instrument runs the same spine; nothing here is metaphor. Walk away when you are ready.' },
+    ],
+    doneLine: 'Rehearsal complete. The path is the agent’s lifeline — plan produces, route decides, fanout runs concurrently, emit assembles. None of it is a metaphor.',
+    switchTitle: 'III · The switch: how to ride the graph',
+    switchBody: [
+      'There is exactly one knob — the NEXUS_AI_ENGINE environment variable. The default is planner (serial path — fast, obvious, instantly verifiable).',
+      'To ride the graph: set NEXUS_AI_ENGINE=graph on the server. Restart to apply — and revert just as easily.',
+    ],
+    switchBullets: [
+      'The branch appears in exactly one call site — routes_agent.py. No sprinkle, no drizzle.',
+      'The same concurrency contract applies — gather is the only concurrent region; timeouts and idempotency bypass no rules.',
+      'Refusal is not a crash — it rides the same emit path.',
+      'No LLM, no new tools — the graph simply makes the plan’s shape explicit.',
+    ],
+    truthTitle: 'IV · The truth: what this graph will never do',
+    truthBody: [
+      'This graph will never: replace an LLM with judgement (make_plan is a rule table); spawn side-effectful tools (reads only); relax §10; exist just to look smart (it shipped as D1142, 18/18 fingerprint pins verified on-host at D1241).',
+      'The only thing this graph does is: make the planning visible, fan out independent reads, keep the tabs clean, and stay recoverable. Everything that looks magical inside the agent is this invisible spine.',
+    ],
+    ctaTitle: 'Want more?',
+    ctaHandbook: 'Back to the handbook › /handbook',
+    startCta: 'Start the rehearsal',
+    nextCta: 'Next step',
+    resetCta: 'Reset',
+    stepLabel: 'Step {current} of {total}',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
   insights: {

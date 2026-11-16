@@ -45480,3 +45480,21 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Ask (owner).** Top up the provider balance on wkapi.pro — the runner secret (`WKAPI_PRO_API_KEY`) belongs to the operator. ¥0.000088 is the provider's own remaining-quota reading. One live run after top-up re-establishes the business metrics; this host cannot.
 
 - readers: this ledger entry, `docs/ATLAS.md` (row on `.github/workflows/llm-cache-probe.yml`).
+
+## 1248. D1248 — the StateGraph complete runbook route: /stategraph, both locales
+
+**Why.** The user made StateGraph's presence in-product a hard requirement — "必須添加成功". The in-app ENGINE block (D1240) and the inline SVG execution-graph figure (D1244) were real but invisible to anyone who had not deliberately opened /handbook. This milestone gives StateGraph its own door — a full page, deep inside the product, linked from the footer and the handbook.
+
+**The unit.** New route `/stategraph` — SSR, `currentLocale()`, canonical `/stategraph`, dict-carried, both locales (Traditional HK on zh side). Four sections in both arms:
+- **一、讀本** — why an agent needs a graph, not a chain; the §10 contract; the plan-shaped-only, model-free design (no LLM in the nodes); the six-field state shape; refusal bypass semantics.
+- **二、演練** — a real interactive island (`StateGraphIsland`): five steps (make_plan → route → fanout → emit → done), locally rendered, Start / Next / Reset — no fetch, no storage, no timers, no custom key handlers (keyboard-native buttons only).
+- **三、開關** — the one knob: `NEXUS_AI_ENGINE` env variable; default planner; `graph` to ride the D1142 plane; branch site is `routes_agent.py`; reversible; zero provider impact.
+- **四、真話** — the hard limits: no LLM, no side-effect tools, no §10 relaxation, D1142 shipped + D1241 measured — honest.
+
+Footer gains a door to it (zh「引擎讀本」/ en「The engine」). The handbook's ENGINE section gains a chip link directly under the inline SVG figure (`copy.stategraphDiagram.runbookCta`). `dict.stategraph` carries the whole pivot copy ×2 locales; `dict.handbook.stategraphDiagram` gains `runbookCta`. `apps/web/src/lib/stategraph-page.test.ts` gains four pins (SSR/dict shape, both-locales rehearsal presence, local-only island contract, handbook CTA + footer door).
+
+**Verification (host).** `tsc` clean · web **401/401** (+4) · census 0 simplified / **2,468** literals · console-i18n 0 offenders · `verify_all` NO OFFENDER (2 ATLAS rows fixed: bare `stategraph-island.tsx` / `stategraph-page.test.ts` now carry full paths) · `falsify_ui_script` **30/30** · mock build compiled 15.6s · SSR both locales: `/stategraph` renders all atoms (eyebrow, title, five steps, switch, truth, CTA back), `/handbook` renders the runbookCta chip, the footer renders its door in both arms.
+
+**Honest boundaries.** This is engineering material, not a user feature — it teaches, it does not run the graph; the graph runs behind `NEXUS_AI_ENGINE` only. No wkapi.pro dependency in the page at all (provider gates do not apply). The rehearsal is deterministic, not a live agent call.
+
+- readers: `apps/web/app/stategraph/page.tsx`, `apps/web/src/components/stategraph-island.tsx`, `apps/web/src/lib/stategraph-page.test.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/app/handbook/page.tsx`, `apps/web/src/components/site-chrome.tsx`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

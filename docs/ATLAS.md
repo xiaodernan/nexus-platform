@@ -137,7 +137,11 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1237: the eighty-ninth HK chapter (hk-kwun-tong-night-calibration-chronicle, 凌晨三點二十分・觀塘——創新工廈——周廠長校錶車間的夜班) — 03:20, the night-shift calibration room |
 | `apps/web/src/lib/mock/seed.ts` | D1233: the eighty-eighth HK chapter (hk-sai-ying-pun-locksmith-chronicle, 晚上七點半・西營盤——第三街——梁師傅鎖匠鋪的最後一單) — 19:30, the locksmith's final key |
 | `apps/web/src/lib/mock/seed.ts` | D1231: the eighty-seventh HK chapter (hk-tai-po-market-dye-factory-chronicle, 半夜二點一刻・大埔墟——黃先生的染廠) — 02:15, the Tai Po dye factory |
-| `apps/web/app/handbook/page.tsx` | D1244: the StateGraph runbook figure — inline SVG (graph path: make_plan → route → fanout ⤵ gather → emit dashed; serial path below), dict-carried `stategraphDiagram` both locales, rendered only inside the `stategraph` section; `apps/web/src/lib/handbook.test.ts` gains pins for figure title + EN/zh labels + page atoms |
+| `apps/web/app/stategraph/page.tsx` | D1248: the runbook route — SSR, dict-carried, canonical /stategraph; four sections （讀本 / 演練 / 開關 / 真話） + /handbook back-link |
+| `apps/web/src/components/stategraph-island.tsx` | D1248: the rehearsal island — client-only, local state, no fetch/storage/timers/no custom key handlers; start → 4 step buttons → reset |
+| `apps/web/src/lib/stategraph-page.test.ts` | D1248: four pins — page SSR/canonical/dict-driven; both locales carry the five-step rehearsal; island local-only contract; handbook CTA + footer door |
+| `apps/web/src/components/site-chrome.tsx` | D1248: footer gains the engine door — `/stategraph`, label zh「引擎讀本」/ en「The engine」 |
+| `apps/web/app/handbook/page.tsx` | D1244: the StateGraph runbook figure — inline SVG (graph path: make_plan → route → fanout ⤵ gather → emit dashed; serial path below) + D1248 runbookCta link to /stategraph inside the `stategraph` section |
 | `apps/web/src/lib/i18n/dict.ts` | D1244: handbook `stategraphDiagram` block (both locales) |
 | `apps/web/app/handbook/page.tsx` | D1220: handbook quickLinks now carry the full 10-surface rail (/search→/me), both locales — every shipped page reachable, gated by tests |
 | `apps/web/src/components/stamp-collection.tsx` | D1221: /stamp endgame — printable wax-seal certificate (inline SVG, single-tap `window.print()`), print-hidden chrome, HK-date stamp |
