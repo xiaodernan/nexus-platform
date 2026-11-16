@@ -364,30 +364,16 @@ def test_a_live_geo_answer_names_the_station_it_was_handed(plane):
     cards = plane["cards"]["zh-HK"]
     assert cards, "the live pipeline returned no card"
     with_bullet = [c for c in cards if _transit(c)]
-    # D985 (2026-11-12): every row here carries a complete mtr pair (proven elsewhere in this
-    # file), but the five-reason pack can evict the transit bullet when a stronger reason wins
-    # the slot - the eviction reason on the checked planes has moved twice already
-    # (`preference_match` on the 2026-09-22 corpus, `fresh_data` on the freshly-anchored CI
-    # one). The ONLY two facts visible from outside - and both are now pinned instead of
-    # asserting the name of the competing reason - are (a) the bullet IS printable on this
-    # plane, and (b) the printable five may or may not carry it on every card. Pinning the
-    # names of the competing reasons would fail the moment a fresh corpus rewards a different
-    # signal; the real claim this file ever needed is that the plane provides the facts the
-    # builder needs to print the station.
-    assert with_bullet, "no live card on the geo plane carries the transit bullet"
-    # D985: when the CI corpus drifts (2026-11-16), 0–3/6 cards name the station — the bullet's
-    # five-reason slot belongs to the ranker, not this plane; the honest claim this file can
-    # keep is "the plane prints the station on at least one card". Raise the floor only if
-    # `_transit` gets a stable pass rate again.
-    assert len(with_bullet) >= 1, (
-        f"{len(with_bullet)} of {len(cards)} live cards name a station - the plane provides"
-        f" the facts for every row, so fewer than five printed means the builder stopped"
-        f" reaching for them (or every card silently outranked the bullet to the five-reason"
-        f" cap, which is exactly the shape the bullet exists to exclude)")
-    # cards[0] need not carry the bullet; walk to the first card that does.
-    first_with_transit = next((c for c in cards if _transit(c)), None)
-    assert first_with_transit is not None
-    first = _transit(first_with_transit)[0]
+    # D1258: at least one card on the geo plane must carry the transit bullet — the plane
+    # provides the mtr facts for every row, and the builder must reach at least once. The
+    # prior floor (>=5 of 6 cards) drifted to >=3, then to zero on the 2026-11-16 CI corpus
+    # (--now pin moved the five-reason slot); the invariant worth keeping is (a) the bullet
+    # is printable, and (b) some card carries it. Pinned by `check_d981_contract_and_d705_followup.mjs`.
+    assert with_bullet, (
+        f"{len(cards)} cards returned on the geo plane; "
+        f"none of them prints the transit bullet — the plane provides the mtr facts for every row, "
+        f"so the builder stopped reaching for them")
+    first = _transit(with_bullet[0])[0]
     assert "min" not in first.text and "分鐘" in first.text, (
         f"a zh-HK reader got {first.text!r}")
 
