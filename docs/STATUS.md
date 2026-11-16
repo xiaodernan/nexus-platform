@@ -45853,3 +45853,21 @@ The copy is minimum-viable, not metaphor: every act beat quotes a real chapter f
 **Verification (host).** Fresh mock build; `tsc` clean; web **414/414** (+4); census 0 simplified (2,679); `verify_all` **NO OFFENDER**; SSR curls zh/en both return 200 with every marker（問手冊 title, answer, citation sigils, degradedNote); no env/fetch/http/embeddings anywhere in the module; CI stays offline (tests: deterministic + grep-contract pins).
 
 - readers: `apps/web/src/lib/manual-rag.ts`, `apps/web/src/lib/manual-rag.test.ts`, `apps/web/app/handbook/page.tsx`, `apps/web/src/lib/i18n/dict.ts` (`handbook.askManual` both arms), this ledger entry.
+
+## 1270. D1270 — REAL-HK IX: the Octopus card (八達通) joins the handbook — 1 September 1997, world's second contactless smart card, 14M transactions a day
+
+**Why.** Mandate §九 keeps pushing real data into the product over fixture pretending. The handbook carried REAL-HK I..VIII （天星、MTR、HKIA、天文台、山頂纜車、大館、叮叮車、恒生指數）, and the one Hong Kong institution every single reader touches every day was missing: the stored-value card that boards the tram, buys the cha siu, opens the school gate, starts the car park.
+
+**The unit.** `dict.handbook.sections` gains `id: 'octopus'` (kicker `REAL-HK`, section title both locales, number **18 ·**) between HSI (17) and the ENGINE block (→19). All figures are inline-sourced to `https://en.wikipedia.org/wiki/Octopus_card` (retrieved 2026-11-16, Card usage/Statistics section cited on the page):
+
+- 1997-09-01 launch (Creative Star → Octopus Cards Limited 2002); world's second contactless smart card (after Korea's Upass); MTR-ring-fenced every landmark transit in HK from day one
+- 2016: 98% of residents aged 15–64 in Hong Kong ride it; 2018: 33M+ cards issued (≈99% of residents)
+- ~14M transactions per day, HK$180M+ daily value; HKMA licensed the operator in 2000 (50% non-transport cap) — before which non-transport was ≤15%
+- 0.3 s gate beep on a single tap; HK$3,000 load ceiling; school attendance + building access + 17,000 parking meters + vending machines
+- 3M cards issued in the first 3 months (1997); 4.6M by Nov 1998; 9M by Jan 2002
+
+**Honest boundaries.** All figures are as recorded on the linked Wikipedia article at retrieval time 2026-11-16; they move in both directions over decades and the inline URL is the live source of truth. The block is additive — no chapter, no route, nothing deleted. The ENGINE section remains kicker `ENGINE`, renumbered 17→18→19 in both locales, section id unchanged.
+
+**Verification (host).** Fresh mock build; `tsc` clean; web **414/414**; census 0 simplified (2,689 literals); `verify_all` **NO OFFENDER**; SSR curls zh/en both return 200 with every marker （八達通 / 1 September 1997 / HK$3,000 / 14M); no pin test required updating (nothing pins section counts outside `{handbook quickLinks}` — count-consistent by construction).
+
+- readers: `apps/web/src/lib/i18n/dict.ts` (handbook `octopus` block both arms; ENGINE renumbered 19 both arms), this ledger entry, `docs/ATLAS.md` row optional (handbook `dict.ts` is already a tracked lineage).

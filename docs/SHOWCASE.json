@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1269",
-  "milestone_full": "第一百零五章 · day arc complete → /handbook asks back: the manual answers questions about itself with verbatim excerpts and section citations (lexical RAG, no model required)",
+  "milestone": "D1270",
+  "milestone_full": "第一百零五章 · day arc complete → REAL-HK IX: the Octopus card joins the handbook (REAL data, inline URL, every HK hand carrying one since 1997)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "New consumer feature: /handbook?ask= — ask the product’s own manual a question and get a verbatim excerpt with a section citation back — deterministic, offline, zero model calls, zero embeddings",
-    "The RAG core (apps/web/src/lib/manual-rag.ts): zh char-bigram idf / en word-token idf retrieval over the shipped handbook corpus; top-3 sections always degraded-and-grounded; answers drill into the exact section they came from",
+    "REAL-HK IX: the Octopus card (八達通， 1 Sep 1997) — the world’s second contactless smart card joins the handbook: 98% coverage 15–64; 33M+ cards in circulation (≈99% of residents); 14M+ transactions per day; HK$180M+ daily stake; HK$3,000 load ceiling; inline Wikipedia URL with 2026-11-16 retrieval",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
     "§九 delivered: docs/evidence/user-journey-2026-11-16.md — twelve real Playwright journeys, zero console errors; the probe caught a live BFF 422 and it was fixed in D1267",
-    "/llm-ops (operator runbook — measured envelope A/B 81.5% vs 16.3%) · /stategraph · /chronicle (the 105-chapter macro-epic frame) · REAL-HK VIII (Hang Seng Index: base 100 → ATH 33,223.58)",
-    "D1269: /handbook asks back · D1268: /chronicle · D1267: user-journey evidence · D1266: embedding-lane probe"
+    "/handbook?ask= — the manual answers its own questions with verbatim excerpts and section citations (lexical RAG, deterministic, offline)",
+    "/chronicle — the macro-epic frame for the 105-chapter series · /llm-ops (measured A/B: direct JSON 81.5% vs SSE 16.3%) · /stategraph · REAL-HK VIII (Hang Seng Index)",
+    "D1270: REAL-HK IX octopus ships · D1269: /handbook asks back · D1268: /chronicle · D1267: user-journey evidence"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

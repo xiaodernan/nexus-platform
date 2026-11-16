@@ -2840,7 +2840,17 @@ const zhHK: Dict = {
         '2025 年收報 25,630.54 點（+27.77%）；2024 年收報 20,059.95 點（+17.67%）；2023 年收報 17,047.39 點（−13.82%）',
         '成份股樣本：滙豐控股（00005）· 港交所（00388）· 騰訊控股（00700）· 友邦保險（01299）· 小米集團（01810）',
       ] },
-      { id: 'stategraph', kicker: 'ENGINE', title: '18 · StateGraph——智能代理的脊柱：make_plan → route → fanout → emit', paragraphs: [
+      { id: 'octopus', kicker: 'REAL-HK', title: '18 · 八達通——1997 年的一張卡，這座城市的每日節奏（不是演示數據）', paragraphs: [
+        '這座城市最常被拒出示的不是身分證，是 Octopus 卡——一拍就能進閘、能買快餐、能買停車場。下面這幾筆同樣是公開來源的真實數字，不屬本站演示資料。',
+        '資料來源：Wikipedia——Octopus card（https://en.wikipedia.org/wiki/Octopus_card，2026-11-16 網頁查閱）。數字隨時間變動；點開連結的 Card usage 與 Statistics 段即可核對最新發卡量與交易量。',
+      ], bullets: [
+        '1997 年 9 月 1 日推出（Creative Star → 2002 改名 Octopus Cards Limited），世界第二個 contactless smart card 系統（首個是韓國 Upass）',
+        'MTR、KCR、KMB、Citybus、天星小輪、公共屋邨等主要交通工具全部納入；MTR 嘟閘 0.3 秒完成',
+        '2016 年：15–64 歲香港居民 98% 在用；2018 年：累計發卡逾 3,300 萬張，覆蓋率約 99%',
+        '單日逾 1,400 萬筆交易、HK$1.8 億以上交易額；HKMA 2000 年發出存款牌照後，非交通交易可佔 50%',
+        '儲值上限 HK$3,000；兼顧乘車、出入校園、大廈出入設備、停車場、自動售賣機與簽名快餐門店',
+      ] },
+      { id: 'stategraph', kicker: 'ENGINE', title: '19 · StateGraph——智能代理的脊柱：make_plan → route → fanout → emit', paragraphs: [
         'NEXUS 的智能代理不是一個黑箱，它是一張圖。make_plan —— 把輸入交給與序列路徑完全相同的確定性 plan_tools；route —— 規劃被拒絕時直落 emit，否則 fanout；fanout —— 獨立讀取的工具以 asyncio.gather 並發派發，再按計劃順序排回去；emit —— 組裝與序列路徑逐字節一致的 ExecutionReport。',
         '啟用開關：環境變量 NEXUS_AI_ENGINE=graph（預設 planner——啟用之前一切不動）。這不是對模型能力的包裝：這張圖沒有 LLM、沒有新工具，只是把計劃的形狀顯式化——獨立讀可以並發，行動者的承諾不變。',
       ], bullets: [
@@ -4828,7 +4838,17 @@ const en: Dict = {
         '2025 close 25,630.54 (+27.77%); 2024 close 20,059.95 (+17.67%); 2023 close 17,047.39 (−13.82%)',
         'Constituent samples: HSBC Holdings (00005) · HKEX (00388) · Tencent (00700) · AIA Group (01299) · Xiaomi (01810)',
       ] },
-      { id: 'stategraph', kicker: 'ENGINE', title: '18 · StateGraph — the agent’s spine: make_plan → route → fanout → emit', paragraphs: [
+      { id: 'octopus', kicker: 'REAL-HK', title: '18 · The Octopus card — one swipe since 1997, this city’s daily pulse (not demo figures)', paragraphs: [
+        'The card this city reaches for more than its ID — it boards the train, buys the cha siu, opens the car park. These figures are public-source reality too, not demo data.',
+        'Source: Wikipedia — Octopus card (https://en.wikipedia.org/wiki/Octopus_card, retrieved 2026-11-16). Figures move; the Card usage section of the linked page carries the current ridership and transaction counts.',
+      ], bullets: [
+        'Launched 1 September 1997 (Creative Star → renamed Octopus Cards Limited in 2002) — the world’s second contactless smart card system, after Korea’s Upass',
+        'MTR, KCR/KMB, Citybus, Star Ferry and Light Rail all on board; a full MTR gate beep takes 0.3 seconds',
+        '2016: 98% of Hong Kong residents aged 15–64 ride it; 2018: 33M+ cards in circulation, ≈99% of residents',
+        '14M+ transactions per day, HK$180M+ turnover daily; HKMA granted a deposit-taking licence in 2000 (50% non-transport cap since)',
+        'Stored-value ceiling HK$3,000; doubles for school attendance, building access, 17,000 parking meters (2003) and vending machines',
+      ] },
+      { id: 'stategraph', kicker: 'ENGINE', title: '19 · StateGraph — the agent’s spine: make_plan → route → fanout → emit', paragraphs: [
         'NEXUS’s agent is not a black box; it is a graph. Node one — make_plan — hands the text to the identical deterministic plan_tools the serial path uses; node two — route — branches a refusal straight to emit, otherwise to fanout; node three — fanout — dispatches the v1 independent reads concurrently via asyncio.gather, re-sorts outcomes into plan order; node four — emit — assembles the byte-identical ExecutionReport the serial path renders.',
         'Enable with NEXUS_AI_ENGINE=graph (default planner — nothing changes until you do). The graph is not a wrapper over model capability: no LLM, no new tools, just the plan’s shape made explicit — independent reads may run concurrently; the caller’s promises do not move.',
       ], bullets: [
