@@ -45356,3 +45356,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** This is the synthetic mock plane, reachable only from this host with `NEXT_PUBLIC_DATA_MODE=mock`. It does not represent production latency; it measures render cost and error-free shape at load. It does not test the API route (`/api/nexus/*`); the API route was pressure-tested separately (128 req @ 32 concurrency, 100% 2xx) in earlier milestones.
 
 - readers: this ledger entry only.
+
+## 1237. D1237 — chapter LXXXIX （觀塘，03:20） — the night-shift calibration room
+
+**Why.** The smallest beat in the whole day-arc — the one worker who knows the time tickets are one-plus-tenths of a second off before anyone else wakes. The arc now owns a beat at 03:20, in-between the trolley stand and the dawn baker.
+
+**The unit.** `DEMO_GUIDES` gains `hk-kwun-tong-night-calibration-chronicle`, 「凌晨三點二十分：觀塘——創新工廈——周廠長校錶車間的夜班（香港系列 · 第八十九章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、校錶車間的夜班 · 二、時間的甜度 · 三、天亮之前的最後一刻鐘）, 後記 + SearchBox pointer （「觀塘 校錶」）. Arc clock gains 03:20 between 羅湖行李手車（03:15）與鹹光燒餅（03:30）— **178 chips across both locales**; handbook reading order updated to eighty-nine; `chapter-icons` gains `'hk-kwun-tong-night-calibration-chronicle': 'navigation'`; e2e floors ≥89; `/world` copy 88→89 everywhere; partition test now **16+16+16+15+8+10+8 = 89**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,353** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 18.2s · SSR curls both locales: chapter renders with 周廠長/校錶/觀塘 markers, `/hong-kong` carries the chip and 第八十九章， `/world` returns **89 distinct guide links in each arm**.
+
+**Honest boundaries.** 觀塘工業區 is a real estate; 創新工廈、周廠長、校錶、時間的甜度——全部 合成敘事. No real factory exists here; the precision in the hour is the fiction's.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.

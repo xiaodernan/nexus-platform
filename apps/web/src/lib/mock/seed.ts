@@ -2591,4 +2591,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kwun-tong-night-calibration-chronicle', title: '凌晨三點二十分：觀塘——創新工廈——周廠長校錶車間的夜班（香港系列 · 第八十九章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：凌晨三點二十分的觀塘——校錶車間的燈還亮着，周廠長把最後一台時間票券機的時差調到零點一秒。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨三點二十分。觀塘工業區（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——校錶車間的燈還亮着。' },
+      { type: 'heading', text: '一、校錶車間的夜班' },
+      { type: 'paragraph', text: '凌晨三點二十分，觀塘工業區只剩校錶車間的工作燈。周廠長在這裏守班——校錶的不是手錶，是這棟寫字樓的出入時間票券機：每部票券機要收到零點一秒才肯收工。' },
+      { type: 'cards', title: '觀塘可見', items: [] },
+      { type: 'heading', text: '二、時間的甜度' },
+      { type: 'paragraph', text: '周廠長每調好一部機，就在卡片盒蓋上蓋一枚點。「很多人以為時間是給數據的，其實是給人的。人準時，日子才落得乾乾淨淨。」（合成對話，非真實人物）' },
+      { type: 'cards', title: '觀塘可聽', items: [] },
+      { type: 'heading', text: '三、天亮之前的最後一刻鐘' },
+      { type: 'paragraph', text: '第十六部票券機調好的時候，周廠長把藍筆蓋回筆盒。窗外天尚未亮。他關上燈之後沒有立刻離開——他站在黑暗裏，聽着副機裏仍在慢慢走動的秒數。' },
+      { type: 'cards', title: '觀塘可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「觀塘 校錶」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];
