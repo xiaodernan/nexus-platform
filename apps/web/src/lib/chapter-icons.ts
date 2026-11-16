@@ -115,6 +115,7 @@ export const CHAPTER_ICONS: Readonly<Record<string, IconName>> = {
   'hk-tsim-shui-po-dawn-tricycle-chronicle': 'navigation',
   'hk-tseung-kwan-o-100-bakery-chronicle': 'navigation',
   'hk-lung-cheung-road-nightbus-chronicle': 'navigation',
+  'hk-kennedy-town-junk-books-chronicle': 'navigation',
 };
 
 export const chapterIcon = (slug: string): IconName | undefined => CHAPTER_ICONS[slug];

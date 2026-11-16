@@ -2864,4 +2864,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kennedy-town-junk-books-chronicle', title: '下午三點十五分：西環——堅巷——阿陳的舊書攤（香港系列 · 第一百零二章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：下午三點十五分的西環堅巷——舊書攤正午後的沉默，與一個願意讓書便宜賣出去的人。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午三點十五分。西環——堅巷（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——整條巷子只聽見書頁翻動的聲音。阿陳（合成敘事，非真實人物）把一疊舊書往天光底下攤開——下午三點的光剛好，不曬書，不傷書脊。' },
+      { type: 'heading', text: '一、舊書不會急著找主人' },
+      { type: 'cards', title: '堅巷可見', items: [] },
+      { type: 'paragraph', text: '堅巷不寬，四個人已經塞滿，阿陳把攤子從巷口一直拉到中段：二手中文書一疊、舊雜誌一疊、罕見的第一版一小撮——每一本上面都鉛筆寫著上一個主人對它的評語。來的人不買書，先站一會兒——這入口只需要五分鐘，比到診所快多了。' },
+      { type: 'heading', text: '二、下午三點的一杯檸茶' },
+      { type: 'cards', title: '堅巷可聽', items: [] },
+      { type: 'paragraph', text: '阿陳自己每天下午三點都會從巷口茶檔搬一杯檸茶過來——冰塊化到一半，正好喝完。一個中環中學生來問：「有冇王家衛那本舊的？」阿陳拉出一本封面泛黃的《重慶森林》——封面裡夾著一張九〇年代的電影票根。「九十塊。」「可否六十？」阿陳笑笑：「六十，但你要答應我，後面有一頁給我看過。」' },
+      { type: 'heading', text: '三、堅巷退去燈火' },
+      { type: 'cards', title: '堅巷可等', items: [] },
+      { type: 'paragraph', text: '五點半，阿陳把書一疊一疊捆好，鎖上低矮的木箱——像把一隻只會說話的鳥裝回籠。巷子重新安靜下來，只剩遠處堅尼地城公園傳來孫子落網球拍的聲音。他關上燈，「堅巷舊書攤，明天下午兩點再見。」這是阿陳連續第四百一十三天的收攤語——與它一樣貴重的是下一個人的等待。' },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「西環 舊書攤」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

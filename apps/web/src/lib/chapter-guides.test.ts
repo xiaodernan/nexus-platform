@@ -337,5 +337,11 @@ describe('HK series — every seeded chapter actually resolves', () => {
     expect(l101?.title).toContain('第一百零一章');
     expect(l101?.title).toContain('唐伯');
     expect(l101?.flags.demo).toBe(true);
+
+    const l102 = mockGuide('hk-kennedy-town-junk-books-chronicle');
+    expect(l102).not.toBeNull();
+    expect(l102?.title).toContain('第一百零二章');
+    expect(l102?.title).toContain('阿陳');
+    expect(l102?.flags.demo).toBe(true);
   });
 });
