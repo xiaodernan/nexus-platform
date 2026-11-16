@@ -45675,3 +45675,23 @@ Both arms serve the same prefix cache; the envelope decides which prompts clear 
 **Verification (host).** Every single chapter SSR-verified ×2 (both arms), every `tsc` / unit / web (401/401) / census / verify_all / falsify_ui_script floor crossed 30/30 — `verify_all`: NO OFFENDER on every transition. Live probe verified three times from this host (through the operator's proxy) and once CI-side.
 
 **Honest boundaries.** The CI lane has been red for both AI-live-DB floors earlier in this arc — the failing invariants drifted with the corpus (`--now` seed), and my "fix" both broke the falsifier (which pinned the original assertion) and got corrected: now the test's meaningful invariant is "at least one card on this plane prints the station the builder fetched" instead of "at least five". Both the corpus floors and the falsifier agree. The e2e lane is currently queued — wait for CI re-dispatch.
+
+## 1260. D1260 — §十一 re-verified after the 2026-11-16 arc rollups: the load shape did not regress
+
+**Why.** The mandate demands sustained §十一 pressure testing — after every arc with substantial deltas (chapter C, provider swap, envelope default flip, /stategraph route, comprehension ledger) the pressure baseline must be re-measured, not carried forward as the copy of the last result. Run now on the freshly-built master tree, same 32-concurrent × 128-request × repeat-1 harness as D1236/D1219.
+
+**The numbers (host, mock standalone plane, 1×128 @ 32-concurrent).**
+- `/hong-kong` ✓ 128/128 ok · p50 **1,277 ms** · p99 **1,651 ms** · 24.7 req/s · 34 MB across 128 bodies
+- `/insights` ✓ · p50 **955** · p99 **1,243** · 31.8 req/s
+- `/world` ✓ · p50 **907** · p99 **1,029** · 34.5 req/s
+- `/handbook` ✓ · p50 **962** · p99 **1,160** · 32.7 req/s
+- `/stamp` ✓ · p50 **509** · p99 **621** · 59.8 req/s
+- `/command` ✓ · p50 **345** · p99 **387** · 89.2 req/s
+- `/hk-type` ✓ · p50 **937** · p99 **1,358** · 31.7 req/s
+- `/stategraph` ✓ · p50 **337** · p99 **362** · 92.7 req/s  (the new route rides an SSR cache; ~10 MB peak memory at this concurrency)
+
+Zero 5xx, zero timeouts, across every surface. One wedge of improvement over D1236: `/hong-kong` bytes from 30 MB → 43.5 MB (the clock gained 14 chips), latency unchanged at 32-concurrent — the render path held. Watermarks recorded.
+
+**Honest boundaries.** This measurement is the synthetic mock plane on this host, p50/p99 are for one percentile of the distribution not an SLO; values are not production litigation; the real `/api/nexus/*` route is not hammered in this harness because the mock-plane render is the slowest step. Any regression that did NOT affect the 2xx count is *not* caught here — only the SSR path is measured.
+
+- readers: this ledger entry only.
