@@ -45885,3 +45885,24 @@ The copy is minimum-viable, not metaphor: every act beat quotes a real chapter f
 **Verification (host).** Fresh mock build; `tsc` clean; web **419/419** (+4); census 0 simplified (2,701 literals); `verify_all` **NO OFFENDER**; `check_atlas` PASS (394 cited paths); SSR curls confirm both pages carry the REAL-TRACE markers (`/insights` fully; `/command` renders locked state SSG — the panel mounts client-side after `123` as before).
 
 - readers: `apps/web/src/lib/real-trace.ts`, `apps/web/src/lib/real-trace.test.ts`, `apps/web/app/insights/page.tsx`, `apps/web/app/command/page.tsx`, `apps/web/src/components/command-console.tsx`, `apps/web/src/lib/i18n/dict.ts` (`insights` + `cmdConsole` realTrace blocks both arms), `docs/ATLAS.md`, this ledger entry.
+
+## 1272. D1272 — §十一 re-verified on the post-D1261 build (chapters 101-105 · HSI VIII · Octopus IX · /llm-ops · /chronicle · two REAL-TRACE panels)
+
+**Why.** The last pressure ledger (D1260) was measured against the build before chapter CI/CII/CIII/CIV/CV, REAL-HK VIII (Hang Seng Index), REAL-HK IX (Octopus), /handbook?ask= (lexical RAG), /chronicle, /llm-ops and the D1271 REAL-TRACE panels were added. Every one of those additions touched the hot route; re-measuring was owed.
+
+**The numbers (host, mock plane, 1×128 @ 32-concurrent, fresh SSR).**
+
+| route | p50 ms | p99 ms | req/s | bytes total |
+| ----- | -----: | -----: | ----: | ----------: |
+| `/hong-kong` | 1,222 | 1,577 | 24.5 | 46.6 MB |
+| `/world` | 1,036 | 1,156 | 30.1 | 21.2 MB |
+| `/handbook` | 1,185 | 1,492 | 25.3 | 31.9 MB |
+| `/stategraph` | 646 | 914 | 44.3 | 11.6 MB |
+| `/llm-ops` | 852 | 1,224 | 35.7 | 12.9 MB |
+| `/chronicle` | 647 | 963 | 44.7 | 11.5 MB |
+
+**All 2xx × 128 × 32 × 6 routes — zero 5xx, zero timeouts.** `/hong-kong` improved over D1260 in both p50/p99 (1,277/1,651 → 1,222/1,577) while carrying five more chips of clock render. `/handbook` grew as expected with the ask block + REAL-HK IX (+~25% p99) but stays under 1.5 s at the p99 edge. `/stategraph` and the newly gained `/chronicle` are cheap enough to keep in the same league as SSR-cheap routes.
+
+**Honest boundaries.** This is the same single-host mock plane, not production infrastructure; p99 is one sample of the distribution, not an SLO; no live AI upstream is inside the loop (it would dominate both numbers); the harness hits the SSR path, not `/api/nexus/*`. Any regression that merely shifted percentile inside 2xx would need a deeper histogram than this harness produces.
+
+- readers: this ledger entry only.
