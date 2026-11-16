@@ -1074,6 +1074,19 @@ export interface Dict {
     ctaHandbook: string;
   };
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
+  chronicle: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    actTitle: string;
+    acts: Array<{ kicker: string; title: string; blurb: string; beats: string[] }>;
+    finaleTitle: string;
+    finaleBody: string[];
+    ctaStory: string;
+    ctaStamp: string;
+    ctaHandbook: string;
+  };
   insights: {
     eyebrow: string;
     title: string;
@@ -2994,6 +3007,45 @@ const zhHK: Dict = {
     ctaHandbook: '回到說明書 › /handbook',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
+  chronicle: {
+    eyebrow: '香港系列 · 全書',
+    title: '一座城的一天，一百零五章的完整馬拉松',
+    intro: '這一百零五章不是目錄——它是一個完整的日子：從 00:00 的紙包飲品販賣機到 23:45 的船長炳與最後一班船。三個章節：凌晨的煤氣味、早晨的引擎、一收市的分寸。每一章都是真實的小故事；每一個故事照亮的，是同一座城市。讀完這部全書，你就讀完了香港的一天。',
+    actTitle: '三幕',
+    acts: [
+      { kicker: '第一幕', title: '凌晨的煤氣味（00:00 – 05:45）', blurb: '這個時辰沒有旁觀者——只有班次。城市在睡，而它由「做事的人」擦亮。', beats: [
+        '00:00 紙包飲品販賣機 —— 城市還沒醒，販賣機的燈先醒了。',
+        '01:15 唐伯與阿璇的 N 巴士 —— 最後一班通宵巴士把學生送回九龍塘；末班車後，候車亭還要再守一刻鐘。',
+        '03:10 漁欄 —— 凌晨三點的維多利亞港，水果升降斗在昏暗中完成亞洲最大的勞作。',
+        '04:30 天光魚市 —— 深水埗北河街市醒來，菜葉的浮亮先於太陽。',
+        '05:30 三餐的血 —— 茶餐廳的白勺子與炭火，是這座城最早開張的爐灶。',
+      ] },
+      { kicker: '第二幕', title: '早晨的引擎（06:00 – 11:15）', blurb: '這座城市開始流動：車、船、麵包、電梯，全部同時啟動。', beats: [
+        '06:40 阿強的百番甜麵包 —— 麵包香氣鋪滿唐宮裡，夜班班次才是最早的顧客。',
+        '07:05 德興陶的蒸飯盒 —— 南丫島榕樹灣的早班，蒸飯盒是島上的第一聲。',
+        '08:30 校巴的秘密班機 —— 校巴準時在巷口等人，整座西貢半島剛醒來。',
+        '09:15 天星小輪的晨更 —— 維港在白天把自己寫進時間。',
+        '10:15 李阿打烊的報紙檔 —— 報紙一疊疊綁上布——這座城每天早上的第一份下午茶香。',
+      ] },
+      { kicker: '第三幕', title: '一收市的分寸（12:00 – 23:45）', blurb: '午間是馬匹，它驅趕節奏；傍晚是水閘，它把城市輕輕關上。', beats: [
+        '12:00 燒味（第二章） —— 燒味飯盒啟航，正午的營養師是廚房。',
+        '14:15 陳老師與最後一遍板書（銅鑼灣·謝斐道） —— 第三堂將完，粉筆以半個指甲的速度寫下去。',
+        '15:45 阿莊的包裹處（觀塘） —— 觀塘工業大廈與節奏由他的手保留著。',
+        '18:00 潮州話・旺角菜市場 —— 菜市場在傍晚完成它每天的告別——潮州話就是它的結尾。',
+        '23:45 船長炳與最後一班船（天星碼頭） —— 最後一班船向西折返，深夜的訊息只屬於海——這部全書就此擱下封面。',
+      ] },
+    ],
+    finaleTitle: '後記',
+    finaleBody: [
+      '這一百零五章不是目錄。它是一個完整的日子；每一小時都會替同一件事發聲：這裡有人工作，有人生活，有人守護——他們一起在這座城市裡記帳。',
+      '合成敘事：商戶與人物均為虛構，與任何真實商戶無關；時刻全部是敘事建構。每一章都是一件細小而真實的事——而這些微小的事全部來自我們願意把它們記下來。',
+      '讀完之後，去 /stamp 蓋一個章 ——「這一天，我讀完了」是這座城市最大的讚美。',
+    ],
+    ctaStory: '開始讀全系列 › /hong-kong',
+    ctaStamp: '蓋一個章 › /stamp',
+    ctaHandbook: '回到說明書 › /handbook',
+  },
   insights: {
     eyebrow: '營運者早間掃描 · 昨日 22 位讀者',
     title: '幽靈的痕跡',
@@ -4935,6 +4987,45 @@ const en: Dict = {
     ctaHandbook: 'Back to the handbook › /handbook',
   },
   /** D1206: the /insights operator scan — deterministic ghost readers, zero telemetry. */
+  /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
+  chronicle: {
+    eyebrow: 'HK SERIES · THE CODEX',
+    title: 'One city, one day — the hundred-and-five-chapter marathon',
+    intro: 'These one hundred and five chapters are not a table of contents — they are a whole day, from the 00:00 vending machine to Captain Ping’s last sailing at 23:45. Three acts: the night-shift haze, the morning engine, the closing discipline. Every chapter is a small, true story; each one is lit by the same city. Finish the codex and you have read a full HK day.',
+    actTitle: 'Three acts',
+    acts: [
+      { kicker: 'Act I', title: 'The night-shift haze (00:00 – 05:45)', blurb: 'These hours have no spectators — only shifts. The city sleeps while the people who run it stay awake.', beats: [
+        '00:00 The vending machine — the city is asleep; the machine’s light woke first.',
+        '01:15 Mr. Tong and A-syun’s N-bus — the last night bus carries students back to Kowloon Tong; the shelter holds the light a quarter-hour past the bus.',
+        '03:10 The fruit market — before dawn, the largest wholesale work in Asia closes its ledger by lantern light.',
+        '04:30 The dawn fish market — the leaves lift before the sun does.',
+        '05:30 Three meals — the first pots of the cha chaan teng prove the city wakes by pan, not by alarm.',
+      ] },
+      { kicker: 'Act II', title: 'The morning engine (06:00 – 11:15)', blurb: 'The city starts moving: trams, ferries, bread, elevators — everything boots at once.', beats: [
+        '06:40 Ah Keung’s hundred-and-first sweet bun — the night shift is the first customer of the day.',
+        '07:05 Duc-hing’s pot-steamed rice boxes — the first kitchen sound on Lamma.',
+        '08:30 The school bus — the whole Sai Kung peninsula wakes one stop at a time.',
+        '09:15 The Star Ferry’s morning run — the harbour writes its name onto the water by daylight.',
+        '10:15 The open newsstand — the press is hand-bundled, and the city has its first afternoon sugar by nose.',
+      ] },
+      { kicker: 'Act III', title: 'The closing discipline (12:00 – 23:45)', blurb: 'Noon is a horse that chases rhythm; evening is a sluice gate that lowers the city gently.', beats: [
+        '12:00 Siu Mei — the first service bell of the afternoon rush.',
+        '14:15 Mr. Chen and the last column of chalk — the third lesson ends with half a fingernail of chalk left.',
+        '15:45 Ah-jong’s parcel room — the Kwun Tong factory buildings hum between his hands.',
+        '18:00 The Teochew market — the dialect is the closing speech.',
+        '23:45 Captain Ping’s last sailing — one last fold of the harbour; the codex closes on the water.',
+      ] },
+    ],
+    finaleTitle: 'Finale',
+    finaleBody: [
+      'These one hundred and five chapters are not a table of contents. They are a whole day — and every hour of it has one thing to say: here someone worked, here someone lived, here someone watched — and all of them keep the city’s books together.',
+      'Synthetic narrative: merchants and people are fictional; hours are narrative construction, not real schedules. Every chapter is a small, true moment — and those small moments exist because we chose to keep them.',
+      'When you finish the codex, get a stamp on /stamp — “I read the whole day” is the loudest compliment this city can accept.',
+    ],
+    ctaStory: 'Start the series › /hong-kong',
+    ctaStamp: 'Stamp the passport › /stamp',
+    ctaHandbook: 'Back to the handbook › /handbook',
+  },
   insights: {
     eyebrow: 'The ops morning scan · 22 ghosts arrived yesterday',
     title: 'Where the day bites',

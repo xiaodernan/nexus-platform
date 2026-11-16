@@ -45823,3 +45823,17 @@ Plus an inline SVG bar chart of the two envelopes; the footer gains the door (la
 **Verification (host).** Fresh mock build; `tsc` clean; web **406/406**; census 0 simplified (2,638); `verify_all` **NO OFFENDER**; `check_atlas` 393 PASS; `check_console_i18n` PASS; all twelve journeys re-run on the post-fix build with **zero console errors in every single journey**.
 
 - readers: `scripts/user_journey_probe.mjs`, `docs/evidence/user-journey-2026-11-16.md`, `apps/web/src/components/ask-merchant.tsx`, `apps/web/src/lib/i18n/dict.ts` (`/insights` disclaimer both arms), `docs/ATLAS.md`, this ledger entry.
+
+## 1268. D1268 — `/chronicle`: the macro-epic frame the whole HK series hangs off (one city, one day, 105 chapters)
+
+**Why.** Mandate §一 asks for a macro-epic framing, §六 for continued expansion — and the 105-chapter day arc was finished (D1262/D1263/D1264) without ever being *framed as a single story* it claims to be. The series read as a directory, not as a novel. The missing page was not another chapter; it was the framing codex.
+
+**The unit.** New SSR route `apps/web/app/chronicle/page.tsx` — the HK-series codex: introduction (00:00 vending machine → 23:45 Captain Ping's last sailing), three acts, finale CTAs back into the product (`/hong-kong` → series; `/stamp` → have you read the whole day; `/handbook` → manual). Every beat of the codex carries the real chapter number and timestamp from the corpus — the page claims nothing the series does not ship: the night-shift prologue (paper-packaging vending machine → 唐伯 N-bus → 果欄 → dawn fish market → the first pot of the cha chaan teng), the morning engine (06:40 Ah Keung → 07:05 Duc-hing's rice boxes → 08:30 school bus → 09:15 Star Ferry → 10:15 newsstand) and the closing discipline (12:00 siu mei → 14:15 Mr. Chen's chalk column → 15:45 Ah-jong → 18:00 Teochew market → 23:45 Captain Ping).
+
+The copy is minimum-viable, not metaphor: every act beat quotes a real chapter file / clock chip (they are the same text that ships on `/world`). The codex is one page, server-rendered, dict-carried both locales, canonical `/chronicle`, no client island, CTAs back into the product. `/spect-critical` nothing. Footer gains the door (label zh「系列全書」/ en「The Chronicle」); `docs/ATLAS.md` row; `chronicle-page.test.ts` pins both locales + the three-act shape; census 0 simplified over **2,673** literals; web **409/409**.
+
+**Honest boundaries.** The codex quotes chapter titles verbatim from the corpus — it celebrates what exists, does not invent new characters or invent arcs; the "macro-epic" frame is a reader, not a fiction writer. The page deliberately reuses chapter text rather than expanding contradictions — it adds no new synthetic facts. If any future chapter gets renamed on `/world`, this page will keep quoting the old name until re-synced — the same roster hazard already proven for the footer's 68→105 hint.
+
+**Verification (host).** Fresh mock build; `tsc` clean; web **409/409** (56 files); `verify_all` **NO OFFENDER**; `check_atlas` PASS (394 cited paths — chronicle's row included); census **0 simplified** (2,673); SSR curls both locales return 200 with every act/beat marker; canonical `/chronicle` correctly 301s/renders; footer suite green; ask endpoints untouched.
+
+- readers: `apps/web/app/chronicle/page.tsx`, `apps/web/src/lib/i18n/dict.ts` (`chronicle:` both arms, interface both arms), `apps/web/src/components/site-chrome.tsx`, `apps/web/src/lib/chronicle-page.test.ts`, `docs/ATLAS.md`, this ledger entry.
