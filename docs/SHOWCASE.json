@@ -1,19 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1250",
-  "milestone_full": "Live provider swapped — api.aizzz.xyz/v1 + gpt-6.1-terra (cache probe re-verified: identical 3/6 · tiny-system 2/3 @95.5% · contract 6/12)",
+  "milestone": "D1251",
+  "milestone_full": "Live provider swap fully verified — api.aizzz.xyz/v1 + gpt-6.1-terra · intent extractor 5/5 PASS live after the prompt-clarity fix · SSE stream default (D1044) still surfaces cached_tokens",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
     "HK series: ninety-six Traditional chapters — 00:00→24:00 full day arc · 192-chip clock both locales",
-    "Edition XCVI — 中午十二點十分：元朗——鳳翔路——阿雄的東風畫材行 (12:10) · the morning's last outgoing parcels",
+    "Edition XCVI — 中午十二點十分：元朗——鳳翔路——阿雄的東風畫材行 (12:10) · the morning’s last outgoing parcels",
+    "D1251: provider migration complete — api.aizzz.xyz/v1 + gpt-6.1-terra · live smoke PASSED (latency ≈ 8.4s · 4,411-token prefix 84.5% cached) · eval_live_intent 5/5 on three consecutive runs · prompt-composer clarity fix",
     "D1248: /stategraph — the full in-app StateGraph runbook (four sections, both locales) · handbook CTA + footer door",
     "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · StateGraph runbook figure (inline SVG in-app) · 18 accept-probe pins green",
     "/world atlas reads 96 chips (16+17+17+19+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
     "/hong-kong (96 chapters) · /world (96 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123 · /stategraph",
-    "D1249: XCVI · D1248: /stategraph · D1247: wkapi.pro 403-quota verdict · D1246: XCV · D1245: XCIV · D1244: StateGraph figure",
-    "D1250: provider swapped → api.aizzz.xyz/v1 + gpt-6.1-terra · probe re-verified green on the runner · wkapi.pro retired"
+    "D1251: migration complete · D1250: provider swap · D1249: XCVI · D1248: /stategraph · D1247: wkapi.pro 403-quota verdict · D1246: XCV"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

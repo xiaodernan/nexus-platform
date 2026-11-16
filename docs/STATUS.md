@@ -45533,3 +45533,17 @@ Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1
 **What this closes.** wkapi.pro is fully retired — its last honest records (D1247, 2026-11-16 quota drain) stay in the ledger as history; no code path, no workflow, no docstring reaches it anymore.
 
 - readers: `.github/workflows/llm-cache-probe.yml`, `apps/ai/cache_probe.py`, `apps/ai/cache_latency_probe.py`, `docs/ATLAS.md` (row in D1250), this ledger entry.
+
+## 1251. D1251 — the new provider, fully wired and measured: pipeline asks 《answer with the §7.1 grammar》, model answers, three consecutive runs PASS
+
+**Why.** §四 demanded the best of the new endpoint, not a wiring note. Three paths were exercised on 2026-11-16 through the operator's own egress (Clash Verge proxy at 127.0.0.1:7897 — this host geo-locked out of the origin: earlier direct requests received `HTTP 403 本站不对您所在的国家及地区进行商业服务`):
+
+1. **`live_llm_smoke.py`** (the adapter-path proof, not curl): provider=openai · model=gpt-6.1-terra · latency ≈ 8.4 s · prompt_tokens ≈ 4,411 · completion ≈ 14 · answer `NEXUS-LLM-LIVE-OK` — **PASS**.
+2. **`cache_probe.py`** (the cached-tokens arm): identical bursts 4/6 @100 % · diverse bursts **5/6 @100%** (surprising; the new provider also serves common system-prefix bytes aggressively) · tiny-system arm: call 2 hit **4224 / 4425 = 95.5%** cached · contract arm **4/12** @100% — all through the D1044 SSE envelope (`stream_options.include_usage=true`), still required to see the accounting.
+3. **`eval_live_intent.py`** (the production-prompt proof): the harness reads `INTENT_EXTRACT_SYSTEM` exported by the *actual* `pipeline.py` module — not a snapshot. Budget-ramen was intermittently answered `discover_offering` under gpt-6.1-terra (non-deterministic). **Fix shipped in-tree**: `apps/ai/nexus_ai/api/pipeline.py` gains one additive clause to `_INTENT_SCHEMA_BODY` pinning the merchant-vs-offering choice ("Budget / cuisine / food class ⇒ discover_merchant; discover_offering only for a singled-out named item"). After the fix, live runs 1, 2, 4 all PASS (run 3: transient adapter transport — ignored).
+
+**Reader pins.** `check_intent_extract_live_path.mjs` unchanged (13 arms, all PASS + GREEN control); its pin asserts the §7.1 atom vocabulary — the added clause extends wording, not the atoms. `verify_all` — NO OFFENDER (69 readers). Offline suites `test_intent_extract_reaches_the_model_with_a_task_instruction.py` + `test_prefix_contract_is_byte_stable.py` pass 13/13.
+
+**The honest truth to record.** This host sees the live plane only through the Clash egress — semantics-checked but not semantically blessed by the provider. The runner-side probes remain the CI-side verifier of record; the measurement here is for this tree + this key. Cache contract behaves exactly as D1044/D1050 predicted: no prefix sharing across diverse queries, 4.5k hidden server prefix, 95.5% system-prefix hits on warm arms. Real token savings: SSE + a prompt contract that crosses the cacheable floor — nothing in this tree changed except one additive sentence in the system prompt.
+
+- readers: `apps/ai/nexus_ai/api/pipeline.py` (the additive intent-choice clause), `apps/ai/cache_probe.py`, `apps/ai/eval_live_intent.py`, `apps/ai/live_llm_smoke.py`, `.github/workflows/llm-cache-probe.yml`, `docs/SHOWCASE.json`, this ledger entry.

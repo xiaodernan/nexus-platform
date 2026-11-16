@@ -86,6 +86,10 @@ _INTENT_SCHEMA_BODY = (
     "\"confidence\": <{lane: 0..1}>,"
     "\"unknowns\": [<every field you had to leave unanswered>],"
     "\"mentioned_entities\": [], \"excluded_ids\": []}. "
+    "\n"
+    "Intent choice: a query that asks to FIND a place or dish — cuisine, a food class, "
+    "a budget figure — e.g. \"預算500港幣的拉麵\", is discover_merchant. Answer "
+    "discover_offering only when the query singles out a named menu item (e.g. \"有沒有叉燒\"). "
     "Never invent: a field the query did not state is null and is named in `unknowns`. "
     "Answer with JSON only."
 )
