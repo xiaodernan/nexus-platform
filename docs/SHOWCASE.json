@@ -1,17 +1,19 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1278",
-  "milestone_full": "简体中文 completes the corpus — the 105 chapters + collections now answer in Simplified Chinese (generated opencc twin, CI-locked) · Simplified stays the first-class locale from D1276 · /command carries the live model reality",
-  "headline": "NEXUS Platform — Hong Kong's table, one sentence away. 现在完整支持简体中文。",
+  "milestone": "D1280",
+  "milestone_full": "The live model reads the operator's mirror — /insights ghost replay now receives a model-phrased paragraph with fail-closed discipline, provenance badges, and server-side recompute — service-to-service, hidden from public OpenAPI",
+  "headline": "NEXUS Platform — Hong Kong's table, one sentence away. Now with a live second voice.",
   "as_of": "2026-11-17",
   "updated_at_commit": "current-master",
   "features": [
-    "D1278: the 105-chapter corpus folds in — DEMO_GUIDES/DEMO_COLLECTIONS generated in Simplified via opencc (hk2s+t2s); slug-identical, order-preserved, fold-idempotent; the zh-CN arm now carries every chapter end-to-end",
-    "D1276: Simplified Chinese is a first-class locale — one toggle cycles 繁體中文 → 简体中文 → EN; SSR verified Simplified across /, /hong-kong, /handbook, the chapter pages and the 404 boundary",
-    "D1276: seeded ghost-replay insights, entity cards, starter prompts, manual-RAG answers all localize per locale; the old silent Simplified-for-everyone fallback is gone",
+    "D1280: /insights now mounts <InsightsNarrative> — the operator's HK-dated ghost replay gets an adjacent AI paragraph every fresh render; one-second URL leak / invented-number / uncited-confident-answer refusal contract; mock mode emits nothing; live mode writes one run to the ledger (insights_narrative)",
+    "D1279: /handbook?ask= ·POST /ai/v1/handbook/ask — the manual phrases itself live: the 6 most relevant manual sections go to the model as context, the model answers with in-corpus citations only, cache + token usage measured on every call; mock mode inert; measured on Clash Verge egress (latency 4-7s, provider openai/gpt-6.1-terra, high confidence)",
+    "D1278: Simplified Chinese corpus fold — DEMO_GUIDES (107 slugs) and DEMO_COLLECTIONS folded via opencc hk2s+t2s; read path routes LOCALE->zhCN arm; Traditional arm byte-identical",
+    "D1276: Simplified Chinese is a first-class locale — three-state locale toggle zh-HK→zh-CN→en; all SSR pages verified Simplified under Accept-Language: zh-CN; census stays green; verify_all NO OFFENDER",
     "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · /world 105 chips · /afterward tail · /chronicle codex",
-    "§十一 pressure re-verified on the post-D1276 build — zero 5xx across seven SSR routes at 128×32",
-    "/command: LIVE-PROVIDER panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope default · identical-burst cache 81.5% vs SSE 16.3% · intent 5/5 (measured, operator egress)"
+    "HK REAL-HK blocks carry inline Wikipedia sources — retrieve-or-silence rule, no invented figures",
+    "§十一 pressure re-verified (six routes × 128×32 — zero 5xx) · §伍 geometry census clean at 1280×800",
+    "/command: LIVE-PROVIDER panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope · identical-burst cache 81.5% vs SSE 16.3% · intent 5/5"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
