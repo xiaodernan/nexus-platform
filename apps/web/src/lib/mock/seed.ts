@@ -2675,4 +2675,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-kwun-tong-parcel-sorting-chronicle', title: '下午三點三刻：觀塘——友諒工業大廈——阿莊的包裹處（香港系列 · 第九十三章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：下午三點三刻的觀塘——友諒工業大廈B座地下快遞室——阿莊托運機吐出最後一件包裹，今日結算。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午三點三刻。觀塘友諒工業大廈地下快遞室（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿莊把今日最後一件包裹放上托盤。' },
+      { type: 'heading', text: '一、地下快遞室的下午' },
+      { type: 'paragraph', text: '下午三點三刻，觀塘友諒工業大廈地下只剩下分揀燈低低的。阿莊守了七年的午盤——他說每一件包裹都有一個目的地，每一個目的地都有一個家。' },
+      { type: 'cards', title: '觀塘可見', items: [] },
+      { type: 'heading', text: '二、托盤機的確定感' },
+      { type: 'paragraph', text: '阿莊把包裹一件件放進分流格。他認得大部分目的——九一樓有人收過生日蛋糕，六十三樓有人收過毛毛衫。沒有一件是同一個街坊，但每件都是同一個等候。' },
+      { type: 'cards', title: '觀塘可聽', items: [] },
+      { type: 'heading', text: '三、今日又沒有漏件' },
+      { type: 'paragraph', text: '下午快到四點。阿莊關上托盤機，把保險單放進抽屜。這一次又沒有漏件。這個感覺比準時下班更勝過下班本身——阿莊說。' },
+      { type: 'cards', title: '觀塘可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「觀塘 包裹」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

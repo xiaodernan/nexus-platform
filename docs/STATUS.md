@@ -45424,3 +45424,15 @@ Zero 5xx, zero timeouts. Not an SLO — a measurement; it is what today's tree c
 **Honest boundaries.** 銅鑼灣 and Jardine's Bazaar are real; 李阿、剩下六份晚報、給媽媽折的那兩張——全部合成敘事. No real newsstand owes this page anything; the charm belongs to fiction.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1243. D1243 — chapter XCIII （觀塘友諒工業大廈，15:45） — the parcel room before the evening rush
+
+**Why.** The morning exhausted desk needs its afternoon counterpart — a sorter who parcels before the evening rush peaks. The arc gains its 15:45 anchor, the hinge between the design-market and the exchange bell.
+
+**The unit.** `DEMO_GUIDES` gains `hk-kwun-tong-parcel-sorting-chronicle`, 「下午三點三刻：觀塘——友諒工業大廈——阿莊的包裹處（香港系列 · 第九十三章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、地下快遞室的下午 · 二、托盤機的確定感 · 三、今日又沒有漏件）, 後記 + SearchBox pointer （「觀塘 包裹」）. Arc clock gains 15:45 between 萬象天地（15:30）與交易所鐘聲（16:00）— **186 chips across both locales**; handbook reading order updated to ninety-three; `chapter-icons` gains `'hk-kwun-tong-parcel-sorting-chronicle': 'navigation'`; e2e floors ≥93; `/world` copy 92→93 everywhere; partition test now **16+17+17+16+9+10+8 = 93**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,399** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 15.0s · SSR curls both locales: chapter renders with 阿莊/包裹/觀塘 markers, `/hong-kong` carries the chip and 第九十三章， `/world` returns **93 distinct guide links in each arm**.
+
+**Honest boundaries.** 觀塘工業區 is real; 友諒工業大廈、阿莊、七年午盤、承生蛋糕的那位——全部合成敘事. No real parcel leaves this fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
