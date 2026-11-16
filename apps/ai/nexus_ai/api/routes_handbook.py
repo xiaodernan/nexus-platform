@@ -39,10 +39,7 @@ log = logging.getLogger("nexus_ai.api.routes_handbook")
 
 router = APIRouter()
 
-_MAX_SECTIONS = 8
 _MAX_SECTION_BODY = 2400
-_MAX_SECTION_TITLE = 200
-_MAX_QUESTION = 400
 
 _URL_RE = re.compile(r"https?://|www\.", re.IGNORECASE)
 
