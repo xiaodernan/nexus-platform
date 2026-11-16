@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1265",
-  "milestone_full": "第一百零五章 · day arc complete → /llm-ops: the model plane explained in-product — direct JSON 81.5% vs SSE 16.3% pinned live, the weekly probe, and the economics operators need",
+  "milestone": "D1267",
+  "milestone_full": "Real user-behaviour ledger measured by twelve Playwright journeys on this very build (impatient bounce → chapter reader) — and the probe caught a live BFF contract defect (ask-merchant 422), fixed the same day",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "New operator route: /llm-ops — the model plane in the open: measured envelope A/B (2026-11-16, this host) · the frozen INTENT_EXTRACT_SYSTEM prefix · the router/budget/floor ladder · token economics · the weekly probe · the honesty strip",
-    "HK series: one hundred and five Traditional chapters — the day arc is COMPLETE (00:00→23:45) · 210-chip clock across both locales",
-    "Live provider re-verified fresh: smoke PASS (2.9s) · eval_live_intent 5/5 · identical-queries A/B: SSE 16.3% (8,832/54,211) vs direct JSON 81.5% (44,160/54,211)",
-    "D1261-era fixes ride forward: handbook mobile rail (113px → 0) · scroll-axis contract e2e on both projects · REAL-HK VIII (Hang Seng Index: base 100 → ATH 33,223.58 · 2025 close 25,630.54 +27.77%) · /stategraph section V “The measured wire”",
-    "/hong-kong (105 chapters) · /world (105 chips) · /stamp passport · /handbook · /command 123 · /stategraph · /llm-ops",
-    "D1265: /llm-ops ships · D1264: day arc complete · D1263: CIII · D1262: CII · D1261: CI + HSI + measured wire + handbook fix"
+    "§九 delivered in-product AND in-evidence: docs/evidence/user-journey-2026-11-16.md — twelve actual Chromium journeys (impatient-close · focused-search · stray-clicker · handbook-tour · chapter-reader · locale-swapper · theme-toggle · wheel-scroller · strip-bridge · merchant-browser · never-gets-comfort · closed-but-curious) with measured durations and zero console errors",
+    "The probe found a REAL defect: ask-merchant fired conversations/latest with a mock slug → BFF rightly returned 422 every time — fixed to an UUID precheck (no round trip, no console noise); anonymous cart happens for free on every merchant page",
+    "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · 210-chip clock · /world 105 chips asserted",
+    "/llm-ops (operator runbook with the measured 81.5% direct-JSON vs SSE 16.3% A/B) · /stategraph · handbook REAL-HK VIII (Hang Seng Index: base 100 → ATH 33,223.58)",
+    "Live provider re-verified fresh through the operator’s egress: smoke PASS 2.9s · intent 5/5 · the envelope A/B unchanged",
+    "D1267: user-journey evidence ships · D1266: embedding-lane probe · D1265: /llm-ops · D1264: day arc complete"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

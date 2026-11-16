@@ -59,12 +59,18 @@ export function AskMerchant({
   const hydratedOnce = useRef(false);
   const inputId = useId();
 
-  // §142's consumer half: on mount, try to load the caller's previous thread with this merchant
+    // §142's consumer half: on mount, try to load the caller's previous thread with this merchant
   // (RBAC-gated owner read — the BFF reads only the caller's own threads). 401 means anonymous;
   // shown as nothing, never as an error. The references to the demo store nothing in `turns`.
   useEffect(() => {
     if (hydratedOnce.current) return;
     hydratedOnce.current = true;
+    // The BFF contract is a uuid merchant_id; the mock catalogue's ids are slugs, and a slug can
+    // never hold a conversation — fetching would manufacture a guaranteed 422 console error on
+    // every mock merchant page for zero information. Skip the round trip; the widget already
+    // paints its ask surface in that case (exactly what an anonymous hit would show).
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(merchantId)) return;
     fetch(`/api/nexus/conversations/latest?merchant_id=${encodeURIComponent(merchantId)}`, {
       credentials: 'same-origin',
       headers: { accept: 'application/json' },
