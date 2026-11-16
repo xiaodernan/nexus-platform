@@ -1,7 +1,7 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1249",
-  "milestone_full": "第九十六章 · 元朗——鳳翔路——阿雄的東風畫材行（12:10）· /world 九十六章",
+  "milestone": "D1250",
+  "milestone_full": "Live provider swapped — api.aizzz.xyz/v1 + gpt-6.1-terra (cache probe re-verified: identical 3/6 · tiny-system 2/3 @95.5% · contract 6/12)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
@@ -12,7 +12,8 @@
     "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · StateGraph runbook figure (inline SVG in-app) · 18 accept-probe pins green",
     "/world atlas reads 96 chips (16+17+17+19+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
     "/hong-kong (96 chapters) · /world (96 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (10-surface quick rail + 7 REAL-HK) · /command 123 · /stategraph",
-    "D1249: XCVI · D1248: /stategraph · D1247: wkapi.pro 403-quota verdict · D1246: XCV · D1245: XCIV · D1244: StateGraph figure"
+    "D1249: XCVI · D1248: /stategraph · D1247: wkapi.pro 403-quota verdict · D1246: XCV · D1245: XCIV · D1244: StateGraph figure",
+    "D1250: provider swapped → api.aizzz.xyz/v1 + gpt-6.1-terra · probe re-verified green on the runner · wkapi.pro retired"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

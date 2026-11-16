@@ -45510,3 +45510,26 @@ Footer gains a door to it (zh「引擎讀本」/ en「The engine」). The handbo
 **Honest boundaries.** 元朗 and 鳳翔路 are real; 阿雄、他的東風畫材行、隨身寄件——全部合成敘事. No real art-supply shop is reflected here; the craft belongs to fiction.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1250. D1250 — the live provider is now api.aizzz.xyz / gpt-6.1-terra: the swap is done and verified
+
+**Why.** The operator delivered notice today, in the mandate re-issuance: "大模型的api已经修改了 记得换新的地址和秘钥用这个新的" — new key, new base URL, new model. Keeping the old provider is no longer possible nor allowed.
+
+**The swap.** `.github/workflows/llm-cache-probe.yml` now carries `https://api.aizzz.xyz/v1` + `gpt-6.1-terra` (was the wkapi.pro/gpt-6-sol pair); the `WKAPI_PRO_API_KEY` secret in the repo was rotated in place to the new key (same secret name — deliberately, no secret rename churn). `apps/ai/cache_probe.py` + `apps/ai/cache_latency_probe.py` docstring examples re-pointed the same way. No secret value is ever committed; the workflow only re-quotes env names.
+
+**The verification (CI, 2026-11-16 · run 43811691680).** The host this tree runs on is geo-blocked by the provider (v1/models and v1/chat/completions both return `HTTP 403 本站不对您所在的国家及地区进行商业服务` — "this site does not serve users in your country/region"). So the live truth lives in the runner:
+
+```
+identical bursts      3/6 @100% (call 2/3, 5 hit; warms then holds)
+diverse bursts        3/6 @100% (calls 3, 4, 6 — surprising, and consistent)
+tiny-system bursts    2/3 @95.5% (call 2 & 3, 4224 / 4425 cached)
+contract bursts       6/12 @100% (calls 5–8, 11, 12)
+```
+
+Envelope stays `NEXUS_LLM_STREAM=true` + `stream_options.include_usage=true` (D1044 still the only way `cached_tokens` surfaces); no contract drift on this provider's usage accounting.
+
+**The honest boundaries.** The provider flow is live and serving today. Same provider-side store logic carries over (byte-identical prefix caching still works post-swap — the tiny-system arm confirms the hidden ~4.5k server prefix is present on this endpoint too); no caching contract changed, no adapter code moved, no offline test changes required. This host's egress remains permanently excluded (geo 403), so every future live snapshot arrives only from CI dispatch or the weekly cron — the same protocol as before. The provider's cache lifetime is short and best-effort; the smaller byte-identical contract still pins the path.
+
+**What this closes.** wkapi.pro is fully retired — its last honest records (D1247, 2026-11-16 quota drain) stay in the ledger as history; no code path, no workflow, no docstring reaches it anymore.
+
+- readers: `.github/workflows/llm-cache-probe.yml`, `apps/ai/cache_probe.py`, `apps/ai/cache_latency_probe.py`, `docs/ATLAS.md` (row in D1250), this ledger entry.
