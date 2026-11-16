@@ -2843,4 +2843,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-lung-cheung-road-nightbus-chronicle', title: '凌晨一點十五分：九龍塘——龍翔道——唐伯與阿璇的 N 巴士（香港系列 · 第一百零一章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實行程建議）：凌晨一點十五分的龍翔道——龍翔道通宵巴士的最後一班燈，與兩個人的月台儀式。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨一點十五分。九龍塘——龍翔道候車亭（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——唐伯（合成敘事，非真實人物）牽著阿璇的手站在亭下。補習社的燈光沿著彌敦道拉成一條線，她還沒有背熟的默書，就要到明天的中文科。' },
+      { type: 'heading', text: '一、龍翔道的一盞黃燈' },
+      { type: 'cards', title: '龍翔道可見', items: [] },
+      { type: 'paragraph', text: '通宵巴士來的時候，整條龍翔道只剩候車亭頂上一盞黃燈——龍翔道兩側的店鋪統統拉下鐵閘，只有通宵巴士的引擎聲還在續命。司機阿斌（合成敘事，非真實人物）把車燈壓到最暗，給龍翔道留一份安靜。' },
+      { type: 'heading', text: '二、兩張八達通' },
+      { type: 'cards', title: '龍翔道可聽', items: [] },
+      { type: 'paragraph', text: '唐伯掏出兩張八達通——一張學生票，一張成人票。他不催阿璇背書，也不問她上完幾多堂補習；阿璇把默書攤在膝蓋上，紅筆那一欄只寫了兩個字：「龍翔」。她夠了解龍翔道——這條路知道城市的節奏，它只會在最後一班車開出後，把自己交還給月光。' },
+      { type: 'heading', text: '三、末班車的約定' },
+      { type: 'cards', title: '龍翔道可等', items: [] },
+      { type: 'paragraph', text: '最後一班 N 巴士開走的時候，候車亭頂上的黃燈還會多守多一刻鐘——這是龍翔道的規矩：別人都收拾好自己的東西，它替你再守一會兒。唐伯關上雨傘，阿璇點點頭沒有抬頭：「明天一樣，十二點五十五分我來接你。」末班車的尾燈掠過龍翔道，兩個人先走。' },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「九龍塘 通宵巴士」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

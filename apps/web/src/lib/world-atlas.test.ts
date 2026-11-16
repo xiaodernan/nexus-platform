@@ -1,9 +1,9 @@
 /**
  * D1210 — pins for the /world atlas route and its dictionary block.
  *
- * The atlas reads the 68 arc-clock chips straight from the dictionary (no hand-duplication),
+ * The atlas reads the arc-clock chips straight from the dictionary (no hand-duplication),
  * partitions them into seven hour-layers, and renders them in server markup. These pins
- * make sure the partition is total (68 = 12+16+11+12+6+5+6), the layers are bilingual in the
+ * make sure the partition is total (101 = 17+20+18+19+9+10+8), the layers are bilingual in the
  * same breath, and the page stays an SSR dossier (no client island).
  */
 
@@ -39,12 +39,12 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
     expect(page).toContain('canonical: \'/world\'');
   });
 
-  it('partitions all 68 arc-clock chips exactly once into the seven layers', async () => {
+  it('partitions all 101 arc-clock chips exactly once into the seven layers', async () => {
     const zh = getDict('zh-HK');
     const clock = zh.home.hkHub.clock;
-    expect(clock).toHaveLength(100);
+    expect(clock).toHaveLength(101);
     const en = getDict('en');
-    expect(en.home.hkHub.clock).toHaveLength(100);
+    expect(en.home.hkHub.clock).toHaveLength(101);
 
     const counts = new Array<number>(7).fill(0);
     const seen = new Set<string>();
@@ -54,8 +54,8 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
       seen.add(chip.href);
       expect(chip.href).toMatch(/^\/guides\//);
     }
-    expect(counts).toEqual([16, 20, 18, 19, 9, 10, 8]);
-    expect(seen.size).toBe(100);
+    expect(counts).toEqual([17, 20, 18, 19, 9, 10, 8]);
+    expect(seen.size).toBe(101);
 
     // zh and en must partition identically by time (translations drift only in copy)
     const enCounts = new Array<number>(7).fill(0);

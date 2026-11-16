@@ -8,8 +8,9 @@ import { StateGraphIsland } from '@/components/stategraph-island';
 
 /**
  * `/stategraph` — the orchestrator graph explained in the open: the ENGINE section of the
- * handbook names it, this page teaches it. Four sections: why a graph not a chain, a
- * click-through rehearsal of one full turn, the enable switch, the honest limits.
+ * handbook names it, this page teaches it. Five sections: why a graph not a chain, a
+ * click-through rehearsal of one full turn, the enable switch, the honest limits, and the
+ * measured provider A/B that flipped the transport default (D1257).
  */
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -103,6 +104,25 @@ export default async function StateGraphPage() {
           <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-line pt-4">
             <Badge tone="accent" size="sm">ENGINE</Badge>
             <span className="text-2xs leading-relaxed text-ink-faint">StateGraph 0.3.34 · fingerprint 18/18 · D1142 → D1241</span>
+          </div>
+        </section>
+
+        {/* V · The measured wire */}
+        <section aria-labelledby="sg-wire" className="mt-12 flex flex-col gap-4 rounded-2xl border border-accent-line bg-canvas p-6">
+          <h2 id="sg-wire" className="text-balance text-2xl font-semibold leading-tight tracking-tight text-ink-strong">{copy.measuredTitle}</h2>
+          <div className="flex max-w-prose flex-col gap-3 text-sm leading-relaxed text-ink-muted">
+            {copy.measuredBody.map((p, i) => <p key={i}>{p}</p>)}
+          </div>
+          <ul className="mt-1 grid gap-2 sm:grid-cols-2">
+            {copy.measuredBullets.map((b, i) => (
+              <li key={i} className="flex items-start gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-sm leading-relaxed text-ink-strong">
+                <Icon name="check" size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 border-t border-line pt-3">
+            <span className="font-mono text-2xs leading-relaxed text-ink-faint">n=6 per arm · identical burst · production intent_extract prompt · 2026-11-16 · host geo-blocked, egress via Clash Verge :7897 · AI lane 37806 passed (D1257)</span>
           </div>
         </section>
 

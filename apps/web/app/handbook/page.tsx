@@ -109,15 +109,16 @@ export default async function HandbookPage() {
           </ol>
         </section>
 
-        {/* Two-column: jump rail + full content */}
-        <section aria-label={copy.navTitle} className="mt-12 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
-          <nav aria-label={copy.navTitle} className="lg:sticky lg:top-6 lg:self-start">
-            <div className="flex flex-col gap-2 rounded-xl border border-line bg-canvas p-4">
+        {/* Two-column: jump rail + full content (below lg the rail stacks; min-w-0 keeps the
+            grid track from inflating past the viewport on small screens) */}
+        <section aria-label={copy.navTitle} className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <nav aria-label={copy.navTitle} className="min-w-0 lg:sticky lg:top-6 lg:self-start">
+            <div className="flex w-full min-w-0 flex-col gap-2 rounded-xl border border-line bg-canvas p-4">
               <span className="text-2xs font-semibold uppercase tracking-[0.22em] text-ink-muted">{copy.navTitle}</span>
-              <ul className="flex flex-col gap-1">
+              <ul className="flex min-w-0 flex-col gap-1">
                 {copy.sections.map((section) => (
-                  <li key={section.id}>
-                    <a href={`#${section.id}`} className="block rounded-md px-2 py-1.5 text-xs text-ink-muted transition-colors hover:bg-surface hover:text-accent">
+                  <li key={section.id} className="min-w-0">
+                    <a href={`#${section.id}`} className="block break-words rounded-md px-2 py-1.5 text-xs text-ink-muted transition-colors hover:bg-surface hover:text-accent">
                       {section.title.split('·')[0]?.trim() ?? section.title} — {section.kicker}
                     </a>
                   </li>
@@ -133,7 +134,7 @@ export default async function HandbookPage() {
             </div>
           </nav>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex min-w-0 flex-col gap-6">
             {copy.sections.map((section, index) => (
               <article
                 key={section.id}

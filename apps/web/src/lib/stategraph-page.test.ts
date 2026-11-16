@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * D1246 — pins for the in-app StateGraph runbook route: the page is server-rendered and
- * dict-carried, both locales carry the four sections and the five-step rehearsal, the
+ * dict-carried, both locales carry the five sections and the five-step rehearsal, the
  * island is local-only (no fetch, no storage, no timers), and the handbook wholly links
  * into it (CTA) while the footer carries the engine door.
  */
@@ -30,13 +30,13 @@ describe('D1246 the /stategraph runbook page', () => {
     expect(page).toContain('<StateGraphIsland');
   });
 
-  it('both locales carry the runbook (eyebrow, title, four sections, five steps)', () => {
+  it('both locales carry the runbook (eyebrow, title, five sections, five steps)', () => {
     const dict = read(DICT);
     expect(dict).toContain("eyebrow: '引擎 · stategraph'");
     expect(dict).toContain("eyebrow: 'ENGINE · stategraph'");
     expect(dict).toContain('智能代理運行的一張圖');
     expect(dict).toContain('One graph, four nodes, one turn');
-    for (const id of ['runbookTitle', 'rehearsalTitle', 'switchTitle', 'truthTitle']) {
+    for (const id of ['runbookTitle', 'rehearsalTitle', 'switchTitle', 'truthTitle', 'measuredTitle']) {
       const hits = (dict.match(new RegExp(`${id}:`, 'g')) || []).length;
       expect(hits).toBeGreaterThanOrEqual(2);
     }
@@ -44,6 +44,23 @@ describe('D1246 the /stategraph runbook page', () => {
       '① Plan · make_plan', '② Route', '③ Fan-out (concurrent)', '④ Emit', '⑤ Done']) {
       expect(dict.includes(title)).toBe(true);
     }
+  });
+
+  it('the measured wire section pins the live provider A/B that flipped the envelope default', () => {
+    const page = read(PAGE);
+    const dict = read(DICT);
+    // The numbers are the ones D1257 measured on the operator's live provider — pin them so
+    // a future edit cannot silently round or soften them.
+    expect(dict).toContain('direct JSON 81.5%');
+    expect(dict).toContain('81.5%');
+    expect(dict).toContain('16.3%');
+    expect(dict).toContain('44,160 / 54,211');
+    expect(dict).toContain('Clash Verge 127.0.0.1:7897');
+    expect(dict).toContain('NEXUS_LLM_STREAM=true');
+    expect(dict).toContain('llm-cache-probe.yml');
+    expect(page).toContain('sg-wire');
+    expect(page).toContain('measuredTitle');
+    expect(page).toContain('copy.measuredBody.map');
   });
 
   it('the rehearsal island stores nothing; all actions are real buttons', () => {

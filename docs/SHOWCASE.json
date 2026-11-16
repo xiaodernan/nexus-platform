@@ -1,19 +1,18 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1259",
-  "milestone_full": "第一百章 — the hundredth Traditional HK chapter · live provider swap fully re-wired · envelope default flips to direct JSON (2026-11-16 measured A/B)",
+  "milestone": "D1261",
+  "milestone_full": "The one-hundred-and-first Traditional HK chapter · handbook mobile rail stops leaking 113px · the wheel-axis contract pinned by e2e · the Hang Seng Index joins REAL-HK VIII · /stategraph gains the measured-wire section (81.5% vs 16.3%)",
   "headline": "NEXUS Platform — Hong Kong's table, one sentence away.",
   "as_of": "2026-11-16",
   "updated_at_commit": "current-master",
   "features": [
-    "HK series: one hundred Traditional chapters — 00:00→24:00 full day arc · 200-chip clock both locales — the hundred-edition milestone lands",
-    "D1259: live provider swap complete — every live-code/test path points to api.aizzz.xyz/v1 + gpt-6.1-terra · live smoke PASS (~8.4s) · intent extract 5/5 live",
-    "D1257: envelope default flipped — adapter and .env.example ship direct JSON; weekly probe reports both arms (production default + SSE opt-in); 81.5% cached direct vs 16.3% SSE (2026-11-16)",
-    "handbook REAL-HK I/II/III/IV/V/VI/VII + StateGraph ENGINE block · StateGraph runbook route (/stategraph, inline SVG) · 18 accept-probe pins green",
-    "/world atlas reads 100 chips (16+20+18+19+9+10+8 asserted) · seven-step tour · D1217 — /insights action matrix · D1212 — seven-day OLS trend",
-    "/hong-kong (100 chapters) · /world (100 chips + 7 anchors) · /stamp passport (wax seal) · /handbook (7 REAL-HK + ENGINE) · /command 123 · /stategraph",
-    "Chapters LXXXVI → C (91 → 100) landed in this arc; every chapter Traditional · flags demo:true · 合成敘事",
-    "D1259: the milestone · D1257: envelope direct-JSON · D1250: provider lands · D1248: /stategraph"
+    "HK series: one hundred and one Traditional chapters — 00:00→24:00 full day arc · 202-chip clock both locales — the 01:15 slot closes (九龍塘——龍翔道——唐伯與阿璇的 N 巴士)",
+    "§五 closed with fix, not copy: /handbook jump rail reflowed (single-column grid + min-w-0) — mobile overflow 113px → 0; pinned by the new scroll-direction e2e spec on both projects",
+    "wheel-axis contract now machine-checked — wheel down scrolls down, wheel up up; chapter strip bridges vertical wheel sideways on fine pointers; /hong-kong/handbook/world never force a horizontal page scrollbar",
+    "handbook REAL-HK VIII — the Hang Seng Index (base 100 set 31 Jul 1964, first published 24 Nov 1969; 88 constituents ≈58% SEHK cap; 2025 close 25,630.54 +27.77%; ATH 33,223.58) — inline Wikipedia URL retrieved 2026-11-16",
+    "/stategraph gains section V “The measured wire”: the 2026-11-16 live A/B — direct JSON 81.5% cached vs SSE 16.3% on the production intent_extract prompt (44,160 / 54,211 tokens, through Clash Verge :7897); weekly probe reports both arms",
+    "/hong-kong (101 chapters) · /world (101 chips, 17+20+18+19+9+10+8 asserted) · /stamp passport · /handbook (10-surface rail + 8 REAL-HK + ENGINE) · /command 123 · /stategraph",
+    "D1261: handbook rail fix + wheel-e2e · REAL-HK VIII HSI · /stategraph measured wire · chapter CI · gates 402/402 — web stays green"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }

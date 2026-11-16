@@ -331,5 +331,11 @@ describe('HK series — every seeded chapter actually resolves', () => {
     expect(l100?.title).toContain('第一百章');
     expect(l100?.title).toContain('阿強');
     expect(l100?.flags.demo).toBe(true);
+
+    const l101 = mockGuide('hk-lung-cheung-road-nightbus-chronicle');
+    expect(l101).not.toBeNull();
+    expect(l101?.title).toContain('第一百零一章');
+    expect(l101?.title).toContain('唐伯');
+    expect(l101?.flags.demo).toBe(true);
   });
 });
