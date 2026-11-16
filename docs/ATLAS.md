@@ -122,6 +122,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1227: the eighty-third HK chapter (hk-wan-chai-night-court-chronicle, 晚上九點四十五分・灣仔——軒尼詩道——書記官黃姐) — 21:45, the Registrar's last light |
 | `apps/web/src/lib/mock/seed.ts` | D1228: the eighty-fourth HK chapter (hk-mong-kok-ging-fa-shu-mai-chronicle, 晚上十一點半・旺角——金花街——譚華阿婆的最後一鍋燒賣) — 23:30, the shopkeeper closing the last pot of shu mai |
 | `apps/web/src/lib/mock/seed.ts` | D1229: the eighty-fifth HK chapter (hk-jordan-way-shu-lao-sugar-water-chronicle, 半夜十二點一刻・九龍——佐敦道——謝老人的深夜糖水) — 00:15, the night sugar water lamp |
+| `apps/web/src/lib/mock/seed.ts` | D1230: the eighty-sixth HK chapter (hk-yauma-tei-midnight-pharmacy-chronicle, 半夜一點四十五分・油麻地——廟街——蕭哥藥房還在開) — 01:45, the midnight pharmacy |
 | `apps/web/app/handbook/page.tsx` | D1220: handbook quickLinks now carry the full 10-surface rail (/search→/me), both locales — every shipped page reachable, gated by tests |
 | `apps/web/src/components/stamp-collection.tsx` | D1221: /stamp endgame — printable wax-seal certificate (inline SVG, single-tap `window.print()`), print-hidden chrome, HK-date stamp |
 | `apps/web/app/world/page.tsx` | D1218: skip-to-layer nav row on top of the atlas (7 hour-layer anchors, same dict entries) |

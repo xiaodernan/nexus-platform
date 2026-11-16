@@ -2528,4 +2528,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-yauma-tei-midnight-pharmacy-chronicle', title: '半夜一點四十五分：油麻地——廟街——蕭哥藥房，凌晨還在開（香港系列 · 第八十六章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：半夜一點四十五分的廟街——蕭哥的藥房是油麻地唯一一家深夜還營業的老店，味辛的熱氣騰起來。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：半夜一點四十五分。廟街——油麻地這條老街——還聞得到白天沒洗乾淨的早茶味。' },
+      { type: 'heading', text: '一、蕭哥這盞燈' },
+      { type: 'paragraph', text: '夜裏這條街的靜——沒有人有多的心思搞事——所以蕭哥的燈沒關。他是從他父親手上接過來的，多年之後，他發現不只是自己守自己。' },
+      { type: 'cards', title: '廟街可見', items: [] },
+      { type: 'heading', text: '二、一位深夜的女護士' },
+      { type: 'paragraph', text: '半夜一點四十五分左右——一位深夜的女護士按着疲倦走進來。「感冒了，老蕭。」「你這個月跑太多班了。」她笑了。他從小柜台拿盒藥，放在收銀機旁邊。' },
+      { type: 'cards', title: '廟街可聽', items: [] },
+      { type: 'heading', text: '三、明早他六點回來' },
+      { type: 'paragraph', text: '蕭哥想她一身疲倦——那麼清淑，卻還笑——正如他用收銀機上的小鍵盤把自己的名字全部都收起來。半夜又半夜，要麼要走要麼不走。明早他會回來一次。' },
+      { type: 'cards', title: '廟街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「油麻地 藥房」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

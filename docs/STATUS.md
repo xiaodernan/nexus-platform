@@ -45270,3 +45270,13 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,299** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 9.8s · SSR curls both locales: chapter renders with 謝老人/佐敦道 markers, `/hong-kong` carries the chip and 第八十五章， `/world` returns **85 distinct guide links in each arm**.
 
 - readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1230. D1230 — chapter LXXXVI （油麻地廟街，01:45） — the midnight pharmacy
+
+**Why.** The night-shift worker has no one to look up to at 1:45 a.m. — except this one pharmacy that has kept its lamp on through every tea-pot of stock.
+
+**The unit.** `DEMO_GUIDES` gains `hk-yauma-tei-midnight-pharmacy-chronicle`, 「半夜一點四十五分：油麻地——廟街——蕭哥藥房還在開（香港系列 · 第八十六章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、凌晨的藥房 · 二、穿梭的客人 · 三、明天還是亮）, 後記 + SearchBox pointer （「油麻地 藥房」）. Arc clock gains 01:45 between 灣仔咖哩（01:30）與皮蛋瘦肉粥（02:00）— **172 chips across both locales**; handbook reading order updated to eighty-six; `chapter-icons` gains `'hk-yauma-tei-midnight-pharmacy-chronicle': 'navigation'`; e2e floors ≥86; `/world` copy 85→86 everywhere; partition test now **14+16+16+15+8+9+8 = 86**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,308** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 13.7s · SSR curls both locales: chapter renders with 蕭哥/廟街 markers, `/hong-kong` carries the chip and 第八十六章， `/world` returns **86 distinct guide links in each arm**.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
