@@ -2570,4 +2570,25 @@ export const DEMO_GUIDES: Guide[] = [
     generated_by: 'ai', reviewed_by_human: false,
     published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
+
+  {
+    slug: 'hk-sai-ying-pun-locksmith-chronicle', title: '晚上七點半：西營盤——第三街——梁師傅鎖匠鋪的最後一單（香港系列 · 第八十八章）', city: 'hong-kong', category: 'activities',
+    description: '合成敘事指南（非真實商戶建議）：晚上七點半的西營盤——梁師傅今晚七點三十分就關閘，最後一單是樓下新搬來的阿姨的防盜門鎖。',
+    body_blocks: [
+      { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上七點半。西營盤第三街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——梁師傅把最後一把鑰匙放進磨床前。' },
+      { type: 'heading', text: '一、梁師傅的關閘鐘' },
+      { type: 'paragraph', text: '梁師傅在第三街開鎖匠鋪開了二十七年，每天下班時間 19:30 準時關閘。不是他不願做下去，而是他說「那扇閘一關，今天才算真的過去」。' },
+      { type: 'cards', title: '第三街可見', items: [] },
+      { type: 'heading', text: '二、最後一把鑰匙' },
+      { type: 'paragraph', text: '今晚的最後一單，是樓下新搬來的阿姨搬家時掉了一串未複製的原匙的。梁師傅蹲在地上把每一枚都轉過一遍，說：「原匙不在鏡裡，丟了也不能翻拍，只能靠老規矩做。」沉默了幾秒，他問阿姨門號。' },
+      { type: 'cards', title: '第三街可聽', items: [] },
+      { type: 'heading', text: '三、我這輩子最大的生意是替人保住家門' },
+      { type: 'paragraph', text: '磨床一動，火花一閃。梁師傅從櫃桶翻出一本舊冊子——記賬式的簿子，裡面記的是這條街每一扇舊門的銷鎖。「這本冊子永不賣出去，因為這是全街的家底。」「我不是鎖師傅，我是這條街的保管。」' },
+      { type: 'cards', title: '第三街可等', items: [] },
+      { type: 'heading', text: '後記' },
+      { type: 'paragraph', text: '合成敘事示例：商戶、場景、故事全部是敘事建構，用於演示 NEXUS 內容層的呈現能力。趕時間的話，先去 SearchBox 搜「西營盤 鎖匠」。' },
+    ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
+  },
 ];

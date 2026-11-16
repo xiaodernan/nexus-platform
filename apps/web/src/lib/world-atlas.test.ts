@@ -42,9 +42,9 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
   it('partitions all 68 arc-clock chips exactly once into the seven layers', async () => {
     const zh = getDict('zh-HK');
     const clock = zh.home.hkHub.clock;
-    expect(clock).toHaveLength(87);
+    expect(clock).toHaveLength(88);
     const en = getDict('en');
-    expect(en.home.hkHub.clock).toHaveLength(87);
+    expect(en.home.hkHub.clock).toHaveLength(88);
 
     const counts = new Array<number>(7).fill(0);
     const seen = new Set<string>();
@@ -54,8 +54,8 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
       seen.add(chip.href);
       expect(chip.href).toMatch(/^\/guides\//);
     }
-    expect(counts).toEqual([15, 16, 16, 15, 8, 9, 8]);
-    expect(seen.size).toBe(87);
+    expect(counts).toEqual([15, 16, 16, 15, 8, 10, 8]);
+    expect(seen.size).toBe(88);
 
     // zh and en must partition identically by time (translations drift only in copy)
     const enCounts = new Array<number>(7).fill(0);

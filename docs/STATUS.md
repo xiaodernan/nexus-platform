@@ -45304,3 +45304,15 @@ contract bursts (SAME diverse queries, frozen head — D1050)
 **Honest boundaries.** taikwun.hk's own historical timeline is the single inline source — not Wikipedia this time — because the official site carries the canonical 1841/1864/1914/1919/1995/2008/2018/2019 sequence; the handbook narrates it without inventing missing details. The zh title's span runs 1841→2026; the page documents the construction vintage, not an authored date of Tai Kwun itself (which exists as a revitalised public site only since 2018).
 
 - readers: `apps/web/src/lib/i18n/dict.ts` (REAL-HK VI zh + en, /stamp + tour strings), `apps/web/src/lib/stamp-collection.test.ts`, `docs/SHOWCASE.json`, `docs/ATLAS.md`, this ledger entry.
+
+## 1233. D1233 — chapter LXXXVIII （西營盤第三街，19:30） — the locksmith's final key
+
+**Why.** The wait between the crossing crew's dinner (19:15) and Temple Street's last stall (19:45) is the city's hinge — a shopkeeper who knows its every lock and door. The arc gains its evening-joint beat.
+
+**The unit.** `DEMO_GUIDES` gains `hk-sai-ying-pun-locksmith-chronicle`, 「晚上七點半：西營盤——第三街——梁師傅鎖匠鋪的最後一單（香港系列 · 第八十八章）」. Traditional HK script, 合成敘事 framing, three heading cards（一、梁師傅的關閘鐘 · 二、最後一把鑰匙 · 三、我這輩子最大的生意是替人保住家門）, 後記 + SearchBox pointer （「西營盤 鎖匠」）. Arc clock gains 19:30 between 皇崗口岸（19:15）與廟街阿婆尾盤檔（19:45）— **176 chips across both locales**; handbook reading order updated to eighty-eight; `chapter-icons` gains `'hk-sai-ying-pun-locksmith-chronicle': 'navigation'`; e2e floors ≥88; `/world` copy 87→88 everywhere; partition test now **15+16+16+15+8+10+8 = 88**.
+
+**Verification (host).** `tsc` clean · web **396/396** · census 0 simplified / **2,335** literals · console-i18n 0 offenders · `falsify_ui_script` **30/30** · `verify_all` NO OFFENDER · mock build compiled 9.9s · SSR curls both locales: chapter renders with 梁師傅/西營盤 markers, `/hong-kong` carries the chip and 第八十八章， `/world` returns **88 distinct guide links in each arm**.
+
+**Honest boundaries.** 西營盤 and 第三街 are real; 梁師傅, his 27-year notebook of every lock on the street, the mother-of-the-aunt's late call — the entire scene is 合成敘事. No real shop exists behind the story; the charm belongs to fiction.
+
+- readers: `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/chapter-guides.test.ts`, `apps/web/src/lib/chapter-icons.ts`, `apps/web/src/lib/hk-arc-timeline.test.ts`, `apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`, `apps/web/src/lib/world-atlas.test.ts`, `tests/e2e/specs/consumer/hong-kong.spec.ts`, `docs/ATLAS.md`, `docs/SHOWCASE.json`, this ledger entry.
