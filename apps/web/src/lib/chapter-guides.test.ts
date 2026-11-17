@@ -361,5 +361,11 @@ describe('HK series — every seeded chapter actually resolves', () => {
     expect(l105?.title).toContain('第一百零五章');
     expect(l105?.title).toContain('船長炳');
     expect(l105?.flags.demo).toBe(true);
+
+    const l106 = mockGuide('hk-sham-shui-po-pawnshop-chronicle');
+    expect(l106).not.toBeNull();
+    expect(l106?.title).toContain('第一百零六章');
+    expect(l106?.title).toContain('鄭伯');
+    expect(l106?.flags.demo).toBe(true);
   });
 });

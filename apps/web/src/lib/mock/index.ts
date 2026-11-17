@@ -1025,10 +1025,18 @@ const decoratedFor = (locale: string) => {
       items: cards.slice(index * 2, index * 2 + 5),
       updated_at: new Date(mockNow().getTime() - index * 86_400_000).toISOString(),
     })),
-    guides: guidesFor(locale).map((guide, index) => ({
-      ...guide,
-      body_blocks: guide.body_blocks.map((block) => (block.type === 'cards' ? { ...block, items: cards.slice(index, index + 3) } : block)),
-    })),
+    guides: guidesFor(locale).map((guide, index) => {
+      // D1286: where the chapter ships an EN arm, locale 'en' gets it wholesale — same blocks, same beats.
+      const english = normalizeLocale(locale) === 'en' && Array.isArray(guide.body_blocks_en);
+      const source = english ? guide.body_blocks_en! : guide.body_blocks; // non-null when english is true
+      const blocks = source.map((block) => (block.type === 'cards' ? { ...block, items: cards.slice(index, index + 3) } : block));
+      return {
+        ...guide,
+        title: english ? (guide.title_en ?? guide.title) : guide.title,
+        description: english ? (guide.description_en ?? guide.description) : guide.description,
+        body_blocks: blocks,
+      };
+    }),
   };
   DECORATED.set(key, fresh);
   return fresh;

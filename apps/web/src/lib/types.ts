@@ -269,6 +269,10 @@ export interface Guide {
     | { type: 'list'; items: string[] }
     | { type: 'cards'; title: string; items: EntityCard[] }
   >;
+  /** D1286 — the EN arm of the SAME chapter (never a machine translation shell; absent when the chapter has not been translated). */
+  title_en?: string;
+  description_en?: string;
+  body_blocks_en?: Guide['body_blocks'];
   generated_by: 'ai' | 'editor' | 'creator';
   reviewed_by_human: boolean;
   published_at: string;

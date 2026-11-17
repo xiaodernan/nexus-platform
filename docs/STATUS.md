@@ -46105,3 +46105,16 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Live proof (Clash Verge, 2026-11-17).** `admin_digest_probe.py` — one real TestClient round trip: status 200, provider openai, model gpt-6.1-terra, latency ~9.6s, ~5.0k prompt tokens, 193 completion, cost ≈ $0.018; two actions, and the probe verifies out-of-band that every digit token in the reply traces back to the payload. Console mojibake in the captured log is the PowerShell UTF-8 rendering only.
 
 **Honest boundaries.** The digest is one sentence, not a diagnosis — the console never hides the counters it derived from; the model may not write a number it cannot find in the payload; in mock mode the gate grants the demo identity (house §68) and the lane is inert; this is not an alerting pipeline, it never pages anyone; cached projections come only from live calls or the weekly probe.
+
+## 1286. D1286 — chapter 106, and the canon's first full EN arm
+
+**Why.** §八 demands the whole corpus read in either language. The 105 chapters shipped in Traditional HK only — the EN arm existed for rails/chrome/console but never for chapter prose. This milestone lands chapter 106 (`hk-sham-shui-po-pawnshop-chronicle`, 17:40, 深水埗欽州街, Layer K, one shop interior one voice one hour) as the FIRST chapter with a full EN arm, and wires the fixture-plane substitution for the rest of the corpus to adopt it without a schema change.
+
+**The unit.**
+
+- `Guide.body_blocks_en` / `title_en` / `description_en` — the SAME chapter, same beats, in English; absence renders Traditional HK text unchanged (never a machine-folded mush). `decoratedFor()` swaps whole arms per locale for guides that carry them; the cn (Simplified) arm rides the same opencc fold as before (English blocks pass through untouched).
+- Chapter 106: Master Cheng brings the pawnshop to life — Mr Lam pledges the Tudor his ex-wife left behind (a monthly ritual), the schoolboy pledges four Teresa Teng LPs ("do not sell. Lodge it. Come back."), Auntie Chu pledges the husband's gold bangle so the twins keep their piano place; the young mother with old photographs asks nothing but sits and waits. Traditional HK, Cantonese cadence, `flags:{demo:true}`, full English parallel (title/description/blocks), zero Chinese glyphs in the EN render.
+- Rails / timelines / arc enumeration / codex page counts all move to 一百零六章/106; `hkType.seriesLabel`, chronicle build/count copy, atlas chips (106 chips; evening layer rebalances 9→10, layers partition 17/20/18/21/10/10/10).
+- Tests: `chapter-en-arm.test.ts` (EN arm renders with zero CJK glyphs; HK-only chapters fall back honestly; cn arm folds normally); `chapter-guides` now covers 106; arc/world-atlas/hk-type/home-series-rail pins updated; web suite 480/480.
+
+**Honest boundaries.** Chapters 1–105 still have no EN prose — this milestone is the *machinery* + one proof-of-volume chapter, not a translation campaign. The remaining 105 bodies are a named next project (a live-provider batch behind chapter-ask-style discipline, sampled verification, committed seed regeneration, lockstep censuses like the Simplified fold). The en arc enumeration inserts the chapter honestly; zhHK rails list it first-class.

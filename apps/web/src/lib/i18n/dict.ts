@@ -1320,7 +1320,7 @@ const zhHK: Dict = {
     examplesLabel: '試試這些',
     hkSeries: {
       kicker: '香港系列',
-      title: '一百零五章反覆走完一個 HK',
+      title: '一百零六章反覆走完一個 HK',
       cards: [
         { slug: 'hk-food-chronicle', label: '香港三餐的血脈', kicker: '第一章' },
         { slug: 'hk-siu-mei-chronicle', label: '燒味：凌晨兩點的光與炭', kicker: '第二章' },
@@ -1351,6 +1351,7 @@ const zhHK: Dict = {
         { slug: 'hk-causeway-bay-teacher-chalkboard-chronicle', label: '下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書', kicker: '第一百零三章' },
         { slug: 'hk-wellington-street-jazz-club-chronicle', label: '晚上十一點一刻：中環——威靈頓街——阿豪的鼓', kicker: '第一百零四章' },
         { slug: 'hk-star-ferry-last-sailing-chronicle', label: '晚上十一點四十五分：尖沙咀——天星碼頭——船長炳與最後一班船', kicker: '第一百零五章' },
+        { slug: 'hk-sham-shui-po-pawnshop-chronicle', label: '下午五點四十分：深水埗——欽州街——鄭伯的當鋪', kicker: '第一百零六章' },
         { slug: 'hk-last-tong-sui-urn-chronicle', label: '凌晨兩點半：最後一鍋糖水', kicker: '第二十五章' },
         { slug: 'hk-fishball-stall-chronicle', label: '上午十點：魚蛋檔', kicker: '第二十六章' },
         { slug: 'hk-newspaper-wrapper-chronicle', label: '早上十一點：報館放送', kicker: '第二十七章' },
@@ -1432,6 +1433,7 @@ const zhHK: Dict = {
         { slug: 'hk-causeway-bay-teacher-chalkboard-chronicle', label: '下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書', kicker: '第一百零三章' },
         { slug: 'hk-wellington-street-jazz-club-chronicle', label: '晚上十一點一刻：中環——威靈頓街——阿豪的鼓', kicker: '第一百零四章' },
         { slug: 'hk-star-ferry-last-sailing-chronicle', label: '晚上十一點四十五分：尖沙咀——天星碼頭——船長炳與最後一班船', kicker: '第一百零五章' },
+        { slug: 'hk-sham-shui-po-pawnshop-chronicle', label: '下午五點四十分：深水埗——欽州街——鄭伯的當鋪', kicker: '第一百零六章' },
       ],
     },
     hkDaily: {
@@ -1542,7 +1544,7 @@ const zhHK: Dict = {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
       intro: '從凌晨四點半的魚市與果欄，到廟街的車仔麵、冰室的菠蘿包、最後一碗糖水——本系列為香港人的早餐、午飯、宵夜與甜品寫下了一頁頁，每一章都是這座城市的一個縮影。',
-      chaptersTitle: '一百零五章反覆走完一個香港',
+      chaptersTitle: '一百零六章反覆走完一個香港',
       clockTitle: '香港一日的讀法：照時間讀',
       clockHint: '由 00:15 謝老人的深夜糖水到 00:00 紙包飲品販賣機——照順序讀這座城的一整天。桌面：垂直滾輪在此橫列上=橫向滑動（到兩端自動還給頁面）',
       continueReading: {
@@ -1637,6 +1639,7 @@ const zhHK: Dict = {
         { time: '17:00', name: '太古城候車亭', href: '/guides/hk-typhoon-shelter-chronicle' },
         { time: '17:15', name: '元朗鞋材店的收工時分', href: '/guides/hk-yuen-long-shoemaker-shop-chronicle' },
         { time: '17:30', name: '星期天的觀音借', href: '/guides/hk-temple-circuit-sunday-chronicle' },
+    { time: '17:40', name: '鄭伯的當鋪', href: '/guides/hk-sham-shui-po-pawnshop-chronicle' },
         { time: '17:45', name: '魚蛋檔黃生的收檔', href: '/guides/hk-kwun-tong-fishball-stall-dusk-chronicle' },
         { time: '17:58', name: '獅子山', href: '/guides/hk-lion-rock-chronicle' },
         { time: '18:00', name: '潮州話．旺角菜市場', href: '/guides/hk-teochew-markets-chronicle' },
@@ -1950,7 +1953,7 @@ const zhHK: Dict = {
     title: '你係邊一個 HK？',
     howTo: '玩法：撳 A／B／C（或直接撳選項）；沒有啱錯之分——十題心情，一刻定型。',
     intro: '食是香港這座城最不願意向你解釋、又最願意向你展示的一門功課。用十條問題找出你屬於哪一種香港人。',
-    seriesLabel: '一百零五章香港系列指南',
+    seriesLabel: '一百零六章香港系列指南',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: '香港三餐的血脈', hint: '入門篇' },
       { href: '/guides/hk-siu-mei-chronicle', title: '燒味：凌晨兩點的光與炭', hint: '第二章' },
@@ -2011,6 +2014,7 @@ const zhHK: Dict = {
       { href: '/guides/hk-causeway-bay-teacher-chalkboard-chronicle', title: '下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書', hint: '第一百零三章' },
       { href: '/guides/hk-wellington-street-jazz-club-chronicle', title: '晚上十一點一刻：中環——威靈頓街——阿豪的鼓', hint: '第一百零四章' },
       { href: '/guides/hk-star-ferry-last-sailing-chronicle', title: '晚上十一點四十五分：尖沙咀——天星碼頭——船長炳與最後一班船', hint: '第一百零五章' },
+      { href: '/guides/hk-sham-shui-po-pawnshop-chronicle', title: '下午五點四十分：深水埗——欽州街——鄭伯的當鋪', hint: '第一百零六章' },
       { href: '/guides/hk-loko-ma-chau-barrier-chronicle', title: '清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨', hint: '第五十五章' },
       { href: '/guides/hk-yauma-tei-opera-supper-chronicle', title: '晚上八點半：油麻地粵劇牌樓老倌的散場宵夜', hint: '第五十六章' },
       { href: '/guides/hk-taipo-wholesale-market-chronicle', title: '凌晨五點四十五分：大埔墟農產品批發市場', hint: '第五十七章' },
@@ -2784,7 +2788,7 @@ const zhHK: Dict = {
       { href: '/insights', label: '營運掃描', title: '虛擬讀者的每日鬼影分析 — 一頁看完，不存數據' },
       { href: '/stategraph', label: '引擎讀本', title: '一張圖講清楚智能代理怎麼走 — make_plan → route → fanout → emit' },
       { href: '/llm-ops', label: '模型手術枱', title: '大模型怎麼在產品裡流轉 — envelope A/B · prefix cache · router · weekly probe（真機實測）' },
-      { href: '/chronicle', label: '系列全書', title: '一座城的一天 — 一百零五章、三幕、一段史詩的全書錨位' },
+      { href: '/chronicle', label: '系列全書', title: '一座城的一天 — 一百零六章、三幕、一段史詩的全書錨位' },
       { href: '/afterward', label: '收工之後', title: '第二十四版全書的尾巴——零點到天亮之間的五個守夜瞬間' },
       { href: '/world', label: '世界地圖', title: '全景地圖 — 全系列 105 章按時辰攤開，七層一次讀完' },
     ],
@@ -2818,7 +2822,7 @@ const zhHK: Dict = {
         'District chips（沙田／中環／旺角／銅鑼灣／荃灣…）是無腦跳法：點一下就把搜索丟進那個地區；想再精修就在 SearchBox 後面加條件即可。',
       ] },
       { id: 'hkseries', kicker: 'STORY', title: '3 · 香港系列 · 由凌晨三點走到最甜的杯底', paragraphs: [
-        '一百零五章反覆走一遍香港這座城市的一整天——本系列經已拓至第一百零五章。順序按讀書順序：00:15 謝老人的深夜糖水（第八十五章）→ 00:30 的士站最後一客（第二十一章）→ 00:45 文錦渡的跨境米車（第六十四章）→ 01:00 塔樓清潔工（第二十四章）→ 01:15 唐伯與阿璇的N巴士（第一百零一章）→ 01:30 灣仔咖哩魚飯堂（第四十一章）→ 01:45 深夜的藥房（第八十六章）→ 02:00 皮蛋瘦肉粥（第十二章）→ 02:15 大埔墟黃先生的染廠（第八十七章）→ 02:30 最後一鍋糖水（第二十五章）→ 02:45 皇崗閘機的夜班（第六十一章）→ 03:00 急症室入口（第十九章）→ 03:10 果欄（第八章）→ 03:15 羅湖行李手車（第四十九章）→ 03:20 校錶車間（第八十九章）→ 03:30 鹹光燒餅（第十七章）→ 03:45 羅湖夜市的油條（第六十二章）→ 04:00 抹窗師傅（第二十章）→ 04:10 元州街黃叔掃路的夜更（第九十章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 04:45 九龍灣冚廠清晨（第五十二章）→ 05:00 觀塘『曙光報紙』的分送員（第五十一章）→ 05:15 深水埗北河街市的運菜員（第六十三章）→ 05:30 三餐的血（第一章）→ 05:45 大埔墟農產品批發市場（第五十七章）→ 06:00 茶餐廳（第五章）→ 06:10 阿德的油條（第九十八章）→ 06:15 落馬洲通勤前哨（第五十五章）→ 06:30 鯉魚門（第十六章）→ 06:40 阿強的百番甜麵包（第一百章）→ 06:45 冰室（第十章）→ 07:00 隔水渡輪（第三十六章）→ 07:05 德興陶的蒸飯盒（第九十七章）→ 07:15 浩明第三班折返（第六十五章）→ 07:30 早茶（第三章）→ 07:45 浩明的早班米斗（第六十六章）→ 08:00 安樹堂的開診時間（第五十三章）→ 08:05 阿藍的空籃（第九十九章）→ 08:15 浩明的第二輛米車（第六十七章）→ 08:30 校巴的秘密班機（第二十二章）→ 08:45 阿昌的返城班車（第六十八章）→ 09:00 維園的外國傭工（第四十二章）→ 09:15 天星小輪的晨更（第六十九章）→ 09:30 長洲（第十四章）→ 09:45 維港中間的三分鐘（第七十章）→ 10:00 魚蛋檔（第二十六章）→ 10:15 李阿打烊的報紙檔（第九十二章）→ 10:30 北漂作家的香港筆記（第三十八章）→ 10:45 花墟走尾（第七十一章）→ 11:00 報館放送（第二十七章）→ 11:15 電車叮叮的慢拍（第七十二章）→ 11:30 大澳——鹹魚棧（第三十七章）→ 11:45 永利街的慢手工（第七十三章）→ 12:00 燒味（第二章）→ 12:10 阿雄的東風畫材行（第九十六章）→ 12:15 陳總廚的飯盒時光（第七十四章）→ 12:30 東涌——機場的風（第三十四章）→ 12:45 佐敦吉華餃麵店（第五十章）→ 13:00 霍普韋爾的外傭午餐（第四十三章）→ 13:15 老黃生的中午開櫃（第七十五章）→ 13:30 洗碗阿姨的第二幕（第二十三章）→ 13:45 青衣貨櫃碼頭的橋吊午休（第五十八章）→ 14:00 深水埗零頭布（第五十四章）→ 14:15 陳老師與最後一遍板書（第一百零三章）→ 14:30 羅湖站的雙向貨幣（第四十六章）→ 14:45 阿郭的咖啡烘焙的午後（第九十四章）→ 15:00 九龍公園的雀籠房（第二十八章）→ 15:15 阿陳的舊書攤（第一百零二章）→ 15:30 萬象天地的設計師街（第四十八章）→ 15:45 阿莊的包裹處（第九十三章）→ 16:00 交易所鐘聲（第十八章）→ 16:15 李阿忠的打字機行（第九十五章）→ 16:30 坪洲——纜車鐵箱子（第三十五章）→ 16:45 爐主阿九關爐的第五聲（第七十六章）→ 17:00 太古城候車亭（第二十九章）→ 17:15 元朗鞋材店的收工時分（第五十九章）→ 17:30 星期天的觀音借（第四十四章）→ 17:45 魚蛋檔黃生的收檔（第七十七章）→ 17:58 獅子山（第十三章）→ 18:00 潮州話．旺角菜市場（第三十九章）→ 18:15 黃生船屋的晚飯（第九十一章）→ 18:30 寫字樓落到地鐵（第十五章）→ 18:45 老秤匠阿利的半邊天秤（第七十八章）→ 19:00 廟街（第四章）→ 19:15 皇崗口岸的員工餐廳（第四十七章）→ 19:30 梁師傅鎖匠鋪的最後一單（第八十八章）→ 19:45 廟街阿婆的尾盤檔（第七十九章）→ 20:00 粥府的長枱（第三十章）→ 20:15 阿梅的士多收檔（第八十章）→ 20:30 粵劇散場宵夜（第五十六章）→ 20:45 黃大仙祠的夜上香（第八十一章）→ 21:00 星期天最後一間有排隊的餐廳（第四十五章）→ 21:15 雪廠街阿良的西裝舖（第八十二章）→ 21:30 屋邨電梯口的紙箱老伯（第三十一章）→ 21:45 黃姐的收檔燈（第八十三章）→ 22:00 菲律賓中環（第四十章）→ 22:15 平利果皮批發（第六十章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）→ 23:00 麥當勞得來速（第三十二章）→ 23:15 阿豪的鼓（第一百零四章）→ 23:30 金花街譚華阿婆的最後一鍋燒賣（第八十四章）→ 23:45 船長炳與最後一班船（第一百零五章）→ 00:00 紙包飲品販賣機（第三十三章）。',
+        '一百零六章反覆走一遍香港這座城市的一整天——本系列經已拓至第一百零六章。順序按讀書順序：00:15 謝老人的深夜糖水（第八十五章）→ 00:30 的士站最後一客（第二十一章）→ 00:45 文錦渡的跨境米車（第六十四章）→ 01:00 塔樓清潔工（第二十四章）→ 01:15 唐伯與阿璇的N巴士（第一百零一章）→ 01:30 灣仔咖哩魚飯堂（第四十一章）→ 01:45 深夜的藥房（第八十六章）→ 02:00 皮蛋瘦肉粥（第十二章）→ 02:15 大埔墟黃先生的染廠（第八十七章）→ 02:30 最後一鍋糖水（第二十五章）→ 02:45 皇崗閘機的夜班（第六十一章）→ 03:00 急症室入口（第十九章）→ 03:10 果欄（第八章）→ 03:15 羅湖行李手車（第四十九章）→ 03:20 校錶車間（第八十九章）→ 03:30 鹹光燒餅（第十七章）→ 03:45 羅湖夜市的油條（第六十二章）→ 04:00 抹窗師傅（第二十章）→ 04:10 元州街黃叔掃路的夜更（第九十章）→ 04:15 春花姨（第七章）→ 04:30 天光魚市（第六章）→ 04:45 九龍灣冚廠清晨（第五十二章）→ 05:00 觀塘『曙光報紙』的分送員（第五十一章）→ 05:15 深水埗北河街市的運菜員（第六十三章）→ 05:30 三餐的血（第一章）→ 05:45 大埔墟農產品批發市場（第五十七章）→ 06:00 茶餐廳（第五章）→ 06:10 阿德的油條（第九十八章）→ 06:15 落馬洲通勤前哨（第五十五章）→ 06:30 鯉魚門（第十六章）→ 06:40 阿強的百番甜麵包（第一百章）→ 06:45 冰室（第十章）→ 07:00 隔水渡輪（第三十六章）→ 07:05 德興陶的蒸飯盒（第九十七章）→ 07:15 浩明第三班折返（第六十五章）→ 07:30 早茶（第三章）→ 07:45 浩明的早班米斗（第六十六章）→ 08:00 安樹堂的開診時間（第五十三章）→ 08:05 阿藍的空籃（第九十九章）→ 08:15 浩明的第二輛米車（第六十七章）→ 08:30 校巴的秘密班機（第二十二章）→ 08:45 阿昌的返城班車（第六十八章）→ 09:00 維園的外國傭工（第四十二章）→ 09:15 天星小輪的晨更（第六十九章）→ 09:30 長洲（第十四章）→ 09:45 維港中間的三分鐘（第七十章）→ 10:00 魚蛋檔（第二十六章）→ 10:15 李阿打烊的報紙檔（第九十二章）→ 10:30 北漂作家的香港筆記（第三十八章）→ 10:45 花墟走尾（第七十一章）→ 11:00 報館放送（第二十七章）→ 11:15 電車叮叮的慢拍（第七十二章）→ 11:30 大澳——鹹魚棧（第三十七章）→ 11:45 永利街的慢手工（第七十三章）→ 12:00 燒味（第二章）→ 12:10 阿雄的東風畫材行（第九十六章）→ 12:15 陳總廚的飯盒時光（第七十四章）→ 12:30 東涌——機場的風（第三十四章）→ 12:45 佐敦吉華餃麵店（第五十章）→ 13:00 霍普韋爾的外傭午餐（第四十三章）→ 13:15 老黃生的中午開櫃（第七十五章）→ 13:30 洗碗阿姨的第二幕（第二十三章）→ 13:45 青衣貨櫃碼頭的橋吊午休（第五十八章）→ 14:00 深水埗零頭布（第五十四章）→ 14:15 陳老師與最後一遍板書（第一百零三章）→ 14:30 羅湖站的雙向貨幣（第四十六章）→ 14:45 阿郭的咖啡烘焙的午後（第九十四章）→ 15:00 九龍公園的雀籠房（第二十八章）→ 15:15 阿陳的舊書攤（第一百零二章）→ 15:30 萬象天地的設計師街（第四十八章）→ 15:45 阿莊的包裹處（第九十三章）→ 16:00 交易所鐘聲（第十八章）→ 16:15 李阿忠的打字機行（第九十五章）→ 16:30 坪洲——纜車鐵箱子（第三十五章）→ 16:45 爐主阿九關爐的第五聲（第七十六章）→ 17:00 太古城候車亭（第二十九章）→ 17:15 元朗鞋材店的收工時分（第五十九章）→ 17:30 星期天的觀音借（第四十四章）→ 17:40 鄭伯的當鋪（第一百零六章）→ 17:45 魚蛋檔黃生的收檔（第七十七章）→ 17:58 獅子山（第十三章）→ 18:00 潮州話．旺角菜市場（第三十九章）→ 18:15 黃生船屋的晚飯（第九十一章）→ 18:30 寫字樓落到地鐵（第十五章）→ 18:45 老秤匠阿利的半邊天秤（第七十八章）→ 19:00 廟街（第四章）→ 19:15 皇崗口岸的員工餐廳（第四十七章）→ 19:30 梁師傅鎖匠鋪的最後一單（第八十八章）→ 19:45 廟街阿婆的尾盤檔（第七十九章）→ 20:00 粥府的長枱（第三十章）→ 20:15 阿梅的士多收檔（第八十章）→ 20:30 粵劇散場宵夜（第五十六章）→ 20:45 黃大仙祠的夜上香（第八十一章）→ 21:00 星期天最後一間有排隊的餐廳（第四十五章）→ 21:15 雪廠街阿良的西裝舖（第八十二章）→ 21:30 屋邨電梯口的紙箱老伯（第三十一章）→ 21:45 黃姐的收檔燈（第八十三章）→ 22:00 菲律賓中環（第四十章）→ 22:15 平利果皮批發（第六十章）→ 22:30 糖水（第九章）→ 22:45 車仔麵（第十一章）→ 23:00 麥當勞得來速（第三十二章）→ 23:15 阿豪的鼓（第一百零四章）→ 23:30 金花街譚華阿婆的最後一鍋燒賣（第八十四章）→ 23:45 船長炳與最後一班船（第一百零五章）→ 00:00 紙包飲品販賣機（第三十三章）。',
         '每章都是「合成敘事示例」（旗幟標誌 demo: true），用於演示內容層的呈現能力；不是真實店家推薦，但就是那樣真實的一頓飯。',
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
       ] },
@@ -3166,8 +3170,8 @@ const zhHK: Dict = {
   /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
   chronicle: {
     eyebrow: '香港系列 · 全書',
-    title: '一座城的一天，一百零五章的完整馬拉松',
-    intro: '這一百零五章不是目錄——它是一個完整的日子：從 00:00 的紙包飲品販賣機到 23:45 的船長炳與最後一班船。三個章節：凌晨的煤氣味、早晨的引擎、一收市的分寸。每一章都是真實的小故事；每一個故事照亮的，是同一座城市。讀完這部全書，你就讀完了香港的一天。',
+    title: '一座城的一天，一百零六章的完整馬拉松',
+    intro: '這一百零六章不是目錄——它是一個完整的日子：從 00:00 的紙包飲品販賣機到 23:45 的船長炳與最後一班船。三個章節：凌晨的煤氣味、早晨的引擎、一收市的分寸。每一章都是真實的小故事；每一個故事照亮的，是同一座城市。讀完這部全書，你就讀完了香港的一天。',
     actTitle: '三幕',
     acts: [
       { kicker: '第一幕', title: '凌晨的煤氣味（00:00 – 05:45）', blurb: '這個時辰沒有旁觀者——只有班次。城市在睡，而它由「做事的人」擦亮。', beats: [
@@ -3194,7 +3198,7 @@ const zhHK: Dict = {
     ],
     finaleTitle: '後記',
     finaleBody: [
-      '這一百零五章不是目錄。它是一個完整的日子；每一小時都會替同一件事發聲：這裡有人工作，有人生活，有人守護——他們一起在這座城市裡記帳。',
+      '這一百零六章不是目錄。它是一個完整的日子；每一小時都會替同一件事發聲：這裡有人工作，有人生活，有人守護——他們一起在這座城市裡記帳。',
       '合成敘事：商戶與人物均為虛構，與任何真實商戶無關；時刻全部是敘事建構。每一章都是一件細小而真實的事——而這些微小的事全部來自我們願意把它們記下來。',
       '讀完之後，去 /stamp 蓋一個章 ——「這一天，我讀完了」是這座城市最大的讚美。',
     ],
@@ -3249,9 +3253,9 @@ const zhHK: Dict = {
   world: {
     eyebrow: '全景地圖 · 讀一座城的一整天',
     title: '把這座城的一整天攤在桌上',
-    intro: '這一頁不是列表，是一張攤開的世界圖：全系列一百零五章，按時辰排成七層——凌晨前行、天光市場、早上集、午後街、薄暮收心、夜市樓長街、夜貓子與通風口。同一座城的一整天，一次讀完；每一格都可點進去。',
+    intro: '這一頁不是列表，是一張攤開的世界圖：全系列一百零六章，按時辰排成七層——凌晨前行、天光市場、早上集、午後街、薄暮收心、夜市樓長街、夜貓子與通風口。同一座城的一整天，一次讀完；每一格都可點進去。',
     clockLabel: '時刻 — 章名 — 點即開',
-    countNote: '一百零五個時辰格 — 全部是合成敘事示例，與真實商戶、真實人物全不相關。',
+    countNote: '一百零六個時辰格 — 全部是合成敘事示例，與真實商戶、真實人物全不相關。',
     layers: [
       { code: 'night', title: '壹 · 凌晨前行（00:00 – 03:30）', blurb: '販賣機亮著螢光、米車在閘前等著、城市醒得最早的人出閘入閘。這時出生的故事，全是低聲說的。' },
       { code: 'dawn', title: '貳 · 天光市場（03:45 – 07:30）', blurb: '從羅湖夜市最後一口油條到早茶最後一籠蝦餃——市場全開，香港顧得上吃、沒時間談。' },
@@ -3407,7 +3411,7 @@ const en: Dict = {
     examplesLabel: 'Try one of these',
     hkSeries: {
       kicker: 'HK SERIES',
-      title: 'One HK in one hundred and five chapters',
+      title: 'One HK in one hundred and six chapters',
       cards: [
         { slug: 'hk-food-chronicle', label: "Hong Kong's Three Meals", kicker: 'Chapter I' },
         { slug: 'hk-siu-mei-chronicle', label: 'Siu Mei: The Light and Charcoal at Two A.M.', kicker: 'Chapter II' },
@@ -3438,6 +3442,7 @@ const en: Dict = {
         { slug: 'hk-causeway-bay-teacher-chalkboard-chronicle', label: 'Quarter past two: Causeway Bay — Tse Fai Road, Mr. Chen’s last column of chalk', kicker: 'Chapter CIII' },
         { slug: 'hk-wellington-street-jazz-club-chronicle', label: 'Quarter past eleven: Central — Wellington Street, Ah-ho’s drum', kicker: 'Chapter CIV' },
         { slug: 'hk-star-ferry-last-sailing-chronicle', label: 'Eleven forty-five pm: Tsim Sha Tsui — Star Ferry Pier, Captain Ping’s last sailing', kicker: 'Chapter CV' },
+        { slug: 'hk-sham-shui-po-pawnshop-chronicle', label: 'Five-forty pm: Sham Shui Po — Yau Chau Street — Master Cheng’s pawnshop', kicker: 'Chapter CVI' },
         { slug: 'hk-last-tong-sui-urn-chronicle', label: 'The Last Tong Sui Urn at Half-Two', kicker: 'Chapter XXV' },
         { slug: 'hk-fishball-stall-chronicle', label: 'The Fishball Stall at Ten', kicker: 'Chapter XXVI' },
         { slug: 'hk-newspaper-wrapper-chronicle', label: 'The Newspaper Wrapper at Eleven', kicker: 'Chapter XXVII' },
@@ -3519,6 +3524,7 @@ const en: Dict = {
         { slug: 'hk-causeway-bay-teacher-chalkboard-chronicle', label: 'Quarter past two: Causeway Bay — Tse Fai Road, Mr. Chen’s last column of chalk', kicker: 'Chapter CIII' },
         { slug: 'hk-wellington-street-jazz-club-chronicle', label: 'Quarter past eleven: Central — Wellington Street, Ah-ho’s drum', kicker: 'Chapter CIV' },
         { slug: 'hk-star-ferry-last-sailing-chronicle', label: 'Eleven forty-five pm: Tsim Sha Tsui — Star Ferry Pier, Captain Ping’s last sailing', kicker: 'Chapter CV' },
+        { slug: 'hk-sham-shui-po-pawnshop-chronicle', label: 'Five-forty pm: Sham Shui Po — Yau Chau Street — Master Cheng’s pawnshop', kicker: 'Chapter CVI' },
       ],
     },
     hkDaily: {
@@ -3629,7 +3635,7 @@ const en: Dict = {
       eyebrow: 'THE HONG KONG SERIES · THE COMPLETE CHAPTERS',
       title: 'One table, one Hong Kong',
       intro: 'From the 4:30 a.m. fish market and the fruit lorries of Yau Ma Tei to the cart-noodles at Temple Street, the ice-room’s pineapple bun, and the sweet soup that closes the night — a chapter-by-chapter narrative of a city.',
-      chaptersTitle: 'One hundred and five chapters through one Hong Kong',
+      chaptersTitle: 'One hundred and six chapters through one Hong Kong',
       clockTitle: 'Reading the day in Hong Kong — clock order',
       clockHint: 'Every chapter, one time of day — from 00:15 through 00:00, all around the clock. Desktop: vertical wheel over the strip = sideways track (hands back to the page at both ends)',
       continueReading: {
@@ -3724,6 +3730,7 @@ const en: Dict = {
         { time: '17:00', name: 'Typhoon Shelter', href: '/guides/hk-typhoon-shelter-chronicle' },
         { time: '17:15', name: 'The shoe-materials shop is closing', href: '/guides/hk-yuen-long-shoemaker-shop-chronicle' },
         { time: '17:30', name: 'The Sunday temple circuit', href: '/guides/hk-temple-circuit-sunday-chronicle' },
+    { time: '17:40', name: 'Master Cheng’s pawnshop', href: '/guides/hk-sham-shui-po-pawnshop-chronicle' },
         { time: '17:45', name: 'The Kwun Tong fishball stall lights off', href: '/guides/hk-kwun-tong-fishball-stall-dusk-chronicle' },
         { time: '17:58', name: 'Lion Rock', href: '/guides/hk-lion-rock-chronicle' },
         { time: '18:00', name: 'The Teochew wet market', href: '/guides/hk-teochew-markets-chronicle' },
@@ -4037,7 +4044,7 @@ const en: Dict = {
     title: 'Which Hong Kong are you?',
     howTo: 'How to play: tap A / B / C or tap any option — there is no right or wrong; ten questions, one mood.',
     intro: 'Food is the one exam Hong Kong will give you without warning. Ten questions to find which Hong Kong you are.',
-    seriesLabel: 'One hundred and five HK chapters',
+    seriesLabel: 'One hundred and six HK chapters',
     chapters: [
       { href: '/guides/hk-food-chronicle', title: "Hong Kong's Three Meals", hint: 'Part one' },
       { href: '/guides/hk-siu-mei-chronicle', title: 'Siu Mei: The Light and Charcoal at Two A.M.', hint: 'Chapter two' },
@@ -4098,6 +4105,7 @@ const en: Dict = {
       { href: '/guides/hk-causeway-bay-teacher-chalkboard-chronicle', title: 'Quarter past two: Causeway Bay — Tse Fai Road, Mr. Chen’s last column of chalk', hint: 'Chapter one-hundred-and-third' },
       { href: '/guides/hk-wellington-street-jazz-club-chronicle', title: 'Quarter past eleven: Central — Wellington Street, Ah-ho’s drum', hint: 'Chapter one-hundred-and-fourth' },
       { href: '/guides/hk-star-ferry-last-sailing-chronicle', title: 'Eleven forty-five pm: Tsim Sha Tsui — Star Ferry Pier, Captain Ping’s last sailing', hint: 'Chapter one-hundred-and-fifth' },
+      { href: '/guides/hk-sham-shui-po-pawnshop-chronicle', title: 'Five-forty pm: Sham Shui Po — Yau Chau Street — Master Cheng’s pawnshop', hint: 'Chapter one-hundred-and-sixth' },
       { href: '/guides/hk-loko-ma-chau-barrier-chronicle', title: 'A quarter past six: the Lok Ma Chau crossing', hint: 'Chapter fifty-fifth' },
       { href: '/guides/hk-yauma-tei-opera-supper-chronicle', title: 'The opera troupe after the finale', hint: 'Chapter fifty-sixth' },
       { href: '/guides/hk-taipo-wholesale-market-chronicle', title: 'The Tai Po wholesale produce market at five-forty-five', hint: 'Chapter fifty-seventh' },
@@ -4905,7 +4913,7 @@ const en: Dict = {
         'District chips (Sha Tin / Central / Mong Kok / Causeway Bay / Tsuen Wan…) are the no-thinking jump: tap one, and the search is re-fired with the district preset — then refine from the SearchBox as usual.',
       ] },
       { id: 'hkseries', kicker: 'STORY', title: '3 · The HK series — lifetime chapters across the whole day', paragraphs: [
-        'One hundred and five chapters walk through a whole Hong Kong day. Newest: Chapter 105 (Captain Ping’s last sailing, 23:45). In chronological reading order: Chapter 85 (Uncle Tse’s sugar-water, 00:15) → Chapter 21 (the last fare, 00:30) → Chapter 64 (Ho Ming the Man Kam To rice driver, 00:45) → Chapter 24 (the tower cleaner, 01:00) → Chapter 101 (Mr. Tong and A-syun’s N-bus, 01:15) → Chapter 41 (the Mumbai curry house, 01:30) → Chapter 12 (congee, 02:00) → Chapter 87 (Wong-saang’s dye factory, 02:15) → Chapter 25 (the last tong sui urn, 02:30) → Chapter 61 (the Huanggang barrier at quarter-to-three, 02:45) → Chapter 19 (the emergency triage, 03:00) → Chapter 8 (fruit market, 03:10) → Chapter 49 (the Lo Wu trolleys at first crossing, 03:15) → Chapter 89 (Kwun Tong’s night-shift calibration room, 03:20) → Chapter 17 (the Dawn Bakery, 03:30) → Chapter 62 (the last vendor at Luohu, 03:45) → Chapter 20 (the window cleaners, 04:00) → Chapter 90 (Uncle Wong’s night-sweeper round, 04:10) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 52 (the Kowloon Bay garment floor, 04:45) → Chapter 51 (the Kwun Tong Paper Depot, 05:00) → Chapter 63 (North River Market: the last run at dawn, 05:15) → Chapter 1 (three meals, 05:30) → Chapter 57 (the Tai Po wholesale produce market, 05:45) → Chapter 5 (cha chaan teng, 06:00) → Chapter 98 (Ah Dat’s yeet long, 06:10) → Chapter 55 (the Lok Ma Chau crossing, 06:15) → Chapter 16 (Lei Yue Mun, 06:30) → Chapter 100 (Ah Keung’s hundredth sweet bun, 06:40) → Chapter 10 (the ice-room, 06:45) → Chapter 36 (the old ferry, 07:00) → Chapter 97 (Duc-hing’s steam boxes, 07:05) → Chapter 65 (Ho Ming — third cross-border run at quarter-past-seven, 07:15) → Chapter 3 (yum cha, 07:30) → Chapter 66 (Ho Ming’s rice-bucket at dawn, 07:45) → Chapter 53 (the ANSHUTANG Acupuncture House, 08:00) → Chapter 99 (Ah Lan’s empty basket, 08:05) → Chapter 67 (Ho Ming’s second truck, 08:15) → Chapter 22 (the school bus, 08:30) → Chapter 68 (Ah Cheong’s Huanggang return coach, 08:45) → Chapter 42 (the Filipina at Victoria Park, 09:00) → Chapter 69 (The Star Ferry’s slow beat, 09:15) → Chapter 14 (Cheung Chau, 09:30) → Chapter 70 (Three minutes mid-harbour, 09:45) → Chapter 26 (the fishball stall, 10:00) → Chapter 92 (Uncle Li’s paper bundle, 10:15) → Chapter 38 (a Beijing writer in Hong Kong, 10:30) → Chapter 71 (Flower Market walk-out, 10:45) → Chapter 27 (the newspaper wrapper, 11:00) → Chapter 72 (The ding-ding tram, 11:15) → Chapter 73 (Wing Lee Street, 11:45) → Chapter 74 (Executive Chef Chan’s lunch-box hour, 12:15) → Chapter 75 (The pawnshop’s noon cabinet, 13:15) → Chapter 76 (Ah-Jiu’s fifth gong, 16:45) → Chapter 77 (The Kwun Tong fishball stall dusk, 17:45) → Chapter 78 (The Kowloon Bay scalemaker, 18:45) → Chapter 79 (Temple Street: Ahpo’s closing stall, 19:45) → Chapter 80 (Ah Mui’s tuk-tuk stall, 20:15) → Chapter 81 (Wong Tai Sin, 20:45) → Chapter 82 (Ah Leung’s tailor shop, 21:15) → Chapter 83 (Registrar Wong-jie at Wan Chai, 21:45) → Chapter 84 (Tam Mui-po at Golden Flower Street, 23:30) → Chapter 85 (Uncle Tse’s sugar-water, 00:15) → Chapter 86 (The midnight pharmacy, 01:45) → Chapter 87 (Wong-saang’s dye factory, 02:15) → Chapter 88 (Leung-saang’s locksmith, 19:30) → Chapter 89 (Kwun Tong’s night-shift calibration room, 03:20) → Chapter 90 (Uncle Wong’s night-sweeper round, 04:10) → Chapter 91 (Uncle Wong’s boat-house dinner, 18:15) → Chapter 92 (Uncle Li’s paper bundle, 10:15) → Chapter 93 (Ah-jong’s parcel room, 15:45) → Chapter 94 (Uncle Kwok’s roastery afternoon, 14:45) → Chapter 95 (Uncle Lee’s typewriter shop, 16:15) → Chapter 96 (Ah Hung’s art shop, 12:10) → Chapter 97 (Duc-hing’s steam boxes, 07:05) → Chapter 98 (Ah Dat’s yeet long, 06:10) → Chapter 99 (Ah Lan’s empty basket, 08:05) → Chapter 100 (Ah Keung’s hundredth sweet bun, 06:40) → Chapter 37 (Tai O and the dried fish, 11:30) → Chapter 2 (siu mei, 12:00) → Chapter 96 (Ah Hung’s art shop, 12:10) → Chapter 34 (the new airport wind, 12:30) → Chapter 50 (the Yau Ma Tei dumpling house, 12:45) → Chapter 43 (the Sunday lunch above the Hopewell, 13:00) → Chapter 23 (the auntie on the dish pit, 13:30) → Chapter 58 (the container bridge at quarter-to-two, 13:45) → Chapter 54 (the remnant rolls of Kam Yuen Fabrics, 14:00) → Chapter 103 (Mr. Chen’s last column of chalk, 14:15) → Chapter 46 (Lok Ma Chau — two currencies, 14:30) → Chapter 94 (Uncle Kwok’s roastery afternoon, 14:45) → Chapter 28 (the pigeon coop, 15:00) → Chapter 102 (Ah Chan’s old books, 15:15) → Chapter 48 (the designer street at MixC World, 15:30) → Chapter 93 (Ah-jong’s parcel room, 15:45) → Chapter 18 (the Central Bourse, 16:00) → Chapter 95 (Uncle Lee’s typewriter shop, 16:15) → Chapter 35 (Peng Chau and the cable-car, 16:30) → Chapter 29 (the typhoon shelter, 17:00) → Chapter 59 (the Yuen Long shoe-materials shop at closing time, 17:15) → Chapter 44 (the Sunday temple circuit, 17:30) → Chapter 13 (the Lion Rock, 17:58) → Chapter 39 (the Teochew wet market, 18:00) → Chapter 91 (Uncle Wong’s boat-house dinner, 18:15) → Chapter 15 (office to MTR, 18:30) → Chapter 4 (Temple Street, 19:00) → Chapter 47 (the Huanggang crossing crew, 19:15) → Chapter 88 (Leung-saang’s locksmith, 19:30) → Chapter 30 (the communal long table, 20:00) → Chapter 56 (the Cantonese opera troupe’s supper after the finale at Yau Ma Tei, 20:30) → Chapter 45 (the last queue of the Sunday, 21:00) → Chapter 31 (the cardboard elder, 21:30) → Chapter 40 (a cleaner in Central at ten, 22:00) → Chapter 60 (the last tangerine-peel wholesaler, 22:15) → Chapter 9 (tong sui, 22:30) → Chapter 11 (cart noodles, 22:45) → Chapter 32 (the drive-thru, 23:00) → Chapter 104 (Ah-ho’s drum, 23:15) → Chapter 105 (Captain Ping’s last sailing, 23:45) → Chapter 33 (the vending machine, 00:00).',
+        'One hundred and six chapters walk through a whole Hong Kong day. Newest: Chapter 106 (Master Cheng’s pawnshop, 17:40); before that Chapter 105 (Captain Ping’s last sailing, 23:45). In chronological reading order: Chapter 85 (Uncle Tse’s sugar-water, 00:15) → Chapter 21 (the last fare, 00:30) → Chapter 64 (Ho Ming the Man Kam To rice driver, 00:45) → Chapter 24 (the tower cleaner, 01:00) → Chapter 101 (Mr. Tong and A-syun’s N-bus, 01:15) → Chapter 41 (the Mumbai curry house, 01:30) → Chapter 12 (congee, 02:00) → Chapter 87 (Wong-saang’s dye factory, 02:15) → Chapter 25 (the last tong sui urn, 02:30) → Chapter 61 (the Huanggang barrier at quarter-to-three, 02:45) → Chapter 19 (the emergency triage, 03:00) → Chapter 8 (fruit market, 03:10) → Chapter 49 (the Lo Wu trolleys at first crossing, 03:15) → Chapter 89 (Kwun Tong’s night-shift calibration room, 03:20) → Chapter 17 (the Dawn Bakery, 03:30) → Chapter 62 (the last vendor at Luohu, 03:45) → Chapter 20 (the window cleaners, 04:00) → Chapter 90 (Uncle Wong’s night-sweeper round, 04:10) → Chapter 7 (Auntie Chun Fa Yee, 04:15) → Chapter 6 (fish market, 04:30) → Chapter 52 (the Kowloon Bay garment floor, 04:45) → Chapter 51 (the Kwun Tong Paper Depot, 05:00) → Chapter 63 (North River Market: the last run at dawn, 05:15) → Chapter 1 (three meals, 05:30) → Chapter 57 (the Tai Po wholesale produce market, 05:45) → Chapter 5 (cha chaan teng, 06:00) → Chapter 98 (Ah Dat’s yeet long, 06:10) → Chapter 55 (the Lok Ma Chau crossing, 06:15) → Chapter 16 (Lei Yue Mun, 06:30) → Chapter 100 (Ah Keung’s hundredth sweet bun, 06:40) → Chapter 10 (the ice-room, 06:45) → Chapter 36 (the old ferry, 07:00) → Chapter 97 (Duc-hing’s steam boxes, 07:05) → Chapter 65 (Ho Ming — third cross-border run at quarter-past-seven, 07:15) → Chapter 3 (yum cha, 07:30) → Chapter 66 (Ho Ming’s rice-bucket at dawn, 07:45) → Chapter 53 (the ANSHUTANG Acupuncture House, 08:00) → Chapter 99 (Ah Lan’s empty basket, 08:05) → Chapter 67 (Ho Ming’s second truck, 08:15) → Chapter 22 (the school bus, 08:30) → Chapter 68 (Ah Cheong’s Huanggang return coach, 08:45) → Chapter 42 (the Filipina at Victoria Park, 09:00) → Chapter 69 (The Star Ferry’s slow beat, 09:15) → Chapter 14 (Cheung Chau, 09:30) → Chapter 70 (Three minutes mid-harbour, 09:45) → Chapter 26 (the fishball stall, 10:00) → Chapter 92 (Uncle Li’s paper bundle, 10:15) → Chapter 38 (a Beijing writer in Hong Kong, 10:30) → Chapter 71 (Flower Market walk-out, 10:45) → Chapter 27 (the newspaper wrapper, 11:00) → Chapter 72 (The ding-ding tram, 11:15) → Chapter 73 (Wing Lee Street, 11:45) → Chapter 74 (Executive Chef Chan’s lunch-box hour, 12:15) → Chapter 75 (The pawnshop’s noon cabinet, 13:15) → Chapter 76 (Ah-Jiu’s fifth gong, 16:45) → Chapter 106 (Master Cheng’s pawnshop, 17:40) → Chapter 77 (The Kwun Tong fishball stall dusk, 17:45) → Chapter 78 (The Kowloon Bay scalemaker, 18:45) → Chapter 79 (Temple Street: Ahpo’s closing stall, 19:45) → Chapter 80 (Ah Mui’s tuk-tuk stall, 20:15) → Chapter 81 (Wong Tai Sin, 20:45) → Chapter 82 (Ah Leung’s tailor shop, 21:15) → Chapter 83 (Registrar Wong-jie at Wan Chai, 21:45) → Chapter 84 (Tam Mui-po at Golden Flower Street, 23:30) → Chapter 85 (Uncle Tse’s sugar-water, 00:15) → Chapter 86 (The midnight pharmacy, 01:45) → Chapter 87 (Wong-saang’s dye factory, 02:15) → Chapter 88 (Leung-saang’s locksmith, 19:30) → Chapter 89 (Kwun Tong’s night-shift calibration room, 03:20) → Chapter 90 (Uncle Wong’s night-sweeper round, 04:10) → Chapter 91 (Uncle Wong’s boat-house dinner, 18:15) → Chapter 92 (Uncle Li’s paper bundle, 10:15) → Chapter 93 (Ah-jong’s parcel room, 15:45) → Chapter 94 (Uncle Kwok’s roastery afternoon, 14:45) → Chapter 95 (Uncle Lee’s typewriter shop, 16:15) → Chapter 96 (Ah Hung’s art shop, 12:10) → Chapter 97 (Duc-hing’s steam boxes, 07:05) → Chapter 98 (Ah Dat’s yeet long, 06:10) → Chapter 99 (Ah Lan’s empty basket, 08:05) → Chapter 100 (Ah Keung’s hundredth sweet bun, 06:40) → Chapter 37 (Tai O and the dried fish, 11:30) → Chapter 2 (siu mei, 12:00) → Chapter 96 (Ah Hung’s art shop, 12:10) → Chapter 34 (the new airport wind, 12:30) → Chapter 50 (the Yau Ma Tei dumpling house, 12:45) → Chapter 43 (the Sunday lunch above the Hopewell, 13:00) → Chapter 23 (the auntie on the dish pit, 13:30) → Chapter 58 (the container bridge at quarter-to-two, 13:45) → Chapter 54 (the remnant rolls of Kam Yuen Fabrics, 14:00) → Chapter 103 (Mr. Chen’s last column of chalk, 14:15) → Chapter 46 (Lok Ma Chau — two currencies, 14:30) → Chapter 94 (Uncle Kwok’s roastery afternoon, 14:45) → Chapter 28 (the pigeon coop, 15:00) → Chapter 102 (Ah Chan’s old books, 15:15) → Chapter 48 (the designer street at MixC World, 15:30) → Chapter 93 (Ah-jong’s parcel room, 15:45) → Chapter 18 (the Central Bourse, 16:00) → Chapter 95 (Uncle Lee’s typewriter shop, 16:15) → Chapter 35 (Peng Chau and the cable-car, 16:30) → Chapter 29 (the typhoon shelter, 17:00) → Chapter 59 (the Yuen Long shoe-materials shop at closing time, 17:15) → Chapter 44 (the Sunday temple circuit, 17:30) → Chapter 13 (the Lion Rock, 17:58) → Chapter 39 (the Teochew wet market, 18:00) → Chapter 91 (Uncle Wong’s boat-house dinner, 18:15) → Chapter 15 (office to MTR, 18:30) → Chapter 4 (Temple Street, 19:00) → Chapter 47 (the Huanggang crossing crew, 19:15) → Chapter 88 (Leung-saang’s locksmith, 19:30) → Chapter 30 (the communal long table, 20:00) → Chapter 56 (the Cantonese opera troupe’s supper after the finale at Yau Ma Tei, 20:30) → Chapter 45 (the last queue of the Sunday, 21:00) → Chapter 31 (the cardboard elder, 21:30) → Chapter 40 (a cleaner in Central at ten, 22:00) → Chapter 60 (the last tangerine-peel wholesaler, 22:15) → Chapter 9 (tong sui, 22:30) → Chapter 11 (cart noodles, 22:45) → Chapter 32 (the drive-thru, 23:00) → Chapter 104 (Ah-ho’s drum, 23:15) → Chapter 105 (Captain Ping’s last sailing, 23:45) → Chapter 33 (the vending machine, 00:00).',
 
 
 
@@ -5256,8 +5264,8 @@ const en: Dict = {
   /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 105 chapters. */
   chronicle: {
     eyebrow: 'HK SERIES · THE CODEX',
-    title: 'One city, one day — the hundred-and-five-chapter marathon',
-    intro: 'These one hundred and five chapters are not a table of contents — they are a whole day, from the 00:00 vending machine to Captain Ping’s last sailing at 23:45. Three acts: the night-shift haze, the morning engine, the closing discipline. Every chapter is a small, true story; each one is lit by the same city. Finish the codex and you have read a full HK day.',
+    title: 'One city, one day — the hundred-and-six-chapter marathon',
+    intro: 'These one hundred and six chapters are not a table of contents — they are a whole day, from the 00:00 vending machine to Captain Ping’s last sailing at 23:45. Three acts: the night-shift haze, the morning engine, the closing discipline. Every chapter is a small, true story; each one is lit by the same city. Finish the codex and you have read a full HK day.',
     actTitle: 'Three acts',
     acts: [
       { kicker: 'Act I', title: 'The night-shift haze (00:00 – 05:45)', blurb: 'These hours have no spectators — only shifts. The city sleeps while the people who run it stay awake.', beats: [
@@ -5284,7 +5292,7 @@ const en: Dict = {
     ],
     finaleTitle: 'Finale',
     finaleBody: [
-      'These one hundred and five chapters are not a table of contents. They are a whole day — and every hour of it has one thing to say: here someone worked, here someone lived, here someone watched — and all of them keep the city’s books together.',
+      'These one hundred and six chapters are not a table of contents. They are a whole day — and every hour of it has one thing to say: here someone worked, here someone lived, here someone watched — and all of them keep the city’s books together.',
       'Synthetic narrative: merchants and people are fictional; hours are narrative construction, not real schedules. Every chapter is a small, true moment — and those small moments exist because we chose to keep them.',
       'When you finish the codex, get a stamp on /stamp — “I read the whole day” is the loudest compliment this city can accept.',
     ],
@@ -5339,9 +5347,9 @@ const en: Dict = {
   world: {
     eyebrow: 'THE WORLD ATLAS · ONE CITY, ONE DAY',
     title: 'The whole day, laid flat on the table',
-    intro: 'Not a list — a map. All one hundred and five HK-series chapters, laid out in seven layers by the hour: night run, dawn market, morning market, afternoon street, dusk settling, night-market row, the stayers. Read the city from 00:00 to midnight in one go; every cell is a door you can walk through.',
+    intro: 'Not a list — a map. All one hundred and six HK-series chapters, laid out in seven layers by the hour: night run, dawn market, morning market, afternoon street, dusk settling, night-market row, the stayers. Read the city from 00:00 to midnight in one go; every cell is a door you can walk through.',
     clockLabel: 'Time — chapter — tap to open',
-    countNote: 'One hundred and five chambers of one fictional city — synthetic from the first step to wherever the series goes next; no real merchant, no real person.',
+    countNote: 'One hundred and six chambers of one fictional city — synthetic from the first step to wherever the series goes next; no real merchant, no real person.',
     layers: [
       { code: 'night', title: 'I · Night run (00:00 – 03:30)', blurb: 'The vending machine hums, rice trucks wait at the gate, the city wakes through its earliest gates. The stories born here are whispered.' },
       { code: 'dawn', title: 'II · The dawn markets (03:45 – 07:30)', blurb: 'From Luohui’s last youtiao to yum cha’s last har gau — the markets are fully open; Hong Kong can eat, but has no time to talk.' },
