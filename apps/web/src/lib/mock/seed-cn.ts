@@ -569,6 +569,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-mtr-evening-chronicle', title: '十八点半：办公室落到地铁（香港系列 · 第十五章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著下班的一页，由九龙塘坐到油麻地，再走一段回家的路——这是整个城市收工的声音。',
+    title_en: 'Half past six — from the office floor down to the MTR (HK series, Ch. 15)',
+    description_en: 'A synthetic guide (not travel advice): follow one page of knocking off — Kowloon Tong down to Yau Ma Tei, then the short walk home — this is the sound of a whole city clocking out.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half past six, and Central’s office towers go dark floor by floor. The lifts drop from the high floors to the lobby; the only sound is the card-swipe — nobody speaks. The whole city has finally agreed to knock off.' },
+      { type: 'heading', text: 'I · Half a face' },
+      { type: 'paragraph', text: 'Office windows face the harbour and the Peak. Some desk workers glance out; some never notice. The air-conditioning winds down by degrees, desks fold closed one after another, and phones ride home heavy with whatever the last page left unfinished. The lift doors open and close like a ceremony — a city moving through a rite it performs every working day.' },
+      { type: 'cards', title: 'MTR, what to play', items: [] },
+      { type: 'heading', text: 'II · From Kowloon Tong down to Yau Ma Tei' },
+      { type: 'paragraph', text: 'From the high floors down to the station, board an up-bound train for Sheung Shui. The carriage is packed with people knocking off: suits, aprons, empty hands. Nobody speaks. Music leaks from each pair of headphones; phone screens wake and dim — a bank alert, a message from home, a delivery update.' },
+      { type: 'cards', title: 'MTR, what to ride along', items: [] },
+      { type: 'heading', text: 'III · Alight, and walk home' },
+      { type: 'paragraph', text: 'Yau Ma Tei, an hour after the streetlights come on. The cries of stall-holders drift out of corners still lit — the tea houses have closed for the night, the fish-ball vendors still guard their fish tanks; one more knock-off collision, one more bowl of congee, and then the shutter comes down.' },
+      { type: 'cards', title: 'After work, what to eat', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yau Ma Tei fish ball” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上十点，中环的写字楼一层层熄灯。电梯从高楼落到底楼，全车只有刷卡声，没有人说话。整座城终于肯收工了。' },
       { type: 'heading', text: '一、半张脸' },
