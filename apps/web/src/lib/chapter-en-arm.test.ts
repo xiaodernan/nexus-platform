@@ -545,4 +545,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /iron frame/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 38 (the north drifter) ships in three arms too', () => {
+    const hk = mockGuide('hk-beijing-writer-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/北漂作家/);
+    const cn = mockGuide('hk-beijing-writer-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/北漂作家/);
+    const en = mockGuide('hk-beijing-writer-chronicle', 'en');
+    expect(en?.title).toMatch(/north drifter/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chen/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /northern decision/i.test(b.text))).toBe(true);
+  });
 });

@@ -1414,6 +1414,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-beijing-writer-chronicle', title: '早上十点半：北漂作家的香港笔记（香港系列 · 第三十八章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着一位北漂作家在香港的第三年，从茶餐厅里的笔记本到写字楼的窗边——这个南至极的城的北室。',
+    title_en: 'Half-past ten — the north drifter’s Hong Kong notebook (HK series, Ch. 38)',
+    description_en: 'A synthetic guide (not travel advice): follow a north-drifting writer’s third year in Hong Kong, from the notebook in the cha chaan teng to the window seat of the office tower — this southernmost city’s north-facing room.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past ten in the morning. In a Central office window, Ah Chen (synthetic narrative, not a real person) pulls down an LED desk lamp and takes out a black notebook from his bag. Three years since he came down from Beijing; every page carries one line: “Beijing says it is Beijing, and every sentence here forgets it is Beijing.”' },
+      { type: 'heading', text: 'I · Every northerner docks somewhere' },
+      { type: 'paragraph', text: 'Ah Chen is a true north drifter: he read literature as an undergraduate, never finished his postgraduate; then he drifted south, stayed three years, never came back; now he writes copy at a financial firm. Every morning at nine he sits in the lift, looks at the lift mirror and thinks: “The north is so wide.” Then he walks out the doors and smiles: “This place is narrow enough.”' },
+      { type: 'cards', title: 'Office tower, what to see', items: [] },
+      { type: 'heading', text: 'II · The northern decision' },
+      { type: 'paragraph', text: 'But Ah Chen also writes: he likes most of all sitting in cafés, looking out. He says: “This city’s cafés are not bladders but dreams: every café here feels itself as an empty bottle in a Beijing alley, but actually they are smoke in the blood — a pot in the blood, wine in the blood.” — Just as he finished that paragraph, the café owner asked if he wanted to order more coffee; he said yes again, she smiled: “You people from the north don’t know coffee?” He answered: “I do know, but what northerners don’t know is the silence here.”' },
+      { type: 'cards', title: 'Office tower, what to count', items: [] },
+      { type: 'heading', text: 'III · Asking home' },
+      { type: 'paragraph', text: 'Every Mid-Autumn, Ah Chen takes the same photo every year — the Great Wall in Beijing, the cha chaan teng clusters in the south, the office tower’s sunrise kiss. The family always asks: “when will you come home?” Every time he answers: “I already came home.” He doesn’t know when he will ever be able to answer. At half-past three in the afternoon, he closes the book, folds all his files, enters the lift; in the mirror he sees himself. “You northerners don’t understand silence” — he really doesn’t.' },
+      { type: 'cards', title: 'Office tower, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “cha chaan teng silence” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上十点半。位于中环写字楼的窗口，陈生（合成叙事，非真实人物）拉开一盏 LED 台灯，从书包里拿出一本黑色笔记本。他从北京来到这里第三年，每页都有一句话：「北京说自己是北京，而这里每句话都忘记了自己是北京。」' },
       { type: 'heading', text: '一、所有北方人落脚' },
