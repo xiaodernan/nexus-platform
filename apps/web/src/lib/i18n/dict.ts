@@ -442,6 +442,16 @@ export interface Dict {
       title: string;
       blurb: string;
     };
+    /** D1284: the chapter's live companion — one voice, grounded in the chapter alone. */
+    chapterAsk: {
+      eyebrow: string;
+      title: string;
+      hint: string;
+      placeholder: string;
+      submit: string;
+      pending: string;
+      proven: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -1923,6 +1933,15 @@ const zhHK: Dict = {
       eyebrow: '香港系列 · 編者點線',
       title: '五章反覆走完一個香港',
       blurb: '從凌晨四點半街市裡冒煙的叉燒店，到午夜廟街的霓虹還剩最後一格——這是一座還沒被現實寫完的城市。',
+    },
+    chapterAsk: {
+      eyebrow: '章節伴讀 · 大模型',
+      title: '問問這一章',
+      hint: '只用這一章的原文作答、附出處；答唔到就話答唔到——不會替章節補腦生情節、名字同價格。',
+      placeholder: '問一問：「黃生係邊個？」「這一章喺邊度場？」「點解會咁做？」',
+      submit: '問',
+      pending: '大模型正在這一章裡面搵答案…',
+      proven: '模型潤飾自這一章 · 出處如下',
     },
   },
   hkType: {
@@ -3995,6 +4014,15 @@ const en: Dict = {
       eyebrow: "HK SERIES · The Editor's Line",
       title: 'Five chapters, one Hong Kong',
       blurb: "From the wok smoke still rising at 4:30 a.m. to the neon that has not yet retired on Temple Street — a city still being written.",
+    },
+    chapterAsk: {
+      eyebrow: 'CHAPTER COMPANION · MODEL',
+      title: 'Ask this chapter',
+      hint: 'Answers only from this chapter’s own text, with excerpt IDs. If the chapter does not say, it says so — no invented characters, places or prices.',
+      placeholder: 'Ask: “Who is Mr Wong?” “Where is this set?” “Why does it happen?”',
+      submit: 'Ask',
+      pending: 'The model is looking for the answer inside this chapter…',
+      proven: 'Model-phrased from this chapter · source excerpts below',
     },
   },
   hkType: {

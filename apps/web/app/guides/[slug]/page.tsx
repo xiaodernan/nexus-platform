@@ -5,8 +5,10 @@ import { guideBySlug } from '@/lib/data';
 import { SITE_URL } from '@/lib/env';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
+import { Container } from '@nexus/ui';
 import { GuideView } from '@/components/growth-view';
 import { JsonLd } from '@/components/json-ld';
+import { ChapterAskLive } from '@/components/chapter-ask-live';
 
 /**
  * `/guides/{slug}` (§8, §28). An unreviewed AI guide is still readable, but it is kept out of the
@@ -45,6 +47,14 @@ export default async function GuidePage(props: Props) {
   return (
     <>
       <GuideView guide={guide} locale={locale} />
+      <Container size="shell" className="-mt-4 pb-10 sm:pb-14">
+        {/* D1284 — the chapter's live companion; fail-closed, and inert in mock mode. */}
+        <ChapterAskLive
+          chapterSlug={guide.slug}
+          locale={locale}
+          labels={dict.growth.chapterAsk}
+        />
+      </Container>
       <JsonLd
         value={{
           '@context': 'https://schema.org',

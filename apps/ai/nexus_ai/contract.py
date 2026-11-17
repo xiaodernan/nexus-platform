@@ -390,6 +390,25 @@ class HandbookAskRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class ChapterAskSection(_Strict):
+    """One excerpt of ONE chapter, exactly as the reader's lane believes relevant."""
+
+    id: str = Field(min_length=1, max_length=48)
+    kicker: str = Field(default="", max_length=80)
+    title: str = Field(min_length=1, max_length=200)
+    body: str = Field(default="", max_length=1600)
+
+
+class ChapterAskRequest(_Strict):
+    """The chapter-companion lane's request — one chapter, the top excerpts; the model owns nothing else."""
+
+    question: str = Field(min_length=1, max_length=400)
+    chapter_id: str = Field(min_length=1, max_length=120)
+    chapter_title: str = Field(min_length=1, max_length=200)
+    sections: list[ChapterAskSection] = Field(min_length=1, max_length=8)
+    locale: str = Field(default="zh-HK", max_length=16)
+
+
 class InsightsWeekPoint(_Strict):
     date: str = Field(min_length=10, max_length=10)
     label: str = Field(default="", max_length=40)

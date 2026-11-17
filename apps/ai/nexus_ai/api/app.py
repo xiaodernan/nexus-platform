@@ -35,6 +35,7 @@ from nexus_ai.api.routes_agent import router as agent_router
 from nexus_ai.api.routes_actuator import router as actuator_router
 from nexus_ai.api.routes_handbook import router as handbook_router
 from nexus_ai.api.routes_insights import router as insights_router
+from nexus_ai.api.routes_chapter import router as chapter_router
 from nexus_ai.db import pool as db_pool
 
 log = logging.getLogger("nexus_ai.api.app")
@@ -143,7 +144,7 @@ def create_app(settings: Any | None = None) -> FastAPI:
 
     for r in (search_router, stream_router, discover_router, rag_router,
               conversations_router, system_router, agent_router, actuator_router,
-              handbook_router, insights_router):
+              handbook_router, insights_router, chapter_router):
         app.include_router(r)
 
     @app.get("/")
