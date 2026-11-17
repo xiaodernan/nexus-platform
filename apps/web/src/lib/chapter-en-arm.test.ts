@@ -79,4 +79,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /character of a steamer/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /har gow/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 4 (temple street) ships in three arms too', () => {
+    const hk = mockGuide('hk-temple-street-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/廟街/);
+    const cn = mockGuide('hk-temple-street-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/庙街/);
+    const en = mockGuide('hk-temple-street-chronicle', 'en');
+    expect(en?.title).toMatch(/Temple Street/);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /soup-pot brothers/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /why the signboard/i.test(b.text))).toBe(true);
+  });
 });

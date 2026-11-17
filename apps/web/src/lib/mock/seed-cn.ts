@@ -175,6 +175,21 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-temple-street-chronicle', title: '庙街：宵夜成的一座庙（香港系列 · 第四章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著庙街的霓虹灯走完一刻，看一座城市如何每天晚上设香火、卖牛杂、挂起卜卦。',
+    title_en: 'Temple Street — a temple the night keeps (HK series, Ch. 4)',
+    description_en: 'A synthetic guide (not travel advice): one walk through the neon at dusk, watching a city lean into incense, beef tripe and fortune-telling every single night.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): the hour after seven, Yau Ma Tei’s Temple Street sheds the daytime patience and puts on its two rows of lanterns. One side: roast meats and dumpling counters. The other: grass-abusers, palm readers, fortune tellers with folded slips. The middle of the road is movable — plastic chairs, things without names yet, stalls being pushed and pulled, the air thick enough to chew with a bowl of starch soup.' },
+      { type: 'heading', text: 'I · Why the signboard is heavy' },
+      { type: 'paragraph', text: 'The three characters — temple, street — read before they are seen. 庙 / mium / temple is not a religious zone, it is this city’s recognition that anything with a voice is worth a question. 街 / gaai / street is not a thoroughfare, it is this city’s recognition that any voice is worth hearing. Every stroke on the signboard bows to the night.' },
+      { type: 'heading', text: 'II · Rice noodle soup, neon, and fortune slips' },
+      { type: 'paragraph', text: 'Three trades hold up the night. The soup-pot brothers do not use a lit sign — they deal in talk long before the soup has a name. The neon shop-keeper comes out with his boxes and demonstrates the typeface. The woman who lays down the figurines can see the red in your dream before you speak — whether you are asleep or awake does not interest her.' },
+      { type: 'cards', title: 'Before and after Temple Street', items: [] },
+      { type: 'heading', text: 'III · Hua-ba’s lo hei' },
+      { type: 'paragraph', text: 'The hottest hour on Temple Street is the late-night hour — people here have earned their dinner standing on their feet. Look down: dried tangerine peel, bean sprouts, rice noodles, turnip, carrot — whatever the basket can carry to your bowl. When the chopsticks go in, they go in deep, as though they were carving characters.' },
+      { type: 'cards', title: 'Dinner after Temple Street', items: [] },
+      { type: 'heading', text: 'Afterword — what you walk away with' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. Temple Street is rewritten every night; nobody has read it whole, and nobody needs to. In a hurry? SearchBox “Yaumatei supper”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：黄昏七点以后，油麻地的庙街开始卸去白天的耐烦，换上两排花灯。一侧是烧味和水饺档，一侧是打小人、看相、解签的婆婆；路中央是可移动的 stall ——塑胶椅子、还未命名的东西，盘推来推去，空气里塞满一锅薯粉汤。' },
       { type: 'heading', text: '一、牌匾为何重' },
