@@ -620,4 +620,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /hugs that only happen on Sundays/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 43 (Hopewell’s Sunday) ships in three arms too', () => {
+    const hk = mockGuide('hk-hopewell-sunday-lunch-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/霍普韋爾的外傭午餐/);
+    const cn = mockGuide('hk-hopewell-sunday-lunch-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/霍普韦尔的外佣午餐/);
+    const en = mockGuide('hk-hopewell-sunday-lunch-chronicle', 'en');
+    expect(en?.title).toMatch(/Hopewell/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Sister Ah Lan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /revolution of the rooftop photo/i.test(b.text))).toBe(true);
+  });
 });

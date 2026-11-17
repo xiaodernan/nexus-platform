@@ -2306,6 +2306,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-hopewell-sunday-lunch-chronicle', title: '下午一點：霍普韋爾的外傭午餐（香港系列 · 第四十三章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：星期天的灣仔霍普韋爾中心——菲律賓姐妹和她們帶着的便當、互相交換的髮型和手機相片——香港星期天另一個擁抱了半個城的午後。',
+    title_en: 'One in the afternoon — Hopewell’s Sunday lunch (HK series, Ch. 43)',
+    description_en: 'A synthetic guide (not travel advice): Sunday at Wanchai Hopewell Centre — Filipina sisters with their lunchboxes, hairstyles and phone-photos exchanged — a Hong Kong Sunday afternoon that hugs half the city.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, twenty minutes before one. The Hopewell Centre (synthetic narrative, not a real merchant) at Wanchai — two sightseeing elevators rise together — Sister Ah Lan (synthetic narrative, not a real person) holds a paper bag of her own cooking: one jar of mango sauce (her mother shipped from the old country last month) and two curry puffs. This is her first proper lunch of the week; also her first unsupervised free afternoon in six weeks.' },
+      { type: 'heading', text: 'I · The rules of the lunch hall' },
+      { type: 'paragraph', text: 'Every table is a small restaurant opening. Everyone lays out their own dishes to swap: your fried rice for my curry puff; her salad for my one jar of mango sauce. The plates are plastic, the teapots are plastic, the forks are plastic — nobody minds. This is Hong Kong on Sundays — every person has his own seat, every person can call himself his own chef. The air in the hall carries curry, coconut milk, garlic — and a courage unique to Sundays: ordering an ice-chilled distilled water, then saying one “thank you for your work,” then sitting down straight.' },
+      { type: 'cards', title: 'Hopewell, what to see', items: [] },
+      { type: 'heading', text: 'II · The revolution of the rooftop photo' },
+      { type: 'paragraph', text: 'Half-past one, photo time. They link their phones together and take turns photographing one another — six people, faces facing the camera, laughing with all they have. The Sunday sun slants down as always, pressing the dusk layer by layer onto the Wanchai buildings; harbour, cable-car line, the rooftop water tower, all turned into the cheapest and the most expensive scenery in their lens. These are the Sunday travel photos — this week, this month, this whole contract year. Every time Ah Lan looks back, she feels these photos alone cancel out the six days’ fatigue — she calls this her “year-end bonus.”' },
+      { type: 'cards', title: 'Hopewell, what to hear', items: [] },
+      { type: 'heading', text: 'III · Off they go' },
+      { type: 'paragraph', text: 'Two in the afternoon, the hall’s lights dim one by one. The sisters disperse: some go to Star Street in Wan Chai because the dessert there is the happiness beyond the contract; some go to Causeway Bay because the latest craze must be in their hands before Monday; some go directly back to the dorm in North Point, dividing the mango sauce for tomorrow’s breakfast. Ah Lan writes on the way back: “even the rooftop is theirs.” She doesn’t write any merchant’s name in her notebook — all she knows is this roof, this light, and which word they said.' },
+      { type: 'cards', title: 'Hopewell, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Hopewell Filipina” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天，下午一點前的二十分鐘。灣仔的霍普韋爾中心（合成敘事，非真實商戶）兩架觀光升降機一起往上走——阿蘭（合成敘事，非真實人物）手上的紙袋裡裝着她自己做的餸：一盒芒果醬（她媽媽上個月從她的老家寄來的）和兩個咖喱角。這是她這個星期的第一頓像樣的午餐；也是她六個星期以來第一個沒有人監督的自由下午。' },
       { type: 'heading', text: '一、午餐大堂的規則' },
