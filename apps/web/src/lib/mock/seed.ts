@@ -1899,6 +1899,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-drive-thru-midnight-chronicle', title: '深夜十一點：麥當勞得來速（香港系列 · 第三十二章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着午夜得來速永不熄滅的燈——整個城睡的時候，它繼續醒。',
+    title_en: 'Eleven at night — the McDonald’s drive-thru (HK series, Ch. 32)',
+    description_en: 'A synthetic guide (not travel advice): follow the never-extinguished light of the drive-thru — when the whole city sleeps, it stays awake.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eleven at night. The drive-thru light at McDonald’s is still on — never extinguished: a small model designed entirely for the deep night. Ah Kin (synthetic narrative, not a real person) stands beside the speaker, listening to each car pulling up. He never needs to ask: “Hello, what would you like?” — he only says first: “The fourth combo, one ketchup pack, and a fries.”' },
+      { type: 'heading', text: 'I · The midnight orders' },
+      { type: 'paragraph', text: 'Who comes to the drive-thru at midnight? Never ordinary customers — dockers off the night shift, airport staff off a transpacific flight, drunks dropped off at home, nurses just out of hospital, students who finished an all-night exam. The fourth combo, the seventh, the ninth — these are the night shift’s proteins. Ah Kin even recognises the number plates of the regulars — the red Camry, the black Daewoo, the white X3 — each plate belongs to one life.' },
+      { type: 'cards', title: 'The drive-thru, what to count', items: [] },
+      { type: 'heading', text: 'II · The ever-lit light' },
+      { type: 'paragraph', text: 'This light never goes out, it is true: every lamp in the whole car-park across the street is switched off, but the drive-thru light never goes out. It is not the way into a building, it is one fixed coordinate in time. Even when a typhoon approaches, even when the tram breaks down, even when the whole city flickers off for sixteen minutes — the drive-thru light keeps shining. Sometimes citizens drive past, pass by, and slow down on their own — because they have known for a long time this is one light always safely, reliably on.' },
+      { type: 'cards', title: 'The drive-thru, what to watch', items: [] },
+      { type: 'heading', text: 'III · The rhythm of clocking out' },
+      { type: 'paragraph', text: 'Half past two in the morning, the McDonald’s supply truck drives past, taking out the first batch of cold stock and collecting all kitchen utensils for a final wash — the whole drive-thru frame stays in place, only the spoons change, the ketchup packs change. Then they etch the time on the iron plate for the next run: from four in the morning the breakfast service resumes, same meals, same light, same size. Inside this deep night, this city has something that does not sleep, and never forgets — it keeps shining for the people working deep into the night.' },
+      { type: 'cards', title: 'The drive-thru, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “McDonald’s midnight” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：深夜十一點。麥當勞得來速的燈仍然亮着，沒有熄滅過：這是一個完全為深夜工作而設計的小模型。阿健（合成敘事，非真實人物）站在揚聲器旁邊，聽每一輛車進來的時候，其實他不需要問：「您好，請問想要什麼？」——他只要先講：「第四份餐，番茄醬包一個，再給一份薯條。」' },
       { type: 'heading', text: '一、深夜的訂單' },

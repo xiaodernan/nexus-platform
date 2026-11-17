@@ -455,4 +455,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Thirty boxes/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 32 (the drive-thru) ships in three arms too', () => {
+    const hk = mockGuide('hk-drive-thru-midnight-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/麥當勞得來速/);
+    const cn = mockGuide('hk-drive-thru-midnight-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/麦当劳得来速/);
+    const en = mockGuide('hk-drive-thru-midnight-chronicle', 'en');
+    expect(en?.title).toMatch(/drive-thru/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Kin/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /ever-lit light/i.test(b.text))).toBe(true);
+  });
 });
