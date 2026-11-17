@@ -335,4 +335,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /She knows every plate/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 24 (the tower cleaner) ships in three arms too', () => {
+    const hk = mockGuide('hk-night-cleaner-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/塔樓清潔工/);
+    const cn = mockGuide('hk-night-cleaner-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/塔楼清洁工/);
+    const en = mockGuide('hk-night-cleaner-chronicle', 'en');
+    expect(en?.title).toMatch(/One in the morning/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/nineteen floors/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /corridor light/i.test(b.text))).toBe(true);
+  });
 });

@@ -896,6 +896,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-night-cleaner-chronicle', title: '凌晨一点：塔楼清洁工（香港系列 · 第二十四章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着夜班清洁阿姨的手，由楼梯塔到天台——这座城每一层最早知道自己的事的人，其实不在任何一张名片上。',
+    title_en: 'One in the morning — the tower cleaner (HK series, Ch. 24)',
+    description_en: 'A synthetic guide (not travel advice): follow the night-shift cleaning lady by her hands, from the staircase tower up to the rooftop — the people who know this city floor by floor are written on no business card.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): one in the morning. The whole estate has gone dark, only one staircase light burning all the way up to the rooftop. Ah Wan (synthetic narrative, not a real person) folds her work sheet, unscrews the tap on the fourth floor, and hangs a small empty plastic bag gently from the railing — the content of this city’s cleaning work never appears on any time clock, but at 7:10 every morning, every window comes out clean for you to see.' },
+      { type: 'heading', text: 'I · The corridor light on every floor' },
+      { type: 'paragraph', text: 'This tower has nineteen floors, and eleven of its staircase lights die first, because they rise and fall over three hundred times a day. Ah Wan knows every floor: which lamp only truly lights at one in the morning, which half-open window lets the wind push the door a certain way, which meter reads three hundred kilo-watts above the rest. She is not a maintenance woman — she simply walks the corridors at night: gripping the stair rail and tasting the air, counting the mops, looking up at the open sky above the roof court. Older cleaners say this is reading: every floor of this city has its own temperament.' },
+      { type: 'cards', title: 'The night shift, what to hear', items: [] },
+      { type: 'heading', text: 'II · One hour of stairs, one hour of patience' },
+      { type: 'paragraph', text: 'From the first floor up to the rooftop, three rounds a day — this is how the air of this building gets renewed every single day. Ah Wan rides no bicycle, takes no lift — she walks the route with two legs. On the left corridor she spreads one of her own bedsheets to catch the smells; on the right she sets a fresh charcoal briquette against the dust; sometimes on the second-floor back counter someone leaves a tin of tofu-pudding, and she does not touch it; but a newspaper someone leaves behind, she always folds and places in the downstairs mailbox the next morning — even if she does not know the person. She is writing, in her actions, that the people of this city need not speak a word — they can be a habit.' },
+      { type: 'cards', title: 'The night shift, what to count', items: [] },
+      { type: 'heading', text: 'III · Before the light comes' },
+      { type: 'paragraph', text: 'Quarter to five, Ah Wan sees the last window lit one more time, and takes one clean breath. This shift has been done a hundred times, a thousand times; she washes the traces from her hands, wrings out the cloth, and gives way to the next shift. Six on the dot, she pauses at the flower bed downstairs and watches the sky gradually whiten — she never takes photos, she only keeps the sight of this morning in mind: this city is still here, still kept going by those with no business cards. Her work card has no “position” on it — it says “tower”, and that is enough.' },
+      { type: 'cards', title: 'The night shift, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “tower cleaning” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨一点。整个屋邨熄了灯，只有一盏楼梯灯一路烧到天台。阿环（合成叙事，非真实人物）把工作纸折好，先拧开四楼的水龙头，把一个空胶袋轻轻挂在栏杆上——这座城的清洁工作内容不在任何一张打卡钟上，但每日早上七点十分，每一扇窗都会干净给你看。' },
       { type: 'heading', text: '一、每一层的走廊灯' },
