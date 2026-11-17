@@ -6,6 +6,7 @@ import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 import { answerManual } from '@/lib/manual-rag';
 import { HandbookAskLive } from '@/components/handbook-ask-live';
+import { WheelCheck } from '@/components/wheel-check';
 
 /**
  * `/handbook` — the product's own instruction booklet, in HK Traditional at one door and
@@ -122,6 +123,11 @@ export default async function HandbookPage(props: {
           )}
         </Container>
       </section>
+
+      {/* D1283 — the wheel-direction self-test: the product listens; the OS keeps the sign. */}
+      <Container size="shell" className="pt-10 sm:pt-12">
+        <WheelCheck labels={copy.wheelCheck} />
+      </Container>
 
       <Container size="shell" className="py-10 sm:py-12">
         {/* The first try — a real query, not a slogan */}

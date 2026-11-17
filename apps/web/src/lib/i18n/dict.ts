@@ -1040,6 +1040,7 @@ export interface Dict {
     screenshotNote: string;
     quickLinks: Array<{ href: string; label: string }>;
     askManual: { eyebrow: string; title: string; placeholder: string; submit: string; degradedNote: string; noMatch: string; livePending: string; liveProven: string };
+    wheelCheck: { eyebrow: string; title: string; hint: string; zoneHint: string; start: string; downTrack: string; upTrack: string; downLabel: string; upLabel: string; stepDown: string; stepUp: string; stepVerdict: string; normal: string; inverted: string; inconclusive: string; retry: string };
   };
   /** D1246: the /stategraph runbook page — the orchestrator graph explained in-app. */
   stategraph: {
@@ -2948,6 +2949,24 @@ const zhHK: Dict = {
       noMatch: '找不到對應的章節——試試輸入像「拉麵」「預算」「錯誤」這類名詞。',
       livePending: '大模型正在用說明書措辭…',
       liveProven: '模型潤飾自說明書 · 出處如下',
+    },
+    wheelCheck: {
+      eyebrow: '滾輪方向自檢',
+      title: '滾輪方向係咪反咗？',
+      hint: '喺個盒裡面，先往下滾兩格，再往上滾兩格——十秒內就知道係邊個環節反咗。呢個檢查唔會改動你部機任何設定：方向喺邊度反轉，一目了然。',
+      zoneHint: '按「開始自檢」之後，無論游標停喺邊度都得：用滾輪先往下、再往上各滾兩格——測試期間頁面唔會郁，完事即刻還畀你',
+      start: '開始自檢',
+      downTrack: '往下滾兩格…已記錄 {n} 格',
+      upTrack: '好了——換上滾兩格…已記錄 {n} 格',
+      downLabel: '往下',
+      upLabel: '往上',
+      stepDown: '往下滾兩格',
+      stepUp: '往上滾兩格',
+      stepVerdict: '睇結果',
+      normal: '方向正確——網頁本身冇反轉滾輪。如果覺得反，係你部機的滑鼠設定或者系統設定：Windows 喺「設定 › 藍牙與裝置 › 滑鼠」關掉「反轉滾輪方向」；Mac 喺軌跡板／滑鼠關掉「自然捲動」。',
+      inverted: '偵測到：你部機把滾輪訊號反轉咗。網頁本身冇反轉——去返作業系統改返：Windows：「設定 › 藍牙與裝置 › 滑鼠」關掉「反轉滾輪方向」；Mac：軌跡板／滑鼠關掉「自然捲動」。',
+      inconclusive: '訊號唔夠清楚——入埋個盒再滾一次；如果你用緊軌跡板，請用兩隻手指分兩段清晰輕掃。',
+      retry: '再測一次',
     },
     quickLinks: [
       { href: '/search', label: '智能搜索' },
@@ -5005,6 +5024,24 @@ const en: Dict = {
       noMatch: 'No matching section — try nouns like “ramen”, “budget”, “error”.',
       livePending: 'The model is phrasing from the manual…',
       liveProven: 'Model-phrased from the manual',
+    },
+    wheelCheck: {
+      eyebrow: 'WHEEL DIRECTION CHECK',
+      title: 'Is your wheel actually reversed?',
+      hint: 'Scroll two notches down, then two notches up, inside the box below — ten seconds tells you whose side the fault lives on. This check changes nothing on your machine: it only listens.',
+      zoneHint: 'Hit “Start the check”, then scroll anywhere on the page — two notches down, then two up. The page holds still while the check runs and hands the wheel straight back on the verdict.',
+      start: 'Start the check',
+      downTrack: 'Two notches down… {n} registered',
+      upTrack: 'Good — now two notches up… {n} registered',
+      downLabel: 'Down',
+      upLabel: 'Up',
+      stepDown: 'Two notches down',
+      stepUp: 'Two notches up',
+      stepVerdict: 'The verdict',
+      normal: 'Direction is correct — this page never reverses the wheel. If it still feels backwards, your mouse driver or system settings flip the sign: Windows → Settings → Bluetooth & devices → Mouse → turn “Reverse wheel direction” off; Mac → Trackpad/Mouse → turn “Natural scrolling” off.',
+      inverted: 'Detected: your OS is flipping the wheel’s sign. This page never reverses it — fix it at the system level: Windows → Settings → Bluetooth & devices → Mouse → turn “Reverse wheel direction” off; Mac → Trackpad/Mouse → turn “Natural scrolling” off.',
+      inconclusive: 'Not enough signal — park inside the box and scroll again. On a trackpad, use two fingers in two clear strokes.',
+      retry: 'Check again',
     },
     quickLinks: [
       { href: '/search', label: 'Search' },
