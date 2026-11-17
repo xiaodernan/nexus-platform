@@ -46154,3 +46154,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline (chapter-by-chapter with beat parity + opencc fold discipline).
 
 **The unit.** `hk-cha-chaan-teng-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (post-war kitchens, silk-stocking milk tea, the set meal's three pillars). Chapters with full EN prose: **1, 2, 3, 4, 5, 106** of 106. Chapters 6–105 remain honest fallback (Traditional HK), never machine-folded.
+
+## 1293. D1293 — chapter 6 (dawn fish market) joins the EN arm; seven chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 6 covers the pre-dawn market scene with the same beat-parity discipline.
+
+**The unit.** `hk-fish-market-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 106** of 106. Chapters 7–105 remain honest fallback (Traditional HK), never machine-folded.

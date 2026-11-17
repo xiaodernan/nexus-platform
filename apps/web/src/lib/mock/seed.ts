@@ -952,6 +952,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-fish-market-chronicle', title: '天光魚市：凌晨四點半的香港（香港系列 · 第六章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著凌晨四點半的魚仙街，從潮汐到餐桌——香港一整個星期的眼睛。',
+    title_en: 'The Dawn Fish Market — half-past four in this city (HK series, Ch. 6)',
+    description_en: 'A synthetic guide (not travel advice): walk through the dawn fish alleys, from the tide to the table — the eyes that stay open for this whole city, week after week.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): at half-past four the whole city lights up again. On either side of the fish alley, shielded from the public by a line of fish-and-game stools, the masters lean over their workbenches turning the crimson flounder over with one free hand while calling out prices in their best Cantonese chant, while smearing the plastic bags dry on the tiles under their feet.' },
+      { type: 'heading', text: 'I · The rhythm of the fish market' },
+      { type: 'paragraph', text: 'There is no signboard hanging here. The stalls on both sides are set out like live verse: larger fish, smaller fish, baskets of soft-shell crab, baskets of shrimp heads, tangled baskets of garfish — arranged down a single long aisle like a sentence that refuses to break. From half-past four onward the whole back end of the alley is singing — Cantonese and English traded back and forth among themselves.' },
+      { type: 'cards', title: 'What you can browse', items: [] },
+      { type: 'heading', text: 'II · Lights going dim, then bright again' },
+      { type: 'paragraph', text: 'The market knows its light. From four-thirty to half-six the lights are amber; from half-six to ten the mercury colds them down. The first half hour before dawn is a half-awake, half-alive temperature; the whole hour returns to its old future with big white sky light. No decorative lighting anywhere — just the colour to keep the fish alive.' },
+      { type: 'cards', title: 'What you can eat here', items: [] },
+      { type: 'heading', text: 'III · The fish-market flower' },
+      { type: 'paragraph', text: 'Dawn order trickles in — first the fish-skin hot pot with pickled mustard greens and broth brought to boil, then the shredded eel pan-seared in sesame oil, then the fermented rice wine in little cups. This is the hour when the city cries. Every Hongkonger knows that taste.' },
+      { type: 'cards', title: 'What you can order with your tea', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. Tomorrow night the fish alley will not be in the same place, but it will still be in every Hong Kong morning for as long as Hong Kong stays hungry. In a hurry? SearchBox “Sheung Wan fish egg”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨四點半，整個香港又亮起來。在魚仙街兩排塑膠魚檔前，師傅趴在一張小凳上，把鮮紅的大比目魚翻過來，一邊喊價，一邊把塑膠袋上的血水抹到腳踩的地磚上。' },
       { type: 'heading', text: '一、魚仙街的韻律' },
