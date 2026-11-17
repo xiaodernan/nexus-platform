@@ -635,4 +635,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /revolution of the rooftop photo/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 44 (the Guanyin loan) ships in three arms too', () => {
+    const hk = mockGuide('hk-temple-circuit-sunday-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/觀音借/);
+    const cn = mockGuide('hk-temple-circuit-sunday-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/观音借/);
+    const en = mockGuide('hk-temple-circuit-sunday-chronicle', 'en');
+    expect(en?.title).toMatch(/Guanyin/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /etiquette of three incense sticks/i.test(b.text))).toBe(true);
+  });
 });

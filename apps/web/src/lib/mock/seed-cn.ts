@@ -1636,6 +1636,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-temple-circuit-sunday-chronicle', title: '下午五点半：星期天的观音借（香港系列 · 第四十四章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：星期天的晚黄昏——湾仔的观音借香烟缭绕、签筒满地、姐妹们把整个星期一的疲惫全部放下。',
+    title_en: 'Half-past five — Sunday at the Guanyin loan (HK series, Ch. 44)',
+    description_en: 'A synthetic guide (not travel advice): Sunday evening — incense smoke, full divination tubes, and the sisters let go of the whole week.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, half-past five. After a long lunch, the Guanyin loan at Wanchai is the city’s second lung. Ah Lan (synthetic narrative, not a real person) returns with a stick of incense she had not burned last week; the smoke and their faces are all familiar. This loan is not a real temple, which is why they can shout, laugh, shake out the whole week’s sorrows.' },
+      { type: 'heading', text: 'I · The etiquette of three incense sticks' },
+      { type: 'paragraph', text: 'Don’t bring too much, Ah Lan said. Three sticks, three wishes: one for the factory to be safe, one for Mom back home to sleep well, one for tomorrow morning to wake to one more free Sunday. The ash drifts down in a yellow-orange shower; the smoke slowly boils the evening wind of Wanchai. The crackling sound of the tossing coins comes through: snap, snap, snap — the old woman at the counter looks once and says: “this one draws again — she came around Golden Week.” Everyone laughs.' },
+      { type: 'cards', title: 'Guanyin loan, what to see', items: [] },
+      { type: 'heading', text: 'II · The divination poem and the tossing coins' },
+      { type: 'paragraph', text: 'The cup that shakes the straws is already pitch-dark and shiny. Ah Chun drew an upper slip which read “soon to see kin”; she holds the slip in the palm of her hand, eyes straight at the incense burner. “Is this a wish-slip, or a destiny glued onto my forehead?” she asks herself. Ah Lan laughs: “an upper slip is an upper slip — don’t be in two minds.” Everyone laughs together; the laughter folds the Sunday dusk into one class meeting: every Sunday they let go of a heavier self.' },
+      { type: 'cards', title: 'Guanyin loan, what to hear', items: [] },
+      { type: 'heading', text: 'III · The sky dims slowly' },
+      { type: 'paragraph', text: 'Six in the afternoon, blue-purple pieces push into the rice-yellow doorway; the orange urn at the entrance and the water-tower shadow weave together; someone buys one bag of sugar and dyes every seed’s core ink-green. Ah Lan closes her notebook: “this is their last transfer station — the next stop is the Monday morning elevator.” She knows she will come back next Sunday; at that time, here will give her three sticks of incense and the direction toward her own self.' },
+      { type: 'cards', title: 'Guanyin loan, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Guanyin Wanchai” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：星期天，下午五点半。散了一顿长午餐之后，湾仔的观音借（合成叙事，非真实商户）是这座城的第二个肺。阿兰（合成叙事，非真实人物）带着上个星期没抽的一支签回到这里；香炉里的烟和她们的脸都很熟悉。这座借不是真的庙，于是她们才能在里面大声说话、大声笑、大声把这一星期的悲哀全部抖出来。' },
       { type: 'heading', text: '一、三支香的礼仪' },
