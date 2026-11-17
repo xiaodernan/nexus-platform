@@ -46172,3 +46172,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 8 continues the pre-dawn rhythm: the fruit wholesale market that starts before the sun does, the auction as the way word becomes price.
 
 **The unit.** `hk-fruit-market-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 7, 8, 106** of 106. Chapters 9–105 remain honest fallback (Traditional HK), never machine-folded.
+
+## 1296. D1296 — chapter 9 (tong sui) joins the EN arm; ten chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 9 closes the dinner arc with the Cantonese tong sui discipline intact — sesame, fire, stone mill, the post-midnight need for sweet.
+
+**The unit.** `hk-tongsui-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 7, 8, 9, 106** of 106. Chapters 10–105 remain honest fallback (Traditional HK), never machine-folded.

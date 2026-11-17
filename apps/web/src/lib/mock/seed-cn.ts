@@ -353,6 +353,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-tongsui-chronicle', title: '糖水：宵夜后的一碗甜（香港系列 · 第九章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著一碗芝麻糊的温度，走进油麻地与北角之间的糖水舖。',
+    title_en: 'Tong sui — one bowl of sweet to close the day (HK series, Ch. 9)',
+    description_en: 'A synthetic guide (not travel advice): follow one bowl of sesame paste across the line between Yaumatei and North Point — this city’s quiet way of putting the day to rest.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): after dinner, nobody is in a hurry to go home. The tofu-and-daikon fritter vendor on Yaumatei has folded his ledger; the little tong sui shop in North Point has its dim yellow light just glazed against the glass door. Hong Kong is famous for closing with one bowl of sweet — the heaviness of siu mei, the heat of cart-noodles, all of it waits to be absorbed by this one bowl of sweetness.' },
+      { type: 'heading', text: 'I · Fire and the stone mill' },
+      { type: 'paragraph', text: 'The craft sits in the grind and the fire: black sesame roasted first, then crushed in a stone mill, down to the last bitter note. Ginger is never sliced into thick coins — freshly grated into a paste, root and fibre both, for the heat to come through proper. Every bowl is a “work first, swallow later” kind of deal — it sounds like nothing more than sweet, but making one takes a proper half a day.' },
+      { type: 'cards', title: 'Tong sui, to drink', items: [] },
+      { type: 'heading', text: 'II · The lights of North Point, the fire of Yaumatei' },
+      { type: 'paragraph', text: 'Walk into any tong sui shop in North Point, and the jars are sitting out — green bean sand, bitter almond paste, black sesame paste, red bean paste — the first spoon on the counter is for your taste test. The ones in Yaumatei post a notice "sold two hundred bowls today" — those who earn by the night all know where to come; a bowl of peanut paste carried more than one dawn for the overtime crowd.' },
+      { type: 'cards', title: 'Tong sui, to order', items: [] },
+      { type: 'heading', text: 'III · Post-midnight, salt does not go down' },
+      { type: 'paragraph', text: 'Post-midnight food is almost always salt — siu mei rice, cart-noodles, fish-ball noodles — by the end of it the tongue begins to ask for sweet. The best spot, the sweet one, is the one before sleep — not a big meal, not a hot pot, just one sweet. It beats any late-night stop by miles, and it gives Saturday morning something to look forward to.' },
+      { type: 'cards', title: 'Tong sui, to order', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. Tong sui is a quiet closing — a mouthful on the way home, and the morning of the next day has already been paid for. In a hurry? SearchBox “Yaumatei tong sui”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚饭收场之后，总有人不著急回家。油麻地那位煎藕饼的小贩收出帐簿了，北角的小糖水舖昏黄的灯光刚好亮到玻璃门上。香港习惯用一碗甜，替一天划上句号——烧味的重、车仔面的辣，都要等这碗糖水来收容。' },
       { type: 'heading', text: '一、柴火与石磨' },

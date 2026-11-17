@@ -134,4 +134,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /ten past three/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /one day begins before dawn/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 9 (tong sui) ships in three arms too', () => {
+    const hk = mockGuide('hk-tongsui-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/糖水/);
+    const cn = mockGuide('hk-tongsui-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/糖水/);
+    const en = mockGuide('hk-tongsui-chronicle', 'en');
+    expect(en?.title).toMatch(/Tong sui/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /after dinner, nobody is in a hurry/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Fire and the stone mill/i.test(b.text))).toBe(true);
+  });
 });
