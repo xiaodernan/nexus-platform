@@ -2491,6 +2491,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-mixc-world-designer-chronicle', title: '下午三點半：萬象天地的設計師街（香港系列 · 第四十八章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：星期天下午三點半，深圳南山萬象天地設計師街——兩種貨幣、兩種口音、一個地方。',
+    title_en: 'Half past three — the designer’s street at MixC World (HK series, Ch. 48)',
+    description_en: 'A synthetic guide (not travel advice): Sunday at half past three, MixC World designers’ street in Shenzhen Nanshan — two currencies, two accents, one place.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, half past three. MixC World in Shenzhen Nanshan (synthetic narrative — not a real merchant or a real moment; the hour and the street are narrative constructions) — nobody needs to show any proof. The shop windows here do not sell things, they sell style: store by store, book by book, lamp by lamp. Ah Yin, a designer from Hong Kong (synthetic narrative, not a real person), cradling his own notebook-as-mother, sips his third latte here. His pay is split both ways: half for the Hong Kong rent, half for the Shenzhen dream.' },
+      { type: 'heading', text: 'I · The designer’s market' },
+      { type: 'paragraph', text: 'There is no cashier here asking “may I get you anything you need” — nobody introduces; you just stand before each piece and it greets you like a displayed guest. Ah Yin admits these things are not made to solve problems, but to solve “today I want to buy a little thing I deserve.” He says this is about as innocent a reason as any.' },
+      { type: 'cards', title: 'MixC World, what to see', items: [] },
+      { type: 'heading', text: 'II · The etiquette of two currencies' },
+      { type: 'paragraph', text: 'HK dollars pin against the RMB price tags: the subtle checkout rituals here are many — some swap renminbi beforehand, some swipe an HK credit card (the system converts in real time), some scan an Octopus App QR code. No one here will ever refuse you because you paid in HK dollars — this place’s silent commentator explains no one.' },
+      { type: 'cards', title: 'MixC World, what to hear', items: [] },
+      { type: 'heading', text: 'III · The dusk of design and waiting' },
+      { type: 'paragraph', text: 'Near four o’clock, the strollers multiply: tourists, camera bags, dog-walkers, and people in pyjamas going for a walk — “the four o’clock wind blows one sentence.” Ah Yin closes his notebook; today he buys nothing. He is doing the math: tomorrow is Saturday, and there will be one more camera’s sunrise here.' },
+      { type: 'cards', title: 'MixC World, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “MixC World designers’ street” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天的下午三點半。深圳南山的萬象天地（合成敘事，非真實商戶與真實時刻——時刻與街道全部是敘事建構）——沒有人需要展示任何證明。這裏的櫥窗不賣東西，賣的是風格：一家一家地、一本書地、一盞燈地。香港來的設計師阿然（合成敘事，非真實人物）抱着他自己當他媽媽的筆記本，在這裏啜飲着第三杯拿鐵。他的月薪兩邊寄：一半留給香港的房租，一半留給深圳的夢想。' },
       { type: 'heading', text: '一、設計師的市場' },

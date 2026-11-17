@@ -695,4 +695,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /ticket that goes both ways/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 48 (MixC World’s designers’ street) ships in three arms too', () => {
+    const hk = mockGuide('hk-mixc-world-designer-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/萬象天地的設計師街/);
+    const cn = mockGuide('hk-mixc-world-designer-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/万象天地的设计师街/);
+    const en = mockGuide('hk-mixc-world-designer-chronicle', 'en');
+    expect(en?.title).toMatch(/MixC World/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Yin/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /etiquette of two currencies/i.test(b.text))).toBe(true);
+  });
 });
