@@ -46118,3 +46118,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 - Tests: `chapter-en-arm.test.ts` (EN arm renders with zero CJK glyphs; HK-only chapters fall back honestly; cn arm folds normally); `chapter-guides` now covers 106; arc/world-atlas/hk-type/home-series-rail pins updated; web suite 480/480.
 
 **Honest boundaries.** Chapters 1–105 still have no EN prose — this milestone is the *machinery* + one proof-of-volume chapter, not a translation campaign. The remaining 105 bodies are a named next project (a live-provider batch behind chapter-ask-style discipline, sampled verification, committed seed regeneration, lockstep censuses like the Simplified fold). The en arc enumeration inserts the chapter honestly; zhHK rails list it first-class.
+
+## 1287. D1287 — the StateGraph execution plane IS the agent now, not an opt-in experiment
+
+**Why.** §三 asked for LangGraph in the project; D1142 landed it as an env-gated second engine (`NEXUS_AI_ENGINE=graph`) with a fingerprint test proving byte-identical reports. It never ran by default — the serial planner kept the wheel.
+
+**The unit.** The default flips to `graph` at `apps/ai/nexus_ai/api/routes_agent.py` — the agent's own §10 surface. Same deterministic planner, same registry, same tool set; the graph just fans the independent reads out (asyncio.gather, plan order preserved). Opt out with `NEXUS_AI_ENGINE=planner`. Tests: the fingerprint suite (26/26 incl. `test_langgraph_engine_fingerprint` and `test_max_tool_calls_env_reaches_both_gates`) unaffected; the AI suite stands at 37848 passed with 0 graph-specific failures. Honest note: the langgraph checkpoint import now warns about `LangChainPendingDeprecationWarning` at INFO level on the code path — documented, not suppressed silently.

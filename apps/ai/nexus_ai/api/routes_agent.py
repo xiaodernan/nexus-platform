@@ -54,9 +54,11 @@ async def agent_plan(request: Request, body: AgentPlanRequest):
 
     report = None
     tool_calls: list[dict[str, Any]] = []
-    # D1142: NEXUS_AI_ENGINE=graph swaps in the opt-in LangGraph execution plane (same plan,
-    # same registry, parallel fan-out of independent reads). Default is the planner's serial loop.
-    use_graph = os.environ.get("NEXUS_AI_ENGINE", "planner").strip().lower() == "graph"
+    # D1142 → D1287: the StateGraph execution plane is now the DEFAULT path for the agent
+    # (same plan, same registry, parallel fan-out of independent reads — byte-identical outputs,
+    # see test_langgraph_engine_fingerprint.py; event interleaving may differ by design).
+    # Opt out with NEXUS_AI_ENGINE=planner for the serial planner's execution path.
+    use_graph = os.environ.get("NEXUS_AI_ENGINE", "graph").strip().lower() == "graph"
     if body.execute:
         if use_graph:
             from nexus_ai.orchestrator.langgraph_engine import run_engine
