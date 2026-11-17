@@ -1007,6 +1007,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-newspaper-wrapper-chronicle', title: '早上十一点：报馆放送（香港系列 · 第二十七章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着报纸包装工人在纸厂前的走廊，由新闻纸卷一直到报纸架——早报是整个城市第一面镜子。',
+    title_en: 'Eleven in the morning — the newspaper wrapping crew (HK series, Ch. 27)',
+    description_en: 'A synthetic guide (not travel advice): follow the news-paper wrapping workers along the corridor before the presses — the morning paper is the first mirror of the whole city.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eleven in the morning. The newspaper room lights are all on; the paper-clip racks stand full of workers. Ah Yun (synthetic narrative, not a real person) holds the same pair of shears every day, binding rolls of paper into bundles. The first morning paper of Hong Kong officially comes into shape at this moment, seated in two rows along the corridor, prepared for delivery across all of Hong Kong.' },
+      { type: 'heading', text: 'I · Paper swallows the news' },
+      { type: 'paragraph', text: 'Newsprint is dark and black, biologically nothing important, all the current moment of the city must first be squeezed onto this one roll of white paper. Ah Yun folds up about ten rolls, layer by layer, pressing them tight with bamboo blades and iron hoops, the corridor wind making the papers rustle — this is the first motion every citizen sees open in the morning: when you open the paper, the voice of the city is in your hands.' },
+      { type: 'cards', title: 'The pressroom, what to hear', items: [] },
+      { type: 'heading', text: 'II · Folding and dispatch' },
+      { type: 'paragraph', text: 'Half-past midnight, the first batch of pages reaches the first floor of the corridor. Ah Yun presses, folds, prints — each motion has its own order. Page one previews the international situation; page two is local news; page three, the weather for every district, each district’s sun. This pile of paper becomes the daily paper, numbers one to one hundred, and then into each cha chaan teng, each convenience store, each newspaper stand.' },
+      { type: 'cards', title: 'The pressroom, what to count', items: [] },
+      { type: 'heading', text: 'III · Every participation' },
+      { type: 'paragraph', text: 'Noon. Ah Yun lifts the last bundle of newspapers onto the small boat and rows off. The first motion this whole city opens its eyes to is this page. So many office towers, so many taxis, so many breakfast tables all depart from this bundle in his hands — he says: “Handing the paper to the whole city — that is the most director-like job of my life.” He believes one simple thing every time he does it: a newspaper never opens by itself, but once it is opened, the city wakes.' },
+      { type: 'cards', title: 'The pressroom, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “morning paper” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上十一点。报馆灯光齐了，胶纸架站满了工人。阿润（合成叙事，非真实人物）每日握住同一把铰剪，把几卷纸筒夹成一束——香港每个早上的第一张报纸在这个时刻正式印制成型，坐在走廊两边成排，准备发到全港。' },
       { type: 'heading', text: '一、纸在吃掉新闻' },

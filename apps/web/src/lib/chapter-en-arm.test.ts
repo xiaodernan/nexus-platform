@@ -380,4 +380,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /skewer craft/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 27 (the newspaper wrapper) ships in three arms too', () => {
+    const hk = mockGuide('hk-newspaper-wrapper-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/報館/);
+    const cn = mockGuide('hk-newspaper-wrapper-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/报馆/);
+    const en = mockGuide('hk-newspaper-wrapper-chronicle', 'en');
+    expect(en?.title).toMatch(/newspaper wrapping/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Yun/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Folding and dispatch/i.test(b.text))).toBe(true);
+  });
 });
