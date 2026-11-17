@@ -215,4 +215,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /half a face/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 16 (Lei Yue Mun) ships in three arms too', () => {
+    const hk = mockGuide('hk-lei-yue-mun-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/鯉魚門/);
+    const cn = mockGuide('hk-lei-yue-mun-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/鲤鱼门/);
+    const en = mockGuide('hk-lei-yue-mun-chronicle', 'en');
+    expect(en?.title).toMatch(/Lei Yue Mun/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/half past six/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /calling of prices/i.test(b.text))).toBe(true);
+  });
 });

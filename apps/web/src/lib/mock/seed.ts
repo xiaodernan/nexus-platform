@@ -1312,6 +1312,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-lei-yue-mun-chronicle', title: '鯉魚門：東邊的晨曦、西邊的晚霞（香港系列 · 第十六章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著苦練鯉魚門的漁民與船長，走進這座城市一個仍養着老海濱秩序的角落。',
+    title_en: 'Lei Yue Mun — dawn on the east shore, dusk on the west (HK series, Ch. 16)',
+    description_en: 'A synthetic guide (not travel advice): follow the hard-training Lei Yue Mun fisher folk and boat captains, into a corner of the city that still keeps its old seaside order.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): at the eastern end of Sai Wan Ho, past Shau Kei Wan, lies the Lei Yue Mun weir entrance. At half past six every dawn the boats push off from in front of the houses; by half past seven they are out; by eight to nine mid-morning the fishing association has gone in to anchor, unload and sort — and not one word passes over the counter. The whole process runs on instinct and silence.' },
+      { type: 'heading', text: 'I · Morning on the pier' },
+      { type: 'paragraph', text: 'Two rows on the pier — one row sells fish, one row sells shellfish. Dawn light slides off the ridge onto the water; the fisher-wives keep their stubborn straight faces — they are as punctual as Hong Kong, as punctual as the sea. The scales tally the fish baskets; the gestures are brisk and clean, even their mouths pause half a second — no one mis-prices.' },
+      { type: 'cards', title: 'Pier, what to eat', items: [] },
+      { type: 'heading', text: 'II · Seafood and the calling of prices' },
+      { type: 'paragraph', text: 'Crab meat is seventy-eight a portion, shrimp a hundred and forty-eight a catty, grouper by the foot. The stalls weigh in Hong Kong kilos; the kitchen splits the tower-fire into fry, pan, steam and boil by station — crab meat seared fragrant first, shrimp shells torn away, then Shaoxing wine and young-ginger white, simmered shut. This is the fish that argues one breath with the traditional menu inside Lei Yue Mun.' },
+      { type: 'cards', title: 'Pier, what to fry', items: [] },
+      { type: 'heading', text: 'III · The river beneath the weir' },
+      { type: 'paragraph', text: 'Beneath the Lei Yue Mun weir there used to be the sound of water; now the rules are thicker and you may not sit. The Long Harbour Bay Road swings around; walk the riverbank all the way — you will pass Lei Yue Mun Park and the old Eastern District patriotic film house — the East’s voice, still playing.' },
+      { type: 'cards', title: 'Weir, what to eat', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Lei Yue Mun seafood” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：西灣河東面的盡頭，筲箕灣再向前走，到底就是鯉魚門堤壩入口。每天六點半天剛亮，屋前出船,到七點半已出去，到中午八九點漁會陸續拋錨、卸魚、分級——整個過程沒有台面上的一句話，全靠默契。' },
       { type: 'heading', text: '一、碼頭上的早晨' },
