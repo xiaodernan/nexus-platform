@@ -167,4 +167,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /eleven at night/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /six small pots/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 12 (preserved-egg congee) ships in three arms too', () => {
+    const hk = mockGuide('hk-congee-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/皮蛋瘦肉粥/);
+    const cn = mockGuide('hk-congee-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/皮蛋瘦肉粥/);
+    const en = mockGuide('hk-congee-chronicle', 'en');
+    expect(en?.title).toMatch(/Preserved-egg pork congee/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /(2am|substantial)/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /last thing the city says/i.test(b.text))).toBe(true);
+  });
 });

@@ -461,6 +461,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-congee-chronicle', title: '皮蛋瘦肉粥：全城加班后的最后一味（香港系列 · 第十二章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著一锅皮蛋瘦肉粥，走进凌晨二点的收班香港。',
+    title_en: 'Preserved-egg pork congee — the last taste after overtime (HK series, Ch. 12)',
+    description_en: 'A synthetic guide (not travel advice): follow a claypot of preserved-egg pork congee into 02:00 Hong Kong — the hour the whole city finally gets to put its stomach down.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): 2am at Mcdonnell Road. The congee shop pulls down its last sodden net bind, embers still breathing at the stove. An egg split friendly-green edge, golden heart, fanned across the counter — this one bowl is here to close tonight’s stomach for the whole city.' },
+      { type: 'heading', text: 'I · Why the claypot congee is the last thing the city says' },
+      { type: 'paragraph', text: 'Skin-and-flesh pork congee is this city’s very last collateral. Rice soaked clean, lean slices slid in slow, egg halved and torn across, scallion scattered thin through steam — give it another few minutes and the bowl breaks like a wave into something that does not need to be skilful to soothe. By then, every stomach in the room has stopped arguing.' },
+      { type: 'cards', title: 'Congee, what to order', items: [] },
+      { type: 'heading', text: 'II · Where the preserved egg comes from' },
+      { type: 'paragraph', text: 'A century is close to how long the egg sleeps. The eggs wait in a layer of charred lime and rice husk, slow-darkened, slow-smoothed — from white to ink, from hard to jelly-soft — the salt carries a scent that never quite names itself, and somehow ends up in this bowl.' },
+      { type: 'cards', title: 'Congee, what to order', items: [] },
+      { type: 'heading', text: 'III · Who sits down with the bowl' },
+      { type: 'paragraph', text: 'At 02:00 there is no one competing for noodles. The illustrator who left work never actually did; the tram driver on the three-in-the-morning shift; the script editor; one couple who only walked along for company. There is a stick of youtiao at the side, but most people do not eat it any more — they just drink the warmth, then hand the bowl back to the counter.' },
+      { type: 'cards', title: 'Congee, what to drink', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. In a hurry? SearchBox “Yaumatei preserved-egg congee”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨二点。庙街的粥店撤去最后一屉网边的面，炖炉还剩一口余温。皮蛋剥开之后摊在盘里，绿绿的边、金黄的心——这碗粥要替这个城市把晚上的胃好好收起来。' },
       { type: 'heading', text: '一、为何粥是夜晚最后一味' },

@@ -46190,3 +46190,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
 
 **The unit.** `hk-cart-noodles-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the six pots, the taxi-drivers/burnt-shine host, the fishball one-liner). Chapters with full EN prose: **1–11, 106** of 106.
+
+## 1299. D1299 — chapter 12 (preserved-egg pork congee) joins the EN arm; thirteen chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
+
+**The unit.** `hk-congee-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the claypot at 02:00, the century-preserved egg, the illustrator turned late-shift ghost). Chapters with full EN prose: **1–12, 106** of 106.
