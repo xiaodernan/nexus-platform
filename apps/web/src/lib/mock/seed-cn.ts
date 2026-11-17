@@ -1969,6 +1969,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-acu-clinic-opens-chronicle', title: '早上八点：安树堂的开诊时间（香港系列 · 第五十三章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：西营盘安树堂中医诊所的早上八点——开诊、搥背、新处方、相信与不相信。',
+    title_en: 'Eight in the morning — the opening hour of the On Shu Tong clinic (HK series, Ch. 53)',
+    description_en: 'A synthetic guide (not travel advice): the eight-o’clock opening hour of the On Shu Tong TCM clinic in Sai Ying Pun — opening, kneading, new prescriptions, trust and not-trust.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eight in the morning. The On Shu Tong TCM clinic at Sai Ying Pun (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the iron gate rolls open, Doctor Ng opens the consultation book he bought on day one. Three things on the desk: one cup of tea, one cervical health pillow, one brand-new instruction manual.' },
+      { type: 'heading', text: 'I · The reason for the morning opening' },
+      { type: 'paragraph', text: 'At quarter past eight, Aunty Wong arrives. What she asks about is the old ache in her shoulder. Doctor Ng’s manner is courteous — do sit, I will needle you first. She does not trust Western medicine, everyone in the neighbourhood knows that; she trusts only acupuncture, only yin and yang, only the On Shu Tong that begins every day at eight.' },
+      { type: 'cards', title: 'On Shu Tong, what to see', items: [] },
+      { type: 'heading', text: 'II · The dialogue of yin and yang' },
+      { type: 'paragraph', text: 'The yin-yang view is actually quite plain: the meridian on her left hand is a little congested. Doctor Ng pushes slowly along her meridian. He does not say “treatment” (he dislikes the word); he says: “we are only helping you unbutton the buttons a little.” After hearing this she feels warm: “alright, unbuttoning is victory.”' },
+      { type: 'cards', title: 'On Shu Tong, what to hear', items: [] },
+      { type: 'heading', text: 'III · Goodbye, eight o’clock' },
+      { type: 'paragraph', text: 'At half-past eight, the door closes for a while. Doctor Ng returns to the desk to practise one character — “sincerity.” He writes that character all morning. He cares for the city’s people who stand closer to knowledge than to health: some think health is everything; some think knowledge is everything. He will open again tomorrow at eight.' },
+      { type: 'cards', title: 'On Shu Tong, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “On Shu Tong acupuncture” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上八点。西营盘安树堂中医诊所（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——铁闸拉开，吴医师把他第一天买的问诊簿翻开。桌上三件东西：一盏茶、一个颈椎保健枕头、一本最新的说明书。' },
       { type: 'heading', text: '一、开诊的来由' },

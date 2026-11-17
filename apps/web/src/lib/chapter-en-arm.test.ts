@@ -770,4 +770,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /wife called cloth/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 53 (the On Shu Tong clinic) ships in three arms too', () => {
+    const hk = mockGuide('hk-acu-clinic-opens-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/安樹堂的開診時間/);
+    const cn = mockGuide('hk-acu-clinic-opens-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/安树堂的开诊时间/);
+    const en = mockGuide('hk-acu-clinic-opens-chronicle', 'en');
+    expect(en?.title).toMatch(/On Shu Tong/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Aunty Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /dialogue of yin and yang/i.test(b.text))).toBe(true);
+  });
 });
