@@ -365,4 +365,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Three kinds of people/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 26 (the fish-ball stall) ships in three arms too', () => {
+    const hk = mockGuide('hk-fishball-stall-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/魚蛋檔/);
+    const cn = mockGuide('hk-fishball-stall-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/鱼蛋档/);
+    const en = mockGuide('hk-fishball-stall-chronicle', 'en');
+    expect(en?.title).toMatch(/fish-ball stall/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/fierce flame/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /skewer craft/i.test(b.text))).toBe(true);
+  });
 });

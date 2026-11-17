@@ -970,6 +970,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-fishball-stall-chronicle', title: '上午十点：鱼蛋档（香港系列 · 第二十六章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着鱼蛋档阿姐的手，由晨间一直煮到中午；跟着一串鱼蛋经过香港的手心。',
+    title_en: 'Ten in the morning — the fish-ball stall (HK series, Ch. 26)',
+    description_en: 'A synthetic guide (not travel advice): follow the stall auntie from the morning’s boil to the midday wipe-down — each fish-ball rides out through Hong Kong’s palms.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): ten in the morning. The stall auntie (synthetic narrative, not a real person) lights the fierce flame, and wipes down the rim of the grate once. Roughly ten Central office workers walk past unaware: every single fish-ball passes through one hundred degrees of steam in her hands — customers choose by colour, by hand-craft, never by failure — but nobody knows every fish-ball is its own made-for-the-public moment.' },
+      { type: 'heading', text: 'I · The discipline of the fierce flame' },
+      { type: 'paragraph', text: 'A fish-ball is not simply dropped into boiling water and done. Fierce flame, medium flame, soft flame — a rhythm she keeps to herself. She slides the fish-ball skewer into the grate, passes the chopsticks and spoon to the customer, and before the customer says seven dollars she has already laid it out — every single customer of a fish-ball skewer in Hong Kong keeps one arithmetic: she reads the distance from the stall to home, the number of stairs, how many words belong to whom. She knows the language teacher, the etiquette teacher, the night-shift nurse. That is nothing more than what she finishes reading every morning before ten — stored inside herself.' },
+      { type: 'cards', title: 'The fish-ball stall, what to order', items: [] },
+      { type: 'heading', text: 'II · The master’s skewer craft' },
+      { type: 'paragraph', text: 'One pork liver skewer, one beef-offal skewer, one fish-ball skewer, one small fish-ball skewer — each has its own old master. Skewering never asks, always gives: four fish-balls per skewer, three small red fish-balls, two beef slices. Customers laugh at her dumbness, but they know this: one more and it bursts, one less and it is not enough. After half past ten, the watchers stretch into one line, fish-balls traveling out of her hands along the same arm and staying perfectly balanced — practised like something.' },
+      { type: 'cards', title: 'The fish-ball stall, what to choose', items: [] },
+      { type: 'heading', text: 'III · Eleven o’clock, close' },
+      { type: 'paragraph', text: 'Eleven o’clock: the fierce flame is out, the skewers tucked away, the auntie wipes the rim clean and takes one last spoonful of broth for herself. The next customer walks in — she will smile at him: “today’s new.” He understands. She hands out fish-ball skewers, hand steady, eyes steady, rhythm steady — this city’s most punctual clock does not live in any tower downtown, it lives on her fingertips.' },
+      { type: 'cards', title: 'The fish-ball stall, what to count', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “fish-ball morning” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：上午十点。鱼蛋档阿姐（合成叙事，非真实人物）把猛火点起，第一个竹胶刷一刷笼沿。十个左右的中环白领不知道：每一粒鱼蛋在她手上都是一百度的蒸气——客人选牠的颜色、点牠的老练，不选牠的失败——但没有人知道每一粒鱼蛋都是她当众为市民做好的一次。' },
       { type: 'heading', text: '一、猛火的纪律' },
