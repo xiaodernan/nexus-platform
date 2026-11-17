@@ -189,4 +189,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /half-six in the evening/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /lion rock/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 14 (Cheung Chau) ships in three arms too', () => {
+    const hk = mockGuide('hk-cheung-chau-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/長洲/);
+    const cn = mockGuide('hk-cheung-chau-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/长洲/);
+    const en = mockGuide('hk-cheung-chau-chronicle', 'en');
+    expect(en?.title).toMatch(/Cheung Chau/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /eight in the morning/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /route and the sea-breeze/i.test(b.text))).toBe(true);
+  });
 });

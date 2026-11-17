@@ -106,6 +106,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/components/site-chrome.tsx` | D1207: header gains the locale switch before the theme toggle; every page honors the cookie per request |
 | `apps/web/app/world/page.tsx` | D1210: the `/world` world atlas — 68 arc chips read straight from dict, seven hour-layers, SSR per request, zero hand-duplication |
 | `apps/web/app/insights/page.tsx` | D1212: `/insights` gains the seven-day ghost trend panel (7 cells, slope advice) — see `apps/web/src/lib/user-journeys.ts` |
+| `apps/web/src/lib/mock/seed.ts` | D1301: `hk-cheung-chau-chronicle` gains title_en/description_en/body_blocks_en — Cheung Chau Sunday in full English; fifteen chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1300: `hk-lion-rock-chronicle` gains title_en/description_en/body_blocks_en — Lion Rock at 17:58 in full English; fourteen chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1299: `hk-congee-chronicle` gains title_en/description_en/body_blocks_en — preserved-egg congee at 02:00 in full English; thirteen chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1298: `hk-cart-noodles-chronicle` gains title_en/description_en/body_blocks_en — cart noodles at 11pm in full English; twelve chapters now carry complete EN prose |

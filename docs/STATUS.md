@@ -46202,3 +46202,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
 
 **The unit.** `hk-lion-rock-chronicle` gains title_en / description_en / body_blocks_en — a full English arm preserved in cadence. Chapters with full EN prose: **1–13, 106** of 106.
+
+## 1301. D1301 — chapter 14 (Cheung Chau) ships in EN arm; fifteen chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
+
+**The unit.** `hk-cheung-chau-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1–14, 106** of 106.

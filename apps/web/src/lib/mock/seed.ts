@@ -1240,6 +1240,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-cheung-chau-chronicle', title: '長洲：海與大嶼之內的那個週末（香港系列 · 第十四章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著一條渡輪，從北角、從西營盤看見維港縮小成一條灰影——然後這就是長洲。',
+    title_en: 'Cheung Chau — the weekend between sea and Lantau (HK series, Ch. 14)',
+    description_en: 'A synthetic guide (not travel advice): ride the ferry from North Point or Sai Ying Pun as the harbour folds down into a grey line — and that, finally, is Cheung Chau.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eight in the morning on Sunday, and the Central Pier is already full — people with sluggish Saturday selves packed into their own knees. The bow is all tourists who started at ten; the sea widens as Lantau slowly recedes, then the harbour becomes one slow grey line.' },
+      { type: 'heading', text: 'I · The route and the sea-breeze' },
+      { type: 'paragraph', text: 'The slow boat takes a full hour; the fast boat cuts to twenty-five minutes. The sound of a fast boat cutting across the water is the sound of the hull refusing to lose — south is Hong Kong Island, north is Lantau, both sides pure ocean. The water and the gulls blow everything workday away.' },
+      { type: 'cards', title: 'Cheung Chau, what to play', items: [] },
+      { type: 'heading', text: 'II · The morning at the jetty' },
+      { type: 'paragraph', text: 'At the pier the small stalls stretch out in one line: fish-ball, pudding cake, cheung fun, straw mushrooms. The tea-house sign slowly stewing in Hong Kong’s voice, children ushering parents along, the stall-keeper shouting “one basket!”, gulls wheeling overhead — this scene is what Hong Kong looks like when it exhales.' },
+      { type: 'cards', title: 'Cheung Chau, what to eat', items: [] },
+      { type: 'heading', text: 'III · Put the phone down for a half day' },
+      { type: 'paragraph', text: 'Sit at the pier for two hours, then walk up to the mouth-of-view lookout on foot, then take the fast boat back. Cheung Chau is so small that walking teaches you who you are without the phone. On the way back as the harbour lights wake up, you understand why people work half a life and still come back for a Sunday afternoon of it.' },
+      { type: 'cards', title: 'Cheung Chau, what to wander', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. In a hurry? SearchBox “Cheung Chau seafood”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：週日早上八點，中環渡輪碼頭已經站滿了提着慢熱的自己的人。船頭坐滿了提早十點出發的遊客；眼睛看着大嶼漸漸遠去，然後維港變成一條彎彎的灰線。' },
       { type: 'heading', text: '一、航線與海風' },
