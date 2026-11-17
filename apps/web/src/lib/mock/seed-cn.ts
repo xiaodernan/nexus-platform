@@ -389,6 +389,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-bing-sat-chronicle', title: '冰室：菠萝包与一杯鸳鸯（香港系列 · 第十章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：踏入一间还记得 1960 年代的冰室，北角巷口那扇玻璃门内，菠萝包刚出炉。',
+    title_en: 'Ice house — pineapple bun and yuanyang (HK series, Ch. 10)',
+    description_en: 'A synthetic guide (not travel advice): step into a cha chaan teng that remembers the 1960s — behind the glass door in a quiet alley off North Point Street, the pineapple bun is just out of the oven.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): the little cha chaan teng in the alley at North Point Street, its glass door taped with a handwritten sign “pineapple bun, one special each”. A 1960s Cantonese pop song hums from the radio; the owner lifts a plate of warm pineapple bread from the rack and calls out to two regulars: “Want the french toast this morning, both of you?”' },
+      { type: 'heading', text: 'I · Why pineapple has nothing to do with pineapple' },
+      { type: 'paragraph', text: 'The crust on the pineapple bun came from the baker’s brushed-on pattern — the first generation of immigrants arriving on Hong Kong Island in the 1960s spread a coarse flour over the dough, baked it at the edge of burning, then a thick sugar and butter-lard finishing wash — the glossy crimped coat the pineapple bun is known for. Slice it open and the sound of butter melting into the steam is a sound every generation grew up to.' },
+      { type: 'cards', title: 'Ice house, what to order', items: [] },
+      { type: 'heading', text: 'II · Yuanyang and the dream-within-the-dream' },
+      { type: 'paragraph', text: 'Two drinks hold the menu up: the “yuanyang” (literally “mandarin duck” — the unlikely pair of British tea and Americanized coffee mixed 4:6), and the “double-egg dream” — the local invention of ham fried eggs crowned with a golden pastry crust soaked in warm honey syrup. Neither came out of a cookbook, neither was ever a faithful translation of something foreign; both are the fractures and sustenance this city gave itself after the war, and nobody will be second to claim either of them.' },
+      { type: 'cards', title: 'Ice house, what to drink', items: [] },
+      { type: 'heading', text: 'III · What it means for this generation' },
+      { type: 'paragraph', text: 'Walk in today, and the counter is stacked with the seasonal menu — flash deals, new items, closing dates. But the boss still remembers this: not the oil in the toast, but the extra butter on yours. He works the stove and talks to you at the same time — started from graduation into switching jobs into quitting altogether — the house quietly preserves the one thing left in this city: somewhere you can sit and wait for your tea.' },
+      { type: 'cards', title: 'Ice house, what to order', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. In a hurry? SearchBox “North Point ice house”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：北角巷口这间冰室，玻璃门上贴著手写的「菠萝包热卖一式」。无线电播著一首六十年代流行曲，店主从炉灶上拿出一夹牛油包，问两位常客：「两位今朝整不整多一件西多士啊？」' },
       { type: 'heading', text: '一、菠萝包为什么叫菠萝' },

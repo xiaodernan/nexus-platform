@@ -145,4 +145,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /after dinner, nobody is in a hurry/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Fire and the stone mill/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 10 (ice house) ships in three arms too', () => {
+    const hk = mockGuide('hk-bing-sat-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/冰室/);
+    const cn = mockGuide('hk-bing-sat-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/冰室/);
+    const en = mockGuide('hk-bing-sat-chronicle', 'en');
+    expect(en?.title).toMatch(/Ice house/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && (/1960|North Point/i.test(b.text)))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /pineapple has nothing/i.test(b.text))).toBe(true);
+  });
 });

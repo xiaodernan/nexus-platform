@@ -46178,3 +46178,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 9 closes the dinner arc with the Cantonese tong sui discipline intact — sesame, fire, stone mill, the post-midnight need for sweet.
 
 **The unit.** `hk-tongsui-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 7, 8, 9, 106** of 106. Chapters 10–105 remain honest fallback (Traditional HK), never machine-folded.
+
+## 1297. D1297 — chapter 10 (ice house) joins the EN arm; eleven chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline of one-chapter milestones.
+
+**The unit.** `hk-bing-sat-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the pineapple bun as a stitched pattern, never a fruit reference; the yuanyang 4:6 tea-coffee incantation; the 'double-egg dream' as a house invention Hong Kong gave to itself). Chapters with full EN prose: **1–10, 106** of 106. Chapter 11 onward remain honest fallback (Traditional HK), never machine-folded.
