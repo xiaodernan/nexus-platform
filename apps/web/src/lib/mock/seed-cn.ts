@@ -2191,6 +2191,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-yuen-long-shoemaker-shop-chronicle', title: '下午五点十五分：元朗大马路『辉记鞋材店』的收工时分（香港系列 · 第五十九章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：下午五点十五分的元朗大马路——鞋材批发店的日落、算盘与纸箱、元朗河边隐隐的晚风。',
+    title_en: 'Quarter past five — closing time at the “Fai Kee Shoe Materials Shop” on Yuen Long Main Road (HK series, Ch. 59)',
+    description_en: 'A synthetic guide (not travel advice): quarter past five on Yuen Long Main Road — a shoe-materials wholesaler at sundown, abacus and cartons, and the faint evening breeze off the Yuen Long river.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past five. “Fai Kee Shoe Materials Shop” on Yuen Long Main Road (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the gate half down, cartons stacked like a small hill. The owner’s wife, Auntie Chow (synthetic narrative, not a real person), is tallying today’s inbound and outbound slips: eighteen cartons of cowhide in, three cartons out, one shoe-upper deposit not yet collected.' },
+      { type: 'heading', text: 'I · The sound of the abacus' },
+      { type: 'paragraph', text: 'Auntie Chow does not use a calculator. She uses an abacus. Every “click” is the day’s total checked once more. She says the abacus does not only count money — it counts matters too: payments, leather, workers, relationships — all packed onto those few beads. Not one line of the inbound slip is small.' },
+      { type: 'cards', title: 'Fai Kee, what to see', items: [] },
+      { type: 'heading', text: 'II · The Yuen Long warehouse' },
+      { type: 'paragraph', text: 'The shop’s back door opens into a small warehouse. The warehouse is bigger than it looks — shelf after shelf with zone placards: anti-slip cowhide, printed cloth, breathable mesh. Auntie Chow’s husband and his crew haul all night, never seen. He is responsible for just one thing: stacking tomorrow’s outbound goods to the truck door.' },
+      { type: 'cards', title: 'Fai Kee, what to hear', items: [] },
+      { type: 'heading', text: 'III · The evening close' },
+      { type: 'paragraph', text: 'At half-past five, one oil lamp is lit. Auntie Chow writes today’s list on the back of the door board: “eighteen cartons cowhide, three cartons out, deliver to the shop by eight tomorrow.” She lowers the gate halfway, walks a stretch toward the river — overhead the Yuen Long dusk, at her side the sound of unknown vehicles.' },
+      { type: 'cards', title: 'Fai Kee, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yuen Long shoe materials” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午五点十五分。元朗大马路『辉记鞋材店』（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——铁闸半拉，纸箱叠得像一座小山。老板娘周婶（合成叙事，非真实人物）正在清算今天的进出货单：进了十八箱牛皮、出了三箱止滑、一笔鞋面定金还没收款。' },
       { type: 'heading', text: '一、算盘的声音' },

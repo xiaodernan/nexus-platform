@@ -860,4 +860,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /char siu rice/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 59 (the Fai Kee shoe shop) ships in three arms too', () => {
+    const hk = mockGuide('hk-yuen-long-shoemaker-shop-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/輝記鞋材店/);
+    const cn = mockGuide('hk-yuen-long-shoemaker-shop-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/辉记鞋材店/);
+    const en = mockGuide('hk-yuen-long-shoemaker-shop-chronicle', 'en');
+    expect(en?.title).toMatch(/Fai Kee Shoe Materials Shop/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Auntie Chow/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /sound of the abacus/i.test(b.text))).toBe(true);
+  });
 });
