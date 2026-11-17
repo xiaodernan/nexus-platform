@@ -1384,6 +1384,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-central-bourse-chronicle', title: '中環交易所：下午四點的鐘聲（香港系列 · 第十八章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著中環交易大廳走完從早上九點到下午四點的一天，最後讀那一聲金到實在的鐘聲。',
+    title_en: 'The Central Bourse — four o’clock bell (HK series, Ch. 18)',
+    description_en: 'A synthetic guide (not travel advice): walk one day inside the Central trading hall, nine in the morning to four in the afternoon, and finally read that golden, honest bell.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): four thirty-three in the afternoon. The screens in the trading hall run a few redder than usual — the Hang Seng’s trace jumps up and down. Chung Chi-cheung (synthetic narrative, not a real person) sits in the last three rows; his phone has rung twice at home and nobody picked up.' },
+      { type: 'heading', text: 'I · The opening bell' },
+      { type: 'paragraph', text: 'HKEX opens at ten-fifteen; the OTC line runs first at half past nine in the morning. Breakfast plates sit in front of the desks, coffee cooling slowly; the screens preview the whole board from red to green — every gesture holds a decision.' },
+      { type: 'cards', title: 'Central, what to do', items: [] },
+      { type: 'heading', text: 'II · Mid-session' },
+      { type: 'paragraph', text: 'Two in the afternoon, the Hang Seng drops three-twenty points. Chung looks up; the cha chaan teng waiter beside his desk is on his way to collect his cup — if the index falls two percent further, he will clock off early today and not wait for five. The afternoon trading hall listens to the banks, and to the rattle of a dozen ticker boards.' },
+      { type: 'cards', title: 'Central, what to watch', items: [] },
+      { type: 'heading', text: 'III · The bell' },
+      { type: 'paragraph', text: 'Four o’clock. The closing bell rings. People on the ground-floor trading hall stand; those not yet standing quietly pull their chairs back a little; screens refresh blue and green on their own — as the crowd steps down the steps, the cha chaan teng will soon have diners.' },
+      { type: 'cards', title: 'Central, what to buy', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Central dinner” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午四點三十三分。交易大廳裏的電腦屏幕比平時都多幾分紅燈，來自恆生指數的走圖一上一下。鍾澯翔（合成敘事，非真實人物）坐在最後三排，手機放了第二次鈴之家，沒人接。' },
       { type: 'heading', text: '一、開市' },
