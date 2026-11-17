@@ -46196,3 +46196,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
 
 **The unit.** `hk-congee-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the claypot at 02:00, the century-preserved egg, the illustrator turned late-shift ghost). Chapters with full EN prose: **1–12, 106** of 106.
+
+## 1300. D1300 — chapter 13 (Lion Rock) ships in EN arm; fourteen chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
+
+**The unit.** `hk-lion-rock-chronicle` gains title_en / description_en / body_blocks_en — a full English arm preserved in cadence. Chapters with full EN prose: **1–13, 106** of 106.

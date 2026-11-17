@@ -497,6 +497,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-lion-rock-chronicle', title: '狮子山：17:58 的第一粒灯（香港系列 · 第十三章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：傍晚第一粒灯亮起的瞬间，整座城把今天的担子卸下来——不是奇迹，是这个城每天两次的仪式。',
+    title_en: 'Lion Rock — the first light at 17:58 (HK series, Ch. 13)',
+    description_en: 'A synthetic guide (not travel advice): the very moment the first light comes on tonight, the whole city lets today go — not a miracle, just the ritual that happens twice every day.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-six in the evening, the rain done, the sky the colour of poultry flesh. From Causeway Bay to Kennedy Town, every floor of every tower lights up — this is the ritual this city performs every single day: nothing planned, nothing announced.' },
+      { type: 'heading', text: 'I · Lion Rock — a city’s seal' },
+      { type: 'paragraph', text: 'People talk about “the Lion Rock spirit” without meaning any particular thing — but look east from the ground floor of any office block and the long grey mane is there, still, above the skyline. It does not ask whether you won today; it simply sits.' },
+      { type: 'cards', title: 'From the mountain’s foot, what to see', items: [] },
+      { type: 'heading', text: 'II · The first light at 17:58' },
+      { type: 'paragraph', text: 'First building lights up at two minutes past six on the island side; forty-two after six on the Kowloon edge, the blue windows open like a bloom. The lights feather out across the harbour, fishing boats slip through the light leaving a different shade of silver on the water. It is not a postcard; it is one city changing its burden into light, twice a day, on schedule.' },
+      { type: 'cards', title: 'From the mountain’s foot, what to drink', items: [] },
+      { type: 'heading', text: 'III · How to watch a city cast its own silhouette' },
+      { type: 'paragraph', text: 'Look down from the upper floor of any cha chaan teng — the whole city reads like a hand of dominoes: meetings here, writers finishing lines there, lives split in half. Someone leaves, someone comes back; one house turns their light off, another keeps it on late into the morning. No scripts, no orchestras — but every window carries the day, one shoulder at a time.' },
+      { type: 'cards', title: 'From the mountain’s foot, what to see', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. In a hurry? SearchBox “Victoria Harbour view”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：傍晚六点，雨都停了，天还是芭黛般的灰蓝。从湾仔到西环，每一幢楼都亮起来——这是全城每一天都不太特意，却又每一天都见的仪式。' },
       { type: 'heading', text: '一、狮子山：一座城的印章' },

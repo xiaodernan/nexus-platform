@@ -178,4 +178,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /(2am|substantial)/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /last thing the city says/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 13 (Lion Rock) ships in three arms too', () => {
+    const hk = mockGuide('hk-lion-rock-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/獅子山/);
+    const cn = mockGuide('hk-lion-rock-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/狮子山/);
+    const en = mockGuide('hk-lion-rock-chronicle', 'en');
+    expect(en?.title).toMatch(/Lion Rock/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /half-six in the evening/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /lion rock/i.test(b.text))).toBe(true);
+  });
 });
