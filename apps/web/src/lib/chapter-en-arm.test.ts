@@ -605,4 +605,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /curry devotion/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 42 (the Filipina Sundays) ships in three arms too', () => {
+    const hk = mockGuide('hk-vic-park-sunday-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/維園的外國傭工/);
+    const cn = mockGuide('hk-vic-park-sunday-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/维园的外国佣工/);
+    const en = mockGuide('hk-vic-park-sunday-chronicle', 'en');
+    expect(en?.title).toMatch(/Filipina/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Sister Ah Lin/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /hugs that only happen on Sundays/i.test(b.text))).toBe(true);
+  });
 });

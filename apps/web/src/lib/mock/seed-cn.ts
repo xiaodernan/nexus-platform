@@ -1562,6 +1562,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-vic-park-sunday-chronicle', title: '星期天早上九点：维园的外国佣工（香港系列 · 第四十二章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着一班菲律宾姐妹，由东头的公园一层一层到西头——香港每个星期天才会出现的拥抱与合影。',
+    title_en: 'Nine on Sunday morning — the Filipina sisters at Victoria Park (HK series, Ch. 42)',
+    description_en: 'A synthetic guide (not travel advice): follow a group of Filipina sisters from the east gate of Victoria Park to the west, layer by layer — the hugs and the group photos that only show up in Hong Kong on Sundays.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, nine in the morning. East Victoria Park — a group of Filipina sisters sit down and arrange their belongings. Sister Ah Lin (synthetic narrative, not a real person) holds a packet of tomato ketchup rice: this is her first bite of fried rice this week. This feels more like a brunch — and more like breakfast than breakfast.' },
+      { type: 'heading', text: 'I · The hugs that only happen on Sundays' },
+      { type: 'paragraph', text: 'Some Filipina sisters rise at half-past five in the morning, some travel from the New Territories, some have lived in this district for one whole year. They speak Tagalog, English, Cantonese, sometimes snatches of Thai. They all come here for one reason only: one rest day after six working days. Here there are no rules, but they tell one another whose birthday it is today.' },
+      { type: 'cards', title: 'Victoria Park, what to see', items: [] },
+      { type: 'heading', text: 'II · A pair of disagreed group photos' },
+      { type: 'paragraph', text: 'Some cook at the pavilion office; some eat vermicelli right by the little stream; some came from the Philippine port to help in the kitchen, some went to Tokyo from Manila, finally grew up here more determined to stay than any before them. Perhaps they will never make it to the west café, but every day they use this park as a mirror of a café.' },
+      { type: 'cards', title: 'Victoria Park, what to hear', items: [] },
+      { type: 'heading', text: 'III · See you next Sunday' },
+      { type: 'paragraph', text: 'Four in the afternoon, the elders’ committee members at the north-west start waving to signal clearing. Some sisters are still chatting on the lawn; some are packing their lunchboxes home. Some are going to eat-bo this Sunday, some just want to go home and sleep. Ah Lin writes in her notebook: “every green tree in Victoria Park is their hometown.”' },
+      { type: 'cards', title: 'Victoria Park, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Victoria Park Filipina” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：星期天早上九点。维园东边场内——一群菲律宾姐妹坐下来整理自己的行李。阿莲（合成叙事，非真实人物）手里拿著一卷番茄酱菜：这是她这周的第一口干炒饭。这比星期天的brunch 更像brunch，比早餐更温暖的早晨。' },
       { type: 'heading', text: '一、星期天才会出现的拥抱' },
