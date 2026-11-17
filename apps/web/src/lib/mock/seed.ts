@@ -1825,6 +1825,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-soup-kitchen-communal-chronicle', title: '晚上八點：粥府的長枱（香港系列 · 第三十章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着一城人共用一張長枱吃粥的晚上——這座城的共享菜，每晚八點開飯。',
+    title_en: 'Eight in the evening — the long table at the congee shop (HK series, Ch. 30)',
+    description_en: 'A synthetic guide (not travel advice): follow one city’s worth of people share one long table of congee from the same pot, every night at eight — this city’s communal dish is served at eight sharp.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eight in the evening. A small congee shop on Temple Street — one long table laid out for one or two dozen people. Auntie Nine (synthetic narrative, not a real person) brings out two pots of congee, both the same taste, both the same temperature — this shop has no menu, no categories: everyone who comes in asks first: “what do you have today?” Auntie Nine always answers: “you.”' },
+      { type: 'heading', text: 'I · The daily ledger of the long table' },
+      { type: 'paragraph', text: 'This long table is the most unfair and the most fair place in this city: everyone who sits at it is the same, whether they come from the north-east, from Causeway Bay, or from the back of the shop. Auntie Nine never asks any question of her guests, and the candidate menu never changes for anyone — plain congee with pork liver, pork belly taro stew, pigeon eggs; people come in, sit down, eat two bowls first, then drink one hot one, then watch the neighbour across still not leaving — the walk there is about forty-five minutes, and only gradually do people drift out.' },
+      { type: 'cards', title: 'The congee shop, what to hear', items: [] },
+      { type: 'heading', text: 'II · The three kinds of people at this table' },
+      { type: 'paragraph', text: 'The first kind: night-shift workers — gas furniture cleaners, freezer-ship dockers, half-shift workers at 24-hour factories — they come off shift, walk in here, slip a piece of paper with their name on it, and sit down in whichever empty seat they find. The second: mothers — they don’t arrive together, they come one by one, and none of them knows the person across the table. The third: those who simply haven’t eaten — they finish their congee, say one line to Auntie Nine: “so good,” and Auntie Nine always answers: “eat slowly.” This shop has no receipt, no order forms — everyone keeps their own number in their head.' },
+      { type: 'cards', title: 'The congee shop, what to count', items: [] },
+      { type: 'heading', text: 'III · The people leaving the long table' },
+      { type: 'paragraph', text: 'Ten on the dot, the next batch of guests come upstairs; Auntie Nine lets the new people choose their seats, then cleans up the previous round of bowls and chopsticks. Every person leaving hears a ripple of laughter. This is the closest thing to a church in this city: a crowd sharing one dining table, everyone leaving with the same sentence — the one Auntie Nine always says: “eat slowly.”' },
+      { type: 'cards', title: 'The congee shop, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “congee long table” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上八點。廟街一間小小的粥府裡，一張長枱排得一二十個人。姨九（合成敘事，非真實人物）端出兩鍋粥，每鍋都是同一個味道、同一個溫度——這間店沒有菜單，也沒有分類：每個人進來坐下的時候都要先問：「今日有什麼？」姨九總是說：「有你。」' },
       { type: 'heading', text: '一、長枱的每日記' },
