@@ -1456,6 +1456,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-window-cleaner-chronicle', title: '抹窗師傅：凌晨四點（香港系列 · 第二十章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着抹窗師傅陳叔，由凌晨四點開始——香港人每天往上望見的天空，是這樣一層一層擦出來的。',
+    title_en: 'Four in the morning — the Hong Kong nobody sees (HK series, Ch. 20)',
+    description_en: 'A synthetic guide (not travel advice): follow Master Chan the window cleaner from four in the morning — the sky Hong Kong looks up to every day is wiped out this way, layer by layer.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): four in the morning. The top of Central Concorde Plaza — eighty-eight floors, the wind comes straight up from the foot of the mountain. Uncle Chan (synthetic narrative, not a real person) wrings out his cloth, clips the safety rope onto the cradle, and counts the neon lights once: the only person awake in all Hong Kong, the only one who can see the city’s greyest face.' },
+      { type: 'heading', text: 'I · Tie the rope first, then the sea' },
+      { type: 'paragraph', text: 'Window cleaning — the trade calls them “cradle men”. The master tests the wind first, then the rope, and only then shows one hand over the edge. Uncle Chan, fourteen years in, out at four, home by six — earlier than the earliest office-cleaning auntie, steadier than the Observatory’s warnings. He knows whose dream is behind every pane of glass; the glass does not care, he does.' },
+      { type: 'cards', title: 'Rooftop, what to see', items: [] },
+      { type: 'heading', text: 'II · One scrape, one layer deeper' },
+      { type: 'paragraph', text: 'Scraping glass is not wiping: wipe, scrape, wipe, scrape — a four-word cycle, and every pane of glass takes seven passes. Thirty-five degrees in summer, pressed against the glass like a steam bath; winter north wind shoots straight through the jacket — the masters wear two layers, and always carry a bottle of water on the rope — never let yourself dry out. When the glass is clean, the whole Central curtain wall lights up together, and only then does the city consent to switch the lights on. Hongkongers never know that the harbour view they look up at is held entirely by one person hanging off the eighty-eighth floor with one hand.' },
+      { type: 'cards', title: 'Rooftop, what to hear', items: [] },
+      { type: 'heading', text: 'III · A clean-glassed morning' },
+      { type: 'paragraph', text: 'Six-forty, the last batch of masters fold up their ropes and land. They buy two rice balls at the convenience store for breakfast, then catch the first bus home — on the dot at seven the whole of Central lights up. At eight everyone sits down on time and glares at glass so clean it reflects — nobody remembers that at four in the morning somebody wiped the layer they cannot see. On his days off Uncle Chan most wants to lie on the beach and wipe nothing at all.' },
+      { type: 'cards', title: 'Rooftop, what to eat', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Victoria Harbour view” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨四點。中環康樂廣場頂——八十八樓，風自山腳直衝上來。陳叔（合成敘事，非真實人物）把抹窗布擰乾，將安全繩扣在吊籃上，抬頭數了一遍霓虹：全港只有他一個人醒着，只有他看得見這個城市最灰的一面。' },
       { type: 'heading', text: '一、先繫繩，再看海' },

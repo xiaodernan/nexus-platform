@@ -275,4 +275,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The waiting/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 20 (the window cleaner) ships in three arms too', () => {
+    const hk = mockGuide('hk-window-cleaner-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/抹窗師傅/);
+    const cn = mockGuide('hk-window-cleaner-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/抹窗师傅/);
+    const en = mockGuide('hk-window-cleaner-chronicle', 'en');
+    expect(en?.title).toMatch(/Four in the morning/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/cradle men/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /rope first/i.test(b.text))).toBe(true);
+  });
 });
