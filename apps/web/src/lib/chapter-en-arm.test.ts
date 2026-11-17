@@ -440,4 +440,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /three kinds of people/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 31 (the cardboard-box old man) ships in three arms too', () => {
+    const hk = mockGuide('hk-estate-cardboard-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/紙箱老伯/);
+    const cn = mockGuide('hk-estate-cardboard-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/纸箱老伯/);
+    const en = mockGuide('hk-estate-cardboard-chronicle', 'en');
+    expect(en?.title).toMatch(/cardboard-box old man/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Cardboard Ah Pak/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Thirty boxes/i.test(b.text))).toBe(true);
+  });
 });

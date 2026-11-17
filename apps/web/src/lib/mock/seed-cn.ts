@@ -1155,6 +1155,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-estate-cardboard-chronicle', title: '晚上九点半：屋邨电梯口的纸箱老伯（香港系列 · 第三十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着纸箱老伯由垃圾房一路折到回收站——这座城每个晚上最安静的供应链。',
+    title_en: 'Half-past nine — the cardboard-box old man at the lift (HK series, Ch. 31)',
+    description_en: 'A synthetic guide (not travel advice): follow the cardboard-carton old man from the rubbish room all the way to the recycling yard — the quietest supply chain this city builds every night.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half past nine. At the lift door of a housing estate, an old man in dark-blue overalls patiently cuts a stack of dry cardboard into three equal parts. Ah Pak (synthetic narrative, not a real person) does not speak, but each cut falls like a low piano note. Everyone in the building passes the lift morning and night, unaware: every morning the recycling truck departs from this very lift.' },
+      { type: 'heading', text: 'I · The grades of cardboard' },
+      { type: 'paragraph', text: 'Ah Pak only collects large electrical, refrigerators, air conditioners, wine cases, and wan-toh winding types — these are the most valuable at the recycling yard; the rest goes into landfill. He begins around half past ten, wiping down each carboard box. Every neighbour leaves some “junk” for him in front of his spot — he never refuses, but reads it carefully: the valuable ones stay, the valueless ones go. He runs an invisible guild-court over every stack.' },
+      { type: 'cards', title: 'The lift door, what to hear', items: [] },
+      { type: 'heading', text: 'II · Thirty boxes, one city' },
+      { type: 'paragraph', text: 'Ah Pak handles roughly sixty boxes every day. Each box carries its lineage back four to five generations: freezer-company packaging, vegetable sellers’ cardboard, Taikoo City fashion-house moving cartons. Half past ten, he pushes the flatbed truck to the back of the yard, places the load on the scale once at a time, then fills in a pre-printed receipt: “twenty-three kilograms, seventy dollars.” Recycling has been going on for twenty years.' },
+      { type: 'cards', title: 'The lift door, what to count', items: [] },
+      { type: 'heading', text: 'III · Half past ten, clocking out' },
+      { type: 'paragraph', text: 'The finish time never reaches eleven: Ah Pak pushes his truck with a mint candy in his mouth, sits down at the back of the lift door. He ticks off a small mark on the duty roster on the wall. Then he separates today’s leftover boxes — half stacked at his spot, half placed into the recycling cart — “these go to the money office.” He says nothing more. The whole estate knows his name — “Cardboard Ah Pak” — and the whole estate does not know his real name, but nobody cares: “He’s Cardboard Ah Pak.” That is enough.' },
+      { type: 'cards', title: 'The lift door, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “cardboard recycling” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上九点半。屋邨电梯口，一个穿深蓝色工装的老伯将一叠叠干纸壳小心裁成三等分。阿伯（合成叙事，非真实人物）不会说话，但每一次裁剪声像钢琴低音。整个屋邨的人早晚都经过电梯，但不知道：每天早上的回收车都是从这个电梯口出发的。' },
       { type: 'heading', text: '一、纸壳的等级' },
