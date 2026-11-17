@@ -2824,6 +2824,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-taipo-wholesale-market-chronicle', title: '凌晨五點四十五分：大埔墟農產品批發市場（香港系列 · 第五十七章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：凌晨五點四十五分的大埔墟農產品批發市場——菜籃子在天光前裝滿整個城市的胃，香港最早聽見市場的城市邊緣。',
+    title_en: '5:45 in the morning — the Tai Po wholesale market (HK series, Ch. 57)',
+    description_en: 'A synthetic guide (not travel advice): the Tai Po wholesale market at 5:45 — the baskets fill the whole city’s stomach before first light; the city’s edge hears the market first.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): 5:45 in the morning. The Tai Po wholesale market (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — trucks are already three streets deep at the East Gate. The market’s lamps are on, and baskets of produce are carried in one crate at a time, broad-bodied from shoulder to heel.' },
+      { type: 'heading', text: 'I · The first row of trucks at the East Gate' },
+      { type: 'paragraph', text: 'At five in the morning, the first convoys from New Territories East register their counts. The market manager’s daughter, Ting Ting (synthetic narrative, not a real person), stands at the gate, stamping each truck’s manifest — every wager is someone’s breakfast. She does not say much; one word — “today’s numbers are enough” — and the whole market enters its second round.' },
+      { type: 'cards', title: 'Tai Po East Gate, what to see', items: [] },
+      { type: 'heading', text: 'II · The arithmetic on the scale' },
+      { type: 'paragraph', text: 'Uncle Lee (synthetic narrative, not a real person) is one of the market’s old scale masters. He does not look at the leaves first; he looks at the number on the scale. He says the leaves are for the buyers, the number is for the earth — both must be honest; one catty missing, add one; one catty over, not allowed: “the market does not stretch the knife’s edge.”' },
+      { type: 'cards', title: 'Tai Po, what to hear', items: [] },
+      { type: 'heading', text: 'III · The gate opens at six sharp' },
+      { type: 'paragraph', text: 'At six sharp, the market officially opens. Vegetable traders, restaurant owners, hotel kitchens — one by one they ask into the crates. What did Ting Ting sell today? The two earliest boxes of choy sum — snatched up by a Tung Chung hotel chef. She does not smile; she hands a manifest copy into the truck driver’s hand: “Next run — 5:45. On time.”' },
+      { type: 'cards', title: 'Tai Po, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tai Po wholesale market” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨五點四十五分。大埔墟農產品批發市場（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——卡車已經在東閘口排隊三條街。市場的燈亮了，菜籃子一筐筐被搬進市場，肥大的體魄從肩膀到腳跟。' },
       { type: 'heading', text: '一、東閘口的第一排卡車' },
