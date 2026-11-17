@@ -46136,3 +46136,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus read in either language; the EN arm campaign is a staged pipeline (machinery first, then chapter-by-chapter with the same beat-parity and fold discipline as D1286/D1288).
 
 **The unit.** `hk-siu-mei-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence, all 12 blocks, mirroring the Traditional HK beats exactly (honey cooked three days, the third hoisting arm, the not-until-smoke rule). Chapters with full EN prose: **1, 2, 106** of 106. Chapters 3–105 remain honest fallback (Traditional HK), never machine-folded.
+
+## 1290. D1290 — chapter 3 (yum cha / dim sum) joins the EN arm; four chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline (chapter-by-chapter with beat parity + opencc fold discipline).
+
+**The unit.** `hk-dim-sum-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the steamer's character, chrysanthemum puerh, the folded newspaper menu). Chapters with full EN prose: **1, 2, 3, 106** of 106. Chapters 4–105 remain honest fallback (Traditional HK), never machine-folded.

@@ -106,6 +106,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/components/site-chrome.tsx` | D1207: header gains the locale switch before the theme toggle; every page honors the cookie per request |
 | `apps/web/app/world/page.tsx` | D1210: the `/world` world atlas — 68 arc chips read straight from dict, seven hour-layers, SSR per request, zero hand-duplication |
 | `apps/web/app/insights/page.tsx` | D1212: `/insights` gains the seven-day ghost trend panel (7 cells, slope advice) — see `apps/web/src/lib/user-journeys.ts` |
+| `apps/web/src/lib/mock/seed.ts` | D1290: `hk-dim-sum-chronicle` gains title_en/description_en/body_blocks_en — yum cha at 07:00 in full English; four chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1289: `hk-siu-mei-chronicle` gains title_en/description_en/body_blocks_en — the siu mei counter at 02:00 in full English; three chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1212: the seventieth HK chapter (hk-central-pier-star-ferry-midbay-chronicle, 早上九點四十五分・天星小輪——維港中間那三分鐘) — 09:45, the harbour arc's second beat |
 | `apps/web/src/lib/mock/seed.ts` | D1212: the seventieth HK chapter (hk-central-pier-star-ferry-midbay-chronicle, 早上九點四十五分・天星小輪——維港中間那三分鐘) — 09:45, the harbour arc's second beat |

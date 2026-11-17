@@ -68,4 +68,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && b.text.includes('two in the morning'))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /light and charcoal/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 3 (dim sum) ships in three arms too', () => {
+    const hk = mockGuide('hk-dim-sum-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早茶/);
+    const cn = mockGuide('hk-dim-sum-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早茶/);
+    const en = mockGuide('hk-dim-sum-chronicle', 'en');
+    expect(en?.title).toMatch(/Yum cha/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /character of a steamer/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /har gow/i.test(b.text))).toBe(true);
+  });
 });

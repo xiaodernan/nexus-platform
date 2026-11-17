@@ -850,6 +850,20 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-dim-sum-chronicle', title: '早茶：竹籠與陳皮茶香（香港系列 · 第三章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：從早班船到竹籠推走的一個早晨——寫下一壺菊花普洱、幾籠蝦餃燒賣、以及一位老闆背上那些疊起來的竹籠的重量。',
+    title_en: 'Yum cha — bamboo baskets and the peel of aged tangerine (HK series, Ch. 3)',
+    description_en: 'A synthetic guide (not travel advice): one dim sum morning from the first ferry to the last basket — a pot of chrysanthemum puerh, four bamboo steamers, and the weight of the stacks each cart-pusher carries on his shoulder.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): yum cha is the heaviest ceremony on this city’s table — no gold, no silver, only bamboo steamers. Seven in the morning, and every track in the city bends one way: the tea houses light their lamps, the pushers wheel out basket after basket — shrimp dumplings wrapped smooth and glassy as coins, siu mai in their yellow crowns, champagne glasses fogging from the steam.' },
+      { type: 'heading', text: 'I · The character of a steamer' },
+      { type: 'paragraph', text: 'The skin of a har gow is thin, the siu mai tight and a little more yielding — and the way each one sits tells the kitchen who cooked it. One batch comes out well, another not. The master will only ask his two questions — in Teochew, not in English: “is it ready?” By the time the paper sheet is folded four ways and the lid is slid home, the basket has been parcelled for one guest only, and no tea house on this earth can pack two people’s morning into the same basket.' },
+      { type: 'cards', title: 'Dim sum cart, what to order', items: [] },
+      { type: 'heading', text: 'II · Puerh and chrysanthemum' },
+      { type: 'paragraph', text: 'Almost every tea house in the territory brews puerh with chrysanthemum — it wakes the spleen without stripping the palate. Those who rush get a fresh pot every time; those who know stay long enough to taste the second one. The older the tea, the deeper the sweetness after bitterness — the same way ten years of noise and chaos end, for the veteran, in one quiet habit that outlasts the crowd.' },
+      { type: 'paragraph', text: 'There are two rows of seats at the hour kind: by the window near the kitchen — those who check their phones for the bill; by the door — the bread-basket route to the counter. Some tea houses fold their menus out of newspaper: one sheet a menu, an entire day of steamers indexed in dense handwriting. It does not matter what time you come in — the lunch hour never cuts across the morning.' },
+      { type: 'cards', title: 'The push-cart menu', items: [] },
+      { type: 'heading', text: 'Afterword — your basket' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. The people of this city do not eat breakfast to be full; they eat it so that the morning can be paused for one hour — somewhere between the air-conditioning and the steam, the day is renegotiated. In a hurry? SearchBox “Tsuen Wan dim sum”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早茶是這座城市桌面上最重的朝拜——不是用金銀換，而是用竹籠換。早上七點，全城的軌道都朝一個方向移動：茶樓裡亮著燈，推手推著一盤盤蝦餃光滑的竹籠子，' },
       { type: 'heading', text: '一、蒸籠的性格' },
