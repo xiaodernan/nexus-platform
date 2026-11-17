@@ -44,4 +44,17 @@ describe('chapter 106 ships in three arms', () => {
     expect(guide).not.toBeNull();
     expect(guide?.title).toContain('船長炳');
   });
+
+  it('the arc opener (chapter 1) ships in three arms too', () => {
+    const hk = mockGuide('hk-food-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/香港三餐/);
+    const cn = mockGuide('hk-food-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/香港三餐/);
+    const en = mockGuide('hk-food-chronicle', 'en');
+    expect(en?.title).toMatch(/Three meals a day/);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && b.text.includes('Hong Kong is an epic written in fire'))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'list'
+      && Array.isArray((b as { items?: string[] }).items)
+      && (b as { items: string[] }).items.some((i) => i.includes('set meal')))).toBe(true);
+  });
 });

@@ -208,6 +208,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/lib/mock/seed.ts` | D1286: `hk-sham-shui-po-pawnshop-chronicle` — chapter 106, Layer K, 17:40 Yau Chau Street pawnshop; zh-HK prose (Master Cheng, Auntie Chu, the schoolboy, Teresa Teng) + full English body_blocks_en; `flags:{demo:true}` |
 | `apps/web/src/lib/mock/index.ts` | D1286: `decoratedFor()` substitutes the EN arm wholesale when the guide ships one (`body_blocks_en` + `title_en` + `description_en`); otherwise locale 'en' renders the Traditional source unchanged — never machine-folded |
 | `apps/web/src/lib/chapter-en-arm.test.ts` | D1286: substitution pins — en arm renders with zero CJK glyphs, zh-HK/zh-CN/en all resolve the same chapter, HK-only chapters fall back honestly |
+| `apps/web/src/lib/mock/seed.ts` | D1288: `hk-food-chronicle` gains title_en/description_en/body_blocks_en — the arc opener in full English, 14 blocks matched beat-for-beat to the Traditional arm |
 | `docs/WORLD_ROADMAP.md` | D1286: the arc moves to 106 chapters — Layer K (one shop, one voice, one hour) gains a slot; the first EN-arm chapter lands |
 | `apps/web/src/components/wheel-check.tsx` | D1283: the wheel-direction self-test — arms a window capture-phase wheel listener (passive:false, only while armed), reads down+up gestures, verdict live-regions the page's honest answer; detaches on verdict |
 | `apps/web/src/lib/wheel-check.ts` | D1283: the pure decision — `classifyWheelPair` (signal floor 60px, advance 300px), `accumulateWheelDelta`; `WHEEL_ADVANCE = 300` |

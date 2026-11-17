@@ -46124,3 +46124,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §三 asked for LangGraph in the project; D1142 landed it as an env-gated second engine (`NEXUS_AI_ENGINE=graph`) with a fingerprint test proving byte-identical reports. It never ran by default — the serial planner kept the wheel.
 
 **The unit.** The default flips to `graph` at `apps/ai/nexus_ai/api/routes_agent.py` — the agent's own §10 surface. Same deterministic planner, same registry, same tool set; the graph just fans the independent reads out (asyncio.gather, plan order preserved). Opt out with `NEXUS_AI_ENGINE=planner`. Tests: the fingerprint suite (26/26 incl. `test_langgraph_engine_fingerprint` and `test_max_tool_calls_env_reaches_both_gates`) unaffected; the AI suite stands at 37848 passed with 0 graph-specific failures. Honest note: the langgraph checkpoint import now warns about `LangChainPendingDeprecationWarning` at INFO level on the code path — documented, not suppressed silently.
+
+## 1288. D1288 — the arc opener (chapter 1) ships in English too
+
+**Why.** §八 asks the whole corpus to read in either language. Chapter 106 (D1286) proved the substitution machinery works; this milestone extents it to the front door of the series — the chapter every reader opens first.
+
+**The unit.** `hk-food-chronicle` gains `title_en` / `description_en` / `body_blocks_en` — a full English arm in the same Cantonese cadence, every heading kept, no translation shell left, identically structured to the Traditional source (all 14 blocks, same list items, the same disclaimers kept verbatim in both languages). The 105-chapter EN campaign is now openly named: 2 of 106 done (106, 1) with honest fallback for everything else; the rest are a staged live-provider + verify pipeline.
