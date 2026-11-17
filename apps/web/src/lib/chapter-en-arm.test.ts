@@ -650,4 +650,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /etiquette of three incense sticks/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 45 (the last Sunday queue) ships in three arms too', () => {
+    const hk = mockGuide('hk-last-queue-sunday-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/星期天最後一間有排隊的餐廳/);
+    const cn = mockGuide('hk-last-queue-sunday-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/星期天最后一间有排队的餐厅/);
+    const en = mockGuide('hk-last-queue-sunday-chronicle', 'en');
+    expect(en?.title).toMatch(/last restaurant with a queue/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Hing/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /light after nine/i.test(b.text))).toBe(true);
+  });
 });

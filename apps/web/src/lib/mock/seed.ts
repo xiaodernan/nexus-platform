@@ -2380,6 +2380,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-last-queue-sunday-chronicle', title: '晚上九點：星期天最後一間有排隊的餐廳（香港系列 · 第四十五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：星期天的晚上九點，皇后大道東盡頭——最後一間有排隊的餐廳內，守候着的不是一桌飯，而是整個星期天的尾聲。',
+    title_en: 'Nine in the evening — the last restaurant with a queue (HK series, Ch. 45)',
+    description_en: 'A synthetic guide (not travel advice): Sunday at nine, at the end of Queen’s Road East — inside the last restaurant with a queue, what waits is not a table of dishes, but the whole closing note of Sunday.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, nine in the evening. The end of Queen’s Road East (synthetic place) — Ah Hing (synthetic narrative, not a real person) lifts the door curtain and still sees a queue. All day Sunday, the city ends under this roof: from the Victoria Park hugs in the morning, to the rooftop lunchboxes at noon, to the incense of the Guanyin loan at dusk, and now here. The last shop on a Sunday never runs short of people.' },
+      { type: 'heading', text: 'I · The reasons people queue' },
+      { type: 'paragraph', text: 'The reasons at the queue door vary: people say pork knuckle; people say roast duck; people say the taste of Ah Hing’s wife’s clay-pot dishes. Only those who have come understand — they are not there to eat, they are there to complete the whole Sunday. The queue is like a pair of feet: one side is this week’s feet aching to death, the other side is that last streak of dignity each person has clung to all afternoon. Ah Hing knows the queue by heart: the old lady by the window seat, the kid who wants extra rice-weight for white rice; he never needs to ask a single question.' },
+      { type: 'cards', title: 'The restaurant, what to see', items: [] },
+      { type: 'heading', text: 'II · Familiar strangers' },
+      { type: 'cards', title: 'The restaurant, what to hear', items: [] },
+      { type: 'paragraph', text: 'The regulars appear most often here: there are kids asking about homework, old Hong Kong women squatting their shoulders in mock exasperation, students fresh off the step of a jail for a bowl of minced pork noodle. Ah Hing’s wife (synthetic narrative, not a real person) says while the wok is on: “Sunday’s dishes are nothing special, they are all just things we make ourselves.” Nothing on the table is trendy, yet every plate makes everyone feel they, too, are a landlord of this city.' },
+      { type: 'heading', text: 'III · The light after nine' },
+      { type: 'paragraph', text: 'Half-past nine, Ah Hing lowers the door curtain halfway — not closing up, just keeping the bugs out. The last table finishes the finance column in the newspaper, pays the bill, and says “see you next Sunday.” Ah Hing nods, no opinion offered. He has never left this place his whole life, and he does not plan to say much on a Sunday. If a summary is truly needed, his notebook holds exactly one sentence: “This Sunday is the whole city’s most reliable dinner.”' },
+      { type: 'cards', title: 'The restaurant, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sunday queue” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天的晚上九點。皇后大道東的盡頭（合成敘事地點）——阿興（合成敘事，非真實人物）把門簾掀開，看見的還是排隊。整個星期天，這座城在這個屋檐下結束：從早上維園的擁抱，到中午的天台飯局，到黃昏觀音借的香火，再到這裡。星期天的最後一家店，永遠不缺人。' },
       { type: 'heading', text: '一、排隊的理由' },
