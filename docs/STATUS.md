@@ -46226,3 +46226,21 @@ Clash proxy: zh-HK pick=2, `cached_tokens` 4864/4990 (97%), latency 5287→2965 
 (4736/4925, 96%). Thirteen AI pins (`test_world_guide.py`), eight web pins
 (`world-guide-live.test.ts`), vocabulary gate green (fixtures restricted to package-carried
 code points), contract-drift 127 routes clean, verify_all RESULT: NO OFFENDER.
+
+## 1308. D1313 — the cache question, measured honestly on aizzz/gpt-6.1-terra/Clash Verge
+
+**Why.** The operator asked why codex holds ~90% cache hit, why ours drops, why our contexts are so small.
+
+**Measured (2026-11-17, Clash Verge 127.0.0.1:7897, gpt-6.1-terra, temperature 0).**
+- identical burst, direct JSON: 6/6 = **96.5%** cached (5888/6101), stable; SSE identical burst: same 96.5% (the 2026-11-16 16.3% observation does not reproduce);
+- growing conversation re-sent whole each turn: warm-state cached = **95.9–96.5%** (E4) — this is the codex mechanism, replayed inside our own probe;
+- diverse user turns sharing the frozen head: **cached=None every call** — this relay does not prefix-cache across requests (the D1050 measurement reproduced);
+- parallel sessions share nothing cross-branch on this relay; the growing-history shape is the only stable 90%+ arm;
+- one-shot lanes (chapter/ask, world/guide, narrative, digest) are structurally not growing history; the frozen head only pays on identical re-sends;
+- transport flaps: TLS UNEXPECTED_EOF roughly every 4th call under sustained load (depends on Clash node) — now retried at the adapter (3 attempts, 0/1.5/4s backoff, transport-only); HTTP 4xx/5xx untouched.
+
+**Verdicts.**
+1. Keep the direct-JSON default (never revert to SSE as an instinct); the SSE default was already flipped by the same measurement.
+2. The replay cache (D1047) + frozen head (D1050) stay; do NOT grow the prefix — on this relay diverse requests miss 100% regardless.
+3. To reach codex-style sustained ~90%: the stateful surfaces (merchant agent chat) must re-send the full growing history each turn. This is a scoped change, next milestone — not a prompt change.
+4. Our contexts are small BY DESIGN (grounded one-shots); inflating them buys 0 cached tokens on this relay.

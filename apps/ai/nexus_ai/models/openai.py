@@ -70,22 +70,37 @@ class OpenAIAdapter(HttpLLMAdapter):
             body["stream_options"] = {"include_usage": True}
 
         started = time.perf_counter()
-        try:
-            resp = await self._http().post(
-                f"{self.base_url}/chat/completions",
-                headers={"authorization": f"Bearer {self.api_key}",
-                         "content-type": "application/json"},
-                json=body,
-            )
-            resp.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            code = exc.response.status_code
-            raise LLMError(f"openai HTTP {code}: {exc.response.text[:200]}",
-                           provider=self.name, retryable=code == 429 or code >= 500,
-                           status=code) from exc
-        except Exception as exc:
-            raise LLMError(f"openai transport error: {exc}", provider=self.name,
-                           retryable=True) from exc
+        # D1313: the relay node (Clash Verge egress or the relay itself) flaps mid-burst —
+        # measurements on 2026-11-17 show TLS UNEXPECTED_EOF / ConnectError on roughly every
+        # fifth call under sustained live probing, interleaved with clean 200s. Retry the
+        # transport (never the application): connect-level failures produce no response, so a
+        # retry cannot double-bill a completion. Three attempts, 0s / 1.5s / 4s backoff.
+        resp = None
+        transport_exc: Exception | None = None
+        import asyncio
+        for attempt, backoff in enumerate((0.0, 1.5, 4.0)):
+            if attempt:
+                await asyncio.sleep(backoff)
+            try:
+                resp = await self._http().post(
+                    f"{self.base_url}/chat/completions",
+                    headers={"authorization": f"Bearer {self.api_key}",
+                             "content-type": "application/json"},
+                    json=body,
+                )
+                resp.raise_for_status()
+                transport_exc = None
+                break
+            except httpx.HTTPStatusError as exc:
+                code = exc.response.status_code
+                raise LLMError(f"openai HTTP {code}: {exc.response.text[:200]}",
+                               provider=self.name, retryable=code == 429 or code >= 500,
+                               status=code) from exc
+            except Exception as exc:
+                transport_exc = exc
+        if resp is None:
+            raise LLMError(f"openai transport error after 3 attempts: {transport_exc}",
+                           provider=self.name, retryable=True) from transport_exc
 
         if stream_mode:
             text, finish, usage, used_model = self._reassemble_sse(resp.text or "", body["model"])
