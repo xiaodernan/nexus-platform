@@ -2154,6 +2154,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-container-terminal-noon-chronicle', title: '下午一点四十五分：青衣货柜码头的桥吊午休（香港系列 · 第五十八章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：下午一点四十五分的青衣货柜码头——桥吊司机的午餐、桥吊与集装箱之间的静默，与这个港口自渡轮年代延续的节奏。',
+    title_en: 'Quarter to two — the bridge-crane lunch hour at the Kwai Chung container terminal (HK series, Ch. 58)',
+    description_en: 'A synthetic guide (not travel advice): quarter to two at the Kwai Chung container terminal — the bridge-crane driver’s lunch, the silence between crane and container, and the rhythm this port carries from the ferry years.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter to two in the afternoon. The Kwai Chung container terminal (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — bridge-crane driver Ah Cheong (synthetic narrative, not a real person) shifts the control lever to neutral. The sea wind comes into the control room; the containers stand in tidy rows, like the keeper of some silent chessboard.' },
+      { type: 'heading', text: 'I · The man on the iron arm' },
+      { type: 'paragraph', text: 'Ah Cheong is the bridge-crane driver — you could also call him the keeper of a small island. His view reaches everywhere — the wrinkled hills of the Kowloon peninsula, the two-kilometre channel of the north-west, the blue-grey skyline of Victoria Harbour in the distance. He says every box he sets down is one move on the world’s chessboard — only he never knows where it goes next.' },
+      { type: 'cards', title: 'Kwai Chung bridge crane, what to see', items: [] },
+      { type: 'heading', text: 'II · Char siu rice in the terminal canteen' },
+      { type: 'paragraph', text: 'The terminal canteen is a corrugated iron shed behind the iron fence. What Ah Cheong ordered today is char siu rice again — same dish, same spec, “because a man who moves boxes row on row, only this mouthful will do.” He does not eat slowly, but he wastes no time either. The terminal does not wait for anyone — yet a man on the sea’s rhythm finally shows itself on the terminal’s dining tables.' },
+      { type: 'cards', title: 'Kwai Chung terminal, what to hear', items: [] },
+      { type: 'heading', text: 'III · The beep-beep of two o’clock' },
+      { type: 'paragraph', text: 'At two sharp, the gate trucks’ wheels sound again — Ah Cheong shakes his head and looks east. A Hong Kong-registered freighter sits at the berth; the port clerk is checking the hatch slots. He thinks of the Hong Kong years before — sampans shuttling, junks sailing; today it is containers, tomorrow perhaps bigger ships. The terminal’s rising and setting of the sun he remembers, but he never mentions it.' },
+      { type: 'cards', title: 'Kwai Chung terminal, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kwai Chung container terminal” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午一点四十五分。青衣货柜码头（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——桥吊司机阿昌（合成叙事，非真实人物）把控制杆扳到中性位。海面的风吹进控制室，货柜一排一排整齐排好，像守著一个安静的棋盘。' },
       { type: 'heading', text: '一、铁臂上的人' },

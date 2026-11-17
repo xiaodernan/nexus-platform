@@ -845,4 +845,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /arithmetic on the scale/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 58 (the Kwai Chung container terminal) ships in three arms too', () => {
+    const hk = mockGuide('hk-container-terminal-noon-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/青衣貨櫃碼頭的橋吊午休/);
+    const cn = mockGuide('hk-container-terminal-noon-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/青衣货柜码头的桥吊午休/);
+    const en = mockGuide('hk-container-terminal-noon-chronicle', 'en');
+    expect(en?.title).toMatch(/Kwai Chung container terminal/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Cheong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /char siu rice/i.test(b.text))).toBe(true);
+  });
 });
