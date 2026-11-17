@@ -14,9 +14,9 @@
  *   5. next moves (the two recommendations the system would surface to the operator)
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Badge, Icon } from '@nexus/ui';
+import { Badge, Icon, attachRailWheelBridge } from '@nexus/ui';
 import type { RealTraceRow, RealTraceSummary } from '@/lib/real-trace';
 
 export interface CommandConsoleCopy {
@@ -99,6 +99,15 @@ export function CommandConsoleClient({
   const [unlocked, setUnlockedClient] = useState(false);
   const [attempt, setAttempt] = useState('');
   const [shake, setShake] = useState(false);
+  // The wide trace strip rides the same bridge as the HK arc strip (D1184 discipline):
+  // a vertical wheel drives the strip, and the page gets the wheel back at both ends —
+  // nobody is locked into a dead horizontal scroll on this page either.
+  const traceStripRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = traceStripRef.current;
+    if (!el) return undefined;
+    return attachRailWheelBridge(el);
+  }, []);
 
   // SSR always renders the locked gate (no sessionStorage on the server); on mount, if
   // this tab had previously unlocked, swap in the dashboard without a reload.
@@ -317,7 +326,7 @@ export function CommandConsoleClient({
             {traceTotals.journeys} journeys · {traceTotals.completed} completed · {traceTotals.crashed} crashed · {traceTotals.totalMs} ms
           </p>
         )}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" ref={traceStripRef}>
           <table className="mt-1 w-full text-left text-2xs">
             <thead className="uppercase tracking-wide text-ink-faint">
               <tr>
