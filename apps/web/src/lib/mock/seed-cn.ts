@@ -1525,6 +1525,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-mumbai-curry-central-chronicle', title: '凌晨一点半：湾仔咖哩鱼饭堂（香港系列 · 第四十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着湾仔的小咖哩鱼饭堂熬煮到凌晨——香港印度人、排队族、人生各种泪痕都在这一锅咖哩里。',
+    title_en: 'Half-past one — the Wanchai curry-fish pot (HK series, Ch. 41)',
+    description_en: 'A synthetic guide (not travel advice): follow the small curry fish-rice pot shop in Wanchai past midnight — the Indians of Hong Kong, the line of late-night eaters, and every tear of their lives inside one pot of curry.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): midnight. Ah Cheong at Wanchai (synthetic narrative, not a real person) cuts potatoes thin; this is his first plate into the pot — then onions, tomatoes, curry powder, salt, one egg. Yesterday was the bottom; today is curry fish.' },
+      { type: 'heading', text: 'I · The curry devotion' },
+      { type: 'paragraph', text: 'Every night near midnight, Wanchai holds a dozen curry-fish-rice dens, almost nobody notices, yet all are served full to the mouth. Ah Cheong’s curry fish is not hot-pot style — it is wok-fried: the fish is fried fragrant first, then curry is poured in, lid on, fifteen minutes wait. Every bite is one memory of every Indian cook in this city, not disappearing, just continuing.' },
+      { type: 'cards', title: 'The curry-fish pot, what to see', items: [] },
+      { type: 'heading', text: 'II · The midnight tribe' },
+      { type: 'paragraph', text: 'At twelve past midnight, those who come to this Wanchai curry fish-rice pot are of three types: Indian-Pakistani junior managers (here straight from clock-out, still talking numbers under their breath), broad-interest university students (who cannot bring themselves to say no to the fragrant rice they just bought), new cross-sea travellers (who every night come to Wanchai to read the signboard). Ah Cheong treats everyone the same — no pulling away by language-tight or language-loose, one same curry for everyone.' },
+      { type: 'cards', title: 'The curry-fish pot, what to count', items: [] },
+      { type: 'heading', text: 'III · The city simmering' },
+      { type: 'paragraph', text: 'Tonight Ah Cheong will make four bowls of curry-fish egg, two of curry-fish potato. One-by-one he sprinkles eighteen spices into the bowl layer by layer; when everyone finishes their bowls, the whole of Wanchai thickens. If tonight no one comes for late supper, tomorrow’s sun will cook Wanchai thicker once more — Wanchai’s late night only exists for this one bowl.' },
+      { type: 'cards', title: 'The curry-fish pot, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “curry fish Wanchai” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：午夜十二点。湾仔阿昌（合成叙事，非真实人物）把土豆切成薄片；这是他的第一盘下锅，之后才是洋葱、番茄、咖喱、盐、鸡蛋。昨天都是煲底；今天是咖哩鱼。' },
       { type: 'heading', text: '一、咖哩的执著' },
