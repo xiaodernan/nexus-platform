@@ -2047,6 +2047,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-tai-o-chronicle', title: '中午十一點半：大澳——鹹魚棧', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着大澳漁家的每日太陽，由碼頭到市場後的鹹魚架——這是一個城市最後未被替代的氣味的地方。',
+    title_en: 'Half-past eleven — Tai O — the salted-fish balcony (HK series, Ch. 36)',
+    description_en: 'A synthetic guide (not travel advice): follow Tai O’s daily sun, from the pier to the salted-fish racks behind the market — this is where a city’s last untamed scent still lives.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past eleven in the morning. On the third pier of Tai O, rows of pale wooden racks are hung with flattened salted fish, gravity pulling the eyes open and slightly round. Sister Ah Wa (synthetic narrative, not a real person) stands at the pier, slapping each salted fish a few times with a blunt bamboo sieve — she is the only shopkeeper of this pier, and the keeper of yet another scene that has been replaced and kept.' },
+      { type: 'heading', text: 'I · The tides and a lunch no one is cooking' },
+      { type: 'paragraph', text: 'Tai O has no special restaurant that ever changed its Menu — the permanent daily menu here is salted fish, soy sauce, sand ginger, lemon. This is the soul of the pier: thirty years ago they shipped the iron-hulled boats to the warehouse; thirty years later, every meal still remembers that menu. Every steaming fish, Sister Ah Wa suns between the tides. Every morning, she watches the tide come and go, then burns a pot of boiling water for herself to pour in a little soy sauce.' },
+      { type: 'cards', title: 'Tai O, what to see', items: [] },
+      { type: 'heading', text: 'II · The foreigners at the pier' },
+      { type: 'paragraph', text: 'Every year some thousands of Japanese visitors arrive. They come to see the one part of this city never replaced by modern luxury. Everyone will sit on this pier, finish the rest of their lemon water, then enter the bamboo-curtain screen inside the little shop. There are just two layers of smiles here: the glinting ones of eyes that shine, and the eyes that don’t want to be photographed but still steal glances.' },
+      { type: 'cards', title: 'Tai O, what to hear', items: [] },
+      { type: 'heading', text: 'III · The turn no one is relieving' },
+      { type: 'paragraph', text: 'Those born on this pier rarely leave: every member of the third-generation Sister Ah Wa line never has any kin who wants to move her to Taikoo, so they live right here — their walls, their fish, their houses still belong to the Japanese who raised them. This city has no church at noon, but every morning it is cooked this way: no one will let Sister Ah Wa’s people go, and no one will come save this place — same as ever: writer, pier, fish, salt, everything continues.' },
+      { type: 'cards', title: 'Tai O, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tai O salted fish” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十一點半。大澳第三條碼頭上，一排排淺色的木架掛着曬平的鹹魚，引力把魚眼拉圓了一點。阿華姐（合成敘事，非真實人物）在碼頭頭上，用一把無鋒的竹簾拍幾次鹽——她是這條碼頭的唯一店主，也是這座又一個被替代過又被保留過的場景的守護人。' },
       { type: 'heading', text: '一、潮汐與無人煮的午餐' },

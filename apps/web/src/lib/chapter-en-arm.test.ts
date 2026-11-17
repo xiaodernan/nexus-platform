@@ -515,4 +515,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /iron box/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 36 (Tai O) ships in three arms too', () => {
+    const hk = mockGuide('hk-tai-o-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/大澳/);
+    const cn = mockGuide('hk-tai-o-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/大澳/);
+    const en = mockGuide('hk-tai-o-chronicle', 'en');
+    expect(en?.title).toMatch(/Tai O/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Sister Ah Wa/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /no one is cooking/i.test(b.text))).toBe(true);
+  });
 });
