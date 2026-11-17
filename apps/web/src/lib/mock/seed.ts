@@ -1420,6 +1420,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-er-chronicle', title: '半夜三點：急症室入口的警惕（香港系列 · 第十九章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着深夜醫院入口，從凌晨的濕地上看一座城市最低音的守護。',
+    title_en: 'Three in the morning — vigil at the emergency entrance (HK series, Ch. 19)',
+    description_en: 'A synthetic guide (not travel advice): follow the deep-night hospital entrance, to look at a city’s lowest-key guardian from the first grey hour.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): three in the morning. The lights of the Pao Tai Shan private hospital emergency entrance are on. The whole entrance carries no voices; each ambulance circles a few times with its siren before it stops. The walkway is grey-yellow, four rows of chairs, and nobody is discussing anything.' },
+      { type: 'heading', text: 'I · Triage first' },
+      { type: 'paragraph', text: 'The triage nurse tapes the wristband and measures three things — temperature, blood pressure, where the pain is. Everyone who comes in must answer three questions: where does it hurt, when did it start, have you taken any medicine? Auntie Shum (synthetic narrative, not a real person) grips both arms of the chair and says 38.2 degrees. The nurse wheels her through the triage door; five minutes later the floor light of the anaesthesia room is on.' },
+      { type: 'cards', title: 'The hospital, what to watch', items: [] },
+      { type: 'heading', text: 'II · The waiting' },
+      { type: 'paragraph', text: 'Waiting in ER is fifteen minutes plus fifteen, plus ten more to pick up. Wherever you wait — everywhere is the same quiet — the television drags one story that refuses to update, the oxygen bottle drips every so often — nothing here hurries you.' },
+      { type: 'cards', title: 'The hospital, what to sit', items: [] },
+      { type: 'heading', text: 'III · The present' },
+      { type: 'paragraph', text: 'Auntie Shum finally pulls through the night. When the nurse wheels her toward the anaesthesia room, she is parked at the far side for half an hour; when she wakes, the medicine is still walking its own rounds — from waking to half an hour later, Auntie Shum understands that “one thing still holds”: waking up, the light is still on her side. The hospital floor light stays lit, showing the way back.' },
+      { type: 'cards', title: 'The hospital, what to buy', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “ER entrance peace of mind” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：半夜三點，炮台山民醫院急症室的燈亮着。整個入口沒有人聲，每隻救護車鳴Siren繞了幾圈才停下。走道是灰黄色，椅子排了四排，沒有人在討論。' },
       { type: 'heading', text: '一、首先是分診' },

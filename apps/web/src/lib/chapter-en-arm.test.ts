@@ -260,4 +260,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /closing bell|The bell/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 19 (the ER vigil) ships in three arms too', () => {
+    const hk = mockGuide('hk-er-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/急症室/);
+    const cn = mockGuide('hk-er-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/急症室/);
+    const en = mockGuide('hk-er-chronicle', 'en');
+    expect(en?.title).toMatch(/Three in the morning/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/triage/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The waiting/i.test(b.text))).toBe(true);
+  });
 });
