@@ -110,6 +110,57 @@ class ConversationApiTest extends NexusIntegrationTest {
                 .getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    // ---------------------------------------------------------------- (f) the internal read door
+
+    @Test
+    @DisplayName("The internal read door refuses callers without the service token")
+    void internalReadDoorNeedsServiceToken() {
+        UUID conversation = openThread();
+        HttpHeaders headers = json(tenant, null);
+        ResponseEntity<String> missing = http.exchange(
+                url("/api/v1/internal/conversations/" + conversation + "/messages?limit=5"),
+                HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(missing.getBody()).contains("internal_token_missing");
+    }
+
+    @Test
+    @DisplayName("The internal read door returns the last N turns oldest → newest, capped at 50")
+    void internalMessagesReturnsGrowingHistoryAscending() {
+        UUID conversation = openThread();
+        aiPost(conversation, Map.of("sender_type", "user", "role", "user", "content", "u-1: hello"));
+        aiPost(conversation, Map.of("sender_type", "ai_agent", "role", "assistant", "content", "a-1: hi"));
+        aiPost(conversation, Map.of("sender_type", "user", "role", "user", "content", "u-2: hours?"));
+        aiPost(conversation, Map.of("sender_type", "ai_agent", "role", "assistant", "content", "a-2: daily 11:30-21:00"));
+        ResponseEntity<String> res = aiGet(conversation, 4);
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode body = Json.tree(res.getBody());
+        assertThat(body.path("returned").asInt()).isEqualTo(4);
+        assertThat(body.path("total").asInt()).isEqualTo(5);
+        java.util.List<String> contents = new java.util.ArrayList<>();
+        body.path("messages").forEach(m -> contents.add(m.path("content").asText()));
+        assertThat(contents).containsExactly("u-1: hello", "a-1: hi", "u-2: hours?", "a-2: daily 11:30-21:00");
+    }
+
+    @Test
+    @DisplayName("An absent thread is 404 to the internal read door, never an empty 200")
+    void internalReadDoorNamesAbsentThread() {
+        HttpHeaders headers = json(tenant, null);
+        headers.set("X-Internal-Token", AI_TOKEN);
+        UUID absent = java.util.UUID.randomUUID();
+        ResponseEntity<String> res = http.exchange(
+                url("/api/v1/internal/conversations/" + absent + "/messages?limit=4"),
+                HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        assertThat(res.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    private ResponseEntity<String> aiGet(UUID conversation, int limit) {
+        HttpHeaders headers = json(tenant, null);
+        headers.set("X-Internal-Token", AI_TOKEN);
+        return http.exchange(url("/api/v1/internal/conversations/" + conversation + "/messages?limit=" + limit),
+                HttpMethod.GET, new HttpEntity<>(headers), String.class);
+    }
+
     // ---------------------------------------------------------------- (e) the internal agent door
 
     @Test

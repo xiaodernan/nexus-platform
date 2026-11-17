@@ -46244,3 +46244,29 @@ code points), contract-drift 127 routes clean, verify_all RESULT: NO OFFENDER.
 2. The replay cache (D1047) + frozen head (D1050) stay; do NOT grow the prefix — on this relay diverse requests miss 100% regardless.
 3. To reach codex-style sustained ~90%: the stateful surfaces (merchant agent chat) must re-send the full growing history each turn. This is a scoped change, next milestone — not a prompt change.
 4. Our contexts are small BY DESIGN (grounded one-shots); inflating them buys 0 cached tokens on this relay.
+
+## 1314. D1314 — the merchant agent re-reads the growing history (codex-style), streamed
+
+**Why.** The operator asked why codex holds ~90% cache hit and ours did not. Measured this week:
+giving the model the whole conversation back each turn is the one arm that holds (E4 probe,
+~96% warm-state on aizzz/gpt-6.1-terra). One-shot lanes cannot; the merchant chat can.
+
+**The unit.**
+- Platform: new audited read door `GET /api/v1/internal/conversations/{id}/messages` (Guarded by
+  the same `X-Internal-Token` ≥16 constant-time compare as the write door; tenant rides).
+  Last `limit` ≤ 50 messages, oldest → newest, minimal projection. Conversation REST door in
+  `ConversationController.internalMessages`; service in `ConversationService.internalMessages`
+  (findConversation 404 on absent/other-tenant, `countMessages` for the last-N offset).
+- AI: `PlatformClient.list_conversation_messages` in the full triple (http / stub / recording).
+  In `_merchant_agent_events` the relay fetches the thread's growing lead BEFORE persisting the
+  current turn and prefixes it **oldest → newest** ahead of the latest question and the KB
+  (labels + columns row-localized per locale; untrusted chunks stay wrapped + scan-gated).
+  Wire shape unchanged when no token configured / no history: `_growing_prompt` returns None and
+  the LLMRequest never carries `prompt` — byte-identical to before this change on that plane.
+- The answer path keeps D1050 (frozen head) + D1047 (replay cache) unchanged; no contract
+  models touched. `_growing_prompt` never invents: history comes only from the platform DB.
+
+**Expected effect.** The merchant-agent chat — the one live conversational surface — inherits
+the codex 90% mechanism; measured turn-by-turn cached mass only grows (E4 evidence). All other
+one-shot lanes remain byte-stable-frozen for the identical-burst arm only; they never claimed
+cross-branch prefix caching on this relay.

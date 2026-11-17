@@ -354,6 +354,7 @@ judgement about that text and not a permanent silence.
 | POST | `/api/v1/conversations/{id}/handoff-resolve` | `{action?, note?}` — the merchant team closing out an escalation raised under §24-26. `action` is `accepted` or `resolved` (default `resolved`); either moves the thread's `owner_type` to `human`, and only `resolved` closes it. With no handoff waiting the route answers `409 no_open_handoff` rather than reporting a quiet success, and the act is audited as `conversation_handoff_resolve` carrying the handoff's own `reason` as the before-state. Guarded by `send_message` on the thread's merchant, so a consumer cannot end their own escalation — §5 answers the same act through the merchant inbox alias. |
 | GET | `/api/v1/conversations` | the acting user's threads, newest first |
 | POST | `/api/v1/internal/conversations/{id}/agent-message` | service-to-service only (§7.0): the AI service's single audited door for persisting an agent turn. |
+| GET | `/api/v1/internal/conversations/{id}/messages` | service-to-service only (§7.0): the AI service's audited READ door (D1314) — the last `limit` messages of a thread (oldest → newest, cap 50) so the relayed conversation can re-read its growing lead every turn (~96% warm-state prefix hit on aizzz). |
 
 SSE event stream for `/ai/v1/search/stream` (statuses are user-legible, never chain-of-thought):
 ```
@@ -376,6 +377,7 @@ secret. This is D20: the platform owns every commerce and conversation write, so
 | Method | Path | Direction | Contract |
 |---|---|---|---|
 | POST | `/api/v1/internal/conversations/{id}/agent-message` | AI → platform | Header `X-Internal-Token: ${NEXUS_AI_INTERNAL_TOKEN}` (≥16 chars, constant-time compare) + `X-Tenant`. Body `{role, content, agent_run_id?, fact_ids?, degraded?}` → the persisted message. Unconfigured token ⇒ **501**, never an open door (D7). |
+| GET | `/api/v1/internal/conversations/{id}/messages` | AI → platform | Same `X-Internal-Token` ≥16 chars, constant-time compare + `X-Tenant`. Query `limit` (1–50, default 12) → `{messages:[{sender_type, role, content, created_at}], returned, total, limit}`, oldest → newest, minimal projection (no sender ids, no agent_run_id). D1314 — for the growing-lead relayed conversation; the platform still owns every write. |
 | POST | `/ai/v1/imports/extract` | platform → AI | `{source_type,source_ref,raw_text}` → `{proposals:[{kind,name,price,currency,category,confidence,source_span}], extractor, degraded}` (§22). Extracted text is untrusted content (§51): `confidence` and `source_span` are mandatory so a human reviews every proposal before publish. |
 
 ### 7.1 Intent (canonical query-understanding object, §8)

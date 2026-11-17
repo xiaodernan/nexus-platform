@@ -80,6 +80,14 @@ class PlatformClient(Protocol):
             internal_token: str | None = None,
             tenant: str | None = None) -> dict[str, Any]: ...
 
+    async def list_conversation_messages(
+            self, conversation_id: str, *, limit: int = 12,
+            internal_token: str | None = None,
+            tenant: str | None = None) -> dict[str, Any]:
+        """D1314: the audited READ door for a thread's growing history — oldest → newest,
+        capped at 50, minimal projection for the relayed conversation surface."""
+        ...
+
 
 # --------------------------------------------------------------------------- shared rules
 @dataclass
@@ -245,6 +253,18 @@ class HttpPlatformClient:
             "POST", f"/api/v1/internal/conversations/{conversation_id}/agent-message",
             token=None, tenant=tenant, json_body=body, internal_token=internal_token)
 
+    async def list_conversation_messages(
+            self, conversation_id: str, *, limit: int = 12,
+            internal_token: str | None = None,
+            tenant: str | None = None) -> dict[str, Any]:
+        """D1314: the audited read door — last `limit` turns, oldest → newest. Capped at 50."""
+        if not internal_token:
+            raise PlatformUnavailable("NEXUS_AI_INTERNAL_TOKEN is unset")
+        cap = max(1, min(int(limit), 50))
+        return await self._request(
+            "GET", f"/api/v1/internal/conversations/{conversation_id}/messages?limit={cap}",
+            token=None, tenant=tenant, internal_token=internal_token)
+
 
 # --------------------------------------------------------------------------- offline stub
 class StubPlatformClient:
@@ -398,6 +418,16 @@ class StubPlatformClient:
                      has_internal_token=bool(internal_token), tenant=tenant)
         return {"message_id": f"stub-msg-{len(self.calls)}", "handoff_id": None,
                 "stub": True}
+
+    async def list_conversation_messages(
+            self, conversation_id: str, *, limit: int = 12,
+            internal_token: str | None = None,
+            tenant: str | None = None) -> dict[str, Any]:
+        cap = max(1, min(int(limit), 50))
+        self._record("list_conversation_messages", conversation_id=conversation_id,
+                     limit=cap,
+                     has_internal_token=bool(internal_token), tenant=tenant)
+        return {"messages": [], "total": 0, "returned": 0, "limit": cap, "stub": True}
 
 
 _STUB = StubPlatformClient()

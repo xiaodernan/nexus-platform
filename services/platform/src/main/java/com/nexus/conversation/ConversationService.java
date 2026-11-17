@@ -113,6 +113,36 @@ public class ConversationService {
         return threadView(conv, limit, offset, tenant, principal, request);
     }
 
+    /**
+     * (f) the AI service's audited read door (D1314): the last {@code limit} messages of a thread,
+     * oldest → newest, minimal shape for the growing-lead prompt. Guarded solely by the service
+     * token (see the controller) — tenant isolation still rides on the conversation lookup, so no
+     * cross-tenant enumeration is possible, and the shape carries no sender ids or agent run ids
+     * the relay does not need.
+     */
+    public Map<String, Object> internalMessages(TenantContext tenant, UUID id, int limit) {
+        conversations.findConversation(tenant, id);  // 404 when the thread is not the caller's
+        int cap = Math.max(1, Math.min(limit, 50));
+        long total = conversations.countMessages(tenant, id);
+        int offset = (int) Math.max(0, total - cap);
+        List<Map<String, Object>> rows = conversations.messagesOf(tenant, id, cap, offset);
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            Map<String, Object> out = new LinkedHashMap<>();
+            out.put("sender_type", row.get("sender_type"));
+            out.put("role", row.get("role"));
+            out.put("content", row.get("content"));
+            out.put("created_at", row.get("created_at"));
+            items.add(out);
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("messages", items);
+        out.put("returned", items.size());
+        out.put("total", total);
+        out.put("limit", cap);
+        return out;
+    }
+
     /** {@code GET /api/v1/me/conversations}. */
     public Map<String, Object> myThreads(TenantContext tenant, HttpServletRequest request, int limit, int offset,
                                          UUID merchantId) {

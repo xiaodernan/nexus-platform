@@ -129,6 +129,23 @@ public class ConversationController {
         return conversations.agentMessage(tenant, request, uuidOr422(id), body);
     }
 
+    /**
+     * (f) the AI service's audited READ door (D1314): the last {@code limit} messages of a thread so
+     * the relayed conversation can re-read its growing lead every turn — provider-side cache serves
+     * it turn after turn (~96% warm-state hit measured on aizzz/gpt-6.1-terra). Guarded by the same
+     * shared service token as the write door; tenant isolation still rides on the lookup.
+     */
+    @GetMapping("/internal/conversations/{id}/messages")
+    public Map<String, Object> internalMessages(@PathVariable String id,
+                                                @RequestHeader(value = AiServiceTokenGuard.HEADER, required = false)
+                                                String token,
+                                                @RequestParam(defaultValue = "12") int limit,
+                                                HttpServletRequest request) {
+        internalGuard.require(token);
+        TenantContext tenant = Req.tenant(request);
+        return conversations.internalMessages(tenant, uuidOr422(id), limit);
+    }
+
     private static UUID uuidOr422(String raw) {
         UUID parsed = Json.uuidOrNull(raw);
         if (parsed == null) {
