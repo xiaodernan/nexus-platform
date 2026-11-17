@@ -57,4 +57,15 @@ describe('chapter 106 ships in three arms', () => {
       && Array.isArray((b as { items?: string[] }).items)
       && (b as { items: string[] }).items.some((i) => i.includes('set meal')))).toBe(true);
   });
+
+  it('chapter 2 (siu mei) ships in three arms too', () => {
+    const hk = mockGuide('hk-siu-mei-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/燒味/);
+    const cn = mockGuide('hk-siu-mei-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/烧味/);
+    const en = mockGuide('hk-siu-mei-chronicle', 'en');
+    expect(en?.title).toMatch(/Roast meats/);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && b.text.includes('two in the morning'))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /light and charcoal/i.test(b.text))).toBe(true);
+  });
 });

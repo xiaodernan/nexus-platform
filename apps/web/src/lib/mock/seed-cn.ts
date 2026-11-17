@@ -107,6 +107,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-siu-mei-chronicle', title: '烧味：凌晨两点的光与炭（香港系列 · 第二章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著烧味师傅的凌晨，看蜜汁为什么要炒七次，烧鹅为什么要靠第三扇吊臂，整条熟圆为什么冒了烟才停手。',
+    title_en: 'Roast meats — the light and the char at two in the morning (HK series, Ch. 2)',
+    description_en: 'A synthetic guide (not travel advice): an overnight shift with the siu mei masters — why the honey is cooked down seven times, why the whole goose rests on a third hoisting arm, and why the birds are not rested until the skin itself starts to smoke.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): two in the morning and the whole street has gone quiet. Only the siu mei counter is still lit — a single small mouth of fire under one long rack of charcoal, chickens and ducks hung one above the other, waiting for their turn over the blaze. The master sits with his lantern at the crossing of wax-smoke and sugar, waiting for the hour to tilt.' },
+      { type: 'heading', text: 'I · The three days: a study in honey' },
+      { type: 'paragraph', text: 'The honey is not cooked out of habit. Day one: pure honey loosened with warm water, put into cold storage. Day two: maltose, fresh ginger and two slices of dried tangerine peel, reduced on low heat until the body changes. Day three: nan ru — fermented red bean curd — with soy sauce and a splash of Hua Diao wine, and the pot is taken off the moment it turns the colour of old amber. This is the first spark this city strikes at dawn.' },
+      { type: 'heading', text: 'II · Light and charcoal' },
+      { type: 'paragraph', text: 'Gas fire will do it too, but the old method keeps to charcoal. The masters do not jostle for the brightest glow — they reach for the bits on top of the ash that still carry shell-crackle: those roast more evenly, hold the heat longer and stand up to double the weight. The charcoal is spread into a fan so the air pushes in across the entrance and out again through the exit — which is what keeps the fat and juices locked under the skin.' },
+      { type: 'cards', title: 'Siu mei counter, dishes to order', items: [] },
+      { type: 'heading', text: 'III · Renders and hanging' },
+      { type: 'paragraph', text: 'First a skewer through the neck of every chicken. Minute one: the fire, high and straight beneath the frame. Minute two: the honey warms and the smell begins to travel. Minute three: the skin turns gold. Minute five: the master counts the bird already done. What sells the siu mei is the smoke — you cannot know it by flavour from the floor, only from the smoke.' },
+      { type: 'paragraph', text: 'A whole goose is too big for one hook to carry. That is why the old shop invented the third hoisting arm: a shallow shelf under the tail, taking the weight so the neck does not tear under its own load. There is one hour in the whole day in which this is the only thing that gets watched — half-past four in the morning, while the masters set up the goose line.' },
+      { type: 'cards', title: 'Siu mei noon rush', items: [] },
+      { type: 'heading', text: 'Afterword — for the queues' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. Siu mei is not a dish — it is a memory this city keeps of half-past four in the morning. For the real thing, you will eat it in person. In a hurry? SearchBox “Sha Tin siu mei”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨两点，整条街都沉默。只有烧味档的炉口还亮著——一个小小的火孔，几条炭排整齐排列，支撑一只只挂在上面等待过火的鸡和鸭。师傅提着灯，坐在一束油香和炭香的交叉点。' },
       { type: 'heading', text: '一、头三天：蜜的学问' },

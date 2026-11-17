@@ -46130,3 +46130,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language. Chapter 106 (D1286) proved the substitution machinery works; this milestone extents it to the front door of the series — the chapter every reader opens first.
 
 **The unit.** `hk-food-chronicle` gains `title_en` / `description_en` / `body_blocks_en` — a full English arm in the same Cantonese cadence, every heading kept, no translation shell left, identically structured to the Traditional source (all 14 blocks, same list items, the same disclaimers kept verbatim in both languages). The 105-chapter EN campaign is now openly named: 2 of 106 done (106, 1) with honest fallback for everything else; the rest are a staged live-provider + verify pipeline.
+
+## 1289. D1289 — chapter 2 (siu mei) joins the EN arm; three chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus read in either language; the EN arm campaign is a staged pipeline (machinery first, then chapter-by-chapter with the same beat-parity and fold discipline as D1286/D1288).
+
+**The unit.** `hk-siu-mei-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence, all 12 blocks, mirroring the Traditional HK beats exactly (honey cooked three days, the third hoisting arm, the not-until-smoke rule). Chapters with full EN prose: **1, 2, 106** of 106. Chapters 3–105 remain honest fallback (Traditional HK), never machine-folded.
