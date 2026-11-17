@@ -1895,6 +1895,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-kwun-tong-newsboy-chronicle', title: '凌晨五点：观塘『曙光报纸』的分送员（香港系列 · 第五十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：观塘的报纸分发中心在凌晨五点醒过来——那辆留下来的电瓶车里、一些什么奇妙的结构。',
+    title_en: 'Five in the morning — the newsboy of “Dawn Herald” in Kwun Tong (HK series, Ch. 51)',
+    description_en: 'A synthetic guide (not travel advice): the newspaper distribution centre at Kwun Tong wakes at five — inside that old battery cart, something of a miraculous structure.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): five in the morning. The Dawn Herald distribution centre at Kwun Tong (synthetic narrative — not a real merchant or a real moment; the hour and the street are narrative constructions) — four walls, three lamps, one wall that hums with a fan. Uncle Ng slips on his slippers and stacks today’s papers onto the cart one pile at a time. He has kept this habit for forty-three years — it is the kind of habit that lives only inside memory, never becoming anything else.' },
+      { type: 'heading', text: 'I · The iron gate at first light' },
+      { type: 'paragraph', text: 'The way this place opens is delicate: the lock is fine, the iron gate is fine, but today’s “sunny” stacks run two or three piles heavier than yesterday’s “cloudy” ones — to Uncle Ng, that is a military rule. He wakes at two in the morning and memorizes each district’s demand; that is his beginning, and that is his end. He says: “Commanding someone to deliver papers is easy. Commanding someone to open their eyes to fight for them — not so easy.”' },
+      { type: 'cards', title: 'Dawn Herald, what to see', items: [] },
+      { type: 'heading', text: 'II · The city’s breathing' },
+      { type: 'paragraph', text: 'At five, the cart leaves Kwun Tong. The route passes through many places — the quarry, the flower market, the slaughterhouse at Hung Hom, the newsstand at Prince Edward. Every stop has an old master waiting. He hands over the papers; the station head speaks two or three characters; beside them, ready in place, is the small block of speech for photographic proof or settling accounts.' },
+      { type: 'cards', title: 'Dawn Herald, what to hear', items: [] },
+      { type: 'heading', text: 'III · Back to the small hours' },
+      { type: 'paragraph', text: 'At 5:15 the Dawn Herald distribution centre closes its gate again, yet nothing about today repeated itself. Uncle Ng pours himself one glass of white liquor — a courtesy from “Nan Tian Men,” his first-generation friend’s harvest. He stands between the four walls; today’s papers are gone, and all that remains is other people’s memories and the sound of their voices calling.' },
+      { type: 'cards', title: 'Dawn Herald, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kwun Tong Dawn Herald” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨五点。观塘曙光报纸分送中心（合成叙事，非真实商户与真实时刻——时刻与街道全部是叙事建构）——四堵墙，三盏灯，一条电风扇哼的墙。吴伯穿拖鞋，把今天的报纸一叠一叠慢慢放上车。他这个习惯已经持续了四十三年——像一个习惯只可以说是活在记忆里的动物，而不能变成另外一样想法。' },
       { type: 'heading', text: '一、曙光的铁闸' },

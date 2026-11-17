@@ -740,4 +740,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /legend of the pink towel/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 51 (Kwun Tong’s “Dawn Herald”) ships in three arms too', () => {
+    const hk = mockGuide('hk-kwun-tong-newsboy-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/觀塘『曙光報紙』的分送員/);
+    const cn = mockGuide('hk-kwun-tong-newsboy-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/观塘『曙光报纸』的分送员/);
+    const en = mockGuide('hk-kwun-tong-newsboy-chronicle', 'en');
+    expect(en?.title).toMatch(/Dawn Herald/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Uncle Ng/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /iron gate at first light/i.test(b.text))).toBe(true);
+  });
 });
