@@ -7,6 +7,7 @@ import { adminSystemHealthRead, adminEventsRead } from '@/lib/console-admin';
 import { ConsoleSection, ReadFailure, SourceStamp } from '@/components/console/console-parts';
 import { ConsoleTable } from '@/components/console/console-table';
 import { AdminChrome, AdminDenied, adminSession } from '@/components/console/admin-shell';
+import { AdminDigest } from '@/components/admin-digest';
 
 /** `/admin/system` — §9/§69. Each dependency's own word for its state is shown verbatim. */
 export async function generateMetadata(): Promise<Metadata> {
@@ -123,7 +124,7 @@ export default async function AdminSystemPage() {
                 ) : events.group && events.group.pending === 0 ? (
                   <p className="mt-3 text-sm text-ink-muted">{copy.pendingDetailEmpty}</p>
                 ) : null}
-                {Array.isArray(events.recent) && events.recent.length > 0 ? (
+                {events?.recent && Array.isArray(events.recent) && events.recent.length > 0 ? (
                   <ConsoleTable
                     caption={copy.eventsTitle}
                     className="mt-3"
@@ -139,6 +140,22 @@ export default async function AdminSystemPage() {
                 ) : (
                   <p className="mt-3 text-sm text-ink-muted">{copy.eventsEmpty}</p>
                 )}
+                {/* D1285 — the model reads these counters once per page view; §68 gate, fail-closed. */}
+                <AdminDigest
+                  events={{
+                    xlen: events.xlen ?? null,
+                    pending: events.group?.pending ?? null,
+                    consumers: events.group?.consumers ?? null,
+                    disabled: events.disabled ?? false,
+                    degraded: events.degraded ?? false,
+                    recentCount: Array.isArray(events.recent) ? events.recent.length : 0,
+                    topTemplates: Array.isArray(events.recent)
+                      ? [...new Set(events.recent.map((r) => r.template).filter((t): t is string => Boolean(t)))].slice(0, 4)
+                      : [],
+                  }}
+                  locale={locale}
+                  labels={dict.console.adminConsole.digest}
+                />
                 <SourceStamp read={eventsRead} locale={locale} className="mt-2" />
               </>
             ) : null}

@@ -409,6 +409,25 @@ class ChapterAskRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class AdminEventsSnapshot(_Strict):
+    """The /admin/system reader's REAL numbers, verbatim — the model sees no store, no tenant, no identity."""
+
+    xlen: int | None = Field(default=None, ge=0, le=10_000_000)
+    pending: int | None = Field(default=None, ge=0, le=10_000_000)
+    consumers: int | None = Field(default=None, ge=0, le=10_000)
+    disabled: bool = False
+    degraded: bool = False
+    recent_count: int = Field(default=0, ge=0, le=1000)
+    top_templates: list[str] = Field(default_factory=list, max_length=4)
+
+
+class AdminDigestRequest(_Strict):
+    """The operator's digest lane — aggregated counters in, grounded read + ≤3 actions out."""
+
+    events: AdminEventsSnapshot
+    locale: str = Field(default="zh-HK", max_length=16)
+
+
 class InsightsWeekPoint(_Strict):
     date: str = Field(min_length=10, max_length=10)
     label: str = Field(default="", max_length=40)

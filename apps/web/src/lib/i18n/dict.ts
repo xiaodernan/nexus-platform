@@ -798,6 +798,7 @@ export interface Dict {
       searchIntro: string;
       systemTitle: string;
       systemIntro: string;
+      digest: { eyebrow: string; title: string; pending: string; proven: string };
       gate: { roleLabel: string; demoRole: string; forbidden: (role: string) => string; unverified: (code: string) => string; signIn: string };
       counters: {
         users: string;
@@ -2514,6 +2515,12 @@ const zhHK: Dict = {
       searchIntro: '平台按窗口統計的搜索需求（§9）。這是描述性計數：schema 裡沒有搜索質量分，本頁也不會憑空造一個（§109）。',
       systemTitle: '系統健康',
       systemIntro: '每個依賴各自探測（§9）：數據庫來自一次真實的 select 1，AI 服務只報告「是否配置」而刻意不做探測。',
+      digest: {
+        eyebrow: 'AI 營運摘要 · 模型潤飾',
+        title: '計數講完了，模型說三句——下一步係什麼',
+        pending: '模型正在讀你個 Redis 事件流…',
+        proven: '模型潤飾自本頁真實計數 · 數字全部來自上面',
+      },
       gate: {
         roleLabel: '當前角色',
         demoRole: '演示身份（未認證）',
@@ -4595,6 +4602,12 @@ const en: Dict = {
       searchIntro: 'What search demand the platform counted over a window (§9). These are descriptive counts: the schema has no search-quality score and this page will not invent one (§109).',
       systemTitle: 'System health',
       systemIntro: 'Each dependency is probed on the call (§9): the database state comes from a real select 1, and the AI service is reported as configured but deliberately not probed.',
+      digest: {
+        eyebrow: 'AI DIGEST · MODEL-PHRASED',
+        title: 'The counters have spoken; the model says what next',
+        pending: 'The model is reading your Redis event stream…',
+        proven: 'Model-phrased from the real counters on this page',
+      },
       gate: {
         roleLabel: 'Acting role',
         demoRole: 'Demo identity (unauthenticated)',

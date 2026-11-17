@@ -1332,6 +1332,12 @@ export const zhCN: Dict = {
       searchIntro: '平台按窗口统计的搜索需求（§9）。这是描述性计数：schema 里没有搜索质量分，本页也不会凭空造一个（§109）。',
       systemTitle: '系统健康',
       systemIntro: '每个依赖各自探测（§9）：数据库来自一次真实的 select 1，AI 服务只报告「是否配置」而刻意不做探测。',
+      digest: {
+        eyebrow: 'AI 营运摘要 · 模型润饰',
+        title: '计数讲完了，模型说三句——下一步系什么',
+        pending: '模型正在读你个 Redis 事件流…',
+        proven: '模型润饰自本页真实计数 · 数字全部来自上面',
+      },
       gate: {
         roleLabel: '当前角色',
         demoRole: '演示身份（未认证）',
