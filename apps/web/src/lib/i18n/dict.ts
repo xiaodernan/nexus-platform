@@ -221,6 +221,16 @@ export interface Dict {
       dismiss: string;
       steps: Array<{ href: string; label: string }>;
     };
+    /** D1317: the Ah Wan NPC — one night-shift voice in one tower. */
+    npcAhWan: {
+      eyebrow: string;
+      title: string;
+      hint: string;
+      placeholder: string;
+      send: string;
+      pending: string;
+      proven: string;
+    };
     /** D1171: the /try quick-start demo route — the in-product walkthrough. */
     tryFlow: {
       eyebrow: string;
@@ -1477,6 +1487,15 @@ const zhHK: Dict = {
         { href: '/hk-type', label: '自測係邊個' },
         { href: '/handbook', label: '翻閱說明書' },
       ],
+    },
+    npcAhWan: {
+      eyebrow: '夜班 · 塔樓',
+      title: '問阿環',
+      hint: '凌晨一點的塔樓清潔阿婆，記憶只裝得下故事裡的事——安頓趕路，切勿請她代辦事務。',
+      placeholder: '問阿環一句………',
+      send: '問',
+      pending: '阿環緊握隻拖把………',
+      proven: '潤飾自這個世界 · 合成口吻，非真人',
     },
     tryFlow: {
       eyebrow: '五步直通 · FIVE STEPS',
@@ -3575,6 +3594,15 @@ const en: Dict = {
         { href: '/hk-type', label: 'Ask which you are' },
         { href: '/handbook', label: 'Open the handbook' },
       ],
+    },
+    npcAhWan: {
+      eyebrow: 'NIGHT SHIFT · THE TOWER',
+      title: 'Ask Ah Wan',
+      hint: 'The night-shift cleaner of the tower — she remembers only the story-world. Ask at one in the morning, no errands, no favours.',
+      placeholder: 'Ask Ah Wan something…',
+      send: 'Ask',
+      pending: 'Ah Wan is wringing the cloth…',
+      proven: 'Phrasing from this world — synthetic, not a real person',
     },
     tryFlow: {
       eyebrow: 'WALKTHROUGH · FIVE STEPS',

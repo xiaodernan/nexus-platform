@@ -9,6 +9,7 @@ import { HkCantoneseDaily } from '@/components/hk-cantonese-daily';
 import { HkDailyDate } from '@/components/hk-daily-date';
 import { HkDailyArcPick } from '@/components/hk-daily-arc-pick';
 import { HkDailyShare } from '@/components/hk-daily-share';
+import { AhWanDialogue } from '@/components/ah-wan-dialogue';
 
 /**
  * `/daily` — the daily ritual page. Three pillars in one place: 今日食運 (the deterministic daily
@@ -61,6 +62,13 @@ export default async function DailyPage() {
             aria-hidden="true"
             className="h-px w-24 bg-accent/60"
           />
+        </Container>
+      </section>
+
+      {/* The live NPC — one tower, one voice, mounted on the daily ritual page only. */}
+      <section aria-label={dict.home.npcAhWan.title} className="border-b border-line bg-surface">
+        <Container size="shell" className="flex py-10">
+          <AhWanDialogue locale={locale} labels={dict.home.npcAhWan} />
         </Container>
       </section>
 

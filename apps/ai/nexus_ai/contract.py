@@ -409,6 +409,21 @@ class ChapterAskRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class AhWanTurn(_Strict):
+    """One turn of the in-world Ah Wan dialogue — role user or ah-wan (assistant)."""
+
+    role: str = Field(min_length=1, max_length=16)
+    content: str = Field(min_length=1, max_length=400)
+
+
+class AhWanDialogueRequest(_Strict):
+    """The NPC Ah Wan's request — locale, latest line; history stays client-side."""
+
+    locale: str = Field(default="zh-HK", max_length=16)
+    message: str = Field(min_length=1, max_length=220)
+    history: list[AhWanTurn] = Field(default_factory=list, max_length=12)
+
+
 class WorldGuideCandidate(_Strict):
     """One place the traveler could go next — curated by the web lane, never invented by the model."""
 

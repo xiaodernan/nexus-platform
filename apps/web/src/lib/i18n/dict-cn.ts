@@ -287,6 +287,15 @@ export const zhCN: Dict = {
         { href: '/handbook', label: '翻阅说明书' },
       ],
     },
+    npcAhWan: {
+      eyebrow: '夜班 · 塔楼',
+      title: '问阿环',
+      hint: '凌晨一点的塔楼清洁阿婆，记忆只装得下故事里的事——安顿赶路，切勿请她代办事务。',
+      placeholder: '问阿环一句………',
+      send: '问',
+      pending: '阿环紧握只拖把………',
+      proven: '润饰自这个世界 · 合成口吻，非真人',
+    },
     tryFlow: {
       eyebrow: '五步直通 · FIVE STEPS',
       title: '一分钟直通：从「今晚食甚么」到「阿婆嘅好意」',
