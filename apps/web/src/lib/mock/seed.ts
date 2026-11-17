@@ -2528,6 +2528,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-loohu-trolleys-chronicle', title: '凌晨三點十五分：羅湖行李手車的第一班趟（香港系列 · 第四十九章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：羅湖口岸的鐵閘被打開之前——那架空手從深圳回到香港、把一家人留在身邊的行李手車。',
+    title_en: '3:15 in the morning — the first shift of the Lo Wu luggage trolleys (HK series, Ch. 49)',
+    description_en: 'A synthetic guide (not travel advice): before the iron gates of Lo Wu Port open — the empty luggage trolley that comes home from Shenzhen to Hong Kong, keeping the family beside it.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): 3:15 in the morning. Lo Wu Port (synthetic narrative — not a real person or a real moment; the hour and the scene are narrative constructions) — the gates are closed as always, the lights dim as always. Only one thing is awake: the luggage trolleys. Small, low, light — yet they are the first thing this city starts today.' },
+      { type: 'heading', text: 'I · The ancestors of the trolley' },
+      { type: 'paragraph', text: 'Ah Fuk (synthetic narrative, not a real person) pushes them out one by one. Every trolley is one sheet of iron, one strap, plus one honest destiny — they have no nationality, only duty. Ah Fuk says: “Each of them has an owner — and their owners are tomorrow’s trolleys.”' },
+      { type: 'cards', title: 'Lo Wu, what to see', items: [] },
+      { type: 'heading', text: 'II · The passwords of the small hours' },
+      { type: 'paragraph', text: 'They do not speak, but they absolutely hear. They know 3:14 is the iron-gate adjustment minute, 3:15 is the hour they leave the palace, 3:07 is the old receptionist’s toilet-mopping minute. Early this morning Ah Fuk overheard a family say: “We are home.” He could not tell whether it was the family speaking, or a trolley.' },
+      { type: 'cards', title: 'Lo Wu, what to hear', items: [] },
+      { type: 'heading', text: 'III · Wings of the morning people' },
+      { type: 'paragraph', text: 'At 3:15, Ah Fuk wheels the last trolley into its slot — snap, snap, snap. The trolley’s name is “Leung Lai,” and at dusk it will push its first passengers into Hong Kong. Ah Fuk says to it: “Lam, see you in a while.” It does not respond, as always. It never needs to.' },
+      { type: 'cards', title: 'Lo Wu, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Lo Wu luggage trolleys” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨三點十五分。羅湖口岸（合成敘事，非真實人物與真實時刻——時刻與場景全部是敘事建構）——閘門照例是閉的，燈照例都是暗的。只有一個東西醒着：行李手車。牠很小、很低、很輕——但是這座城今天最先開始的東西。' },
       { type: 'heading', text: '一、手車的祖先' },

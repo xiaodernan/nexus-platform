@@ -710,4 +710,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /etiquette of two currencies/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 49 (Lo Wu’s first trolley shift) ships in three arms too', () => {
+    const hk = mockGuide('hk-loohu-trolleys-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/羅湖行李手車的第一班趟/);
+    const cn = mockGuide('hk-loohu-trolleys-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/罗湖行李手车的第一班趟/);
+    const en = mockGuide('hk-loohu-trolleys-chronicle', 'en');
+    expect(en?.title).toMatch(/Lo Wu luggage trolleys/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Fuk/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /passwords of the small hours/i.test(b.text))).toBe(true);
+  });
 });
