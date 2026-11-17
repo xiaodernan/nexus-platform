@@ -916,6 +916,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-cha-chaan-teng-chronicle', title: '茶餐廳（香港系列 · 第五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著茶餐廳走一遍早餐、午餐與宵夜——這座城市一直都在排隊等奶茶。',
+    title_en: 'Cha chaan teng — the city that queues for milk tea (HK series, Ch. 5)',
+    description_en: 'A synthetic guide (not travel advice): one tour through breakfast, lunch and late-night milk tea — because this city has always queued for its milk tea.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): there is one sound on this street. The wok-chef’s ladle against steel, the water sloshing through the sink, the set meal suddenly landing on my tray. Every time you walk into a cha chaan teng, you hear the Cantonese phrase — “m goi dang jat dang” (唔該等一等, please wait a moment). It never takes long, but you have to wait.' },
+      { type: 'heading', text: 'I · One bow of rice, fifty years ago' },
+      { type: 'paragraph', text: 'After the war, Hong Kong was a city forever moving bricks. New immigrants poured in. Every shopfront — the fishball stall, the hot-pot counter, the cha dong — carried a family’s whole economy on its shoulders. They did not know the English on the menu; the kitchen invented for itself instead — tomato egg, milk tea, prawn egg noodles, beef brisket rice. We still eat them every day.' },
+      { type: 'paragraph', text: 'Two languages blended in the post-war kitchen: one side is everyday Cantonese tinged with Teochew and Hakka; the other is what British tables were willing to let come to Hong Kong. Milk tea is tea, milk, sugar and leaves in a paper cup — not complicated in itself, but this exact combination was dubbed “silk-stocking milk tea” because of how it is made (the tea leaves wrapped in silk and steeped), which is not a thing you can ask your mother for.' },
+      { type: 'cards', title: 'Cha chaan teng, what to order', items: [] },
+      { type: 'heading', text: 'II · The black sweetness in the bowl' },
+      { type: 'paragraph', text: 'Milk tea is this city’s handshake — a glass of it replaces a business card. Dark tea and white milk interlaced like two ribbons of silk; that colour only someone who has worked two hundred shifts as a waiter can produce. I will take a milk tea however you make it, because by accepting it I have already told you that I belong to this city.' },
+      { type: 'cards', title: 'Set meal, options', items: [] },
+      { type: 'heading', text: 'III · Three things no good set meal omits' },
+      { type: 'paragraph', text: 'Three things every set meal carries: first, a staple — rice, e-fu noodles, or an siu mei roast pork in its own roast-plate; second, a bowl of soup — it sits in the middle of the table quietly while no one reaches for it because someone at every table knows it will get drunk; third, a milk tea — this city’s whole confession about “slow”.' },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. Cha chaan teng is forever a part of this city. Whether it is the same one we went to or not doesn’t matter — the same table, the same phrase and the same cup of hot milk tea will always be the taste of Hong Kong. In a hurry? SearchBox “Shatin cha chaan teng”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：這裏有一種聲音。大嗌的鍋鏟響，水槽嘩啦嘩啦，常餐突然落在我面前。每一次走進茶餐廳，你會聽到一句廣東歇——「唔該等一等」。不會等很久，但都得等。' },
       { type: 'heading', text: '一、五十年前的一碗飯' },

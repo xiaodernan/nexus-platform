@@ -90,4 +90,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /soup-pot brothers/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /why the signboard/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 5 (cha chaan teng) ships in three arms too', () => {
+    const hk = mockGuide('hk-cha-chaan-teng-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/茶餐廳/);
+    const cn = mockGuide('hk-cha-chaan-teng-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/茶餐厅/);
+    const en = mockGuide('hk-cha-chaan-teng-chronicle', 'en');
+    expect(en?.title).toMatch(/Cha chaan teng/);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /silk-stocking/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /three things/i.test(b.text))).toBe(true);
+  });
 });
