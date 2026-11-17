@@ -1858,6 +1858,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-yauma-tei-dumpling-chronicle', title: '中午十二点四十五分：佐敦吉华饺面店（香港系列 · 第五十章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：佐敦的午餐时光——饺子、肉汁、面条和老板娘第十四年的粉红毛巾。',
+    title_en: 'Quarter past twelve — the Yau Ma Tei dumpling house (HK series, Ch. 50)',
+    description_en: 'A synthetic guide (not travel advice): lunchtime at Yau Ma Tei — dumplings, gravy, noodles, and the owner’s wife’s fourteenth pink towel.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past twelve. The Yau Ma Tei dumpling house (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — one narrow old street, one red window. Dumplings dance on the pan; the smell of meat walks the whole street. The owner’s wife lays aside her pink towel, used for the fourteenth year running.' },
+      { type: 'heading', text: 'I · The pork insistence' },
+      { type: 'paragraph', text: 'The owner (synthetic narrative, not a real person) dices pork knuckle into the tiniest grains; dumpling wrappers are pleated with both hands, fingers together; whatever the craft, one spirit holds them together: a good dumpling does not need everything new — it only needs the owner to remember how each person takes theirs.' },
+      { type: 'cards', title: 'Yau Ma Tei, what to see', items: [] },
+      { type: 'heading', text: 'II · The legend of the pink towel' },
+      { type: 'paragraph', text: 'The owner’s wife’s pink towel has been in use for fourteen years. It carries her own embroidery — a bow, one smiling face, one tiny unicorn. Every morning she stacks it neatly on the table before opening; every night she washes it clean and folds it away. When a guest asks about it, she only smiles blankly: “If it had a name, she would give it to you as a gift.”' },
+      { type: 'cards', title: 'Yau Ma Tei, what to hear', items: [] },
+      { type: 'heading', text: 'III · After lunch' },
+      { type: 'paragraph', text: 'Before one o’clock, the owner’s wife puts away all tables, chairs and cutting boards; the dumpling house’s lunch breaks to a close. In the afternoon, she goes to her cheap window, closes it but does not lock it. The regulars all know: tomorrow at six in the morning, dumplings as always. This is the house’s insistence — dumplings every morning, every noon, every night.' },
+      { type: 'cards', title: 'Yau Ma Tei, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yau Ma Tei dumplings” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：中午十二点四十五分。佐敦吉华饺面店（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——一条窄窄的旧街、一扇红色的窗。饺子在煎碟上跳舞，肉味穿了整条街。老板娘把她连续第十四年的粉红毛巾放在侧边。' },
       { type: 'heading', text: '一、猪肉的坚持' },

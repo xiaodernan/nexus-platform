@@ -725,4 +725,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /passwords of the small hours/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 50 (Yau Ma Tei dumpling house) ships in three arms too', () => {
+    const hk = mockGuide('hk-yauma-tei-dumpling-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/佐敦吉華餃麵店/);
+    const cn = mockGuide('hk-yauma-tei-dumpling-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/佐敦吉华饺面店/);
+    const en = mockGuide('hk-yauma-tei-dumpling-chronicle', 'en');
+    expect(en?.title).toMatch(/Yau Ma Tei dumpling/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/pink towel/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /legend of the pink towel/i.test(b.text))).toBe(true);
+  });
 });
