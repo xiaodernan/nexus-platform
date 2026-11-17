@@ -46166,3 +46166,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 7 continues the early-morning rhythm: the stall that never went quiet.
 
 **The unit.** `hk-yu-huei-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 7, 106** of 106. Chapters 8–105 remain honest fallback (Traditional HK), never machine-folded.
+
+## 1295. D1295 — chapter 8 (fruit market) joins the EN arm; nine chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 8 continues the pre-dawn rhythm: the fruit wholesale market that starts before the sun does, the auction as the way word becomes price.
+
+**The unit.** `hk-fruit-market-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 7, 8, 106** of 106. Chapters 9–105 remain honest fallback (Traditional HK), never machine-folded.

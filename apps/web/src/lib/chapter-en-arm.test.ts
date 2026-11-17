@@ -123,4 +123,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /three in the morning/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /basin, the clock/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 8 (fruit market) ships in three arms too', () => {
+    const hk = mockGuide('hk-fruit-market-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/果欄/);
+    const cn = mockGuide('hk-fruit-market-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/果栏/);
+    const en = mockGuide('hk-fruit-market-chronicle', 'en');
+    expect(en?.title).toMatch(/fruit market/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /ten past three/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /one day begins before dawn/i.test(b.text))).toBe(true);
+  });
 });

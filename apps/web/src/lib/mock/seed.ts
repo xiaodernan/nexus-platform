@@ -1024,6 +1024,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-fruit-market-chronicle', title: '果欄：凌晨三點的卸貨（香港系列 · 第八章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著果欄的第一批卡車，走進每日天光之前都醒著的油麻地。',
+    title_en: 'The fruit market — first trucks before dawn (HK series, Ch. 8)',
+    description_en: 'A synthetic guide (not travel advice): ride with the first trucks of the fruit wholesale market into Yaumatei — the one who wakes before the day does.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): ten past three in the morning, Yaumatei is still dark. At the far end of Ferry Street, the first trucks have already taken their spots, unloading mangosteens, peaches, limes and the seasonal papayas — fruit that came here before the sun did, sorted by hand and by forklift and by the old colleagues’ eyes — sizing, boxing, striking the auction board — on their way to become the first sweet basket in Hong Kong’s market stalls.' },
+      { type: 'heading', text: 'I · One day begins before dawn' },
+      { type: 'paragraph', text: 'The fruit market sits at the Yaumatei end of Ferry Street — one of the oldest wholesale fruit markets in Hong Kong. It never sleeps; it only changes its costume across the hours: three in the morning is unloading, four is the auction call, six is the morning stalls opening, and evening is when it clears. Every seasonal box of fruit makes that full circuit before it ever sees a fruit stall.' },
+      { type: 'cards', title: 'Fruit market, where to browse', items: [] },
+      { type: 'heading', text: 'II · The auction is the way word becomes price' },
+      { type: 'paragraph', text: 'The auctioneer calls in Cantonese; a gesture, a tilt of the paddle, that is the real price of the box. Buyers and auctioneers have one dance — look, nod, raise, drop. Price is not a number, it’s a judgement — ripeness, colour, days to sale, whether the season is right. One box of mango calls the whole season.' },
+      { type: 'cards', title: 'Fruit market, what to eat', items: [] },
+      { type: 'heading', text: 'III · Carry the box of morning into every stall' },
+      { type: 'paragraph', text: 'A-Man — a synthetic character, not a real person — opens his stall every day at five. He gets his stock from the fruit market, where the durian calls for nothing else and the exact note is kept in the smell of the season. Two oranges can wait, but a box of mangosteens has to be paid on the spot. The fruit market is not the destination; it is the engine — the moment before the lights even turn on, the whole city’s first sweet basket is already on its way.' },
+      { type: 'cards', title: 'Fruit market, where to go', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. The fruit market goes quiet when the sun reaches the streets, but the fruit never stops travelling — in a hurry? SearchBox “Yaumatei fruit”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨三點十分，油麻地的街還很暗。渡船街盡頭的果欄棚下面，第一批卡車已經停好了。車斗卸下的是山竹、水蜜桃、青檸與當造的木瓜——這些水果在天光之前來到這座城市，由手、由叉車、由老夥計的眼睛，分級、裝箱、拍價，再成為全港早市的第一籃鮮甜。' },
       { type: 'heading', text: '一、果欄的一天，從凌晨開始' },
