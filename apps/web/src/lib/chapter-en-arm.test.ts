@@ -785,4 +785,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /dialogue of yin and yang/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 54 (the Golden Source cloth shop) ships in three arms too', () => {
+    const hk = mockGuide('hk-sham-shui-po-fabric-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/金源布莊/);
+    const cn = mockGuide('hk-sham-shui-po-fabric-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/金源布庄.*零头布/);
+    const en = mockGuide('hk-sham-shui-po-fabric-chronicle', 'en');
+    expect(en?.title).toMatch(/Golden Source/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Sister Wu/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /second spring/i.test(b.text))).toBe(true);
+  });
 });

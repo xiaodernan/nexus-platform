@@ -2006,6 +2006,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-sham-shui-po-fabric-chronicle', title: '下午两点：深水埗『金源布庄』的零头布（香港系列 · 第五十四章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：深水埗金源布庄的下午——堆积如山的零头布、不会卖整匹布的老板娘、与一座布没有终点的城。',
+    title_en: 'Two in the afternoon — the leftover ends at the “Golden Source Cloth Shop” in Sham Shui Po (HK series, Ch. 54)',
+    description_en: 'A synthetic guide (not travel advice): the Sham Shui Po afternoon at the Golden Source Cloth Shop — mountains of leftover ends, a shopkeeper who never sells a whole bolt, and a city where cloth has no finish.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): two in the afternoon. The “Golden Source Cloth Shop” at Sham Shui Po (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the gate half-open, inside only Sister Wu (synthetic narrative, not a real person). Bolts of cloth stacked to the ceiling, yet no whole bolt is sold — she sells only “leftover ends.”' },
+      { type: 'heading', text: 'I · The second spring of the mountain' },
+      { type: 'paragraph', text: 'Sister Wu’s shop appears in no mall directory. She takes in the cloth ends the market cannot sell: prints gone wrong, patterns broken off, the unwanted tail of full bolts. Every end gets a label — date, source, how many inches remain. She says: a whole bolt is the city’s face; a leftover end is its personality.' },
+      { type: 'cards', title: 'Golden Source, what to see', items: [] },
+      { type: 'heading', text: 'II · The arithmetic under the scissors' },
+      { type: 'paragraph', text: 'At 2:20 a young mother pushes the door open, asking for her son’s first pair of trousers. Sister Wu draws out a corner of printed cotton: “Enough for a pair of shorts — plus one piece of lining left over.” The price is never clearly set — she eyeballs it: the cloth’s width, the cloth’s density, the cloth’s fate. The guest asks how much one end costs; she says: “Whatever it comes to — measure enough first, then we will count.”' },
+      { type: 'cards', title: 'Golden Source, what to hear', items: [] },
+      { type: 'heading', text: 'III · The 4:40 stocktake' },
+      { type: 'paragraph', text: 'At 4:40 Sister Wu stacks the day’s leftover ends and writes one word on a slip: “Ends.” She never writes “Tails” — she says cloth has no finish, only a change of season. She still closes at six; the next season’s base cloth is already stacked under the counter. The afternoon sun coming through is just enough for her to inspect every unsold end.' },
+      { type: 'cards', title: 'Golden Source, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sham Shui Po Golden Source cloth shop” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午两点。深水埗『金源布庄』（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——铁闸半开，店里只有一位吴姐（合成叙事，非真实人物）。布匹堆到天花板，唯独不卖整匹——她只卖『零头』。' },
       { type: 'heading', text: '一、堆积如山的第二春' },
