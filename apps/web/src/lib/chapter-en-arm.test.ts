@@ -320,4 +320,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Her route is a secret/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 23 (the dish-washing auntie) ships in three arms too', () => {
+    const hk = mockGuide('hk-dishwash-auntie-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/洗碗阿姨/);
+    const cn = mockGuide('hk-dishwash-auntie-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/洗碗阿姨/);
+    const en = mockGuide('hk-dishwash-auntie-chronicle', 'en');
+    expect(en?.title).toMatch(/second act/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/bong jei/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /She knows every plate/i.test(b.text))).toBe(true);
+  });
 });

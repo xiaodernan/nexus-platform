@@ -859,6 +859,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-dishwash-auntie-chronicle', title: '下午一点半：洗碗阿姨的第二幕（香港系列 · 第二十三章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着厨房师傅，由污水声一步一步看进洗碗间——香港每张餐台背后看不见的人。',
+    title_en: 'Half-past one — the second act of the dish-washing auntie (HK series, Ch. 23)',
+    description_en: 'A synthetic guide (not travel advice): follow the kitchen master, from the clatter of the sink to the dish pit — the unseen hands behind every table in Hong Kong.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past one. The cha chaan teng has gone quiet — nothing but the clatter of pots, the clink of plates, the rush of hot water. The dish-washing auntie (synthetic narrative, not a real person) gives her rubber gloves one swipe, lifts the last slippery plate up onto the rack, taps it twice: everything is clean. Hong Kong keeps its Chinese lunch habits, but nobody knows that every single day she writes, with the palm of her hand, a mid-length novel for this city.' },
+      { type: 'heading', text: 'I · The ledger of “bong jei” clatter' },
+      { type: 'paragraph', text: 'The lunch peak has passed. The auntie first clears the nine-metre galley out the back — porcelain bowls, plates, chopsticks, teapots — three compartments: hot water, suds, clean water. Every single bowl meets its one-look verdict — a celadon piece chipped at one edge, 82 years like an old friend from the neighbourhood — she would put it back into her own cabinet, never to return to the shop. This discipline is not training; it is her own extra rule — chipped bowls will never leave this place again.' },
+      { type: 'cards', title: 'The dish pit, what to hear', items: [] },
+      { type: 'heading', text: 'II · She knows every plate' },
+      { type: 'paragraph', text: 'Which plate is for scrambling vegetables, which for serving crab-roe fishballs, which small bowl is for the soup for the elderly residents’ cups of Chinese-herbal jelly — the auntie knows with her eyes closed. The restaurant’s ownership changed hands three times, and she has stayed at the same cha chaan teng. Every day before she clocks out, she writes for the boss at the rim of the basin: “Today two portions of tripe and tofu skin, five plates” — the boss knows this is the old-theme report: tomorrow’s lunch will be busy; the colleagues silently accept it, no questions asked.' },
+      { type: 'cards', title: 'The dish pit, what to count', items: [] },
+      { type: 'heading', text: 'III · The clocking-out beat' },
+      { type: 'paragraph', text: 'Three-fifty, the electric box has worked a shift; the auntie pushes the cloth of wounds open gently. She aims the dryer into the basin and dries every garment until it shines. The washroom is her rest chair: a cup of water, a snack, chewing gum, tissue — this tiny space is the quietest, warmest little basin in the city. Three fifty-eight, she puts everything back where it belongs — this cha chaan teng has started its next day because of one person.' },
+      { type: 'cards', title: 'The dish pit, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “cha chaan teng afternoon tea” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午一点半。茶餐厅安静了下来——里面只有煲叽、碟碗互撞、热水奔流的声音。洗碗阿姨（合成叙事，非真实人物）把橡胶手套刷了一遍，把最后一碗滑胶浮升起来，落停箱上，轻力拍两下：一切都干净了。整座城市的中餐习惯保留着，不过 nobody 知道，她每天都在用手掌给这座城市写中篇小说。' },
       { type: 'heading', text: '一、「煲叽」的簿记' },
