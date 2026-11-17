@@ -2010,6 +2010,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-peng-chau-chronicle', title: '下午四點半：坪洲——纜車鐵箱子', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着坪洲島上的人，由碼頭到纜車鐵箱，島上的閒暇一直坐在箱子裡。',
+    title_en: 'Half-past four — Peng Chau — the iron cable box (HK series, Ch. 35)',
+    description_en: 'A synthetic guide (not travel advice): follow the Peng Chau islanders from the pier all the way to the cable-car iron box — the leisure of the island still rides inside the box.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past four. Beside Peng Chau’s pier sits that old iron cable box — three thousand residents of the island after a long day’s work all ride this box back, from the island to the transport hub, a ninety-minute span that is not too long, but for people stepping on waves it is the “last rebirth.”' },
+      { type: 'heading', text: 'I · The people inside the iron box' },
+      { type: 'paragraph', text: 'The box is an active dividing line: entering, you are someone coming from home; exiting, you are someone at the destination. Dispatcher Ah Sang (synthetic narrative, not a real person) holds an old tape recorder and announces to each boat the day’s departure time, passenger situation, and the sea wind and waves. This is the only radio channel the box ever receives: this channel has no frequency — only the people of the island know it.' },
+      { type: 'cards', title: 'Peng Chau, what to count', items: [] },
+      { type: 'heading', text: 'II · The cable-car control room' },
+      { type: 'paragraph', text: 'Up and down the cable-car route there is one small control room, and seven staff inside. Every day they do exactly one thing: drive the box from Peng Chau to the Central traffic-style upright escalator, then sit on this frame. Here there is no express gondola and no UV glass: the whole cable-car system lives inside one fairy tale — naive, pure, no high tastes, but it gives the island people confidence going home.' },
+      { type: 'cards', title: 'Peng Chau, what to see', items: [] },
+      { type: 'heading', text: 'III · On the way back to the sea' },
+      { type: 'paragraph', text: 'Perhaps the islanders know: tomato juice is the first sip of fresh tomato they take every morning, hand-to-mouth from the box’s counter. The old people walk talking non-stop about their Pearl-River business, their children, their seafood stalls. The young people say: “I just want to see the rainbow” — every millisecond of rain keeps one island lamp lit. Perhaps Peng Chau will always be this: a relay station amid the three waters, a rebirth after the past.' },
+      { type: 'cards', title: 'Peng Chau, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Peng Chau cable car” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午四點半。坪洲的碼頭旁邊停着那一艘老舊的纜車鐵箱——島上三千名居民每天忙碌勞動後都要坐回這艘鐵箱去，從島到交通樞紐的一個半小時不算太長，但對於腳踏海浪的人來說就是「最後的重生」。' },
       { type: 'heading', text: '一、鐵箱裡的人' },
