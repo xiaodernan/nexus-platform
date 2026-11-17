@@ -755,4 +755,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /iron gate at first light/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 52 (the Kowloon Bay garment factory) ships in three arms too', () => {
+    const hk = mockGuide('hk-kowloon-bay-garment-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/九龍灣製衣廠/);
+    const cn = mockGuide('hk-kowloon-bay-garment-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/九龙湾制衣厂/);
+    const en = mockGuide('hk-kowloon-bay-garment-chronicle', 'en');
+    expect(en?.title).toMatch(/Kowloon Bay garment factory/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Old Chan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /wife called cloth/i.test(b.text))).toBe(true);
+  });
 });

@@ -2639,6 +2639,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-kowloon-bay-garment-chronicle', title: '凌晨四點四十五分：九龍灣製衣廠的冚廠清晨（香港系列 · 第五十二章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：九龍灣的老廠房在凌晨四點四十五分亮燈——一家完整的製衣廠的晨歌。',
+    title_en: '4:45 in the morning — the all-hands dawn of the Kowloon Bay garment factory (HK series, Ch. 52)',
+    description_en: 'A synthetic guide (not travel advice): the old factory at Kowloon Bay lights up at 4:45 — a full garment factory’s morning song.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): 4:45 in the morning. The Kowloon Bay garment factory (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the whole floor’s lamps still dark, only one layered corridor holding its cold white glow. Old Chan (synthetic narrative, not a real person) sits before the cutting table watching television — the dubbed opera stage of the Kwun Tong industrial zone, quietly passing through the night.' },
+      { type: 'heading', text: 'I · The wife called cloth' },
+      { type: 'paragraph', text: 'The leftover cloth comes in like the tide; he measures it over and over. Old Chan does not care whether the tide will turn. He cares only that the cloth in his hands stays clear enough — not raised, not twisted, not stacked, not stuffed. The cloth is today’s child; the scissors are the appointed boss; he himself is only the messenger. He knows every piece carries a destiny — some carry the fate of a boutique, some the fate of a home.' },
+      { type: 'cards', title: 'Kowloon Bay, what to see', items: [] },
+      { type: 'heading', text: 'II · The old sayings of the floor' },
+      { type: 'paragraph', text: 'Upstairs in the factory live the workers. They arrive around four to make the whole city’s clothing look like one thing. At 4:45, Sister Wu (synthetic narrative, not a real person) writes the most urgent orders on the wall; she finishes one cigarette and then willingly lets a smile through. She says making clothes well is her second wife — only she has never had a first.' },
+      { type: 'cards', title: 'Kowloon Bay, what to hear', items: [] },
+      { type: 'heading', text: 'III · One sound of the scissors' },
+      { type: 'paragraph', text: '4:55. The machines all start. The noise layers itself to tell the whole building: the city of Kowloon Bay is running. Today Sister Wu must queue twelve orders — and this is not her last night shift. She begins to sing: an old Cantonese tune — she does not know who wrote it, only that when she drinks she loses every lyric. “The singer, at the end, lives within the Internationale” — she does not need to understand that line. She only needs today’s cloth ready.' },
+      { type: 'cards', title: 'Kowloon Bay, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kowloon Bay garment factory” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨四點四十五分。九龍灣製衣廠（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——整條廠的燈仍然關著，只有一層一層甬道留著冷白的光。老陳（合成敘事，非真實人物）坐在剪裁台前看電視——觀塘工業區的翻譯歌台，靜靜經過了一夜。' },
       { type: 'heading', text: '一、稱之為布面的妻子' },
