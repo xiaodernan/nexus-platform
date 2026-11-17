@@ -1044,6 +1044,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-pigeon-coop-chronicle', title: '下午三点：九龙公园的雀笼房（香港系列 · 第二十八章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着雀鸟房的主人，由茶餐厅一路上到九龙公园的雀箱——这是一种把赛博与宠物间的最后一条传输线。',
+    title_en: 'Three in the afternoon — the pigeon coop at Kowloon Park (HK series, Ch. 28)',
+    description_en: 'A synthetic guide (not travel advice): follow the coop master from the cha chaan teng up to the pigeon loft at Kowloon Park — a last transmission line between the cyber and the pet.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): three in the afternoon. The pigeon coop at the western corner of Kowloon Park is already lit; the brothers’ white pigeons with nothing to do pace back and forth in their cages. Ah Pak (synthetic narrative, not a real person) wears an old suit, stands at the wooden cabinet, and binds a new trap tight with a leather strap. The coop is a New Territories — the bridge between new and old.' },
+      { type: 'heading', text: 'I · The pigeons’ register' },
+      { type: 'paragraph', text: 'White pigeons have their own numbers, their bloodline certificates, their race records. Ah Pak should open at noon; one to three in the afternoon is his microphone-rehearsing time. He does not perform, he recites — he often recites the years and the worlds he has just bought. What he truly listens to is the tailnote of every bird: the cry of a pigeon emerging from under the sleeve will decide next year’s race record.' },
+      { type: 'cards', title: 'The coop, what to see', items: [] },
+      { type: 'heading', text: 'II · Assembly and the race' },
+      { type: 'paragraph', text: 'Every year once, the whole-Hong Kong pigeon race; Ah Pak’s five pigeons must reach the scout zone twenty-one days in advance so they can recognise the local environment. That stretch of road, he has walked more times than he can count, every time he recognises each paving stone. They will participate in that year’s summer race, flying from Lantau Island all the way back to Kowloon. Ah Pak will be sitting in the corner of the park that day watching those young wings fly over his own ceiling — at this moment he feels he is not watching birds, he is watching a nation cross from one to another.' },
+      { type: 'cards', title: 'The coop, what to count', items: [] },
+      { type: 'heading', text: 'III · The day of release' },
+      { type: 'paragraph', text: 'On the race day, Ah Pak arrives early at the coop, opens the cabinet door, blows one cool breath, and passes the message-wand to each pigeon. The pigeon is wrapped in rings of sunlight and suddenly let go, flying through the forest and the reservoir, bumping into columns of stone and young buds. He watches one orange and another orange of orange light is enough to feed himself for a season. He does not drink alcohol, but he drinks a kind of tea — the kind whose name is not public — every sip dry enough. “Pigeon still alive?” He pulls his hand back after the tea, answering himself: “Of course still alive. They all come back.”' },
+      { type: 'cards', title: 'The coop, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “pigeon race” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午三点。九龙公园西角的雀笼房已经亮了，伯仲兄弟的白鸽无事可做就在笼中走动。阿伯（合成叙事，非真实人物）穿着一件旧西装，站在木柜前，把新的捕鸟器用一条皮带绑紧。这间雀房是一条新界——新与旧的桥梁。' },
       { type: 'heading', text: '一、鸠鸽的登记' },
