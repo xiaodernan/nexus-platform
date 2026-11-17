@@ -680,4 +680,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /etiquette of two-way currency/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 47 (the Huanggang staff canteen) ships in three arms too', () => {
+    const hk = mockGuide('hk-huanggang-crossing-crew-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/皇崗口岸的員工餐廳/);
+    const cn = mockGuide('hk-huanggang-crossing-crew-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/皇岗口岸的员工餐厅/);
+    const en = mockGuide('hk-huanggang-crossing-crew-chronicle', 'en');
+    expect(en?.title).toMatch(/Huanggang Port/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Yee/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /ticket that goes both ways/i.test(b.text))).toBe(true);
+  });
 });

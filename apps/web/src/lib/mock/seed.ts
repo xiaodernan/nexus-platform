@@ -2454,6 +2454,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-huanggang-crossing-crew-chronicle', title: '晚上七點一刻：皇崗口岸的員工餐廳（香港系列 · 第四十七章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：星期天晚上七點一刻，皇崗口岸——把這座城和另一座城接起來的一座橋，承載着迎面而來的萬家燈火。',
+    title_en: 'Quarter past seven — the staff canteen at Huanggang Port (HK series, Ch. 47)',
+    description_en: 'A synthetic guide (not travel advice): Sunday at quarter past seven, Huanggang Port — the bridge that joins one city to another, carrying the ten thousand house-lights coming head-on.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, quarter past seven. Huanggang Port (synthetic narrative — not a real merchant or a real moment; the hour and the street are narrative constructions) — a staff canteen propped up by its standing fan, packed with people and dishes. Cross-border taxi drivers, flight-attendant apprentices, domestic-helper sisters who wire their salary to both sides each month — each with a pot of soup, a phone, and one “good night” to tomorrow’s self.' },
+      { type: 'heading', text: 'I · The ticket that goes both ways' },
+      { type: 'paragraph', text: 'Ah Yee (synthetic narrative, not a real person) knows why this canteen is full: she knows whose child has school tomorrow, whose mother in the care home needs a dressing change, whose flights disappeared starting last month. She has no coupons, and no coupon on earth could remember these things — only her memory holds them all: “short rice noodles, no spring onion, one extra bowl.” Nobody at the tables needs to ask questions.' },
+      { type: 'cards', title: 'Huanggang, what to see', items: [] },
+      { type: 'heading', text: 'II · The film through two windows' },
+      { type: 'paragraph', text: 'Behind the kitchen hangs an old film poster — the kind of story from the era of village tales. Every diner recognises that face. Ah Yee says the people here never mention where they are going tomorrow, because they know they will come back tomorrow — come back for rice noodles, come back to look at the poster, come back to say “see you again.” The people on both sides of the bridge are the same batch of people; they just take turns crossing.' },
+      { type: 'cards', title: 'Huanggang, what to hear', items: [] },
+      { type: 'heading', text: 'III · The lights come on, people go home' },
+      { type: 'paragraph', text: 'Eight in the evening, the port lights switch on one by one. Those leaving here haul their luggage back onto their shoulders, tie shoes, charge phones. Ah Yee places the last plate of dumplings on the last table — the one table always reserved, and never taken. She says the people on both sides finally understand tonight: no need to choose — both sides are themselves, both sides are home.' },
+      { type: 'cards', title: 'Huanggang, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Huanggang staff canteen” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：星期天的晚上七點一刻。皇崗口岸（合成敘事，非真實商戶與真實時刻——時刻與街道全部是敘事建構）——一間撐着電風扇的員工餐廳，塞滿了人和菜。過港的的士師傅、空服員學徒、把月薪兩邊寄的家政姐妹，各自對着一鍋湯吃飯、對着手機看新聞、對着明天的自己說晚安。' },
       { type: 'heading', text: '一、進出兩面的那張票' },
