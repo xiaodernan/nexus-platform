@@ -800,4 +800,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /second spring/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 55 (the Lok Ma Chau outpost) ships in three arms too', () => {
+    const hk = mockGuide('hk-loko-ma-chau-barrier-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/落馬洲禁區的通勤前哨/);
+    const cn = mockGuide('hk-loko-ma-chau-barrier-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/落马洲禁区/);
+    const en = mockGuide('hk-loko-ma-chau-barrier-chronicle', 'en');
+    expect(en?.title).toMatch(/Lok Ma Chau/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Master Leung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /gate machines at 6:15/i.test(b.text))).toBe(true);
+  });
 });

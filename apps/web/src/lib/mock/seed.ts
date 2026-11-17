@@ -2750,6 +2750,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-loko-ma-chau-barrier-chronicle', title: '清晨六點一刻：上水火車站、落馬洲禁區的通勤前哨（香港系列 · 第五十五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：清晨六點一刻的上水火車站——關卡通勤線、最先經過的地盤工人、和禁區明天關閘的聲音。',
+    title_en: 'A quarter past six — the Sheung Shui Station and Lok Ma Chau outpost (HK series, Ch. 55)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past six at Sheung Shui Station — the control-point commuter line, the first construction workers through, and the sound of the restricted area’s gate closing for tomorrow.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past six. The commuter line from Sheung Shui Station to the Lok Ma Chau checkpoint (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the first commuter train has just closed its doors. Station Master Leung (synthetic narrative, not a real person) hangs the teahouse’s hand-written sign beside the gate machines: “Today: one egg sandwich, two kaya buns, one soap.”' },
+      { type: 'heading', text: 'I · The gate machines at 6:15' },
+      { type: 'paragraph', text: 'At 6:20, the first cross-boundary travellers begin to arrive. The broom’s tail-end, the glint on the wire fence, the train heading north. Master Leung never asks what lies on the other side of the checkpoint — he only holds their breakfast for them. He says: the person crossing needs only two warm places — this side of the gate, and the stomach.' },
+      { type: 'cards', title: 'Restricted gate, what to see', items: [] },
+      { type: 'heading', text: 'II · A map of the crossers' },
+      { type: 'paragraph', text: 'Master Leung writes today’s headcount on the whiteboard: forty-two arrived today, nine egg sandwiches eaten hunched over the bench, one old gentleman carrying materials across, two primary school kids. He hides no paper slips — everyone passing this side of the gate has passed through again and again. He knows the weight of every footstep.' },
+      { type: 'cards', title: 'Restricted gate, what to hear', items: [] },
+      { type: 'heading', text: 'III · The first run of seven' },
+      { type: 'paragraph', text: 'At seven, the gate machines give one last signal. Master Leung changes the whiteboard into a message: “Closing a touch early today — see you at seven tomorrow.” The restricted-area morning never ends, but it forever belongs to the next station. He pulls the iron gate open from the left side and then closes it, and locks it gently.' },
+      { type: 'cards', title: 'Restricted gate, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sheung Shui Lok Ma Chau” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：清晨六點一刻。上水火車站連接落馬洲關閘的通勤線（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——第一班通勤車的門剛合上。站務員梁師傅（合成敘事，非真實人物）把茶餐廳的手寫牌掛在閘機旁邊：『今日：蛋治一個，咖央兩個，番梘一塊。』' },
       { type: 'heading', text: '一、六點一刻的閘機' },
