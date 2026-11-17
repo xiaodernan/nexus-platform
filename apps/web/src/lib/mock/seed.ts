@@ -2787,6 +2787,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-yauma-tei-opera-supper-chronicle', title: '晚上八點半：油麻地粵劇牌樓老倌的散場宵夜（香港系列 · 第五十六章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：晚上八點半的油麻地粵劇牌樓——落幕四鼓、散場的老倌、最後一鍋靚湯米線；這個城仍然為散場的人留一盞燈。',
+    title_en: 'Half-past eight — the after-show supper for the Cantonese-opera veterans at Yau Ma Tei (HK series, Ch. 56)',
+    description_en: 'A synthetic guide (not travel advice): half-past eight at the Yau Ma Tei opera pavilion — the fourth drum falls, the veterans scatter, the last pot of rice-noodle soup; this city still keeps a lamp for the ones leaving the stage.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past eight in the evening. The Yau Ma Tei opera pavilion (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the fourth drum of the final scene has just fallen. The backstage lights are half out, the performers’ seats still lit; one old wooden table, two dim-sum baskets, one pot of broth.' },
+      { type: 'heading', text: 'I · The fourth drum of the after-show' },
+      { type: 'paragraph', text: 'Ah Kwan (synthetic narrative, not a real person) is the young man on the stand — he hands the gong and drum, collects the knives and spears, pours tea for the veterans. He says the fourth drum landing is not the end; the end is when nobody backstage calls the next act. Tonight Yau Sir, playing the martial sheng (synthetic narrative, not a real person), switches off the walkie-talkie, sets the gauze crown on the table, and says one word: “today made it.”' },
+      { type: 'cards', title: 'The pavilion, what to see', items: [] },
+      { type: 'heading', text: 'II · The roast-duck reunion' },
+      { type: 'paragraph', text: 'Two streets away from the pavilion is a roast shop that never scatters. Yau Sir always orders the same thing: one plate of roast duck, one bowl of rice-noodles in broth, one bowl of rice porridge. The landlady — Third Aunty (synthetic narrative, not a real person) — says on sight: “Yau Sir, hard work today.” He answers: “After the curtain falls is when the world counts.”' },
+      { type: 'cards', title: 'The after-show supper, what to hear', items: [] },
+      { type: 'heading', text: 'III · The thirteen circles before the gates' },
+      { type: 'paragraph', text: 'At half-past ten, Ah Kwan walks Yau Sir home. The thirteen circles before the gates — he counts each lamp past: the convenience store, the rice shop, the mahjong room, the cha chaan teng’s last wok — by the thirteenth, Yau Sir’s lamp is already lit. The scatter is not the end; the scatter is the next act queuing in silence.' },
+      { type: 'cards', title: 'The pavilion, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yau Ma Tei Cantonese opera” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上八點半。油麻地粵劇牌樓（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——最後一幕的四鼓剛落。後台的燈暗了一半，演員席仍然亮著；一張舊木桌，兩籠點心，一壺靚湯。' },
       { type: 'heading', text: '一、散場的四鼓' },
