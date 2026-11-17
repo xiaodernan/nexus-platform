@@ -1529,6 +1529,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-school-bus-chronicle', title: '早上八點半：校巴的秘密班機（香港系列 · 第二十二章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着校巴師傅，由住宅區仔頁一直開到九樓操場——香港每個早上最守時的鐘。',
+    title_en: 'Half-past eight — the school bus’s secret timetable (HK series, Ch. 22)',
+    description_en: 'A synthetic guide (not travel advice): follow the school-bus driver from the housing estate to the school yard — Hong Kong’s most punctual clock of every morning.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): twenty past eight in the morning. Sister Ah-je (synthetic narrative, not a real person) stops the bus at the estate gate and winds the brass lamp to eight. This bus does not run on electricity; it runs on one yawn after another from the primary pupils’ uniforms.' },
+      { type: 'heading', text: 'I · Her route is a secret' },
+      { type: 'paragraph', text: 'The school-bus route is written on no station map — Ah-je carries it in her head: first pick up the five who live in Kowloon City, then the two households from the Hong Kong Island West side, and last stop at Po Yun Road. Before anyone boards, she counts each uniform pocket to see whether the glasses are tucked in. Only when everyone is seated does she let herself ease the accelerator.' },
+      { type: 'cards', title: 'The school bus, what to hear', items: [] },
+      { type: 'heading', text: 'II · One clock, plus two minutes' },
+      { type: 'paragraph', text: 'Out at half past eight, arrived at twenty-five past — every parent knows it: Ah-je’s bus is more reliable than the MTR’s own promises. If one child is missing, she waits three minutes on the spot, still not moving. Nine-year-old Ah-mui is always the last one to skip on board; Ah-je already counts her steps: two up, one stop, two into the seat.' },
+      { type: 'cards', title: 'The school bus, what to count', items: [] },
+      { type: 'heading', text: 'III · The other side of the school bell' },
+      { type: 'paragraph', text: 'Three-forty, class is out, the same bus reappears at the school gate. Everyone has swapped seats: the morning’s lesson bags still ride in hands, the after-school hands are empty — only one silly boy carrying a swim-club card and a soaked schoolbag home. Ah-je never presses the bell; she just says: “Today you do not need to hold the door for me, I will do it myself.” One short route, two rides a day, one whole city, one afternoon seeded with the school bell.' },
+      { type: 'cards', title: 'The school bus, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “school bus lunch” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點二十分，校巴師傅阿姐（合成敘事，非真實人物）在屋苑門前停好車，把趟環燈拉到八。這台巴士的鐘不是靠電，是靠一個一個打呵欠的小學生校服。' },
       { type: 'heading', text: '一、她的路線是一個秘密' },

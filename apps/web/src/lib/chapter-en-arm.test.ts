@@ -305,4 +305,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /last fare/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 22 (the school bus) ships in three arms too', () => {
+    const hk = mockGuide('hk-school-bus-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/校巴/);
+    const cn = mockGuide('hk-school-bus-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/校巴/);
+    const en = mockGuide('hk-school-bus-chronicle', 'en');
+    expect(en?.title).toMatch(/Half-past eight/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Po Yun Road/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Her route is a secret/i.test(b.text))).toBe(true);
+  });
 });
