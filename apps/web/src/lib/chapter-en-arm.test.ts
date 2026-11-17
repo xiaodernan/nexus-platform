@@ -485,4 +485,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /trial of eighteen dollars/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 34 (Tung Chung) ships in three arms too', () => {
+    const hk = mockGuide('hk-tung-chung-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/東涌/);
+    const cn = mockGuide('hk-tung-chung-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/东涌/);
+    const en = mockGuide('hk-tung-chung-chronicle', 'en');
+    expect(en?.title).toMatch(/Tung Chung/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Sing/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /wind that blows every day/i.test(b.text))).toBe(true);
+  });
 });

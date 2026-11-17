@@ -1973,6 +1973,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-tung-chung-chronicle', title: '中午十二點：東涌——機場的風在跑道', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着一群東涌人，由新機場到地產公司的食堂，由風的味道到中午十二點半的飯。',
+    title_en: 'Noon — Tung Chung — the wind on the runway (HK series, Ch. 34)',
+    description_en: 'A synthetic guide (not travel advice): follow a crowd of Tung Chung people from the new airport to the estate canteen, from the taste of the wind to the half-past-twelve meal.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-twelve. The shopping arcade at the new Tung Chung centre is already lit; the runway wind is whiter than white-cloud white. Ah Sing (synthetic narrative, not a real person) comes out of the airport staff canteen, holding a can of lemon tea — he is the typical contradiction of Tung Chung New Town: half the airport staff wind, half the estate-market corridor breath.' },
+      { type: 'heading', text: 'I · The wind that blows every day' },
+      { type: 'paragraph', text: 'The runway wind is Tung Chung’s own: one gust after another, each carrying the smell of aviation fuel and seafood, then miraculously vanishing and arriving again. Ah Sing says: “Every year people claim this city will ‘radically hallucinate’; and every year the city returns to its own self-adjustment.” — Tung Chung’s afternoons fall quiet again, day after day.' },
+      { type: 'cards', title: 'Tung Chung, what to see', items: [] },
+      { type: 'heading', text: 'II · The daily life of a new town' },
+      { type: 'paragraph', text: 'With the new airport gone, this town is old neighbours and old cha chaan teng. Ah Sing walks me through one tiny grocery store — the owner folds fabric, a middle-aged lady is weighing one pound of soy sauce — their daily life is a something like a refusal of novelty, a loyalty to the old. The residents of the new town pass the same building every day: from home to clinic, to the market, to the bus stop, one small life-circle of less than seven hundred metres.' },
+      { type: 'cards', title: 'Tung Chung, what to count', items: [] },
+      { type: 'heading', text: 'III · The people across the wind' },
+      { type: 'paragraph', text: 'Three in the afternoon, the passenger hall commotion eases. They look at the rainbow on the glass, then take out their phone, take one picture, and look away. Every person outside Ah Sing has something of “ready for boarding” and something of “ready to do nothing” — the Tung Chung residents wave these waves of people out every day, while the air here keeps blowing, keeps cool, as if everything were a mirage.' },
+      { type: 'cards', title: 'Tung Chung, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tung Chung new airport” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十二點半。東涌新城市中心的購物走廊已經亮了，跑道風在空氣裡白過白雲。阿城（合成敘事，非真實人物）從新機場員工食堂出來，手裡拿著一罐檸茶——他是東涌新市鎮的典型矛盾：一半是機場的員工風，一半是屋苑市場的走廊氣。' },
       { type: 'heading', text: '一、那道風每天吹過' },
