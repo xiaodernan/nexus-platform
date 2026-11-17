@@ -22,6 +22,8 @@ const repoRoot = join(HERE, '..', '..', '..', '..');
 const ISLAND = 'apps/web/src/components/world-guide-beacon.tsx';
 const ROUTE = 'apps/web/app/api/nexus/ai/world-guide/route.ts';
 const CHAPTER_PAGE = 'apps/web/app/guides/[slug]/page.tsx';
+const HOME_PAGE = 'apps/web/app/page.tsx';
+const GUIDES_INDEX = 'apps/web/app/guides/page.tsx';
 
 describe('world-guide-beacon island', () => {
   const island = readFileSync(join(repoRoot, ISLAND), 'utf8');
@@ -79,6 +81,18 @@ describe('the chapter page mounts the beacon once, beside the companion', () => 
     expect(page).toContain('labels={dict.growth.worldGuide}');
     expect((page.match(/<WorldGuideBeacon/g) ?? []).length).toBe(1);
     expect((page.match(/<ChapterAskLive/g) ?? []).length).toBe(1);
+  });
+
+  it('the front door and the trailhead each mount the beacon exactly once', () => {
+    const home = readFileSync(join(repoRoot, HOME_PAGE), 'utf8');
+    expect(home).toContain('<WorldGuideBeacon');
+    expect(home).toContain('surface="home"');
+    expect(home).toContain('labels={dict.growth.worldGuide}');
+    expect((home.match(/<WorldGuideBeacon/g) ?? []).length).toBe(1);
+    const trailhead = readFileSync(join(repoRoot, GUIDES_INDEX), 'utf8');
+    expect(trailhead).toContain('<WorldGuideBeacon');
+    expect(trailhead).toContain('surface="guides"');
+    expect((trailhead.match(/<WorldGuideBeacon/g) ?? []).length).toBe(1);
   });
 
   it('all three locales carry the worldGuide labels', () => {

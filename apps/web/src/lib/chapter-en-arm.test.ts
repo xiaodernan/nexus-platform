@@ -290,4 +290,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /rope first/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 21 (the last fare) ships in three arms too', () => {
+    const hk = mockGuide('hk-last-taxi-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/半夜十二點半/);
+    const cn = mockGuide('hk-last-taxi-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/半夜十二点半/);
+    const en = mockGuide('hk-last-taxi-chronicle', 'en');
+    expect(en?.title).toMatch(/Half-past midnight/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Hung Hom/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /last fare/i.test(b.text))).toBe(true);
+  });
 });

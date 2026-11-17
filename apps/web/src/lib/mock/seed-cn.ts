@@ -785,6 +785,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-last-taxi-chronicle', title: '半夜十二点半：的士站最后一客（香港系列 · 第二十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着的士师傅陈哥在的士站等最后一班渡轮——香港深夜的最后一条载客线。',
+    title_en: 'Half-past midnight — the last fare at the taxi stand (HK series, Ch. 21)',
+    description_en: 'A synthetic guide (not travel advice): follow Master Chan the taxi driver at the stand, waiting for the last ferry — Hong Kong’s last late-night passenger line.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past midnight. Central Pier faces the taxi stand with just one row of cars left. Master Chan (synthetic narrative, not a real person) zero-sets the meter, opens the door to blow the cold air through — the foghorn sounds once, and that is tonight’s last ferry.' },
+      { type: 'heading', text: 'I · Park the position first' },
+      { type: 'paragraph', text: 'Not everyone may park at the taxi stand. The regulars know to take the furthest slot — most of the passengers off the last ferry are bound for Kowloon or the Hong Kong Island West side; straight ahead, no detour. He counts the heads: three overseas students, a cleaning auntie off the night shift, a stall holder carrying two boxes of frozen meat — all of them want to go home. Master Chan, nineteen years in, knows best where the half-past-midnight crowd heads; money can be found again, time cannot.' },
+      { type: 'cards', title: 'The taxi stand, what to wait for', items: [] },
+      { type: 'heading', text: 'II · The arithmetic of the last fare' },
+      { type: 'paragraph', text: 'A midnight taxi does not count minutes, it counts people — one fare who rides alone back, one family of four, one who wants the seat beside the driver because he is catching a flight. The red, green and yellow taxis all line up under the ferry mouth — the change is exact, and Master Chan would rather overpay one or two, because “when a customer sees you let them win, they remember the ride”. After one in the morning there are still people holding roses and red gift bags, handing over a bunch of “happy” to a friend who will not let go — the back seat of a taxi is this city’s very last chair.' },
+      { type: 'cards', title: 'The taxi stand, what to sit for', items: [] },
+      { type: 'heading', text: 'III · The light at the tunnel mouth' },
+      { type: 'paragraph', text: 'One twenty-five in the morning, Master Chan wheels the last customer through the Hung Hom Cross-Harbour Tunnel. The light at the tunnel mouth catches Victoria Harbour by night — the passenger steps out carrying a bottle of shochu and a riddle: “This bottle, in a few days you will know who it is for”. Master Chan rolls the window down, the sea wind pours into the car — this deep night is held together, ride after ride, by taxis that “do not yet know where they are going”.' },
+      { type: 'cards', title: 'The taxi stand, what to see', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “ferry taxi” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：半夜十二点半。中环码头对面的的士站只剩一排车。陈哥（合成叙事，非真实人物）把计程车表归零，打开车厢吹冷气——气笛响了一声，那是今日最后一班渡轮。' },
       { type: 'heading', text: '一、先泊好位置' },

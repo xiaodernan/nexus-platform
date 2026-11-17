@@ -16,6 +16,7 @@ import { NewcomerTour } from '@/components/newcomer-tour';
 import { hkDateKey } from '@/lib/almanac';
 import { HkTodaySlotCard } from '@/components/hk-today-slot';
 import { pickTodaySlot } from '@/lib/today-slot';
+import { WorldGuideBeacon } from '@/components/world-guide-beacon';
 
 /**
  * Home (§6): the search box is the product. Everything below it is a rail of EntityCards built from
@@ -202,6 +203,16 @@ export default async function HomePage(props: {
           </Container>
         </section>
       ) : null}
+
+      <Container size="shell" className="pt-6">
+        {/* D1310 — the live world guide on the front door: one compass for travelers who just landed. */}
+        <WorldGuideBeacon
+          locale={locale}
+          surface="home"
+          minutes={45}
+          labels={dict.growth.worldGuide}
+        />
+      </Container>
 
       <Container size="shell" className="flex flex-col">
         {rails.degraded ? (

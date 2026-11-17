@@ -9,6 +9,7 @@ import { IS_MOCK } from '@/lib/env';
 import { formatDateTime } from '@/lib/format';
 import { GrowthCardLink, GrowthIndex } from '@/components/growth-view';
 import { EmptyState } from '@nexus/ui';
+import { WorldGuideBeacon } from '@/components/world-guide-beacon';
 
 
 /** `/guides` (§8): the index of editorial/AI guides. Nothing is listed that the data plane omitted. */
@@ -70,6 +71,14 @@ export default async function GuidesIndexPage() {
           </div>
         </section>
       ) : null}
+
+      {/* D1310 — the live world guide on the trailhead, before the list of 106 doors. */}
+      <WorldGuideBeacon
+        locale={locale}
+        surface="guides"
+        minutes={45}
+        labels={dict.growth.worldGuide}
+      />
 
       {guides.length === 0 ? (
         <EmptyState icon="pin" title={dict.states.empty} className="py-10" />
