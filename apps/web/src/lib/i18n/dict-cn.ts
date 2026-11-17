@@ -325,7 +325,7 @@ export const zhCN: Dict = {
         {
           kicker: '第 五 步',
           title: '三分钟测出你的香港人格',
-          body: '去「香港人格」页，三分钟拣完即得自己𠮶个 archetype，出咗嚟的卡唔止俾自己睇，share 去 Instagram／WhatsApp 都得 — 而且系你留低的印记。',
+          body: '去「香港人格」页，三分钟拣完即得自己个个 archetype，出咗嚟的卡唔止俾自己睇，share 去 Instagram／WhatsApp 都得 — 而且系你留低的印记。',
           example: '湾仔 茶餐厅老板／深夜车仔面人／冰室老派派',
           cta: '去测一测',
           href: '/hk-type',
@@ -1681,7 +1681,7 @@ export const zhCN: Dict = {
         '渡轮特许经营权于 2018 年 3 月续约（15 年）；船队九艘柴油电动渡轮，主线中环 ↔ 尖沙咀',
         '票价（2021-02-09 生效）：下层平日 HK$4、上层 HK$5；周末及公众假期下层 HK$5.6、上层 HK$6.5',
       ] },
-      { id: 'airairport', kicker: 'REAL-HK', title: '12 · 赤𫚭角的一通血脉——香港国际机场（不是演示数据）', paragraphs: [
+      { id: 'airairport', kicker: 'REAL-HK', title: '12 · 赤鱲角的一通血脉——香港国际机场（不是演示数据）', paragraphs: [
         '三月之外，城市还有另一种早班——冒穿云层的那种。下面这几笔同样是公开来源的航班与客流刻度，不属本站演示资料。',
         '资料来源：Wikipedia — Hong Kong International Airport（https://en.wikipedia.org/wiki/Hong_Kong_International_Airport，2026-11-16 网页查阅）。数字随时间变动；点开连结与 Statistics 段可核对更新版。',
       ], bullets: [

@@ -38,8 +38,20 @@ HK2S = opencc.OpenCC('hk2s')
 T2S = opencc.OpenCC('t2s')
 
 
+# The fold cannot decide rare/proper Cantonese glyphs; record the same corrections the
+# dict generator uses so neither arm produces a glyph the reader cannot read.
+POST_FOLD_REPLACEMENTS = {
+    '𠮶': '个',   # the Cantonese demonstrative deictic; the Simplified arm uses the plain 个 glyph
+    '𫚭': '鱲',   # 赤鱲角 (Chek Lap Kok, Hong Kong Intl Airport) keeps 鱲 in Simplified Chinese
+    '𩠌': '餸',   # Hong Kong kitchen vocabulary (sung3) — a dish; keep the authentic form
+}
+
+
 def fold(text: str) -> str:
-    return T2S.convert(HK2S.convert(text))
+    converted = T2S.convert(HK2S.convert(text))
+    for src, dst in POST_FOLD_REPLACEMENTS.items():
+        converted = converted.replace(src, dst)
+    return converted
 
 
 def slice_const(src: str, start_needle: str) -> str:

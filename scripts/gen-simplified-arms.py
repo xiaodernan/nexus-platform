@@ -47,7 +47,22 @@ T2S = opencc.OpenCC('t2s')
 
 
 def fold(text: str) -> str:
-    return T2S.convert(HK2S.convert(text))
+    converted = T2S.convert(HK2S.convert(text))
+    # Corrections opencc's tables cannot know, because they are proper-noun or Cantonese-sensitive:
+    for src, dst in POST_FOLD_REPLACEMENTS.items():
+        converted = converted.replace(src, dst)
+    return converted
+
+
+# Singular Hong Kong-proper-noun restorations: characters the fold cannot decide on its own are
+# restored by hand so the Simplified arm never shows a glpyh the reader cannot read. A lone
+# rare variant is a 错别字 to every non-Cantonese-reading screen font on the planet, which is
+# the same mistake D1213 fixed for Traditional.
+POST_FOLD_REPLACEMENTS = {
+    '𠮶': '个',   # the Cantonese demonstrative deictic; the Simplified arm keeps the plain 个 glyph
+    '𫚭': '鱲',   # 赤鱲角 is written with 鱲 in Simplified Chinese as well (Hong Kong Intl Airport)
+    '𩠌': '餸',   # Hong Kong kitchen vocabulary (sung3) — a dish; keep authentic, not the rare form hk2s invented
+}
 
 
 def slice_block(src: str, start_needle: str, end_needle: str) -> str:
