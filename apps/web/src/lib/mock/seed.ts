@@ -1788,6 +1788,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-typhoon-shelter-chronicle', title: '下午五點：太古城候車亭的一身風雨（香港系列 · 第二十九章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着一班乘客擠進候車亭的這一分鐘——一間鐵頂下的市中心避難所。',
+    title_en: 'Five in the afternoon — a downpour at the Taikoo City shelter (HK series, Ch. 29)',
+    description_en: 'A synthetic guide (not travel advice): follow the crowd crammed into the Taikoo City bus shelter inside one minute — an iron-roofed downtown refuge.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): five in the afternoon. The Taikoo City shelter is just an iron roof and a dozen square metres — but today each minute is a small-scale drill for shelter. Rain comes from one side and hits; the off-work crowd wraps their briefcases in raincoats, pulls their luggage against themselves, and puts their nothing-matters face on: “this is the fifteen minutes I have been waiting for.”' },
+      { type: 'heading', text: 'I · The waiting time is really long' },
+      { type: 'paragraph', text: 'When it rains, everyone knows exactly where this bus is — somewhere on the eastern corner; the on-time rate is around seventy per cent. Everyone is calling the boss, the kids, the parents. “I am still queuing.” “I am at the shelter.” “I will make it.” This sentence has been said a hundred times, and no one knows if it is really true. But this shelter’s sunlight only truly arrives once the rain stops — in that single instant, everyone takes a deep breath; the whole of Taikoo City lets out a light sigh.' },
+      { type: 'cards', title: 'The shelter, what to hear', items: [] },
+      { type: 'heading', text: 'II · The short fifteen minutes of social under the iron roof' },
+      { type: 'paragraph', text: 'The shelter is a wholly public, wholly private place. Everyone under this five-metre iron roof is stripped naked of their off-work temper — someone has no patience, someone is unhappy with a colleague, someone has a vendetta against the clock at home. But nobody complains about the order here: legally this is a public space, practically it is an afternoon emotional shelter. This is the only place in Hong Kong where a mental-health meeting takes place at five o’clock every day — and nobody keeps the minutes.' },
+      { type: 'cards', title: 'The shelter, what to watch', items: [] },
+      { type: 'heading', text: 'III · The instant the rain breaks' },
+      { type: 'paragraph', text: 'The rain stops suddenly, the sun slants in from the east of Taikoo City. The people in the shelter all look up, all open their mouths, all slowly relax. In this instant nobody says a word, but every person feels it: those fifteen minutes are over, next second the city will once again present its best-view performance for the harbour. He keeps walking, she keeps walking, he keeps rushing, he keeps sighing — everyone steps out of the shelter.' },
+      { type: 'cards', title: 'The shelter, what to count', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Taikoo City shelter” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午五點。太古城候車亭只有一間鐵頂、十幾平方米——但這天每一分鐘都是一場小型的避難演練。雨從橫掃的方向拍過來，下班的人把公文包裹進雨衣、把行李箱貼緊自己、把無所謂的表情貼在臉上：「這就是我一直等著的十五分鐘。」' },
       { type: 'heading', text: '一、候車的時間真的很長' },
