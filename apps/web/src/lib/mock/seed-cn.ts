@@ -1710,6 +1710,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-loohu-weekend-chronicle', title: '下午两点半：罗湖站的双向货币（香港系列 · 第四十六章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：星期天下午两点半，罗湖站反流人潮——港币换人民币、椰青换凤梨——一座城用另一座城衡量的星期天。',
+    title_en: 'Half past two — the two-way currency of Lo Wu Station (HK series, Ch. 46)',
+    description_en: 'A synthetic guide (not travel advice): Sunday at half past two, the counter-flow tide at Lo Wu — HK dollars for renminbi, coconut water for pineapple — a Sunday measured by one city against another.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): Sunday, half past two. The counter-flow at Lo Wu Station (synthetic narrative; not a real person or a real moment — the time and the merchants are narrative constructions) — a wife carrying a truckload of snacks home, a father whose insole hides two currencies, an empty backpack coming back with only one lobster ball. Every Sunday in Hong Kong, half the city comes back through this direction.' },
+      { type: 'heading', text: 'I · The etiquette of two-way currency' },
+      { type: 'paragraph', text: 'The exchange-window clerk never asks how much you are swapping today, or why. He places HK dollars on the left, renminbi on the right; the sound of the two piles of coins colliding is faster, more honest, than any dialect. Nobody has an opinion on the amount — because nobody truly cares about the amount. Here, the “border” is just a box that needs change.' },
+      { type: 'cards', title: 'Lo Wu, what to see', items: [] },
+      { type: 'heading', text: 'II · The rotation of coconut water and pineapple' },
+      { type: 'paragraph', text: 'Some people buy Yan Tang milk at Lo Wu to carry home — “each person has their price.” Ah Kit (synthetic narrative, not a real person) makes the round trip once a week, not for the bargains: he says he is simply the kind of person for whom both places are home. Every Sunday, the two cities eat the same breakfast separately, each quietly settling the other’s accounts for themselves.' },
+      { type: 'cards', title: 'Lo Wu, what to hear', items: [] },
+      { type: 'heading', text: 'III · The light of the counter-flow' },
+      { type: 'paragraph', text: 'Half past three, the train finally sways. Faces fill the windows — they see themselves in a Hong Kong mirror. Lo Wu Station is not a border, but the doorframe in front of home. Ah Kit slips a box of pineapples into his bag, and carries next week’s self back with him too.' },
+      { type: 'cards', title: 'Lo Wu, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Lo Wu counter-flow” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：星期天下午两点半。罗湖站反流的队伍（合成叙事，非真实人物与真实时刻——时刻与商户全部是叙事建构）——带一卡车零食回家的妻子，鞋垫里藏着两种货币的爸爸，空空的背包里只带回来一个龙虾球。香港的每一个星期天，都有一半的人从这个方向回来。' },
       { type: 'heading', text: '一、双向货币的礼仪' },

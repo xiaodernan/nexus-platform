@@ -665,4 +665,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /light after nine/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 46 (Lo Wu’s two-way currency) ships in three arms too', () => {
+    const hk = mockGuide('hk-loohu-weekend-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/羅湖站的雙向貨幣/);
+    const cn = mockGuide('hk-loohu-weekend-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/罗湖站的双向货币/);
+    const en = mockGuide('hk-loohu-weekend-chronicle', 'en');
+    expect(en?.title).toMatch(/two-way currency/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Kit/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /etiquette of two-way currency/i.test(b.text))).toBe(true);
+  });
 });
