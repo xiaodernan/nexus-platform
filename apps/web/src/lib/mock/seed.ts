@@ -2195,6 +2195,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-filipino-central-chronicle', title: '深夜十點：名媛的中環寫字樓（香港系列 · 第四十章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着一個中環深夜護更的 FILCC，由熄燈一直到翌晨九時——這個城深夜最安靜的運動體。',
+    title_en: 'Ten at night — the Central office tower’s Filipina guard (HK series, Ch. 40)',
+    description_en: 'A synthetic guide (not travel advice): follow a night-shift lantern guard from lights-out to nine the next morning — this city’s deepest quietest runner.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): ten at night. Every office of this glass-curtained Central tower is dark — Ah May (synthetic narrative, not a real person), a night-shift guard, walks through the highest floor each night; she keeps one lamp in the control shack and buffs one last newspaper against each floor: in the deep night she is the tower’s quietest poem.' },
+      { type: 'heading', text: 'I · The face of the office tower' },
+      { type: 'paragraph', text: 'Ah May is a Filipina Central. In Hong Kong three years — cleaning by day, accounting studies by night, finished three levels of EOC. When she steps into this tower every night, she is in fact walking into her own career — this is what brings her back to Central: the same road every day, a road this city refuses to forget.' },
+      { type: 'cards', title: 'Office tower, what to count', items: [] },
+      { type: 'heading', text: 'II · The iron plate never goes off-duty' },
+      { type: 'paragraph', text: 'Ten o’clock arrival, six in the morning the last bin of rubbish is emptied. She washes her floor covering twice — once with one brand, once with another — she says this is the bottom layer of this city’s commerce foundation. Every morning she writes “tomorrow” on a sticky note — like “tomorrow go home to see my child” or “tomorrow the first chapter of Level 3 accounting” — then pins it on the lift wall. Three to four thousand people in this tower brush past, none of them knows.' },
+      { type: 'cards', title: 'Office tower, what to see', items: [] },
+      { type: 'heading', text: 'III · The morning hand-over' },
+      { type: 'paragraph', text: 'Tomorrow, eight-oh-six in the morning, the early-shift sister hands over to her own sister — then walks home to eat one breakfast after a night that didn’t end. Ah May asks: “Is she busy today?” “She is always busy.” Ah May smiles: “Everyone is busy.” Then the two exchange smiles — nobody lingers; evening will come round again.' },
+      { type: 'cards', title: 'Office tower, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Central Filipina” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：深夜十點。中環的這座玻璃幕樓的任何一個辦公室都熄了燈——阿May（合成敘事，非真實人物）這個護更人正經過最高的一層樓，她每天都要把掌室閃一個護更，然後把最後一份報紙在每一層樓上都揉一揉：她在這個深夜裏是整幢樓最安靜的詩。' },
       { type: 'heading', text: '一、寫字樓的臉' },

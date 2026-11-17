@@ -575,4 +575,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Teochew is the normal talk/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 40 (the Filipina guard) ships in three arms too', () => {
+    const hk = mockGuide('hk-filipino-central-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/名媛的中環寫字樓/);
+    const cn = mockGuide('hk-filipino-central-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/名媛的中环写字楼/);
+    const en = mockGuide('hk-filipino-central-chronicle', 'en');
+    expect(en?.title).toMatch(/Filipina|Central office/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah May/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /iron plate/i.test(b.text))).toBe(true);
+  });
 });
