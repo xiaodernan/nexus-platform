@@ -409,6 +409,25 @@ class ChapterAskRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class WorldGuideCandidate(_Strict):
+    """One place the traveler could go next — curated by the web lane, never invented by the model."""
+
+    slug: str = Field(min_length=1, max_length=120)
+    title: str = Field(min_length=1, max_length=200)
+    blurb: str = Field(default="", max_length=240)
+
+
+class WorldGuideRequest(_Strict):
+    """The world-guide lane's request — where the reader stands and how much time they have,
+    the web lane's curated candidates in; ONE next step + its phrasing out."""
+
+    locale: str = Field(default="zh-HK", max_length=16)
+    surface: str = Field(default="guides", max_length=24)
+    current_title: str = Field(default="", max_length=200)
+    minutes: int = Field(default=30, ge=1, le=1440)
+    candidates: list[WorldGuideCandidate] = Field(min_length=1, max_length=6)
+
+
 class AdminEventsSnapshot(_Strict):
     """The /admin/system reader's REAL numbers, verbatim — the model sees no store, no tenant, no identity."""
 

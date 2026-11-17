@@ -46208,3 +46208,21 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
 
 **The unit.** `hk-cheung-chau-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1–14, 106** of 106.
+
+## 1306. D1306 — the world-guide lane (鹿野嚮導) ships live; D1302–D1305 already on master
+
+**Why.** §四: the model must be wired into the play loop, not bolted on beside it. Every reader
+already asks "where do I go next?" — the question was unanswered inside the product.
+
+**The unit.** `POST /ai/v1/world/guide` (+ BFF `POST /api/nexus/ai/world-guide` + the 🧭
+client beacon on every chapter page). A StateGraph (`classify` → `select` → `phrase` →
+`verify`): the web lane curates the two doors (arc order, `hk-` first); the deterministic
+selector ranks them (English stopword-filtered word bigrams / CJK character bigrams; snack ↔
+short blurb, deepen ↔ lexical continuity, settle/explore keep the curated order); the model
+(`gpt-6.1-terra`, temperature 0, `task_class summary`) phrases ONE recommendation in the
+reader's language and may `pick` 1|2 to swap the doors. URL / >420 chars / wrong-language draft
+/ empty answer all collapse to the deterministic fallback template. Live-verified through the
+Clash proxy: zh-HK pick=2, `cached_tokens` 4864/4990 (97%), latency 5287→2965 ms; en similar
+(4736/4925, 96%). Thirteen AI pins (`test_world_guide.py`), eight web pins
+(`world-guide-live.test.ts`), vocabulary gate green (fixtures restricted to package-carried
+code points), contract-drift 127 routes clean, verify_all RESULT: NO OFFENDER.

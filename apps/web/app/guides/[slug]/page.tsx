@@ -9,6 +9,7 @@ import { Container } from '@nexus/ui';
 import { GuideView } from '@/components/growth-view';
 import { JsonLd } from '@/components/json-ld';
 import { ChapterAskLive } from '@/components/chapter-ask-live';
+import { WorldGuideBeacon } from '@/components/world-guide-beacon';
 
 /**
  * `/guides/{slug}` (§8, §28). An unreviewed AI guide is still readable, but it is kept out of the
@@ -53,6 +54,14 @@ export default async function GuidePage(props: Props) {
           chapterSlug={guide.slug}
           locale={locale}
           labels={dict.growth.chapterAsk}
+        />
+        {/* D1306 — the live world guide; one compass button, one next step. */}
+        <WorldGuideBeacon
+          chapterSlug={guide.slug}
+          locale={locale}
+          surface="chapter"
+          minutes={45}
+          labels={dict.growth.worldGuide}
         />
       </Container>
       <JsonLd

@@ -452,6 +452,14 @@ export interface Dict {
       pending: string;
       proven: string;
     };
+    /** D1306: the world guide — one live compass button, one next step. */
+    worldGuide: {
+      eyebrow: string;
+      title: string;
+      hint: string;
+      cta: string;
+      pending: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -1946,6 +1954,13 @@ const zhHK: Dict = {
       submit: '問',
       pending: '大模型正在這一章裡面搵答案…',
       proven: '模型潤飾自這一章 · 出處如下',
+    },
+    worldGuide: {
+      eyebrow: '環球指南針 · 大模型',
+      title: '下一站去邊？',
+      hint: '大模型會睇你而家身處何處、仲有幾多時間，指一條路畀你行。',
+      cta: '撳我，畀我指路',
+      pending: '大模型正在諗下一站…',
     },
   },
   hkType: {
@@ -4037,6 +4052,13 @@ const en: Dict = {
       submit: 'Ask',
       pending: 'The model is looking for the answer inside this chapter…',
       proven: 'Model-phrased from this chapter · source excerpts below',
+    },
+    worldGuide: {
+      eyebrow: 'WORLD GUIDE · LIVE MODEL',
+      title: 'Where to next?',
+      hint: 'The model reads where you are and how much time you have, then points one honest step forward.',
+      cta: 'Ask the guide',
+      pending: 'The roads are aligning — choosing your next step…',
     },
   },
   hkType: {

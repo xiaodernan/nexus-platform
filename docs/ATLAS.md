@@ -665,3 +665,9 @@ was decomposed into microservices.
 | `docs/HONG_KONG_ARC.md` | D1117: the Hong Kong Day-Arc — the reading order across the nine chapters and the product-interlock contract |
 | `.github/workflows/llm-cache-probe.yml` | D1130: the weekly (Tuesday 00:00 UTC) + dispatchable provider-cache probe for wkapi.pro |
 
+
+| `apps/ai/nexus_ai/orchestrator/world_guide_graph.py` | D1306: the world-guide StateGraph — classify → select → phrase → verify; deterministic bigram selection (stopword-filtered English word bigrams + CJK character bigrams), fail-closed verify (URL leak / >420 chars / wrong-language draft), the model reorders only between the two web-curated doors (pick 1|2) |
+| `apps/ai/nexus_ai/api/routes_world_guide.py` | D1306: the world-guide lane — POST /ai/v1/world/guide, service-to-service; candidates curated by the web lane, model phrases one recommendation ≤320 chars; measured + one recommendation ledger row rides the chapter lane's discipline |
+| `apps/ai/tests/test_world_guide.py` | D1306: thirteen pins — mock provider inert; happy-path pick=2 swap; URL/CJK-leak/overlong/empty/non-JSON gates; deepen intent classification; candidate fence at 7 → 422 |
+| `apps/web/src/components/world-guide-beacon.tsx` | D1306: the client beacon — one 🧭 button, dict labels, hides itself on any empty answer; suggestion chips link the two curated chapters |
+| `apps/web/app/api/nexus/ai/world-guide/route.ts` | D1306: the BFF — curates the two arc doors (hk- slugs first from `guideList`), forwards locale/surface/minutes; in mock mode the lane is inert |

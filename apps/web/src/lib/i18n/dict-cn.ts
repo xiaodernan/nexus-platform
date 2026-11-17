@@ -764,6 +764,13 @@ export const zhCN: Dict = {
       pending: '大模型正在这一章里面揾答案…',
       proven: '模型润饰自这一章 · 出处如下',
     },
+    worldGuide: {
+      eyebrow: '环球指南针 · 大模型',
+      title: '下一站去边？',
+      hint: '大模型会睇你而家身处何处、仲有几多时间，指一条路畀你行。',
+      cta: '揿我，畀我指路',
+      pending: '大模型正在谂下一站…',
+    },
   },
   hkType: {
     eyebrow: '香港系列 · 互动篇章',
