@@ -106,6 +106,7 @@ The Spring Cloud plane is a **sidecar**, not a decomposition of the monolith
 | `apps/web/src/components/site-chrome.tsx` | D1207: header gains the locale switch before the theme toggle; every page honors the cookie per request |
 | `apps/web/app/world/page.tsx` | D1210: the `/world` world atlas — 68 arc chips read straight from dict, seven hour-layers, SSR per request, zero hand-duplication |
 | `apps/web/app/insights/page.tsx` | D1212: `/insights` gains the seven-day ghost trend panel (7 cells, slope advice) — see `apps/web/src/lib/user-journeys.ts` |
+| `apps/web/src/lib/mock/seed.ts` | D1294: `hk-yu-huei-chronicle` gains title_en/description_en/body_blocks_en — Auntie Chun Fa's stall in full English; eight chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1293: `hk-fish-market-chronicle` gains title_en/description_en/body_blocks_en — the dawn fish market in full English; seven chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1292: `hk-cha-chaan-teng-chronicle` gains title_en/description_en/body_blocks_en — cha chaan teng at lunch rush in full English; six chapters now carry complete EN prose |
 | `apps/web/src/lib/mock/seed.ts` | D1291: `hk-temple-street-chronicle` gains title_en/description_en/body_blocks_en — temple street at dusk in full English; five chapters now carry complete EN prose |

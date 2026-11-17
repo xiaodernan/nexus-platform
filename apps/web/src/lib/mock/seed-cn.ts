@@ -281,6 +281,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-yu-huei-chronicle', title: '春花姨（香港系列 · 第七章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著春花姨的讨价还价，走进一个在街边站了五十年的小档。',
+    title_en: 'Auntie Chun Fa — the stall that never went quiet (HK series, Ch. 7)',
+    description_en: 'A synthetic guide (not travel advice): follow Auntie Chun Fa through the catch-and-release of her morning — fifty years at the same stall on the same street, one white tin basin at a time.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): at three in the morning the whole district stirs awake. Auntie Chun Fa places an empty transparent bottle diagonally into the white tin basin. The clock reads 4:28; she begins to inspect what was just landed.' },
+      { type: 'heading', text: 'I · The basin, the clock and her two hands' },
+      { type: 'paragraph', text: 'Her name is Lam Yuk-fong; she used to run the fish-stall floor before she became the one-woman institution at the corner. Two children — one in Macau reading medicine, one back in Guangdong cooking — neither expected she would still be standing here today.' },
+      { type: 'cards', title: 'Auntie Chun Fa’s street, where to go', items: [] },
+      { type: 'heading', text: 'II · The words she uses often' },
+      { type: 'paragraph', text: 'Her language is spare — go buy fish, come back to the kitchen, cook. This morning’s slogan was “雪上加鳞” — snow upon snow — her mother’s last phrase before dying; she has never stopped letting it ring in her head.' },
+      { type: 'cards', title: 'Auntie Chun Fa’s stall, what to eat', items: [] },
+      { type: 'heading', text: 'III · The hours inside her body' },
+      { type: 'paragraph', text: 'She runs two sessions every day: morning seven, green-bean soup with choy sam congee; afternoon four, brisket on the stove with potatoes and bean curd. The children who grew up on this street all heard her voice the way you hear a stranger’s radio — familiar without asking. The hours inside her body are just the repeating rhythm of this community itself.' },
+      { type: 'cards', title: 'Nearby, what to eat', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. Auntie Chun Fa’s story is the stable one — there are a thousand such people on any given Hong Kong street corner. In a hurry? SearchBox “Yaumatei fish ball”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨三点，整个街区都醒过来。春花姨把一只透明的空瓶斜斜地放在白铁盆里。时钟显示4:28，她开始检视刚刚卸下的鱼。' },
       { type: 'heading', text: '一、白铁盆、时钟与她这双手' },

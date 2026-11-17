@@ -112,4 +112,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /half-past four/i.test(b.text))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /rhythm of the fish market/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 7 (Auntie Chun Fa) ships in three arms too', () => {
+    const hk = mockGuide('hk-yu-huei-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/春花姨/);
+    const cn = mockGuide('hk-yu-huei-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/春花姨/);
+    const en = mockGuide('hk-yu-huei-chronicle', 'en');
+    expect(en?.title).toMatch(/Auntie Chun Fa/);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /three in the morning/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /basin, the clock/i.test(b.text))).toBe(true);
+  });
 });

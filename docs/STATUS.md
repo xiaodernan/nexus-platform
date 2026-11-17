@@ -46160,3 +46160,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 6 covers the pre-dawn market scene with the same beat-parity discipline.
 
 **The unit.** `hk-fish-market-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 106** of 106. Chapters 7–105 remain honest fallback (Traditional HK), never machine-folded.
+
+## 1294. D1294 — chapter 7 (Auntie Chun Fa) joins the EN arm; eight chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline. Chapter 7 continues the early-morning rhythm: the stall that never went quiet.
+
+**The unit.** `hk-yu-huei-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence. Chapters with full EN prose: **1, 2, 3, 4, 5, 6, 7, 106** of 106. Chapters 8–105 remain honest fallback (Traditional HK), never machine-folded.
