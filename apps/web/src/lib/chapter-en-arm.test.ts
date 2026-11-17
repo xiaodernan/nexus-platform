@@ -470,4 +470,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /ever-lit light/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 33 (the vending machine) ships in three arms too', () => {
+    const hk = mockGuide('hk-vending-machine-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/紙包飲品販賣機/);
+    const cn = mockGuide('hk-vending-machine-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/纸包饮品贩卖机/);
+    const en = mockGuide('hk-vending-machine-chronicle', 'en');
+    expect(en?.title).toMatch(/Midnight/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/eighteen dollars/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /trial of eighteen dollars/i.test(b.text))).toBe(true);
+  });
 });

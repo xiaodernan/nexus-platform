@@ -1229,6 +1229,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-vending-machine-chronicle', title: '凌晨零时零分：纸包饮品贩卖机（香港系列 · 第三十三章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着一部废弃在屋邨角落的张机，由白天亮到半夜——每一个人没想过三年，但每一个人都要用一次。',
+    title_en: 'Midnight zero-zero — the paper-carton drinks vending machine (HK series, Ch. 33)',
+    description_en: 'A synthetic guide (not travel advice): follow one corner-abandoned drink machine from day to midnight — nobody planned on it in three years, but everyone has used it once.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): midnight, 00:00. In the corner behind Block C of the estate, the paper-carton drinks vending machine is still on. It was not recently brought in, neither was it recently removed — it has been here eight years, every year a few people press out one can, sometimes reachable, sometimes not. Underneath it hang taped various handwritten notes: some say “today of critical needs”, others “just come and look” — none with a contact.' },
+      { type: 'heading', text: 'I · Rare choices' },
+      { type: 'paragraph', text: 'The three characters on the face of the machine each carry a surface meaning: the machine holds “premium” orange juice, “cheapest” paper-carton milk tea, “classic” lime. Inside, the things change every year, but the labels never move. Auntie Nine (synthetic narrative, not a real person) says with a smile: “This machine was once in the canteen, then in a karaoke house, finally returned to the estate. Like returning home.”' },
+      { type: 'cards', title: 'The vending machine, what to see', items: [] },
+      { type: 'heading', text: 'II · The trial of eighteen dollars' },
+      { type: 'paragraph', text: 'Eighteen dollars is a sacred number only Hong Kong people know. Some insert eighteen, no sound from the belt, no drink comes out. Some insert eighteen — this time it comes out. Some just slap it. Some see the machine lit and just watch it for one whole night. Auntie Nine says: “Half the rent of this building we don’t know where it goes; the other half is this machine keeping it alive — each of its buttons is this city’s patience.”' },
+      { type: 'cards', title: 'The vending machine, what to count', items: [] },
+      { type: 'heading', text: 'III · The good night forgotten' },
+      { type: 'paragraph', text: 'Half past one in the morning, the whole building goes quiet — every window has turned off its lights. Down below this machine is still lit, still three cans lined up that were swept out, nothing left of two of them. This city never truly slept — it was loosening its kind heart for that one beat. Auntie Nine says one last line: “Nobody has bought this flavour, but for over a year nobody has bought anything — nobody knows, but this machine has always been something that somebody once cared about.”' },
+      { type: 'cards', title: 'The vending machine, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “vending machine estate” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨零时零分。屋邨C座后头那个角落，这台纸包饮品贩卖机还是那样亮着。它不是最近入屋，也不是最近被撤走——它已经在这里八年，每年都有两三拨人按出一罐东西，有时拿得起，有时拿不起。它下面贴着各种手写便笺，有的写「今日要命的」，有的「斋嚟睇睇」没有任何联络人。' },
       { type: 'heading', text: '一、难得的选择' },
