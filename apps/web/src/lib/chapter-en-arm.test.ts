@@ -230,4 +230,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /calling of prices/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 17 (Ham Kwong baked sesame cakes) ships in three arms too', () => {
+    const hk = mockGuide('hk-bakery-dawn-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/鹹光燒餅/);
+    const cn = mockGuide('hk-bakery-dawn-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/咸光烧饼/);
+    const en = mockGuide('hk-bakery-dawn-chronicle', 'en');
+    expect(en?.title).toMatch(/Ham Kwong/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/three o’clock in the morning/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /tripod hedgehog/i.test(b.text))).toBe(true);
+  });
 });

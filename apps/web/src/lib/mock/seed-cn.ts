@@ -641,6 +641,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-bakery-dawn-chronicle', title: '咸光烧饼：第十七章 · 烧饼与半生熟蛋（香港系列 · 第十七章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟著一座叫咸光的烧饼铺，走过「深夜三点半」——烤一炉烧饼、关一炉炉火、熄一盏灯——然后整座城市醒过来。',
+    title_en: 'Ham Kwong baked sesame cakes — half-past three in the night (HK series, Ch. 17)',
+    description_en: 'A synthetic guide (not travel advice): follow a bakery called Ham Kwong through the small hours — one oven lit, one fire closed, one lamp dimmed — and then the whole city wakes up.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): three o’clock in the morning. The Ham Kwong oven has just been lit. Luk Gor stands at the draft vent, a pat of butter testing the heat — the pig-lard smell and the smoke come down at once — the whole wok rim starts from blue to white.' },
+      { type: 'heading', text: 'I · The baked cakes come out' },
+      { type: 'paragraph', text: 'The baked cakes are fragranced, the egg cakes are hot, the sweet cones — a tidy mess nobody questions. Ham Kwong’s night stall never lacks customers; at three in the morning, half the street feels like strangers on a midnight coach — nobody knows anybody, and yet everyone understands: what runs over the edge can still be sold; once it’s yours, it’s yours.' },
+      { type: 'cards', title: 'Ham Kwong, what to buy', items: [] },
+      { type: 'heading', text: 'II · The tripod hedgehog' },
+      { type: 'paragraph', text: 'The third pot at Ham Kwong — the cake stove is a welded-steel assistant. Luk Gor tallies the night’s batch with Old Wong by the water gate — half to sell, half for friends in emergencies. The prices are written on the small blackboard, and never change.' },
+      { type: 'cards', title: 'Ham Kwong, what to buy', items: [] },
+      { type: 'heading', text: 'III · A city wakes up' },
+      { type: 'paragraph', text: 'When Ham Kwong closes, the whole street wakes slowly. The bins have been turned once; the cat that never slept hides between two cars; at first light Luk Gor kicks his cart home and the bin men laugh a good morning — somewhere out there, strangers slowly piece together who he is.' },
+      { type: 'cards', title: 'Ham Kwong, what to use', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Ham Kwong baked sesame cakes” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨三点整。咸光的炉火刚刚点起。陆哥站到风口前，手中拿着一块牛油试烫，猪油的味道与烟同时压下来——整片镬边开始由青变白。' },
       { type: 'heading', text: '一、烧饼出炉' },
