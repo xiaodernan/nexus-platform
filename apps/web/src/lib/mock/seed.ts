@@ -1640,6 +1640,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-last-tong-sui-urn-chronicle', title: '凌晨兩點半：最後一鍋糖水（香港系列 · 第二十五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着姨九黏到糖水檔收攤——香港夜晚最後一口甜的去留。',
+    title_en: 'Half-past two — the last pot of tong sui (HK series, Ch. 25)',
+    description_en: 'A synthetic guide (not travel advice): follow Auntie Nine from the tong sui stall to closing time — Hong Kong’s last sweet note of the night, and who is allowed to have it.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half past two in the morning. The tong sui stall in Sai Wan has closed, only one iron pot left standing in the back corner. Auntie Nine (synthetic narrative, not a real person) crouches and lifts the lid for one look — one bowl is left unclaimed today, but she knows that unclaimed bottom never comes for anyone; it is only the shadow of a mountain, hanging on the last sweetness of the city.' },
+      { type: 'heading', text: 'I · What goes into the last pot' },
+      { type: 'paragraph', text: 'A pot of tong sui is not a pot of water — it is a complete evening: green beans, taro, red beans, pancakes, sago, peanuts. Auntie Nine cooks them in exactly this order every night. The last pot is never reserved for customers — it is for people still reassembling their days: the night-shift worker, the student who failed the exam, the one who broke up. When people queue at the last seat, they rarely speak. Auntie Nine says nothing either, but she slips in a handful of extra rock sugar.' },
+      { type: 'cards', title: 'The stall, what to wait for', items: [] },
+      { type: 'heading', text: 'II · Three kinds of people' },
+      { type: 'paragraph', text: 'The first: night-shift workers — their shirts are not theirs, they are borrowed from the company; they come home on schedule, bowl set on a kumquat plate, brown sugar soup with one extra spoon, eyes half-closed reading the board from the boss. The second: students — still in school uniforms, coming home for a bowl of sugar water, one hand pushing a Nikon and the other carrying someone else’s tears that never dried; for every one of them, Auntie Nine gives them “less sweet”. The third: the heartbroken — they do not queue, they sit directly on the wooden bench at the back; they know Auntie Nine never saw them. But she knows.' },
+      { type: 'cards', title: 'The stall, what to choose', items: [] },
+      { type: 'heading', text: 'III · Before clock-out' },
+      { type: 'paragraph', text: 'Three-oh-five in the morning, Auntie Nine splits the last bowl into three shares — eighty, fifty, five dollars in coins — and tosses them into the earring box: not a box of money, a signature. She closes the pot, wrings the cloth, one more swipe of the floor drain, and says quietly: “done for the night.” Then she pushes the iron door open, a cat jumps onto the shop awning, and the two trees wake up. The whole of Sai Wan goes completely quiet at this moment; but as Auntie Nine lifts her eyes at the shop front she still sees two lights on upstairs — an office all night, a night worker with a chicken-breast meal and one fevered idea. They will hold out until the morning. She knows.' },
+      { type: 'cards', title: 'The stall, what to see', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “tong sui last pot” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨兩點半。西環的糖水檔關門了，只有一口鐵鍋還站在後台的角落。姨九（合成敘事，非真實人物）蹲下來打開鍋蓋看了一眼——今日還有一碗底無主，但她知道那個無主的底永遠不會有人來拿；它只是一座山的影子，掛在這個城市最後那一口甜上。' },
       { type: 'heading', text: '一、最後一鍋的構成' },
