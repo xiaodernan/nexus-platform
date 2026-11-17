@@ -2158,6 +2158,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-teochew-markets-chronicle', title: '傍晚六點：潮州話．旺角菜市場（香港系列 · 第三十九章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟着一個 tide潮的菜市場從清晨六點到傍晚六點——這係個唔差一句「這係個潮州人世界」的地方。',
+    title_en: 'Six in the evening — the Teochew market at Mong Kok (HK series, Ch. 39)',
+    description_en: 'A synthetic guide (not travel advice): follow a Teochew food market from six in the morning to six in the evening — a place that could well be called a Teochew world.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): six in the evening. The daily lamps at the Mong Kok food market are still on; Auntie Wah the vegetable vendor (synthetic narrative, not a real person) is clearing fish off the floor — today’s fishy smell hasn’t cleared yet, and tomorrow’s fishy smell is already prepared on the same floor. This is Mong Kok’s most unchanging rhythm, beginning from someone’s grandmother, generation after generation.' },
+      { type: 'heading', text: 'I · Teochew is the normal talk' },
+      { type: 'paragraph', text: 'Everyone in this market speaks Teochew, and everyone pretends they don’t. Auntie Wah greets the adjacent crab lady: “you back again!”; then turns to the continental mother: “what would you like to eat today?” — every language code is here: “you back again” is Teochew, “what to eat today” is Cantonese, “Continental” is Mandarin… this market is a language-competition ring; every vendor is the last champion.' },
+      { type: 'cards', title: 'The market, what to see', items: [] },
+      { type: 'heading', text: 'II · The vegetables’ hair' },
+      { type: 'paragraph', text: 'Auntie often trims the vegetables one by one before boxing them, the leaves tall and big and fragrant. There are ocean fish from Lantau — the Mong Kok market is the only corner of the city where Lantau fish sells fresh. Tomatoes, aubergines, green vegetables, five-spice pepper, dried bean curd, fragrant vegetables and beans, mint leaves … every one comes from the same Lantau fish-market distribution. Perhaps one meal is the soul of this city: the vegetable sellers, the fish market, the Teochew auntie, one pot, one fried egg.' },
+      { type: 'cards', title: 'The market, what to count', items: [] },
+      { type: 'heading', text: 'III · On the way home from school' },
+      { type: 'paragraph', text: 'After seven in the evening, the school children walk past this market. They may run, may be in a hurry, may ask their parents what fish is on today — but they won’t know a Teochew elder woman was here at five in the morning, washing every fish, calling every fish by name, before any fish had become soup. When they come back home for dinner, the fish smell is already gone: only Teochew remains on the tongue.' },
+      { type: 'cards', title: 'The market, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Mong Kok market Teochew” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：傍晚六點。旺角菜市場的每日燈光仍然亮着，菜奴阿姨（合成敘事，非真實人物）在樓板上收拾它的魚——今天的魚腥味尚未消散，明天的魚腥味已經在同一條樓板上準備好了。這是旺角最不變的節奏，從一個人的祖母開始，一代接着一代。' },
       { type: 'heading', text: '一、潮州話才是普通話' },

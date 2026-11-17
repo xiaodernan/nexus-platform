@@ -560,4 +560,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /northern decision/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 39 (the Teochew market) ships in three arms too', () => {
+    const hk = mockGuide('hk-teochew-markets-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/潮州話．旺角菜市場/);
+    const cn = mockGuide('hk-teochew-markets-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/潮州话．旺角菜市场/);
+    const en = mockGuide('hk-teochew-markets-chronicle', 'en');
+    expect(en?.title).toMatch(/Teochew/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Auntie Wah/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Teochew is the normal talk/i.test(b.text))).toBe(true);
+  });
 });
