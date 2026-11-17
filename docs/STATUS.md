@@ -46184,3 +46184,9 @@ No invented numbers. Two visual accents (accent border + `accent-soft` backgroun
 **Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline of one-chapter milestones.
 
 **The unit.** `hk-bing-sat-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the pineapple bun as a stitched pattern, never a fruit reference; the yuanyang 4:6 tea-coffee incantation; the 'double-egg dream' as a house invention Hong Kong gave to itself). Chapters with full EN prose: **1–10, 106** of 106. Chapter 11 onward remain honest fallback (Traditional HK), never machine-folded.
+
+## 1298. D1298 — chapter 11 (cart noodles) joins the EN arm; twelve chapters now carry full English prose
+
+**Why.** §八 asks the whole corpus to read in either language; EN arm campaign is a staged pipeline.
+
+**The unit.** `hk-cart-noodles-chronicle` gains title_en / description_en / body_blocks_en — a full English arm in the same cadence (the six pots, the taxi-drivers/burnt-shine host, the fishball one-liner). Chapters with full EN prose: **1–11, 106** of 106.

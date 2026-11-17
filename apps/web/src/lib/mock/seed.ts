@@ -1132,6 +1132,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-cart-noodles-chronicle', title: '車仔麵：一桶會預告的夜（香港系列 · 第十一章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：跟著車仔麵輪子走，看一桶熱湯如何一次次預告整夜的胃口。',
+    title_en: 'Cart noodles — one pot predicting the night (HK series, Ch. 11)',
+    description_en: 'A synthetic guide (not travel advice): walk alongside the cart-noodle wheels and watch one cauldron of fishball broth predict the whole night of appetite ahead.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eleven at night, and the cart-noodle sign flips on along the temple-street stalls — six small pots breathing out white steam. The crowd standing there are the waiters just off the shift, students tagging along after a late movie, photographers on their city rounds — the moment the lamps come on the bread basket, they find their front row seats without a word.' },
+      { type: 'heading', text: 'I · Six small pots of truth at the centre' },
+      { type: 'paragraph', text: 'The sincerity of the cart is in its separated pots: a centre basin of beef-and-radish broth, the leftside squid-ink cake — crisply fried when the go is right — the rightside curry fishball, red-yellow and vivid, gently simmered back into the pot. The noodle base is yours to pick: instant noodles, Shanghai thin noodles, rice vermicelli, or flat dried noodles — each one blushed into the water until it barely breaks up — the feeling of safety in this dish lies precisely between the two.' },
+      { type: 'cards', title: 'Cart noodles, what to order', items: [] },
+      { type: 'heading', text: 'II · Who comes for the cart noodles' },
+      { type: 'paragraph', text: 'The cart never holds a table for anyone, but it treats every guest with courtesy: taxi drivers off their last trip, jazz clubs that still have rehearsal at this hour, cleaners on the night shift, and the office workers finishing the brief late. Each of them, when they arrive, has one sentence in their pocket — “any fishball?” — that one line is the tune of the night for this city.' },
+      { type: 'cards', title: 'Cart noodles, what to order', items: [] },
+      { type: 'heading', text: 'III · Why cart noodles are Hong Kong’s' },
+      { type: 'paragraph', text: 'Cart noodles is Hong Kong night at its tightest — a meal built in finite space, time and budget. It does not live in a proper dining room, has no spatial ceremony, no appetiser or digestif; it gives you only one warm bowl of noodles, a scoop of fishball fresh from the broth, and the breath you need between the nine-to-five — and then the wheel rolls on to its next stop, and everyone walks their direction.' },
+      { type: 'cards', title: 'Cart noodles, what to order', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate NEXUS with the content layer. In a hurry? SearchBox “Temple Street cart noodles”.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上十一點，廟街的車仔麵車立起招牌，六格小鍋冒着白煙。站着吃的人，有剛下班的侍應，也有陪朋友散場的學生，也有扛着相機巡城的攝影師——車燈一亮，他們就找上門來。' },
       { type: 'heading', text: '一、車仔檔的六格小鍋' },

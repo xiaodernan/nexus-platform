@@ -156,4 +156,15 @@ describe('chapter 106 ships in three arms', () => {
     expect(en?.body_blocks.some((b) => b.type === 'paragraph' && (/1960|North Point/i.test(b.text)))).toBe(true);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /pineapple has nothing/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 11 (cart noodles) ships in three arms too', () => {
+    const hk = mockGuide('hk-cart-noodles-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/車仔麵/);
+    const cn = mockGuide('hk-cart-noodles-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/车仔面/);
+    const en = mockGuide('hk-cart-noodles-chronicle', 'en');
+    expect(en?.title).toMatch(/Cart noodles/i);
+    expect(en?.body_blocks.some((b) => b.type === 'paragraph' && /eleven at night/i.test(b.text))).toBe(true);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /six small pots/i.test(b.text))).toBe(true);
+  });
 });
