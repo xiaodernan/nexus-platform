@@ -530,4 +530,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /no one is cooking/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 37 (the cross-water ferry) ships in three arms too', () => {
+    const hk = mockGuide('hk-north-run-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/隔水渡輪/);
+    const cn = mockGuide('hk-north-run-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/隔水渡轮/);
+    const en = mockGuide('hk-north-run-chronicle', 'en');
+    expect(en?.title).toMatch(/cross-water|ferry/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /iron frame/i.test(b.text))).toBe(true);
+  });
 });

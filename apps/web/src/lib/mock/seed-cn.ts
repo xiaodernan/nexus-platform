@@ -1377,6 +1377,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-north-run-chronicle', title: '清晨七点：隔水渡轮', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：跟着隔水渡轮的每一名乘客，由起锚去到码头——每一场跨海都不止一次出发。',
+    title_en: 'Seven in the morning — the ferry across the water (HK series, Ch. 37)',
+    description_en: 'A synthetic guide (not travel advice): follow every passenger on the ferry across the water, from anchor to pier — no crossing sails out more than once.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): seven in the morning. On the old ferry across the water, each person rests both hands on the rail, leans each arm against a pillar. The boat pushes off and heads toward Lantau, into the sea-center — tide washes out the water lines, chickens have not called, fishermen have not woken. Every passenger’s face is clear under the blue canopy — each of them thinking about last night’s rehearsal, their boss’s face, their little altar.' },
+      { type: 'heading', text: 'I · The old ferry’s iron frame' },
+      { type: 'paragraph', text: 'Water-wave marks, migratory birds, an old iron-framed boat — these are the ferry’s own heartbeat. Every morning at seven it heads south; at night it heads back; seven it arrives again — a time-capsule that doesn’t exist, yet exists. Ah Chung (synthetic narrative, not a real person) is this ferry’s cook; every day he makes himself one bowl of preserved-vegetable noodle soup; next to him there is usually a grumbled shopkeeper lady disturbed by the boat’s swaying — the two have no record, no argument.' },
+      { type: 'cards', title: 'The ferry, what to see', items: [] },
+      { type: 'heading', text: 'II · The miners’ rice jar' },
+      { type: 'paragraph', text: 'Passengers on this ferry all bring their own meals: the old cook says, “there is no restaurant, no bar.” Every morning at last they finish their morning tea, then deliver it to the south-corner window; from the south it is only ever waiting fifteen minutes, those who are late catch the next crossing. The meal, the short nap — every day the same. A rice bowl built thirty years, held entirely in hand — no one collects it, no one records it.' },
+      { type: 'cards', title: 'The ferry, what to hear', items: [] },
+      { type: 'heading', text: 'III · Finally landing' },
+      { type: 'paragraph', text: 'Everyone waits for daylight, for the moment the sky has not quite brightened yet. Then the dog of the sky arrived, and Lantau finally appeared. The faded pier gives out a hissing of steel; the sea keeps flopping back and forth, each person carrying hope, walking out carrying concern, getting back on the boat again. This is the city’s own promise: at dinner you may take this boat to the island for a pot of boat congee; you may sit next to the captain and watch tea; you may carry the last fish off into this city. The whole city is well-settled, just waiting for daylight.' },
+      { type: 'cards', title: 'The ferry, what to count', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every taste here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “cross-water ferry” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：清晨七点。隔水旧渡轮上，每个人两手搭蓬、双腋下靠着一根柱子。船推开了，就向着大屿山蓦然进入海心——潮洗出了水线，鸡没有叫，渔民也没有醒过来。乘客的脸每个都在蓝色蓬铁里，清清楚楚地在想昨晚的演示、他们 boss 的脸、他们的小佛。' },
       { type: 'heading', text: '一、旧渡轮的钢架' },
