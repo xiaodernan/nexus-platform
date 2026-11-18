@@ -1595,4 +1595,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /everyone finds their own frequency/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 109 (the King’s Road return) ships in three arms too', () => {
+    const hk = mockGuide('hk-north-point-return-rail-driver-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/英皇道.*阿史/);
+    const cn = mockGuide('hk-north-point-return-rail-driver-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/英皇道.*阿史/);
+    const en = mockGuide('hk-north-point-return-rail-driver-chronicle', 'en');
+    expect(en?.title).toMatch(/King(?:’s|'s) Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Sze/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /A quarter to eight/i.test(b.text))).toBe(true);
+  });
 });
