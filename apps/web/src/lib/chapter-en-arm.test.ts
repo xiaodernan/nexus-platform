@@ -1415,4 +1415,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /afternoon not yet closed/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 96 (Ah Hung’s East Wind art-supply store) ships in three arms too', () => {
+    const hk = mockGuide('hk-yuen-long-art-supply-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿雄的東風畫材行/);
+    const cn = mockGuide('hk-yuen-long-art-supply-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿雄的东风画材行/);
+    const en = mockGuide('hk-yuen-long-art-supply-chronicle', 'en');
+    expect(en?.title).toMatch(/East Wind art-supply store/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Hung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /ink of Fung Cheong Road/i.test(b.text))).toBe(true);
+  });
 });

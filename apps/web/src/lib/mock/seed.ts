@@ -4267,6 +4267,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-yuen-long-art-supply-chronicle', title: '中午十二點十分：元朗——鳳翔路——阿雄的東風畫材行（香港系列 · 第九十六章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：中午十二點十分的元朗鳳翔路——阿雄把今日最後一批寄出件一件件排好、綑好、寄走。',
+    title_en: 'Ten past twelve at noon — Yuen Long, Fung Cheong Road, Ah Hung’s East Wind art-supply store (HK series, Ch. 96)',
+    description_en: 'A synthetic guide (not travel advice): ten past twelve in Yuen Long — Ah Hung lines up the day’s last outgoing parcels one by one, ties them tight, ships them off.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): ten past twelve. Fung Cheong Road, Yuen Long (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Hung places today’s last outgoing batch into the cartons.' },
+      { type: 'heading', text: 'I · The art-supply shop at noon' },
+      { type: 'paragraph', text: 'Ten past twelve, and only Ah Hung’s lamp still burns on Fung Cheong Road. Today’s last order is from an art teacher who never haggles — she says teaching is worth more than one painting alone.' },
+      { type: 'cards', title: 'Fung Cheong Road, what to see', items: [] },
+      { type: 'heading', text: 'II · The order of the outgoing parcels' },
+      { type: 'paragraph', text: 'Ah Hung lines up the day’s outgoing batch one by one: paper, brushes, ink, rice-straw. Each piece maps to one student — he records them all in his sales-slip handwriting. (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Fung Cheong Road, what to hear', items: [] },
+      { type: 'heading', text: 'III · The ink of Fung Cheong Road' },
+      { type: 'paragraph', text: 'Ah Hung slides the receipts into the carton, and stamps today’s last ink on the final item. The ink dries; he presses the iron gate down; Fung Cheong Road’s day is closed. He says this art-supply road keeps going.' },
+      { type: 'cards', title: 'Fung Cheong Road, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yuen Long art supplies” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十二點十分。元朗鳳翔路（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿雄把今日最後一批寄出件放進紙箱。' },
       { type: 'heading', text: '一、畫材行的中午' },
