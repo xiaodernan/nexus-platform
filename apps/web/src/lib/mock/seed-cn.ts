@@ -2635,6 +2635,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-mong-kok-flower-market-closeout-chronicle', title: '早上十点四十五分：旺角花墟——走花市的最后一站（香港系列 · 第七十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：早上十点四十五分的通菜街花墟——散尾的零售、等卖不出的盆景打折、走街人最后一眼看的尾巴。',
+    title_en: 'A quarter to eleven in the morning — the Mong Kok flower market, the last stop of the flower run (HK series, Ch. 71)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to eleven at the Tong Choi Street flower market — the last unbundling of retail, the bonsai waiting for a markdown, the passersby the flower stall bids one last glance to.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to eleven. The Mong Kok flower market (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions). After half-past ten, the old flower market begins its clearance — bunches of chrysanthemums with stems bound together, waiting for a price somebody is willing to say aloud.' },
+      { type: 'heading', text: 'I · The running tail of a flower market' },
+      { type: 'paragraph', text: 'The flower market at 10:45 — this is the flower people’s least guarded, therefore most honest hour of the day. The bonsai tables lower their tone; the knives of cutting and wrapping fall so silent only the air is left between strokes.' },
+      { type: 'cards', title: 'Flower market, what to see', items: [] },
+      { type: 'heading', text: 'II · The last customers of the run' },
+      { type: 'paragraph', text: 'Those who arrive late buy something different from those who arrive early. The early ones buy flowers “to pair with” the reunion dinner; the late ones buy them “to keep for themselves” — neither kind haggles the vendor to the floor.' },
+      { type: 'cards', title: 'Flower market, what to hear', items: [] },
+      { type: 'heading', text: 'III · The last cut before closing' },
+      { type: 'paragraph', text: 'The final thing done before the stall closes is the air saying the four words, “I couldn’t care less.” Everything gets cut clean this way — at 10:45, the flower market, at its clearance prices, gives Mong Kok one last reason to say: finally, we can call it a day.' },
+      { type: 'cards', title: 'Flower market, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Mong Kok flower market” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上十点四十五分。旺角花墟（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）。十点半之后，老花墟便开始清盘：一束一束的菊花把茎缠在一起，正在等一个说得出口的价钱。' },
       { type: 'heading', text: '一、走尾的花市' },

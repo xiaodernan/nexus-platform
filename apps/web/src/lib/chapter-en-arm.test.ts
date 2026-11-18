@@ -1040,4 +1040,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /one loudest second/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 71 (the Mong Kok flower market) ships in three arms too', () => {
+    const hk = mockGuide('hk-mong-kok-flower-market-closeout-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/旺角花墟——走花市的最後一站/);
+    const cn = mockGuide('hk-mong-kok-flower-market-closeout-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/旺角花墟——走花市的最后一站/);
+    const en = mockGuide('hk-mong-kok-flower-market-closeout-chronicle', 'en');
+    expect(en?.title).toMatch(/flower market/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/chrysanthemums/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /last cut before closing/i.test(b.text))).toBe(true);
+  });
 });
