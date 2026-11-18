@@ -1355,4 +1355,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /fish-head soup/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 92 (the Keswick Street newspaper stall) ships in three arms too', () => {
+    const hk = mockGuide('hk-causeway-bay-newsstand-closing-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/記利佐治街——李阿打烊的報紙檔/);
+    const cn = mockGuide('hk-causeway-bay-newsstand-closing-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/记利佐治街——李阿打烊的报纸档/);
+    const en = mockGuide('hk-causeway-bay-newsstand-closing-chronicle', 'en');
+    expect(en?.title).toMatch(/Keswick Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lee/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /pulse of six old papers/i.test(b.text))).toBe(true);
+  });
 });

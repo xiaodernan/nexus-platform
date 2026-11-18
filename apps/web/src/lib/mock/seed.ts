@@ -4119,6 +4119,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-causeway-bay-newsstand-closing-chronicle', title: '上午十點一刻：銅鑼灣——記利佐治街——李阿打烊的報紙檔（香港系列 · 第九十二章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：上午十點一刻的銅鑼灣記利佐治街——李阿把一扎舊報綑好，稍作收拾，打烊。',
+    title_en: 'A quarter past ten in the morning — Causeway Bay, Keswick Street, Ah Lee closing up the newspaper stall (HK series, Ch. 92)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past ten on Keswick Street in Causeway Bay — Ah Lee binds a bundle of old papers, tidies up, and calls it a day.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past ten in the morning. Keswick Street, Causeway Bay (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Lee clips today’s unsold evening papers together.' },
+      { type: 'heading', text: 'I · The leftover papers of today' },
+      { type: 'paragraph', text: 'A quarter past ten in the morning, Keswick Street at Causeway Bay. Ah Lee’s newspaper stall had few regulars today — six copies of the evening paper left; he rolls them one by one, layers them into a bundle, lashes them tight.' },
+      { type: 'cards', title: 'Keswick Street, what to see', items: [] },
+      { type: 'heading', text: 'II · The pulse of six old papers' },
+      { type: 'paragraph', text: 'Ah Lee says this bundle of old papers is the street’s pulse — the property market’s rise and fall, where the stocks sit, what happened on neighbours’ dining tables — every page read and acted on by real people. He sets two pages apart into a small bag: “These two pages are for my mother.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Keswick Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · Closing, without breaking the line' },
+      { type: 'paragraph', text: 'Ah Lee ties the evening papers with hemp rope, shoulders his clip bottle, and heads in the direction of Tai Shui Hang. Closing is never announced, but everyone on the street knows when he will next appear. The fourth stretch is the last street he has to walk today.' },
+      { type: 'cards', title: 'Keswick Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Causeway Bay newspaper stall” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：上午十點一刻。銅鑼灣記利佐治街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——李阿把今日一賣剩下的晚報夾在一起。' },
       { type: 'heading', text: '一、今天剩下的舊報' },
