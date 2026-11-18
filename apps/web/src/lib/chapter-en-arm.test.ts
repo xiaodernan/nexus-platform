@@ -1580,4 +1580,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Two kinds of emptiness/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 108 (Ah Oh’s radio shop) ships in three arms too', () => {
+    const hk = mockGuide('hk-wan-chai-radio-shop-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿娥的收音機店/);
+    const cn = mockGuide('hk-wan-chai-radio-shop-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿娥的收音机店/);
+    const en = mockGuide('hk-wan-chai-radio-shop-chronicle', 'en');
+    expect(en?.title).toMatch(/Ah Oh.*radio shop/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Oh/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /everyone finds their own frequency/i.test(b.text))).toBe(true);
+  });
 });
