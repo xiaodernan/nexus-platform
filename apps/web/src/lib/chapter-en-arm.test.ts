@@ -1445,4 +1445,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /rice boxes steamed from midnight/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 98 (Ah Tak’s Aberdeen youtiao) ships in three arms too', () => {
+    const hk = mockGuide('hk-aberdeen-pier-yeetlong-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿德的最後一沓油條/);
+    const cn = mockGuide('hk-aberdeen-pier-yeetlong-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿德的最后一沓油条/);
+    const en = mockGuide('hk-aberdeen-pier-yeetlong-chronicle', 'en');
+    expect(en?.title).toMatch(/Wong Tao Shing Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Tak/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /plenty of heat/i.test(b.text))).toBe(true);
+  });
 });

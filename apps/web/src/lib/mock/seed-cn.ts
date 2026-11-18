@@ -3634,6 +3634,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-aberdeen-pier-yeetlong-chronicle', title: '早上六点十分：香港仔——黄道盛街——阿德的最后一沓油条（香港系列 · 第九十八章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：早上六点十分的香港仔——阿德的油条摊最后一份油条，劈落油锅的热气还在上扬。',
+    title_en: 'Ten past six in the morning — Aberdeen, Wong Tao Shing Street, Ah Tak’s last batch of youtiao (HK series, Ch. 98)',
+    description_en: 'A synthetic guide (not travel advice): ten past six in Aberdeen — Ah Tak’s youtiao stall still fries today’s last batch; the steam rising off the oil kettle is still climbing.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): ten past six in the morning. Wong Tao Shing Street, Aberdeen (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Tak’s youtiao stall still has its lamp lit.' },
+      { type: 'heading', text: 'I · The first scene of the day' },
+      { type: 'paragraph', text: 'At 6:10 in the morning, only Ah Tak’s stove is still hot on Wong Tao Shing Street. He is at the same stall every day at this hour — the spot his line has held for twenty-eight years.' },
+      { type: 'cards', title: 'Wong Tao Shing Street, what to see', items: [] },
+      { type: 'heading', text: 'II · Youtiao, plenty of heat' },
+      { type: 'paragraph', text: 'Ah Tak knows every earlycomer by face — the cleaners, the night-shift workers, the neighbour shop owner’s younger brother. “The thing that most looks like a gold bar is not the youtiao itself — it is the heat; come early, before it cools.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Wong Tao Shing Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · Ah Tak calls it a day' },
+      { type: 'paragraph', text: 'Past half past six, Ah Tak cuts the fire off, and lets the leftover youtiao cool soaking in soy milk. He goes home to sleep — the breakfast partner opens at seven. This stall is one more unwritable story.' },
+      { type: 'cards', title: 'Wong Tao Shing Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Aberdeen youtiao” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上六点十分。香港仔黄道盛街（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——阿德的油条摊还亮着灯。' },
       { type: 'heading', text: '一、这是凌晨第一个现场' },
