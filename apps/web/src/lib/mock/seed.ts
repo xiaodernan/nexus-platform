@@ -4526,6 +4526,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-causeway-bay-teacher-chalkboard-chronicle', title: '下午二點一刻：銅鑼灣——謝斐道——陳老師與最後一遍板書（香港系列 · 第一百零三章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：下午二點一刻的謝斐道——粉筆將盡，仍然在寫的第三堂。',
+    title_en: 'Quarter past two in the afternoon — Causeway Bay, Shei Fei Road, Teacher Chan and the last pass of the blackboard (HK series, Ch. 103)',
+    description_en: 'A synthetic guide (not travel advice): quarter past two on Shei Fei Road — the chalk almost gone, still writing the third class.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past two. A Causeway Bay secondary school on Shei Fei Road (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the third class has fifteen minutes left, and the characters on the blackboard are not finished. Teacher Chen (synthetic narrative, not a real person) holds half a fingernail of white chalk by the podium.' },
+      { type: 'heading', text: 'I · Short chalk, never resting' },
+      { type: 'cards', title: 'Shei Fei Road, what to see', items: [] },
+      { type: 'paragraph', text: 'At the blackboard’s upper right sits today’s subtitle — “waiting.” Teacher Chen does not wipe a single stroke. She writes her own period at her own pace, and even “if only it could” is written neatly. This is her nineteenth year on the podium — the chalk is short, the characters are not.' },
+      { type: 'heading', text: 'II · Thirty names' },
+      { type: 'cards', title: 'Shei Fei Road, what to hear', items: [] },
+      { type: 'paragraph', text: 'All thirty names in this class she can call out. One student, before the bell rings, places a fresh box of chalk on the right of the podium — picks it up, puts it down — until dismissal; the drawer holds only one brand-new box of white chalk, its sugar-colored bag, as if something were quietly kept.' },
+      { type: 'heading', text: 'III · The three o’clock bell' },
+      { type: 'cards', title: 'Shei Fei Road, what to wait for', items: [] },
+      { type: 'paragraph', text: 'At three the bell falls, and Shei Fei Road’s window shudders once — class dismissed. Teacher Chen does not pack her bag, she does not wipe the board: she sets the last half of chalk into the podium’s seam, for tomorrow’s self — the new box of chalk sits at the right, waiting for the answer she is waiting for.' },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Causeway Bay Shei Fei school” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午二點一刻。銅鑼灣——謝斐道一間中學（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——第三堂還剩一刻鐘，黑板上的字還沒有寫完。陳老師（合成敘事，非真實人物）握著一截只剩半個指甲長的白粉筆，站在講台旁。' },
       { type: 'heading', text: '一、粉筆快了也不歇' },
