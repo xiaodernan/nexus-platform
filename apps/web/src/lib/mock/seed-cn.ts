@@ -2265,6 +2265,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-shenzhen-huanggang-night-gate-chronicle', title: '凌晨两点四十五分：皇岗口岸以北的第一道闸机——陈师傅的跨境夜班（香港系列 · 第六十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：凌晨两点四十五分的皇岗口岸——货柜卡车长龙、跨境巴士的夜班司机、与深港边界深处的灯光与车流。',
+    title_en: 'Quarter to three in the morning — Master Chan’s cross-border night shift, the first gate north of Huanggang Port (HK series, Ch. 61)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to three at Huanggang Port — the truck canyons, the night-shift drivers of the cross-border buses, and the light and traffic deep inside the Shenzhen–Hong Kong boundary.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to three in the morning. Huanggang Port North Gate — the Hong Kong-to-Shenzhen northward passage deep inside the boundary (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — container trucks are lined up in long canyons, the cross-border bus engines still warm. Master Chan (synthetic narrative, not a real person) is driving the last return bus from Hong Kong, an eight-hour run through the Airport Road and the Western Tunnel — the moment the vehicle passed, the steel gantry shook a little.' },
+      { type: 'heading', text: 'I · The roadblockers and the truck starters' },
+      { type: 'paragraph', text: 'The Huanggang Port North Gate is one node of Shenzhen–Hong Kong cross-boundary transport. Master Chan says what he dislikes most at two in the morning is not the distance — it is “possibly the need to wait.” Cross-boundary time — the lights on both the Hong Kong and Shenzhen sides, clearance, containers — the one thing to fear most is an uncertain wait. He never turns his big light off at 2am, because today he must still drive out.' },
+      { type: 'cards', title: 'Huanggang gates, what to see', items: [] },
+      { type: 'heading', text: 'II · The traffic control in the radio' },
+      { type: 'paragraph', text: 'Master Chan’s radio never goes off. Every eight minutes he checks in with the border broadcast: which gate is queuing, which container lane has been re-routed, whether today’s Huanggang vehicles are hauling spring-festival freight. He says he indescribably loves that voice — it tells him the world is still moving, and his vehicle is still moving.' },
+      { type: 'cards', title: 'Huanggang gates, what to hear', items: [] },
+      { type: 'heading', text: 'III · The return to Hong Kong at three' },
+      { type: 'paragraph', text: 'At three sharp, the last cross-border bus starts. Master Chan is not on the vehicle — he stands in the shadow of a container, smoking a cigarette. He says after one winter and one summer he can no longer tell whether he lives in Hong Kong or in Shenzhen. The deepest expression of the new era is not choosing where to live; it is knowing your own pace can shuttle between both sides.' },
+      { type: 'cards', title: 'Huanggang gates, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Huanggang cross-border bus” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨两点四十五分。皇岗口岸北闸——深港边界深处连接香港与深圳的北向通道（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——货柜卡车排起长龙，跨境巴士的引擎还没熄。陈师傅（合成叙事，非真实人物）从香港开了八个小时的最后一班回港巴士，经机场路、经西区隧道，车经过时钢架抖了一抖。' },
       { type: 'heading', text: '一、拦车的人与开卡的人' },

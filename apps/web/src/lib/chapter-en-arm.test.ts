@@ -890,4 +890,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /salted-egg record book/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 61 (Master Chan’s cross-border night shift) ships in three arms too', () => {
+    const hk = mockGuide('hk-shenzhen-huanggang-night-gate-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/皇崗口岸以北的第一道閘機/);
+    const cn = mockGuide('hk-shenzhen-huanggang-night-gate-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/皇岗口岸以北的第一道闸机/);
+    const en = mockGuide('hk-shenzhen-huanggang-night-gate-chronicle', 'en');
+    expect(en?.title).toMatch(/Master Chan/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Master Chan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /traffic control in the radio/i.test(b.text))).toBe(true);
+  });
 });
