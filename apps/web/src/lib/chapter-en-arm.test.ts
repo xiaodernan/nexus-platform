@@ -1325,4 +1325,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /sweetness of time/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 90 (the Yuen Chau Street night sweep) ships in three arms too', () => {
+    const hk = mockGuide('hk-sham-shui-po-night-sweeper-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/元州街——黃叔掃路的夜更/);
+    const cn = mockGuide('hk-sham-shui-po-night-sweeper-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/元州街——黄叔扫路的夜更/);
+    const en = mockGuide('hk-sham-shui-po-night-sweeper-chronicle', 'en');
+    expect(en?.title).toMatch(/Yuen Chau Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Uncle Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /last sweep of the night watch/i.test(b.text))).toBe(true);
+  });
 });

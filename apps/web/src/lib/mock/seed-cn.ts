@@ -3338,6 +3338,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-sham-shui-po-night-sweeper-chronicle', title: '凌晨四点十分：深水埗——元州街——黄叔扫路的夜更（香港系列 · 第九十章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：凌晨四点十分的深水埗元州街——黄叔扫路最后一趟，天未亮，元州街却亮过。',
+    title_en: 'Ten past four in the morning — Sham Shui Po, Yuen Chau Street, Uncle Wong on the night sweep (HK series, Ch. 90)',
+    description_en: 'A synthetic guide (not travel advice): ten past four on Yuen Chau Street in Sham Shui Po — Uncle Wong’s last sweep before dawn; the street is dark, but it was lit.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): ten past four in the morning. Yuen Chau Street, Sham Shui Po (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Uncle Wong sweeps his last basket onto the roadside.' },
+      { type: 'heading', text: 'I · The night shift on Yuen Chau Street' },
+      { type: 'paragraph', text: 'At 4:10 in the morning, only Uncle Wong’s broom-and-one-streetlamp remain on Yuen Chau Street. He has kept the night watch for forty-seven years — he says the most important thing is to leave a clean place for the first worker who clocks in tomorrow morning to set foot.' },
+      { type: 'cards', title: 'Yuen Chau Street, what to see', items: [] },
+      { type: 'heading', text: 'II · Broom after broom' },
+      { type: 'paragraph', text: 'Uncle Wong splits every broom into three — for leaves, for paper, for sand and grit. Not one broom is a private family heirloom; he says this street sweep is for the road that everyone walks.' },
+      { type: 'cards', title: 'Yuen Chau Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · The last sweep of the night watch' },
+      { type: 'paragraph', text: 'First light has not arrived; Uncle Wong in his rubber gloves looks toward the truck-yard direction, and slaps the broom on the fence three times — Yuen Chau Street closes for tonight.' },
+      { type: 'cards', title: 'Yuen Chau Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sham Shui Po Yuen Chau Street” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨四点十分。深水埗元州街（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——黄叔把最后一筲扫上路边。' },
       { type: 'heading', text: '一、元州街的夜更' },
