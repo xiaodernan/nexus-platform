@@ -2746,6 +2746,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-central-mandarin-oriental-chef-chronicle', title: '中午十二时一刻：中环——文华东方酒店——陈总厨的饭盒时光（香港系列 · 第七十四章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：中午十二时一刻的文华东方酒店——一位行政总厨在午后最忙的时候离开岗位，只为吃一顿自己带的饭盒。',
+    title_en: 'Quarter past twelve — the Mandarin Oriental, Chief Chen’s lunchbox hour (HK series, Ch. 74)',
+    description_en: 'A synthetic guide (not travel advice): quarter past twelve at the Mandarin Oriental — an executive chef steps away at the busiest hour of the afternoon, only to eat the lunchbox he carried with him.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past twelve. The Mandarin Oriental, Central (synthetic location, not a real story — the scene and the people are narrative constructions) — Executive Chef Chan Yip Chi (synthetic narrative character) takes off his apron; lunchtime is here.' },
+      { type: 'heading', text: 'I · The timing of the apron coming off' },
+      { type: 'paragraph', text: 'At 12:15 this afternoon, on the two floors of kitchen, the room roars — Chief Chen puts the apron down: “when does an executive chef eat? Not when the guests say so; when the clock says so.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Mandarin Oriental, what to see', items: [] },
+      { type: 'heading', text: 'II · The lunchbox he carries' },
+      { type: 'paragraph', text: 'Chief Chen’s lunchbox holds at least two kinds of salted pickles and a spicy dace fish — the one his mother used to have someone make in his childhood. This lunch is more dignified than any banquet; more orthodox than any menu.' },
+      { type: 'cards', title: 'Mandarin Oriental, what to hear', items: [] },
+      { type: 'heading', text: 'III · The lunch that is not on the menu' },
+      { type: 'paragraph', text: 'The kitchen knows about Chief Chen’s lunchbox, but no one dares call it a dish — it appears on no menu, served to no guest, and cannot be tossed away. It is what he kept for himself: his mother’s words, his childhood years — all of it inside this one lunchbox.' },
+      { type: 'cards', title: 'Mandarin Oriental, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Mandarin Oriental” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：中午十二时一刻。中环文华东方酒店（合成叙事地点，非真实故事——场景与人物全部是叙事建构）——行政总厨陈业之（合成叙事人物）把围裙脱下来，吃饭时间到了。' },
       { type: 'heading', text: '一、脱围裙的时机' },

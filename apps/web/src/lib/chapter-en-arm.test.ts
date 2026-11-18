@@ -1085,4 +1085,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /last 35mm reel/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 74 (Chief Chen’s lunchbox hour) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-mandarin-oriental-chef-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/文華東方酒店——陳總廚的飯盒時光/);
+    const cn = mockGuide('hk-central-mandarin-oriental-chef-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/文华东方酒店——陈总厨的饭盒时光/);
+    const en = mockGuide('hk-central-mandarin-oriental-chef-chronicle', 'en');
+    expect(en?.title).toMatch(/Chief Chen/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Chief Chen/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /lunch that is not on the menu/i.test(b.text))).toBe(true);
+  });
 });
