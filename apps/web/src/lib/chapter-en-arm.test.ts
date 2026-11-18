@@ -1430,4 +1430,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /ink of Fung Cheong Road/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 97 (the Yung Shue Wan rice boxes) ships in three arms too', () => {
+    const hk = mockGuide('hk-namdir-bay-pot-steamed-rice-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/榕樹灣——德興陶的蒸飯盒/);
+    const cn = mockGuide('hk-namdir-bay-pot-steamed-rice-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/榕树湾——德兴陶的蒸饭盒/);
+    const en = mockGuide('hk-namdir-bay-pot-steamed-rice-chronicle', 'en');
+    expect(en?.title).toMatch(/Yung Shue Wan/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Tak Hing/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /rice boxes steamed from midnight/i.test(b.text))).toBe(true);
+  });
 });

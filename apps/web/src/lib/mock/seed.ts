@@ -4304,6 +4304,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-namdir-bay-pot-steamed-rice-chronicle', title: '早上七點零五分：南丫島——榕樹灣——德興陶的蒸飯盒（香港系列 · 第九十七章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：早上七點零五分的南丫島榕樹灣——德興陶把半夜十點起蒸的第一籠蒸飯盒，從開經的南丫小客船帶到渡口。',
+    title_en: 'Five past seven in the morning — Lamma Island, Yung Shue Wan, the steamed rice boxes at Tak Hing Ceramic (HK series, Ch. 97)',
+    description_en: 'A synthetic guide (not travel advice): five past seven at Yung Shue Wan on Lamma Island — Tak Hing Ceramic ferries the first batch of rice boxes steamed from ten last night over to the pier with the morning boat.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): five past seven in the morning. Yung Shue Wan, Lamma Island (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Tak Hing Ceramic opens the first steamer of rice boxes.' },
+      { type: 'heading', text: 'I · The rice boxes steamed from midnight' },
+      { type: 'paragraph', text: 'The kiln at Tak Hing Ceramic at Yung Shue Wan was lit at ten last night; the first basket of millet rice was covered; by 7:05 this morning the first batch of rice boxes comes out just right; he ties every box with silk ribbon.' },
+      { type: 'cards', title: 'Yung Shue Wan, what to see', items: [] },
+      { type: 'heading', text: 'II · The weight of one rice box' },
+      { type: 'paragraph', text: 'Tak Hing says true ceramic does not come from which master — it comes from clay and forty-seven years of waiting — each box has carried someone else’s entrusted name. “A rice box is not a bowl; it is a family’s homebound supper.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Yung Shue Wan, what to hear', items: [] },
+      { type: 'heading', text: 'III · A day nine-fragranced' },
+      { type: 'paragraph', text: 'At 7:05 Tak Hing hands the first box to the fisher girl — Ah Chan’s daughter, carrying it so light — Tak Hing says this batch is surely the most fragrant in town. “The alley is full of the aroma of clay-cooked rice; you know today you are very happy.”' },
+      { type: 'cards', title: 'Yung Shue Wan, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yung Shue Wan rice box” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上七點零五分。南丫島榕樹灣（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——德興陶開第一籠蒸飯盒。' },
       { type: 'heading', text: '一、二更起蒸的蒸飯盒' },
