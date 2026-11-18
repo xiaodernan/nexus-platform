@@ -3449,6 +3449,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-kwun-tong-parcel-sorting-chronicle', title: '下午三点三刻：观塘——友谅工业大厦——阿庄的包裹处（香港系列 · 第九十三章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：下午三点三刻的观塘——友谅工业大厦B座地下快递室——阿庄托运机吐出最后一件包裹，今日结算。',
+    title_en: 'A quarter to four in the afternoon — Kwun Tong, Yau Leung Industrial Building, Ah Chong at the parcel counter (HK series, Ch. 93)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to four in Kwun Tong — the basement courier room of Yau Leung Industrial Building, Ah Chong’s tray machine spits out the last parcel, the day closes out.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to four in the afternoon. The basement courier room of Yau Leung Industrial Building (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Chong places today’s last parcel onto the tray.' },
+      { type: 'heading', text: 'I · The afternoon in the basement courier room' },
+      { type: 'paragraph', text: 'A quarter to four, and only the dim sorting lamps remain on in the basement of Yau Leung Industrial Building at Kwun Tong. Ah Chong has kept the afternoon shift for seven years — he says every parcel has a destination, and every destination has a home.' },
+      { type: 'cards', title: 'Yau Leung, what to see', items: [] },
+      { type: 'heading', text: 'II · The reassurance of the tray machine' },
+      { type: 'paragraph', text: 'Ah Chong slides each parcel into the sorting cells one by one. He recognises most of the destinations — birthday cake delivered to floor 91 once — a woolly sweater received at floor 63 — none of them the same neighbour, but each of them the same waiting.' },
+      { type: 'cards', title: 'Yau Leung, what to hear', items: [] },
+      { type: 'heading', text: 'III · Nothing missed again today' },
+      { type: 'paragraph', text: 'Near four. Ah Chong shuts down the tray machine and slides the insurance slip into the drawer. Once again, nothing missed. This feeling, Ah Chong says, beats going off duty right on time.' },
+      { type: 'cards', title: 'Yau Leung, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kwun Tong parcels” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午三点三刻。观塘友谅工业大厦地下快递室（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——阿庄把今日最后一件包裹放上托盘。' },
       { type: 'heading', text: '一、地下快递室的下午' },

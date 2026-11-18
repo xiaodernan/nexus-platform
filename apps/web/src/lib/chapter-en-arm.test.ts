@@ -1370,4 +1370,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /pulse of six old papers/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 93 (Yau Leung Industrial Building parcels) ships in three arms too', () => {
+    const hk = mockGuide('hk-kwun-tong-parcel-sorting-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/友諒工業大廈——阿莊的包裹處/);
+    const cn = mockGuide('hk-kwun-tong-parcel-sorting-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/友谅工业大厦——阿庄的包裹处/);
+    const en = mockGuide('hk-kwun-tong-parcel-sorting-chronicle', 'en');
+    expect(en?.title).toMatch(/Yau Leung Industrial Building/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /reassurance of the tray machine/i.test(b.text))).toBe(true);
+  });
 });
