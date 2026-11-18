@@ -875,4 +875,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /sound of the abacus/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 60 (the Ping Li dried-peel walk-up) ships in three arms too', () => {
+    const hk = mockGuide('hk-mong-kok-ping-li-grocery-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/平利果皮批發/);
+    const cn = mockGuide('hk-mong-kok-ping-li-grocery-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/平利果皮批发/);
+    const en = mockGuide('hk-mong-kok-ping-li-grocery-chronicle', 'en');
+    expect(en?.title).toMatch(/Ping Li/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Boss Chan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /salted-egg record book/i.test(b.text))).toBe(true);
+  });
 });

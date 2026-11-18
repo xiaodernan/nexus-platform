@@ -2228,6 +2228,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-mong-kok-ping-li-grocery-chronicle', title: '晚上十点十五分：旺角唐楼『平利果皮批发』的最后一舖（香港系列 · 第六十章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：晚上十点十五分的旺角唐楼——果皮批发店的黄昏、木梯与咸蛋、与午夜油盐糖醋之间的细火。',
+    title_en: 'Quarter past ten — the last shop at the “Ping Li” dried-peel stall in a Mong Kok walk-up (HK series, Ch. 60)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past ten in Mong Kok’s old walk-up — the dried-peel stall at dusk, the wooden stairs and the salted eggs, and the slow fire between midnight oil-salt-sugar-vinegar.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past ten at night. The “Ping Li” dried-peel wholesale stall in a Mong Kok walk-up building (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the wooden stairs creaking, dried peels heaped like a small hill, glass jars of salted eggs lined along the wall. Boss Chan (synthetic narrative, not a real person) has not closed yet; tonight he is peeling off the “today’s special” sticker.' },
+      { type: 'heading', text: 'I · Wooden stairs and glass jars' },
+      { type: 'paragraph', text: 'Boss Chan has run his dried-peel stall in Mong Kok for twenty-five years. He understands no marketing, no packaging — he only understands one thing: the uses of aged tangerine peel. Lung-heat sufferers, a slice of peel; sore throats, a cup of peel water — he is not a TCM doctor, but he knows the old line better than many influencers: “aged peel regulates the qi, strengthens the spleen and the stomach.” People who find him are rarely in a hurry; they want steady.' },
+      { type: 'cards', title: 'Ping Li, what to see', items: [] },
+      { type: 'heading', text: 'II · The salted-egg record book' },
+      { type: 'paragraph', text: 'The neighbouring stall belongs to Auntie Zheng (synthetic narrative, not a real person), who sells salted eggs. Her bestseller this year is the two-coloured egg. Boss Chan keeps her records on her behalf: how many cartons sold, who they were sent to, who still owes. He says the reasons for credit need not be written down; he knows it — the people of this walk-up pay when the money comes.' },
+      { type: 'cards', title: 'Ping Li, what to hear', items: [] },
+      { type: 'heading', text: 'III · The last beat of midnight' },
+      { type: 'paragraph', text: 'At half-past ten, Ping Li winds down. Boss Chan takes a pack of aged peel for Mrs Chan — a soft green cloth pouch with a silk-yellow peel. He says: this pack is not worth money, but it is worth keeping; “only when the customer forgets it does it get to shine.” He lowers the gate halfway; the lamps of the walk-up go out one by one.' },
+      { type: 'cards', title: 'Ping Li, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Mong Kok dried peel” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上十点十五分。旺角唐楼『平利果皮批发』（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——木梯吱吱作响，果皮堆叠成一座小山，咸蛋的玻璃罐一排排贴在墙上。老板陈先生（合成叙事，非真实人物）还没关门，他今天要把『今日特卖』的胶贴撕下来。' },
       { type: 'heading', text: '一、木梯与玻璃罐' },
