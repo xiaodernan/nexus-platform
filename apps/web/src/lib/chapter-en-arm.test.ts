@@ -1400,4 +1400,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /fire of one bag/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 95 (Ah Chung Lee’s typewriter shop) ships in three arms too', () => {
+    const hk = mockGuide('hk-tseung-kwan-o-typewriter-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/李阿忠的打字機行/);
+    const cn = mockGuide('hk-tseung-kwan-o-typewriter-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/李阿忠的打字机行/);
+    const en = mockGuide('hk-tseung-kwan-o-typewriter-chronicle', 'en');
+    expect(en?.title).toMatch(/typewriter shop/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chung Lee/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /afternoon not yet closed/i.test(b.text))).toBe(true);
+  });
 });

@@ -4230,6 +4230,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-tseung-kwan-o-typewriter-chronicle', title: '下午四點一刻：將軍澳——和德商場——李阿忠的打字機行（香港系列 · 第九十五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：下午四點一刻的將軍澳——李阿忠將今日最後一台樣機從紙箱拿出來驗收。',
+    title_en: 'A quarter past four in the afternoon — Tseung Kwan O, Wo Tak Shopping Centre, Ah Chung Lee at the typewriter shop (HK series, Ch. 95)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past four in Tseung Kwan O — Ah Chung Lee pulls out today’s last demo typewriter from the carton for inspection.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past four in the afternoon. Wo Tak Shopping Centre, Tseung Kwan O (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Chung Lee pulls today’s last demo typewriter from the carton.' },
+      { type: 'heading', text: 'I · The afternoon not yet closed' },
+      { type: 'paragraph', text: 'A quarter past four — Tseung Kwan O, second floor of Wo Tak Shopping Centre — Ah Chung Lee lifts today’s first demo unit from the carton, still wrapped in cotton cloth with red ink, set in the brightest spot.' },
+      { type: 'cards', title: 'Wo Tak Shopping Centre, what to see', items: [] },
+      { type: 'heading', text: 'II · One word, one sentence of sincerity' },
+      { type: 'paragraph', text: 'Ah Chung Lee says typists are not machines — they are the city’s thinking. Every demo unit is a next-contract sub-line — memos, cartons, final chapters, confirmations. People in this city still buy paper. He cannot bring himself to close. (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Wo Tak Shopping Centre, what to hear', items: [] },
+      { type: 'heading', text: 'III · The one character of inspection' },
+      { type: 'paragraph', text: 'Ah Chung Lee starts the demo unit, and presses the keys to leave one line “received” on the paper; then closes the box, and files the nameplate into the drawer. Four o’clock has been pushed to the edge of closing. He says this trade is done for people who keep faith — not for the bottom fishers.' },
+      { type: 'cards', title: 'Wo Tak Shopping Centre, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tseung Kwan O typewriter” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午四點一刻。將軍澳和德商場（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——李阿忠把今日最後一台樣機從紙箱拿出來。' },
       { type: 'heading', text: '一、未收檔的下午' },
