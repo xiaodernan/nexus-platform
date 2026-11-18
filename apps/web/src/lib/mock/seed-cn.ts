@@ -3782,6 +3782,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-kennedy-town-junk-books-chronicle', title: '下午三点十五分：西环——坚巷——阿陈的旧书摊（香港系列 · 第一百零二章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：下午三点十五分的西环坚巷——旧书摊正午后的沉默，与一个愿意让书便宜卖出去的人。',
+    title_en: 'Quarter past three in the afternoon — Kennedy Town, Kin Hong Lane, Ah Chan’s second-hand book stall (HK series, Ch. 102)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past three on Kin Hong Lane — the silence after midday at the second-hand book stall, and a man willing to let books go cheap.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past three. Kin Hong Lane, the Western District (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the whole lane hears only the turning of pages. Ah Chan (synthetic narrative, not a real person) spreads a pile of old books under the daylight — the three-o’clock light is just right, it dries nothing, it hurts no spine.' },
+      { type: 'heading', text: 'I · Old books are in no hurry to find their owner' },
+      { type: 'cards', title: 'Kin Hong Lane, what to see', items: [] },
+      { type: 'paragraph', text: 'Kin Hong Lane is not wide — four people already fill it. Ah Chan drags the stall from the lane mouth to the middle: one pile of second-hand Chinese books, one pile of old magazines, a small pinch of rare first editions — every cover pencil-marked with the previous owner’s verdict. Visitors do not buy at first; they stand for a while. This entrance takes only five minutes — far faster than a clinic.' },
+      { type: 'heading', text: 'II · A three-o’clock lemon tea' },
+      { type: 'cards', title: 'Kin Hong Lane, what to hear', items: [] },
+      { type: 'paragraph', text: 'Ah Chan himself, every day at three, carries one lemon tea across from the lane-mouth teahouse — the ice half-melted, just right to finish. A Central secondary school student asks: “Do you have that old Wong Kar-wai one?” Ah Chan draws out a sun-faded Chungking Express — tucked inside the cover is a nineties film stub. “Ninety.” “Sixty, possible?” Ah Chan smiles: “sixty, but you let me read one page at the back.”' },
+      { type: 'heading', text: 'III · Kin Hong Lane retires its lamps' },
+      { type: 'cards', title: 'Kin Hong Lane, what to wait for', items: [] },
+      { type: 'paragraph', text: 'At half-past five, Ah Chan bundles the books one stack at a time, locks the low wooden chest — like a cage for one-way talking birds. The lane falls silent again; only the tennis-racket sound from the Kennedy Town park drifts over. He kills the light: “Kin Hong Lane second-hand book stall — see you at two tomorrow.” It is Ah Chan’s 413th consecutive closing line — the wait of the next person costs as much as this.' },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Western District second-hand books” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午三点十五分。西环——坚巷（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——整条巷子只听见书页翻动的声音。阿陈（合成叙事，非真实人物）把一叠旧书往天光底下摊开——下午三点的光刚好，不晒书，不伤书脊。' },
       { type: 'heading', text: '一、旧书不会急著找主人' },

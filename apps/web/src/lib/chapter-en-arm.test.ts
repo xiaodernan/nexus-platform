@@ -1505,4 +1505,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Two Octopus cards/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 102 (the Kin Hong Lane book stall) ships in three arms too', () => {
+    const hk = mockGuide('hk-kennedy-town-junk-books-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/堅巷——阿陳的舊書攤/);
+    const cn = mockGuide('hk-kennedy-town-junk-books-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/坚巷——阿陈的旧书摊/);
+    const en = mockGuide('hk-kennedy-town-junk-books-chronicle', 'en');
+    expect(en?.title).toMatch(/Kin Hong Lane/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /hurry to find their owner/i.test(b.text))).toBe(true);
+  });
 });
