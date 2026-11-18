@@ -1295,4 +1295,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /colours of dye/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 88 (Master Leung’s locksmith) ships in three arms too', () => {
+    const hk = mockGuide('hk-sai-ying-pun-locksmith-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/西營盤——第三街——梁師傅鎖匠鋪/);
+    const cn = mockGuide('hk-sai-ying-pun-locksmith-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/西营盘——第三街——梁师傅锁匠铺/);
+    const en = mockGuide('hk-sai-ying-pun-locksmith-chronicle', 'en');
+    expect(en?.title).toMatch(/Third Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Master Leung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /last key/i.test(b.text))).toBe(true);
+  });
 });

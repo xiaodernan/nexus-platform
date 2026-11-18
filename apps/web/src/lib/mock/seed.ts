@@ -3971,6 +3971,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-sai-ying-pun-locksmith-chronicle', title: '晚上七點半：西營盤——第三街——梁師傅鎖匠鋪的最後一單（香港系列 · 第八十八章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：晚上七點半的西營盤——梁師傅今晚七點三十分就關閘，最後一單是樓下新搬來的阿姨的防盜門鎖。',
+    title_en: 'Half-past seven in the evening — Sai Ying Pun, Third Street, Master Leung’s locksmith shop, the last order of the day (HK series, Ch. 88)',
+    description_en: 'A synthetic guide (not travel advice): half-past seven in Sai Ying Pun — Master Leung closes at 19:30 sharp tonight; the last order is the lock on the new auntie’s anti-theft door downstairs.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past seven in the evening. Third Street, Sai Ying Pun (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Master Leung places the last key before the grinder.' },
+      { type: 'heading', text: 'I · Master Leung’s closing bell' },
+      { type: 'paragraph', text: 'Master Leung has run the Third Street locksmith shop for twenty-seven years. Every day he closes at 19:30 sharp. It is not that he is unwilling to go on — he says: “when that gate closes is when today is truly over.”' },
+      { type: 'cards', title: 'Third Street, what to see', items: [] },
+      { type: 'heading', text: 'II · The last key' },
+      { type: 'paragraph', text: 'Tonight’s last order belongs to the auntie downstairs who just moved in — she lost her unduplicated original set while moving. Master Leung squats on the floor and turns each piece one by one: “The original key is not in the mirror — lost as it is, it cannot be copy-scanned; it can only be made the old way.” He falls quiet for a few seconds, then asks the apartment number.' },
+      { type: 'cards', title: 'Third Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · The biggest business of my life is keeping their doors safe' },
+      { type: 'paragraph', text: 'The grinder shakes once — a spark jumps. Master Leung pulls one old ledger from the cabinet — a bookkeeping-style notebook, recording the locks of every old door on this street. “This ledger never gets sold — it is the street’s footing.” “I am not a locksmith. I am this street’s keeper.”' },
+      { type: 'cards', title: 'Third Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sai Ying Pun locksmith” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上七點半。西營盤第三街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——梁師傅把最後一把鑰匙放進磨床前。' },
       { type: 'heading', text: '一、梁師傅的關閘鐘' },
