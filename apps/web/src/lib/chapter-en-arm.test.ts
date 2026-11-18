@@ -1070,4 +1070,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Old Ho’s Ding-ding tempo/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 73 (Wing Lei Street’s film room) ships in three arms too', () => {
+    const hk = mockGuide('hk-wing-lei-street-analog-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/永利街——黃生的膠片修補室/);
+    const cn = mockGuide('hk-wing-lei-street-analog-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/中环永利街——黄生的胶片修补室/);
+    const en = mockGuide('hk-wing-lei-street-analog-chronicle', 'en');
+    expect(en?.title).toMatch(/Wing Lei Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mr Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /last 35mm reel/i.test(b.text))).toBe(true);
+  });
 });

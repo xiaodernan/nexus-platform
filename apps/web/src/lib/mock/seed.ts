@@ -3416,6 +3416,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-wing-lei-street-analog-chronicle', title: '中午十一時四十五分：中環永利街——黃生的膠片修補室（香港系列 · 第七十三章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：中午十一點四十五分的永利街——黃生修補舊膠卷、拾級而上的字喃背影、慢手工在快城市裡的最後一個角落。',
+    title_en: 'A quarter to twelve — Wing Lei Street in Central, Mr Wong’s film-repair room (HK series, Ch. 73)',
+    description_en: 'A synthetic guide (not travel advice): eleven forty-five at Wing Lei Street — Mr Wong mends old film reels, the staircase with the soundless back, and the last corner of slow craft inside a fast city.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): eleven forty-five in the morning. Wing Lei Street (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — a Z-shaped staircase carries the past in a bag; people’s steps here slow without being told.' },
+      { type: 'heading', text: 'I · The ladder alley chasing the light' },
+      { type: 'paragraph', text: 'Mr Wong’s repair room sits on the upper third of the stairs — what you see climbing is not the scenery, but the daylight that gathers around the film reels: eleven forty-five is, for Central, the most restless hour; but people who walk in here do not care about restlessness — they are looking for one proof that slow can be kindled.' },
+      { type: 'cards', title: 'Wing Lei Street, what to see', items: [] },
+      { type: 'heading', text: 'II · The last 35mm reel from the Philippines' },
+      { type: 'paragraph', text: 'A customer’s old reel was air-freighted in from the Philippines — an old Filipino had shot his whole life onto this reel thirty years ago, and Mr Wong rescues it: the spots, the cracks, the watermarks, the slipped fingerprints — all get their honour back in the developing tray (synthetic scene inside a synthetic narrative).' },
+      { type: 'cards', title: 'Wing Lei Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · Slow craft inside a fast era' },
+      { type: 'paragraph', text: 'At midday, the slow of Wing Lei Street is out of place — but necessary. Mr Wong grins and says: “inside a fast day, one small room must be left for slow.” — these words will never appear on any advertisement, but in this room, they are genuinely useful.' },
+      { type: 'cards', title: 'Wing Lei Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Wing Lei Street film” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：中午十一時四十五分。永利街（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——一條 Z 字樓梯把往事裝進袋子裡，人的腳步在這裡自發地慢下來。' },
       { type: 'heading', text: '一、樓梯巷的追光' },
