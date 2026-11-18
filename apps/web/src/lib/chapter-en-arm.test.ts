@@ -1115,4 +1115,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /first of the month, the drawer day/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 76 (the Chai Wan industrial ovens) ships in three arms too', () => {
+    const hk = mockGuide('hk-chai-wan-oven-close-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/爐主阿九關爐的第五聲/);
+    const cn = mockGuide('hk-chai-wan-oven-close-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/炉主阿九关炉的第五声/);
+    const en = mockGuide('hk-chai-wan-oven-close-chronicle', 'en');
+    expect(en?.title).toMatch(/Chai Wan industrial building/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Master Nine/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /five egg tarts at closing/i.test(b.text))).toBe(true);
+  });
 });

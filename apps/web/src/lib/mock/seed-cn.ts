@@ -2820,6 +2820,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-chai-wan-oven-close-chronicle', title: '下午四时四十五分：柴湾——工业大厦——炉主阿九关炉的第五声（香港系列 · 第七十六章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：下午四时四十五分的柴湾工业大厦——炉主阿九依序关炉、最后一火剩的蛋挞、「工厂黄昏」的收工仪式。',
+    title_en: 'A quarter to five in the afternoon — the Chai Wan industrial building, Master Nine closes the ovens to the fifth sound (HK series, Ch. 76)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to five at the Chai Wan industrial building — Master Nine closes the ovens one by one, the last batch of egg tarts, and the “factory dusk” clocking-out ceremony.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to five. The Chai Wan industrial building (synthetic place, not a real merchant or a real hour; the hour and the scene are narrative constructions) — Master Nine counts down floor by floor, topping out at the oven mouth on the highest level.' },
+      { type: 'heading', text: 'I · The fifth sound when the ovens close' },
+      { type: 'paragraph', text: 'Closing the ovens is not “clocking out with a wrist-stamp”; it is “feeling the iron’s temperature with the palm.” After Master Nine closes the last oven: “a day’s work, and then one can close one’s eyes and smile.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Industrial building, what to see', items: [] },
+      { type: 'heading', text: 'II · The regulars on the ground floor' },
+      { type: 'paragraph', text: 'The ground floor belongs to the fuel-station vendors selling hardware; the stalls that sell pinched clamps live on the floors above: the whole building is waiting for this one moment — time to close; the dusk of the Chai Wan industrial building is also about to shut.' },
+      { type: 'cards', title: 'Industrial building, what to hear', items: [] },
+      { type: 'heading', text: 'III · The five egg tarts at closing' },
+      { type: 'paragraph', text: 'Master Nine keeps the last five egg tarts — each baked by his own hands, each named by him: First Batch, the five floors here, the fuel station, the ground floor, himself. He lays them on the last tray, each one evenly spaced, in the same order as the five closing sounds.' },
+      { type: 'cards', title: 'Industrial building, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Chai Wan industrial building” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午四时四十五分。柴湾工业大厦（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——炉主阿九依次由楼下倒数到最高层的炉口。' },
       { type: 'heading', text: '一、关炉的第五声' },
