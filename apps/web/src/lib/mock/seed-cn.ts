@@ -3227,6 +3227,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-tai-po-market-dye-factory-chronicle', title: '半夜二点一刻：大埔墟——黄先生的染厂（香港系列 · 第八十七章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：半夜二点一刻的大埔墟——黄先生的九龙染厂赶出今早出港的最后一匹布，附上一生的承诺。',
+    title_en: 'Quarter past two in the morning — Tai Po Old Market, Mr Wong’s dye factory (HK series, Ch. 87)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past two at Tai Po Old Market — Mr Wong’s dye factory pushes out the last bolt bound for the morning harbour, carrying a lifetime of promises.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past two in the morning. Tai Po Old Market (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — steam still rises from the dye vats.' },
+      { type: 'heading', text: 'I · The midnight dye machine at Tai Po' },
+      { type: 'paragraph', text: 'At 2:15, only this one lamp burns across Tai Po Old Market. Mr Wong inherited the dye factory from his mother; over thirty years on, every batch — he has to see the colour with his own eyes, and check it with his own hands, before he will shut the machine down.' },
+      { type: 'cards', title: 'Tai Po Old Market, what to see', items: [] },
+      { type: 'heading', text: 'II · The colours of dye' },
+      { type: 'paragraph', text: 'Mr Wong remembers every colour name — slate grey, malt yellow, military green — all names the customers asked for; he says he only dyes the few he recognises. “Colour is a promise, not decoration.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Tai Po Old Market, what to hear', items: [] },
+      { type: 'heading', text: 'III · The five-o’clock dock truck' },
+      { type: 'paragraph', text: 'Mr Wong opens the last manifest, and stamps the note column. At five in the morning, he rides the truck to the dock, handing tonight’s inspected goods over to the cargo boat heading back to Hong Kong. When he switched the dye machine off, he did not look back.' },
+      { type: 'cards', title: 'Tai Po Old Market, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tai Po dye factory” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：半夜二点一刻。大埔墟（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——染缸里的蒸气还在往上冒。' },
       { type: 'heading', text: '一、大埔的半夜染机' },

@@ -1280,4 +1280,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Brother Siu’s lamp/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 87 (Mr Wong’s dye factory) ships in three arms too', () => {
+    const hk = mockGuide('hk-tai-po-market-dye-factory-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/大埔墟——黃先生的染廠/);
+    const cn = mockGuide('hk-tai-po-market-dye-factory-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/大埔墟——黄先生的染厂/);
+    const en = mockGuide('hk-tai-po-market-dye-factory-chronicle', 'en');
+    expect(en?.title).toMatch(/dye factory/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mr Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /colours of dye/i.test(b.text))).toBe(true);
+  });
 });
