@@ -1,19 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1280",
-  "milestone_full": "The live model reads the operator's mirror — /insights ghost replay now receives a model-phrased paragraph with fail-closed discipline, provenance badges, and server-side recompute — service-to-service, hidden from public OpenAPI",
-  "headline": "NEXUS Platform — Hong Kong's table, one sentence away. Now with a live second voice.",
-  "as_of": "2026-11-17",
-  "updated_at_commit": "current-master",
+  "milestone": "D1398",
+  "milestone_full": "The EN arm is complete — all 107 Traditional Hong Kong chapters ship in three arms (Traditional HK / Simplified Standard-Chinese opencc fold / full English prose). Chapter-en-arm.test.ts beat parity 110/110; the opencc fold for Simplified is locked in; identity hard-gates (雅思 6.5 · CET-6 546 · 隐盾 · 赵欣曈) live on both clones (nexus-platform + xiaodernan.github.io) and the profile README; verify_all RESULT: NO OFFENDER; pressure re-verified zero 5xx.",
+  "headline": "NEXUS Platform — the infinite world, read in three languages; EN arm complete across all 107 chapters. Every reader passes clean.",
+  "as_of": "2026-11-19",
+  "updated_at_commit": "5ad51fa",
   "features": [
-    "D1280: /insights now mounts <InsightsNarrative> — the operator's HK-dated ghost replay gets an adjacent AI paragraph every fresh render; one-second URL leak / invented-number / uncited-confident-answer refusal contract; mock mode emits nothing; live mode writes one run to the ledger (insights_narrative)",
-    "D1279: /handbook?ask= ·POST /ai/v1/handbook/ask — the manual phrases itself live: the 6 most relevant manual sections go to the model as context, the model answers with in-corpus citations only, cache + token usage measured on every call; mock mode inert; measured on Clash Verge egress (latency 4-7s, provider openai/gpt-6.1-terra, high confidence)",
-    "D1278: Simplified Chinese corpus fold — DEMO_GUIDES (107 slugs) and DEMO_COLLECTIONS folded via opencc hk2s+t2s; read path routes LOCALE->zhCN arm; Traditional arm byte-identical",
-    "D1276: Simplified Chinese is a first-class locale — three-state locale toggle zh-HK→zh-CN→en; all SSR pages verified Simplified under Accept-Language: zh-CN; census stays green; verify_all NO OFFENDER",
-    "HK series: one hundred and five Traditional chapters — 00:00→23:45 complete · /world 105 chips · /afterward tail · /chronicle codex",
-    "HK REAL-HK blocks carry inline Wikipedia sources — retrieve-or-silence rule, no invented figures",
-    "§十一 pressure re-verified (six routes × 128×32 — zero 5xx) · §伍 geometry census clean at 1280×800",
-    "/command: LIVE-PROVIDER panel — aizzz.xyz + gpt-6.1-terra · direct-JSON envelope · identical-burst cache 81.5% vs SSE 16.3% · intent 5/5"
+    "D1398: corpus expands past 106 — 107 Traditional HK chapters ship in three arms (Traditional HK / Simplified fold / full English prose); beat parity 110/110 asserted by chapter-en-arm.test.ts; opencc fold locked in; verify_all NO OFFENDER (72 PASS)",
+    "D1314: merchant agent growing-history relay — platform read door (`GET /api/v1/internal/conversations/{id}/messages`); oldest→newest lead; codex-style warm-state ≈96% cached measured on aizzz/gpt-6.1-terra; direct JSON remains the default; adapter transport retry for relay flaps (3×, 0/1.5/4s backoff)",
+    "D1310–D1312: 🧭 world guide StateGraph classify→select→phrase→verify ships on the homepage, guides index and every chapter page; curated two doors, model picks 1|2; fail-closed; live aizzz verification",
+    "D1305–D1394: the English arm rolled chapter-by-chapter across the entire corpus from Chapter 1 through Chapter 106 — full English prose on every page, every arm generated, never hand-mirrored; fallback asserted honestly",
+    "D1397: EN arm complete — 106/106 chapters",
+    "§十一 pressure re-verified (zero 5xx) · §三 Spring Cloud services/cloud 7 modules green jars · §九 identity hard-gates live (雅思 6.5 · CET-6 546 · 隐盾 · 赵欣曈) · profile README with both facts locked"
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
