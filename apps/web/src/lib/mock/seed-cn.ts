@@ -2968,6 +2968,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-sham-shui-po-tuk-stall-late-night-chronicle', title: '晚上八点一刻：深水埗——财俊大厦士多——阿梅关舖的最后一灯（香港系列 · 第八十章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：晚上八点一刻的深水埗——阿梅给士多放最后一个逐个关灯，与深水埗八点零一分的默契。',
+    title_en: 'A quarter past eight in the evening — Sham Shui Po, the Choi Chun Mansion store, Ah Mei’s last light out (HK series, Ch. 80)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past eight at Sham Shui Po — Ah Mei turning off the Choi Chun Mansion store one lamp at a time, and the eight-oh-one unspoken pact of the neighbourhood.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past eight in the evening. Choi Chun Mansion (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the store’s lamps go home one by one, only the dry corridor lamp still burning.' },
+      { type: 'heading', text: 'I · The store at dusk' },
+      { type: 'paragraph', text: 'The Choi Chun Mansion store in Sham Shui Po has traded for thirty-odd years, maybe more — Ah Mei’s last sheet of receipts is the final item of the day: to write clearly what time the store closes.' },
+      { type: 'cards', title: 'The store, what to see', items: [] },
+      { type: 'heading', text: 'II · Thirty years of a Sham Shui Po person' },
+      { type: 'paragraph', text: 'Ah Mei grew up right here in Sham Shui Po. Everything in her store — the noodles, the rice boxes, the instant cup noodles, the sodas — each was tasted by her own self, confirmed by her own self, before she price-tagged it.' },
+      { type: 'cards', title: 'The store, what to hear', items: [] },
+      { type: 'heading', text: 'III · The last customer' },
+      { type: 'paragraph', text: 'At 8:01 in the evening, the “closed” sign goes onto the door — after that moment, nobody walks in. Ah Mei is neither anxious nor rushed; she ticks the day’s leftovers one by one into the file box, before she kills the light.' },
+      { type: 'cards', title: 'The store, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sham Shui Po Choi Chun Mansion store” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上八点一刻。财俊大厦（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——士多的灯一盏一盏地归位，只剩走廊那一盏干灯。' },
       { type: 'heading', text: '一、黄昏的士多' },

@@ -1175,4 +1175,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /little ritual of closing/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 80 (the Choi Chun Mansion store) ships in three arms too', () => {
+    const hk = mockGuide('hk-sham-shui-po-tuk-stall-late-night-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/財俊大廈士多/);
+    const cn = mockGuide('hk-sham-shui-po-tuk-stall-late-night-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/财俊大厦士多/);
+    const en = mockGuide('hk-sham-shui-po-tuk-stall-late-night-chronicle', 'en');
+    expect(en?.title).toMatch(/Choi Chun Mansion/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Mei/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /store at dusk/i.test(b.text))).toBe(true);
+  });
 });
