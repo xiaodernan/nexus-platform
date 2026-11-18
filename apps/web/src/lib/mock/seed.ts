@@ -3120,6 +3120,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-man-kam-to-return-chronicle', title: '早上七點一刻：文錦渡口岸榕記米業——浩明第三班折返（香港系列 · 第六十五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：早上七點一刻的文錦渡口岸——浩明第三班折返、口岸燈光再開、追車的號角、文錦渡的第一班光明。',
+    title_en: 'Quarter past seven in the morning — Ho Ming’s third run back at “Yung Kee Rice” at Man Kam To Port (HK series, Ch. 65)',
+    description_en: 'A synthetic guide (not travel advice): quarter past seven at Man Kam To Port — Ho Ming comes back for the third run, the port lights fire again, the horn chases, Man Kam To’s first bright hour.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past seven. Yung Kee Rice at Man Kam To Port (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ho Ming (synthetic narrative, not a real person) is driving the third run back. This vehicle ran second from Man Kam To to Sham Shui Po, unloading yesterday’s rice at the wharf.' },
+      { type: 'heading', text: 'I · The third run at the port' },
+      { type: 'paragraph', text: 'Ho Ming is thirty-four this year. Seven in the morning is the third run. He greets the radiator on the truck cab, feeling its temperature with a hand: today this vehicle only runs one — yesterday he already refuelled and handed the vehicle back, today he only delivers rice to the wharf, and no longer hauls goods up to Man Kam To.' },
+      { type: 'cards', title: 'Man Kam To, what to see', items: [] },
+      { type: 'heading', text: 'II · Full or not full' },
+      { type: 'paragraph', text: 'At seven, the vanguard in orange reflective jackets walks over from the Yung Kee direction. Ho Ming knows who they are. They will come and ask whether this truck is fully loaded now. If thirty-nine boxes of rice are all accounted for — they can go. If something falls short — they will tell him the exact gap. He rarely faces a shortfall, but he knows his first day surely was asked.' },
+      { type: 'cards', title: 'Man Kam To, what to hear', items: [] },
+      { type: 'heading', text: 'III · The handover in the morning light' },
+      { type: 'paragraph', text: 'At 7:15 Ho Ming parks the vehicle. Doors closed, radiator cap shut, stabilizer released. He goes back inside Yung Kee, reconciles accounts with warehouse Chief Accountant Chan. Chan gives him a cup of hot tea. Today they do not need to say much — he only delivers rice, and the chief only receives rice.' },
+      { type: 'cards', title: 'Man Kam To, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Man Kam To Yung Kee” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上七點一刻。文錦渡口岸榕記米業（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——浩明（合成敘事，非真實人物）開第三班車回來。這臺車在第二班從文錦渡回到深水埗，把昨日的米卸在碼頭。' },
       { type: 'heading', text: '一、口岸的第三班' },
