@@ -1565,4 +1565,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /between two masts/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 107 (Tai Ping Shan’s midnight noodle shop) ships in three arms too', () => {
+    const hk = mockGuide('hk-tai-ping-shan-noodle-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿敘的午夜麵家/);
+    const cn = mockGuide('hk-tai-ping-shan-noodle-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿叙的午夜面家/);
+    const en = mockGuide('hk-tai-ping-shan-noodle-chronicle', 'en');
+    expect(en?.title).toMatch(/Tai Ping Shan Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Sui/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Two kinds of emptiness/i.test(b.text))).toBe(true);
+  });
 });
