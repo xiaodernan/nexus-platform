@@ -2931,6 +2931,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-temple-street-alpo-market-closing-chronicle', title: '晚上七点四十五分：庙街——阿婆的尾盘档（香港系列 · 第七十九章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：晚上七点四十五分的庙街——年三十八岁开始卖牛杂的阿婆尾盘档、她一盘一锅的坚持与关档前的最后一个买家。',
+    title_en: 'A quarter to eight in the evening — Temple Street, Granny’s end-of-day stall (HK series, Ch. 79)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to eight on Temple Street — Granny started selling beef offal at thirty-eight, one pot and one ladle of insistence, and the last buyer before she closes.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to eight in the evening. Temple Street (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Granny is tucking today’s leftover beef offal and char siu tails under the notice board. Tomorrow the stall opens again.' },
+      { type: 'heading', text: 'I · The end-of-day plate on Temple Street' },
+      { type: 'paragraph', text: 'On Temple Street, the end of day “plate” stalls are not about unsold stock — it is an age difference: to find exactly the right buyer for the very last bowl of soup from the pot. Found, found. Not found, home to stew for herself.' },
+      { type: 'cards', title: 'Temple Street, what to see', items: [] },
+      { type: 'heading', text: 'II · Started at thirty-eight' },
+      { type: 'paragraph', text: 'Granny started selling beef offal at thirty-eight years old. No one taught her. Temple Street is not taught; you only need to stand here, and you can eat beef offal for one lifetime. She says: “Why do I sell beef offal? Because one mouthful a day, and always someone queuing.”' },
+      { type: 'cards', title: 'Temple Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · The little ritual of closing' },
+      { type: 'paragraph', text: 'Closing, Granny always picks out the oldest beef bone — too old for the pot, so into the bamboo basket it goes. She says: “It does not matter whether everything sold today — the things today must finish, finishing them, that is today.”' },
+      { type: 'cards', title: 'Temple Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Temple Street Granny end of day” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上七点四十五分。庙街（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——阿婆正在把今天剩下的牛杂和叉烧尾放进告示牌下面，明天还要开档。' },
       { type: 'heading', text: '一、庙街的尾盘' },
