@@ -1145,4 +1145,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /order the lights go off/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 78 (Old Master Lee’s half-side scale) ships in three arms too', () => {
+    const hk = mockGuide('hk-kowloon-bay-scalemaker-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/老秤匠阿利的半邊天秤/);
+    const cn = mockGuide('hk-kowloon-bay-scalemaker-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/老秤匠阿利的半边天秤/);
+    const en = mockGuide('hk-kowloon-bay-scalemaker-chronicle', 'en');
+    expect(en?.title).toMatch(/half-side scale/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Master Lee/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /half-side scale/i.test(b.text))).toBe(true);
+  });
 });

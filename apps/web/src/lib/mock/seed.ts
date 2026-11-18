@@ -3601,6 +3601,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-kowloon-bay-scalemaker-chronicle', title: '晚上六點四十五分：九龍灣——三家村——老秤匠阿利的半邊天秤（香港系列 · 第七十八章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：晚上六點四十五分的九龍灣三家村——老秤匠阿利的天秤舖、今天的最後一個客人與「半邊天秤」的故事。',
+    title_en: 'A quarter to seven in the evening — Kowloon Bay, Sam Ka Tsuen, Old Master Lee, and the half-side scale (HK series, Ch. 78)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to seven at Sam Ka Tsuen in Kowloon Bay — Old Master Lee the scale-maker’s shop, the last guest of the day and the tale of the half-side scale.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to seven in the evening. Sam Ka Tsuen, Kowloon Bay (synthetic place — not a real merchant or a real hour; the hour and the scene are narrative constructions) — Old Master Lee the scale-maker stands at the entrance of the noodle-sauce-and-silk shop. The mirror shows him — nobody came in today.' },
+      { type: 'heading', text: 'I · Forty-nine years of scales' },
+      { type: 'paragraph', text: 'Forty-nine years. From the time of Master Lee’s mother — he knew the scale’s chime earlier than the taxi bells; now even the spook’s wail gets nobody to stop. “The scale is what guests trust — more useful than trusting me.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Master Lee’s shop, what to see', items: [] },
+      { type: 'heading', text: 'II · The half-side scale' },
+      { type: 'paragraph', text: 'The ugliest scale in Master Lee’s shop has one flat side and one curved, half-and-half — most people never see clearly which side is flat and which bows. Nobody asks whether a scale may be bent. What guests always wait for is whether the scale can be trusted.' },
+      { type: 'cards', title: 'Master Lee’s shop, what to hear', items: [] },
+      { type: 'heading', text: 'III · The ninety-eight store across the road' },
+      { type: 'paragraph', text: 'The ninety-eight store across the road has traded for forty-eight years; Master Lee has traded for forty-nine. The two old men stare at opposite ends of the road, lost in their own thoughts. That window stays shut — yet Master Lee’s lamp has never been out for more than ten nights.' },
+      { type: 'cards', title: 'Master Lee’s shop, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kowloon Bay scale-maker” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上六點四十五分。九龍灣三家村（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——老秤匠阿利在麵醬絲布店的門口。鏡子裡映著他自己——今天沒有人進門。' },
       { type: 'heading', text: '一、四十九年的天秤' },
