@@ -1025,4 +1025,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Octopus gate/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 70 (the three minutes mid-harbour) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-pier-star-ferry-midbay-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/維港中間那三分鐘/);
+    const cn = mockGuide('hk-central-pier-star-ferry-midbay-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/维港中间那三分钟/);
+    const en = mockGuide('hk-central-pier-star-ferry-midbay-chronicle', 'en');
+    expect(en?.title).toMatch(/three honest minutes/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/one loudest second/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /one loudest second/i.test(b.text))).toBe(true);
+  });
 });

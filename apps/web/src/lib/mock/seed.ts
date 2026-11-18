@@ -3305,6 +3305,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-central-pier-star-ferry-midbay-chronicle', title: '早上九點四十五分：天星小輪——維港中間那三分鐘（香港系列 · 第七十章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：早上九點四十五分的維港中間——天星小輪第一號航段上的三分鐘、沒有人講話、水的聲音替所有人把門關上。',
+    title_en: 'Quarter to ten in the morning — the Star Ferry, the three honest minutes in the middle of the harbour (HK series, Ch. 70)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to ten in the middle of Victoria Harbour — the three minutes on the Star Ferry’s first run, nobody speaks, the sound of water closes the door for everyone.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to ten. The Star Ferry mid-harbour segment (synthetic narrative — not a real merchant or a real schedule; the hour and the scene are narrative constructions) — the bow faces the middle of the harbour, the most honest three minutes on the first sailing today.' },
+      { type: 'heading', text: 'I · The calm between boat and boat' },
+      { type: 'paragraph', text: 'Three minutes in the middle of Victoria Harbour: visitors reach for the camera out of habit; locals close their eyes and rehearse where they will stand. No one speaks. The water’s temper closes the door for this boat — it is not the world refusing to speak; it is the world finally willing to listen.' },
+      { type: 'cards', title: 'The cabin, what to see', items: [] },
+      { type: 'heading', text: 'II · The one loudest second' },
+      { type: 'paragraph', text: 'The second before landing, when the rope flies across, is the loudest — not because of the sound, but because there is no sound quieter than it. The fishing boats twist their waists out of the lane; tourists raise their phones to shoulder height. The greatest tension passes inside three seconds, and the whole boat exhales.' },
+      { type: 'cards', title: 'The cabin, what to hear', items: [] },
+      { type: 'heading', text: 'III · The look back before the door closes' },
+      { type: 'paragraph', text: 'At the landing, an applauding palm stretches out from the platform — it is the dock attendant tapping at a screen. The driver does not look in the rear-view mirror: Victoria Harbour does not ask you to look back; it only asks you to remember the direction of the palm.' },
+      { type: 'cards', title: 'The cabin, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Star Ferry pier” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上九點四十五分。天星小輪中段（合成敘事，非真實商戶與真實商戶、真實班次——時刻與場景全部是敘事建構）——船頭對著維港的中間，這是這一班上最誠實的三分鐘。' },
       { type: 'heading', text: '一、船與船中間的平靜' },
