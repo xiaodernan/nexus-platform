@@ -995,4 +995,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /different about the second truck/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 68 (Ah Cheong’s return coach at Huanggang) ships in three arms too', () => {
+    const hk = mockGuide('hk-huanggang-return-coach-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/返城班車的司機阿昌/);
+    const cn = mockGuide('hk-huanggang-return-coach-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/返城班车的司机阿昌/);
+    const en = mockGuide('hk-huanggang-return-coach-chronicle', 'en');
+    expect(en?.title).toMatch(/return coach at Huanggang Port/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Cheong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Two dialects on the waiting bench/i.test(b.text))).toBe(true);
+  });
 });

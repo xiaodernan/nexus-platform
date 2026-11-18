@@ -3231,6 +3231,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-huanggang-return-coach-chronicle', title: '早上八點四十五分：皇崗口岸——返城班車的司機阿昌（香港系列 · 第六十八章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：早上八點四十五分的皇崗口岸——返深班車、候車長椅、阿昌的早班與關閘保安交班時刻。',
+    title_en: 'Quarter to nine in the morning — Ah Cheong, the driver of the return coach at Huanggang Port (HK series, Ch. 68)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to nine at Huanggang Port — the back-to-Shenzhen coaches, the waiting benches, Ah Cheong’s early shift and the guards’ handover at the gate.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to nine in the morning. The return-coach bay at Huanggang Port (synthetic narrative — not a real gate shape or real schedules; the hour and the scene are narrative constructions) — Ah Cheong (synthetic narrative, not a real person) wheels the fourth early shift out, for the yardful of factory-shoed workers heading through.' },
+      { type: 'heading', text: 'I · Ah Cheong’s early shift' },
+      { type: 'paragraph', text: 'Ah Cheong takes the first vehicle at half-past seven each morning, signs off at half-past six. He says the 8:45 run is the one he knows best — the waiting workers mostly wear one factory’s rubber shoes, and the same deep-blue uniform.' },
+      { type: 'cards', title: 'Huanggang, what to see', items: [] },
+      { type: 'heading', text: 'II · Two dialects on the waiting bench' },
+      { type: 'paragraph', text: 'The conversations on the waiting bench run half Cantonese, half Teochew — today the two hottest topics, which congee can hold its low fire through the gate, and which dishes will not topple (synthetic dialogue inside a synthetic narrative, not a real merchant).' },
+      { type: 'cards', title: 'Huanggang, what to hear', items: [] },
+      { type: 'heading', text: 'III · The walkers and the gate' },
+      { type: 'paragraph', text: 'After the guard verifies identity, the whole early shift curves through like an anthill-line tracing an arc. Ah Cheong keeps both eyes on the rear-view mirror, watching them line up — the reason he feels this job is worth doing today.' },
+      { type: 'cards', title: 'Huanggang, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Huanggang return coach” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上八點四十五分。皇崗口岸的返城班車停靠點（合成敘事，非真實口岸形態與真實班次——時刻與場景全部是敘事建構）——阿昌（合成敘事，非真實人物）按照牌照早上第四班，替滿院兒都是工廠鞋的人們開出關。' },
       { type: 'heading', text: '一、阿昌的早班' },
