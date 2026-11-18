@@ -2450,6 +2450,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-man-kam-to-morning-chronicle', title: '早上七点四十五分：文锦渡口岸榕记米业——浩明的早班米斗（香港系列 · 第六十六章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：早上七点四十五分的文锦渡口岸——浩明早班的米斗装卸、米斗的准确、口岸栈板与春韭的最后一笔记帐。',
+    title_en: 'Quarter to eight in the morning — Ho Ming’s morning rice-bucket at “Yung Kee Rice” at Man Kam To Port (HK series, Ch. 66)',
+    description_en: 'A synthetic guide (not travel advice): quarter to eight at Man Kam To Port — Ho Ming works the morning rice-bucket shift, the exact measure of the buckets, the port’s pallets and the last ledger entry for the spring greens.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter to eight. Yung Kee Rice at Man Kam To Port (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ho Ming’s morning rice truck rolls out of the port’s factory gate. This is the first vehicle he sends out today, and the first bucket of rice sold to customers every single day.' },
+      { type: 'heading', text: 'I · The morning at Yung Kee' },
+      { type: 'paragraph', text: 'Ho Ming is thirty-four this year. By seven, vehicles are already rolling in to collect their rice. He still stands at the Yung Kee door with his eyes closed — but his ears are wide awake. He knows the engine note of every rice truck that rolls in.' },
+      { type: 'cards', title: 'Yung Kee, what to see', items: [] },
+      { type: 'heading', text: 'II · The accuracy of the bucket' },
+      { type: 'paragraph', text: 'Ho Ming’s usual measure is forty buckets, each bucket fifty catties. He counts the spring greens — the morning rice must go to the biggest customers — he is not sure where this rule comes from, but he follows it. Every bucket of rice is steady in his hands.' },
+      { type: 'cards', title: 'Yung Kee, what to hear', items: [] },
+      { type: 'heading', text: 'III · The first shovel of morning rice' },
+      { type: 'paragraph', text: 'At quarter past eight, Ho Ming lowers the first bucket of rice from the trolley. He does not say anything — only carries the rice steadily. Before the vehicle door is shut, he presses one small mark onto the surface of the rice inside the bucket. That is the mark of good rice.' },
+      { type: 'cards', title: 'Yung Kee, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Man Kam To Yung Kee” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上七点四十五分。文锦渡口岸榕记米业（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——浩明（合成叙事，非真实人物）的早班米车从口岸厂门走出来。这是他今天开始发米的第一辆车，也是每天卖给客户的第一斗米。' },
       { type: 'heading', text: '一、榕记的清晨' },

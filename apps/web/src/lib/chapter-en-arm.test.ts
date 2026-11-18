@@ -965,4 +965,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /third run at the port/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 66 (Ho Ming’s morning rice-bucket) ships in three arms too', () => {
+    const hk = mockGuide('hk-man-kam-to-morning-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/浩明的早班米斗/);
+    const cn = mockGuide('hk-man-kam-to-morning-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/浩明的早班米斗/);
+    const en = mockGuide('hk-man-kam-to-morning-chronicle', 'en');
+    expect(en?.title).toMatch(/morning rice-bucket/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ho Ming/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /accuracy of the bucket/i.test(b.text))).toBe(true);
+  });
 });
