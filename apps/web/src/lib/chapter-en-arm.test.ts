@@ -1340,4 +1340,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /last sweep of the night watch/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 91 (the Aberdeen boat-house supper) ships in three arms too', () => {
+    const hk = mockGuide('hk-aberdeen-boat-house-dinner-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/船灣——黃生的船屋晚飯/);
+    const cn = mockGuide('hk-aberdeen-boat-house-dinner-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/船湾——黄生的船屋晚饭/);
+    const en = mockGuide('hk-aberdeen-boat-house-dinner-chronicle', 'en');
+    expect(en?.title).toMatch(/boat bay/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mr Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /fish-head soup/i.test(b.text))).toBe(true);
+  });
 });

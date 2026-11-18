@@ -4082,6 +4082,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-aberdeen-boat-house-dinner-chronicle', title: '晚上六點一刻：香港仔——船灣——黃生的船屋晚飯（香港系列 · 第九十一章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：晚上六點一刻的香港仔——黃生在船屋上鋪好晚飯，等今天的最後一位採購。',
+    title_en: 'A quarter past six in the evening — Aberdeen, the boat bay, Mr Wong’s boat-house supper (HK series, Ch. 91)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past six in Aberdeen — Mr Wong lays out supper on the boat house, waiting for the last produce buyer of the day.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past six. Aberdeen’s boat bay (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Mr Wong sets the kettle to boil and arranges the last table of dishes.' },
+      { type: 'heading', text: 'I · The 3:30 tide-in' },
+      { type: 'paragraph', text: 'At 6:15 in the evening, the boats drift back in one by one. Mr Wong holds his post on the boat house — every afternoon he lays dried fish, a chopping board, chopsticks on the deck table. He says this is a pause granted to the busy sea — this table is the brake for tired people.' },
+      { type: 'cards', title: 'Boat bay, what to see', items: [] },
+      { type: 'heading', text: 'II · Mr Wong’s fish-head soup' },
+      { type: 'paragraph', text: 'Mr Wong lifts the big pot and ladles out a pot of white fish-head broth. Tonight he waits for the last guest — a fresh-fish buyer. “You dawdle — the soup is best taken while warm.” The two share a glance and laugh in that last chevron of light on the boat bay. (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Boat bay, what to hear', items: [] },
+      { type: 'heading', text: 'III · The wood off, closing' },
+      { type: 'paragraph', text: 'Mr Wong shuts the boat house iron gate, puts the finished broth ingredients into the fridge. The bay is gently rocking, rocking the night away. The next awakening: either tomorrow, or a worse day. He says, “finish a day — that alone is worth it.”' },
+      { type: 'cards', title: 'Boat bay, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Aberdeen boat house” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上六點一刻。香港仔的船灣（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——黃生把茶壺燒開，碼好最後一檯菜。' },
       { type: 'heading', text: '一、三點半的收工潮' },
