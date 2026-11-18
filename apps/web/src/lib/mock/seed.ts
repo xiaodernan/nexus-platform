@@ -3268,6 +3268,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-central-pier-star-ferry-chronicle', title: '早上九點十五分：天星小輪——維港的慢拍開始轉動（香港系列 · 第六十九章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：早上九點十五分的中環碼頭——天星小輪下一次啟航前的兩分鐘、月台八達通閘前的隊、從 Salisbury Road 出來的風。',
+    title_en: 'A quarter past nine in the morning — the Star Ferry, when the slow beat begins to turn (HK series, Ch. 69)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past nine at Central Pier — the two minutes before the next Star Ferry sailing, the queue at the Octopus gate, the wind coming off Salisbury Road.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past nine. The Star Ferry Central Pier (synthetic narrative — not a real merchant or real schedule; the hour and the scene are narrative constructions). The second sailing’s gate has just opened — one slow beat for the harbour.' },
+      { type: 'heading', text: 'I · Slow is this city’s under-fire' },
+      { type: 'paragraph', text: 'Nobody hurries for the Star Ferry. People who come to the pier come for slow — the morning paper finishes in time, the aroma of tea endures, and the water has not broken into shards before they reach the other side (synthetic scene inside a synthetic narrative).' },
+      { type: 'cards', title: 'The platform, what to see', items: [] },
+      { type: 'heading', text: 'II · Two kinds of rhythm at the Octopus gate' },
+      { type: 'paragraph', text: 'Visitors and locals each have their own rhythm. Visitors tap the gate then take the photo; locals tap the gate then close their eyes and rehearse where they will stand. The gate has no opinion.' },
+      { type: 'cards', title: 'The platform, what to hear', items: [] },
+      { type: 'heading', text: 'III · The moment of the horn' },
+      { type: 'paragraph', text: 'When the sailing horn sounds, the shattered day-light on the water shudders with it. Passengers take it as a one-line opening, applauded in their heads — a quarter past nine, this city; people say “slow” — they are really saying “long.”' },
+      { type: 'cards', title: 'The platform, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Star Ferry pier” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上九點十五分。天星小輪中環碼頭（合成敘事，非真實商戶與真實班次——時刻與場景全部是敘事建構）。第二班的閘剛剛放開，給維港一個慢拍。' },
       { type: 'heading', text: '一、緩慢是這座城的底火' },
