@@ -1310,4 +1310,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /last key/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 89 (the clock-calibration night shift) ships in three arms too', () => {
+    const hk = mockGuide('hk-kwun-tong-night-calibration-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/周廠長校錶車間的夜班/);
+    const cn = mockGuide('hk-kwun-tong-night-calibration-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/周厂长校表车间的夜班/);
+    const en = mockGuide('hk-kwun-tong-night-calibration-chronicle', 'en');
+    expect(en?.title).toMatch(/Manager Chow/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Factory Manager Chow/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /sweetness of time/i.test(b.text))).toBe(true);
+  });
 });

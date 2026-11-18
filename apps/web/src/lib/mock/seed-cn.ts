@@ -3301,6 +3301,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-kwun-tong-night-calibration-chronicle', title: '凌晨三点二十分：观塘——创新工厦——周厂长校表车间的夜班（香港系列 · 第八十九章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：凌晨三点二十分的观塘——校表车间的灯还亮着，周厂长把最后一台时间票券机的时差调到零点一秒。',
+    title_en: 'Twenty past three in the morning — Kwun Tong, the Innovation Industrial Building, Factory Manager Chow’s clock-calibration night shift (HK series, Ch. 89)',
+    description_en: 'A synthetic guide (not travel advice): twenty past three in the morning in Kwun Tong — the calibration workshop lights still burning, Factory Manager Chow tweaking the last ticket machine to zero-point-one seconds.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): twenty past three in the morning. Kwun Tong industrial district (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the calibration workshop light is still burning.' },
+      { type: 'heading', text: 'I · The night shift in the calibration workshop' },
+      { type: 'paragraph', text: 'At 3:20 in the morning, only the calibration workshop lamp still burns through Kwun Tong’s industrial district. Factory Manager Chow keeps the night shift — what they calibrate is not wristwatches, but the entry-and-exit time ticket machines of this writing building; every machine has to land on zero point one seconds before anyone can sign off.' },
+      { type: 'cards', title: 'Kwun Tong, what to see', items: [] },
+      { type: 'heading', text: 'II · The sweetness of time' },
+      { type: 'paragraph', text: 'For every machine he tunes right, Factory Manager Chow drops one dot on the card box lid. “Many think time belongs to data — it actually belongs to people. When people are punctual, the day falls dry and clean.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Kwun Tong, what to hear', items: [] },
+      { type: 'heading', text: 'III · The last fifteen minutes before first light' },
+      { type: 'paragraph', text: 'The sixteenth ticket machine is tuned at last — Factory Manager Chow closes the blue pen back into the pen holder. Outside, first light has not arrived. After turning the lamp off, he does not leave — he stands in the dark, hearing the subordinate machine still slowly ticking away its seconds.' },
+      { type: 'cards', title: 'Kwun Tong, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kwun Tong clock calibration” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨三点二十分。观塘工业区（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——校表车间的灯还亮着。' },
       { type: 'heading', text: '一、校表车间的夜班' },
