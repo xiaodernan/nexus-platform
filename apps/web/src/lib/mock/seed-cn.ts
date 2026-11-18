@@ -3671,6 +3671,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-tsim-shui-po-dawn-tricycle-chronicle', title: '早上八点零五分：东涌——机场快线——阿蓝的空篮（香港系列 · 第九十九章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：早上八点零五分的东涌航展——阿蓝的空篮飘过机场快线的玻璃，留下一串光。',
+    title_en: 'Five past eight in the morning — Tung Chung, the Airport Express, Ah Lam’s empty basket (HK series, Ch. 99)',
+    description_en: 'A synthetic guide (not travel advice): five past eight at Tung Chung — Ah Lam’s empty basket drifts past the glass of the Airport Express, leaving one trail of light.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): five past eight in the morning. The Airport Express at Tung Chung (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Lam hangs a bamboo basket off this car.' },
+      { type: 'heading', text: 'I · The sky reduced to the railing’s glare' },
+      { type: 'paragraph', text: 'At 8:05, the last-stop light at Tung Chung Airport Express is reduced to glare on the glass. Ah Lam stands beside the railing, holding an empty bamboo basket — his father was a dock worker — at this hour every day he waits by the railing. Besides the morning-shift workers, it is him here.' },
+      { type: 'cards', title: 'Tung Chung, what to see', items: [] },
+      { type: 'heading', text: 'II · Ah Lam is not a driver — he is the line that guides' },
+      { type: 'paragraph', text: 'Ah Lam makes one utterance that makes the animals stand still — he is not the speaking kind; he is the line that lets the birds see this sea. Today’s first call: “Plane comes.” The plane has no echo; people along the railings answered softly.' },
+      { type: 'cards', title: 'Tung Chung, what to hear', items: [] },
+      { type: 'heading', text: 'III · The empty basket is the business card' },
+      { type: 'paragraph', text: 'Ah Lam draws the bamboo basket back in; he says the basket is never for watching — it is for remembering. At 8:05 he signs off, because at 8:06 the next red-eye begins — the second shift, not his nor mine, but the basket stays.' },
+      { type: 'cards', title: 'Tung Chung, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tung Chung empty basket” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上八点零五分。东涌机场快线（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——阿蓝用一只竹篮挂住了这辆车。' },
       { type: 'heading', text: '一、天空只是栏杆的反光' },

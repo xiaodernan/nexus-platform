@@ -1460,4 +1460,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /plenty of heat/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 99 (Ah Lam’s empty basket) ships in three arms too', () => {
+    const hk = mockGuide('hk-tsim-shui-po-dawn-tricycle-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/東涌——機場快線——阿藍的空籃/);
+    const cn = mockGuide('hk-tsim-shui-po-dawn-tricycle-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/东涌——机场快线——阿蓝的空篮/);
+    const en = mockGuide('hk-tsim-shui-po-dawn-tricycle-chronicle', 'en');
+    expect(en?.title).toMatch(/Tung Chung/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lam/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /empty basket is the business card/i.test(b.text))).toBe(true);
+  });
 });
