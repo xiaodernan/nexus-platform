@@ -4452,6 +4452,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-lung-cheung-road-nightbus-chronicle', title: '凌晨一點十五分：九龍塘——龍翔道——唐伯與阿璇的 N 巴士（香港系列 · 第一百零一章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：凌晨一點十五分的龍翔道——龍翔道通宵巴士的最後一班燈，與兩個人的月台儀式。',
+    title_en: 'Quarter past one in the morning — Kowloon Tong, Lung Cheung Road, the number N coach shared by Uncle Tong and Ah Suen (HK series, Ch. 101)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past one on Lung Cheung Road — the last lamp of the all-night coach route, and the platform ritual between two people.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past one in the morning. The Lung Cheung Road shelter, Kowloon Tong (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Uncle Tong (synthetic narrative, not a real person) holds Ah Suen’s hand beneath the shelter. The tutoring-centre lights along Nathan Road are drawn into one straight line; she has not yet learned tomorrow’s dictation for Chinese class.' },
+      { type: 'heading', text: 'I · The one yellow lamp on Lung Cheung Road' },
+      { type: 'cards', title: 'Lung Cheung Road, what to see', items: [] },
+      { type: 'paragraph', text: 'When the night coach arrives, only one yellow lamp still burns atop the shelter — every shop along Lung Cheung Road has pulled its iron shutters down — only the coach’s engine keeps time alive. Ah Bin, the driver (synthetic narrative, not a real person), dims the headlights to give Lung Cheung Road one portion of quiet.' },
+      { type: 'heading', text: 'II · Two Octopus cards' },
+      { type: 'cards', title: 'Lung Cheung Road, what to hear', items: [] },
+      { type: 'paragraph', text: 'Uncle Tong draws out two Octopus cards — one student, one adult. He does not rush Ah Suen into memorising, nor asks how many tutoring sessions she attended; Ah Suen spreads the dictation sheet on her knees, and the red column carries only two characters: “Lung Cheung.” She knows Lung Cheung Road well — this road knows the city’s tempo; it only hands itself back to the moonlight after the last coach leaves.' },
+      { type: 'heading', text: 'III · The promise of the last coach' },
+      { type: 'cards', title: 'Lung Cheung Road, what to wait for', items: [] },
+      { type: 'paragraph', text: 'When the last N coach pulls away, the yellow lamp atop the shelter keeps watch one quarter-hour longer — Lung Cheung Road’s rule: when others have packed up and gone, it still holds a little longer for you. Uncle Tong closes the umbrella; Ah Suen nods without lifting her head. “Tomorrow the same — 12:55 I will be here to collect you.” The tail lights skim Lung Cheung Road; the two walk on first.' },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kowloon Tong night coach” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨一點十五分。九龍塘——龍翔道候車亭（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——唐伯（合成敘事，非真實人物）牽著阿璇的手站在亭下。補習社的燈光沿著彌敦道拉成一條線，她還沒有背熟的默書，就要到明天的中文科。' },
       { type: 'heading', text: '一、龍翔道的一盞黃燈' },

@@ -1490,4 +1490,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /tail of number ninety-nine/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 101 (the Lung Cheung Road night coach) ships in three arms too', () => {
+    const hk = mockGuide('hk-lung-cheung-road-nightbus-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/龍翔道——唐伯與阿璇的 N 巴士/);
+    const cn = mockGuide('hk-lung-cheung-road-nightbus-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/龙翔道——唐伯与阿璇的 N 巴士/);
+    const en = mockGuide('hk-lung-cheung-road-nightbus-chronicle', 'en');
+    expect(en?.title).toMatch(/Lung Cheung Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Uncle Tong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Two Octopus cards/i.test(b.text))).toBe(true);
+  });
 });
