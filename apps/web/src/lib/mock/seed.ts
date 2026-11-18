@@ -3046,6 +3046,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-sham-shui-po-north-river-market-chronicle', title: '凌晨五點十五分：深水埗北河街市——運菜員的最後一趟（香港系列 · 第六十三章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：凌晨五點十五分的深水埗北河街市——深港蔬菜的最後一汪、運菜車的最後一趟、尚未醒來的城市的胃。',
+    title_en: '5:15 in the morning — the North River Market in Sham Shui Po, the porter’s last run (HK series, Ch. 63)',
+    description_en: 'A synthetic guide (not travel advice): the North River fresh-produce market in Sham Shui Po at 5:15 — the last pool of Shenzhen–Hong Kong vegetables, the last run of the porters, and the stomach of the city still asleep.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): 5:15 in the morning. The North River fresh-produce market in Sham Shui Po (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the sound of unloading vegetables shakes the whole street. Master Chan (synthetic narrative, not a real person) stands beside his truck, the money-counting machine still not switched off in his hand.' },
+      { type: 'heading', text: 'I · The dawn of the vegetable porters' },
+      { type: 'paragraph', text: 'Every night at the North River Market begins with floating, bright green leaves. By five in the morning, three trucks have already crossed into Hong Kong from Man Kam To. They do not count quantity — they count only the volume the market is willing to take in today.' },
+      { type: 'cards', title: 'North River Market, what to see', items: [] },
+      { type: 'heading', text: 'II · The sound of carrying vegetables' },
+      { type: 'paragraph', text: 'How Master Chan carries a whole cart of vegetables is the one thing he has known for decades: the standing posture, the shoulder angles, the exact distance to push a crate upward — every gesture has been rehearsed an hundred times. His crewmates say he says only one sentence — “don’t drop it” — and nobody understands what is weighing inside that one line.' },
+      { type: 'cards', title: 'North River Market, what to hear', items: [] },
+      { type: 'heading', text: 'III · The vegetable truck before sunrise' },
+      { type: 'paragraph', text: 'At six sharp, all the vegetable trucks leave the gate. The last one out is celery — two crates, a cartload of fresh vegetables — Master Chan stands beside it, not sure why he stayed behind. One stroke of sunlight lands, and the whole market sees what tomorrow will look like.' },
+      { type: 'cards', title: 'North River Market, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Sham Shui Po North River market” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：凌晨五點十五分。深水埗北河街市（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——蔬菜的卸載聲響徹整個街道。陳師傅（合成敘事，非真實人物）站在貨車旁，手裏的點鈔機還沒有關。' },
       { type: 'heading', text: '一、運菜的黎明' },

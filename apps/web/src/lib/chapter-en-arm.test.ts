@@ -920,4 +920,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /memories of the cans/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 63 (the North River market porters) ships in three arms too', () => {
+    const hk = mockGuide('hk-sham-shui-po-north-river-market-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/深水埗北河街市/);
+    const cn = mockGuide('hk-sham-shui-po-north-river-market-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/北河街市/);
+    const en = mockGuide('hk-sham-shui-po-north-river-market-chronicle', 'en');
+    expect(en?.title).toMatch(/North River Market/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Master Chan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /sound of carrying vegetables/i.test(b.text))).toBe(true);
+  });
 });
