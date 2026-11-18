@@ -4193,6 +4193,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-quarry-bay-coffee-roastery-chronicle', title: '下午二點三刻：鰂魚涌——建華街——阿郭的咖啡烘焙的午後（香港系列 · 第九十四章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：下午二點三刻的鰂魚涌建華街——阿郭將今日第十九袋豆子移出爐溫；每一袋都有一種火候。',
+    title_en: 'A quarter to three in the afternoon — Quarry Bay, Kin Hua Street, Ah Kwok’s coffee-roasting afternoon (HK series, Ch. 94)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to three on Kin Hua Street in Quarry Bay — Ah Kwok pulls out the day’s nineteenth bag of beans from the heat; every bag has a different roast.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to three in the afternoon. Kin Hua Street, Quarry Bay (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Kwok pulls out today’s nineteenth bag of beans from the roaster.' },
+      { type: 'heading', text: 'I · The roast goal at East-wind afternoon' },
+      { type: 'paragraph', text: 'A quarter to three, and only the scorched aroma of coffee drifts across Kin Hua Street at Quarry Bay. Ah Kwok keeps the row of roasters — he says first of all he is a bean picker, then only a barista. “Roasting is practising seriousness — one second less of roasting is the fate of over-fire.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Kin Hua Street, what to see', items: [] },
+      { type: 'heading', text: 'II · The fire of one bag' },
+      { type: 'paragraph', text: 'Ah Kwok writes each customer’s fire-degree inside the beans: who wants the slate note, who wants dry acidity — there is no taste profile he does not recognise. He says coffee is nothing but one spoonful of life, and suggests carrying another spoonful along.' },
+      { type: 'cards', title: 'Kin Hua Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · The leftover test beans' },
+      { type: 'paragraph', text: 'Ah Kwok shuts the roaster, and pours the day’s leftover roast-test beans back into the bag. Closing time is here. He says the reason for roasting is to keep the steadiness that many people choose — not to show off his own skill.' },
+      { type: 'cards', title: 'Kin Hua Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Quarry Bay coffee” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午二點三刻。鰂魚涌建華街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——阿郭把今日第十九袋豆子移出爐溫。' },
       { type: 'heading', text: '一、東風下午的烘焙目標' },

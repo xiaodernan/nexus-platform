@@ -1385,4 +1385,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /reassurance of the tray machine/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 94 (Ah Kwok’s Quarry Bay roastery) ships in three arms too', () => {
+    const hk = mockGuide('hk-quarry-bay-coffee-roastery-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿郭的咖啡烘焙的午後/);
+    const cn = mockGuide('hk-quarry-bay-coffee-roastery-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿郭的咖啡烘焙/);
+    const en = mockGuide('hk-quarry-bay-coffee-roastery-chronicle', 'en');
+    expect(en?.title).toMatch(/coffee-roasting/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Kwok/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /fire of one bag/i.test(b.text))).toBe(true);
+  });
 });
