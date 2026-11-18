@@ -1055,4 +1055,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /last cut before closing/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 72 (Old Ho’s Ding-ding tram) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-tram-ding-ding-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/中環電車——老何的叮叮慢拍/);
+    const cn = mockGuide('hk-central-tram-ding-ding-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/中环电车——老何的叮叮慢拍/);
+    const en = mockGuide('hk-central-tram-ding-ding-chronicle', 'en');
+    expect(en?.title).toMatch(/Ding-ding/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Old Ho/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Old Ho’s Ding-ding tempo/i.test(b.text))).toBe(true);
+  });
 });

@@ -3379,6 +3379,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-central-tram-ding-ding-chronicle', title: '早上十一點一刻：中環電車——老何的叮叮慢拍（香港系列 · 第七十二章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：早上十一點一刻的中環德輔道中——老何師傅的打掣節奏、電車的「叮叮」鈴聲、德輔道中的車與城市裡最慢的那條線。',
+    title_en: 'A quarter past eleven in the morning — Old Ho and the Central tram, the slow beat of “Ding-ding” (HK series, Ch. 72)',
+    description_en: 'A synthetic guide (not travel advice): quarter past eleven on Des Voeux Road Central — Master Ho’s bell-pull cadence, the “Ding-ding” train, and the slowest line through the city: the cars on Des Voeux Road Central.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past eleven. The Ding-ding tram on Des Voeux Road Central (synthetic narrative — not a real driver or a real hour; the hour and the scene are narrative constructions) — it rings once, and the whole of Des Voeux Road Central hears it.' },
+      { type: 'heading', text: 'I · The Ding-ding bell is not a bell' },
+      { type: 'paragraph', text: 'The meaning of Ding-ding is not to educate pedestrians; it only tells the city: it is your turn to yield. One Ding-ding, and pedestrians stop in their tracks — that stop, for one beat, is the city’s most self-disciplined posture.' },
+      { type: 'cards', title: 'The tram, what to see', items: [] },
+      { type: 'heading', text: 'II · Old Ho’s Ding-ding tempo' },
+      { type: 'paragraph', text: 'Old Ho has driven the tram for thirty-one years. He does not care about speed: when the tram runs too fast, nobody sees the tram; when it slows, everyone gets to finish their newspaper inside their own time. “We do not carry things. We carry time.” (synthetic dialogue, not a real person.)' },
+      { type: 'cards', title: 'The tram, what to hear', items: [] },
+      { type: 'heading', text: 'III · The line the tram runs' },
+      { type: 'paragraph', text: 'The Ding-ding tram on Des Voeux Road Central is this city’s slowest object — but it is never anxious. It is also one reading: a person’s pace never truly decides how a person lives in this world — it only shapes how much of the world a person gets to see.' },
+      { type: 'cards', title: 'The tram, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Central tram” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：早上十一點一刻。德輔道中的叮叮車（合成敘事，非真實司機與真實時刻——時刻與場景全部是敘事建構）——叮叮動了一聲，整條德輔道中都聽得到了。' },
       { type: 'heading', text: '一、叮叮鈴不是鈴' },
