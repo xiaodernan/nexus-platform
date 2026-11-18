@@ -1130,4 +1130,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /five egg tarts at closing/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 77 (the Ngau Tau Kok fishball stall) ships in three arms too', () => {
+    const hk = mockGuide('hk-kwun-tong-fishball-stall-dusk-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/魚蛋檔的黃生關燈/);
+    const cn = mockGuide('hk-kwun-tong-fishball-stall-dusk-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/鱼蛋档的黄生关灯/);
+    const en = mockGuide('hk-kwun-tong-fishball-stall-dusk-chronicle', 'en');
+    expect(en?.title).toMatch(/fishball stall/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mr Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /order the lights go off/i.test(b.text))).toBe(true);
+  });
 });

@@ -2857,6 +2857,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-kwun-tong-fishball-stall-dusk-chronicle', title: '下午五点四十五分：观塘——牛头角——鱼蛋档的黄生关灯（香港系列 · 第七十七章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：下午五点四十五分的牛头角鱼蛋档——黄生一天收档前的最后一个锅、关灯的顺序、邻居的「食咗未」。',
+    title_en: 'Quarter to six in the afternoon — Kwun Tong, Ngau Tau Kok, Mr Wong at the fishball stall, lights off (HK series, Ch. 77)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to six in Ngau Tau Kok at the fishball stall — Mr Wong’s last pot before closing, the order of the lights, and the neighbour calling “have you eaten yet?”',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to six in the afternoon. Ngau Tau Kok, Kwun Tong (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Mr Wong’s last pot of fishballs is on the flame, before the lights go off.' },
+      { type: 'heading', text: 'I · The order the lights go off' },
+      { type: 'paragraph', text: 'Mr Wong turns off the lights in a fixed order — first the daylight lamps, then the air-conditioner, then he steps out to have one look: “Opening the stall is easy. Closing it — that is the hard part.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'The fishball stall, what to see', items: [] },
+      { type: 'heading', text: 'II · The freshness of the last pot' },
+      { type: 'paragraph', text: 'This pot has no customer. Mr Wong does not put it away: “this one is for the vegetable-selling auntie downstairs — one more chop, two; the good ones never stretch to share.”' },
+      { type: 'cards', title: 'The fishball stall, what to hear', items: [] },
+      { type: 'heading', text: 'III · “Yau zok mei”' },
+      { type: 'paragraph', text: 'After the daylight goes off, Sister Fong on the floor opposite shouts out one line — “have you eaten yet?” Mr Wong does not startle. Ngau Tau Kok at night, people need no words: the sky keeps its own measure — if it is bright, it is bright. Mr Wong at the fishball stall closes the stall, and that is how the day passed.' },
+      { type: 'cards', title: 'The fishball stall, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Kwun Tong fishball stall” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：下午五点四十五分。观塘牛头角（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——鱼蛋档的黄生关灯前的最后一锅。' },
       { type: 'heading', text: '一、关灯的顺序' },
