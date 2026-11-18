@@ -935,4 +935,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /sound of carrying vegetables/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 64 (Ho Ming on the Man Kam To run) ships in three arms too', () => {
+    const hk = mockGuide('hk-man-kam-to-driver-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/榕記米業/);
+    const cn = mockGuide('hk-man-kam-to-driver-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/榕记米业/);
+    const en = mockGuide('hk-man-kam-to-driver-chronicle', 'en');
+    expect(en?.title).toMatch(/Ho Ming/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ho Ming/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /mercury light/i.test(b.text))).toBe(true);
+  });
 });

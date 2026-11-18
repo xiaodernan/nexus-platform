@@ -2376,6 +2376,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-man-kam-to-driver-chronicle', title: '凌晨零点四十五分：文锦渡口岸「榕记米业」的跨境货车司机浩明（香港系列 · 第六十四章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：凌晨零点四十五分的文锦渡口岸——榕记米业跨境货车司机的夜班、最后一车米、最后一车菜、与文锦渡口岸连夜的白炽灯光。',
+    title_en: 'Quarter past midnight — driver Ho Ming, the Man Kam To cross-border trucker for “Yung Kee Rice” (HK series, Ch. 64)',
+    description_en: 'A synthetic guide (not travel advice): quarter past midnight at the Man Kam To Port — the night shift of Yung Kee Rice’s cross-border trucker, the last rice truck, the last vegetable truck, and the floodlights burning through the night.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past midnight. The cross-border truck of Yung Kee Rice at Man Kam To Port (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the truck’s mercury light draws a white circle on the water. Driver Ho Ming (synthetic narrative, not a real person) is tallying today’s manifest: one truck of rice, three trucks of dried vegetables, five of soy sauce.' },
+      { type: 'heading', text: 'I · The mercury light on the truck cab' },
+      { type: 'paragraph', text: 'Ho Ming is thirty-three, nine years behind this wheel. What he remembers most vividly are the docks in Singapore — all lights and tower cranes. Back then he thought this trade was freedom. Now he laughs at himself each night — belonging to no one, yet somehow belonging to everyone.' },
+      { type: 'cards', title: 'Man Kam To, what to see', items: [] },
+      { type: 'heading', text: 'II · The standby on the truck' },
+      { type: 'paragraph', text: 'Ho Ming’s truck has three standby windows: anchoring in Hong Kong, unloading at Man Kam To, the day slot at the loading bay. He must unload the dried vegetables and the rice in the first half of the night, then head back to Yung Kee to take in tomorrow’s soy sauce. The daytime people call him “Tiger” — supposedly he resembles one. He has no time to insist on what he is called.' },
+      { type: 'cards', title: 'Man Kam To, what to hear', items: [] },
+      { type: 'heading', text: 'III · The first light of the morning' },
+      { type: 'paragraph', text: 'At four sharp, the first light comes out of Man Kam To. Ho Ming parks the truck by Yung Kee’s warehouse door, sleeping bag rolled out in the rear compartment. The manifest stays in the cab — the co-driver on the morning shift will check it once more. This night belongs to no one, and to everyone — if you are at the unloading yards at dawn, you will meet Ho Ming; the smell of his smoke travels seventeen streets.' },
+      { type: 'cards', title: 'Man Kam To, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Man Kam To Yung Kee” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨零点四十五分。文锦渡口岸榕记米业的跨境货车（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——车头的水银灯在水面上画出一个白圈。司机浩明（合成叙事，非真实人物）正在点算今天的到货单：一车米、三车菜干、五车酱油。' },
       { type: 'heading', text: '一、车头的水银灯' },
