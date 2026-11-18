@@ -3490,6 +3490,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-wan-chai-pawnshop-chronicle', title: '下午一時一刻：灣仔——擺押局——老黃生的中午開櫃（香港系列 · 第七十五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：下午一時一刻的灣仔擺押局——老黃生的中午開櫃時刻，一只用錦布蒙住的抽屜與香港擺押的生意經。',
+    title_en: 'A quarter past one in the afternoon — the Wan Chai pawnshop, Old Mr Wong’s midday drawer (HK series, Ch. 75)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past one at the Wan Chai pawnshop — Old Mr Wong’s midday drawer opens, a brocade-draped ledger and the Wan Chai trade in pledged goods.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past one in the afternoon. The Wan Chai pawnshop (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Old Mr Wong officially opens the back counter; this is the one thing this day he will remember his mother never knew.' },
+      { type: 'heading', text: 'I · The hour the drawer opens' },
+      { type: 'paragraph', text: 'The pawnshop has not advertised for seventy years. When Old Mr Wong opens the drawer, one passing girl stops and watches: “when he opens the drawer, I’d guess nobody would dare take a photo.” (synthetic dialogue, not a real merchant)' },
+      { type: 'cards', title: 'Pawnshop, what to see', items: [] },
+      { type: 'heading', text: 'II · The first of the month, the drawer day' },
+      { type: 'paragraph', text: 'On the first of every month, at 1:15 — Old Mr Wong opens again the drawer at the back, the one draped in brocade, spreads it in front of him, and from the deepest place takes things out carefully. He never lets anyone take photographs, because these things are not “antiques”; they are “to be returned.”' },
+      { type: 'cards', title: 'Pawnshop, what to hear', items: [] },
+      { type: 'heading', text: 'III · Before he locks the door' },
+      { type: 'paragraph', text: 'Near two in the afternoon, the customers gradually leave. Old Mr Wong puts away the keys to the counter — this night, he will again stand by the entrance waiting for the next customer who will not say their name, and has his own little ledger.' },
+      { type: 'cards', title: 'Pawnshop, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Wan Chai pawnshop” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：下午一時一刻。灣仔擺押局（合成敘事，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——老黃生正式打開後櫃，這是這一天裡他的母親不知道的唯一一件事。' },
       { type: 'heading', text: '一、開櫃時刻' },

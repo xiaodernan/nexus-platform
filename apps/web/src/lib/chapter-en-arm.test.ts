@@ -1100,4 +1100,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /lunch that is not on the menu/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 75 (the Wan Chai pawnshop) ships in three arms too', () => {
+    const hk = mockGuide('hk-wan-chai-pawnshop-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/擺押局——老黃生的中午開櫃/);
+    const cn = mockGuide('hk-wan-chai-pawnshop-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/摆押局——老黄生的中午开柜/);
+    const en = mockGuide('hk-wan-chai-pawnshop-chronicle', 'en');
+    expect(en?.title).toMatch(/Wan Chai pawnshop/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Old Mr Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /first of the month, the drawer day/i.test(b.text))).toBe(true);
+  });
 });
