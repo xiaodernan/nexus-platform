@@ -1475,4 +1475,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /empty basket is the business card/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 100 (the hundred sweet-bun numbers) ships in three arms too', () => {
+    const hk = mockGuide('hk-tseung-kwan-o-100-bakery-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿強的百番甜麵包/);
+    const cn = mockGuide('hk-tseung-kwan-o-100-bakery-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿强的百番甜面包/);
+    const en = mockGuide('hk-tseung-kwan-o-100-bakery-chronicle', 'en');
+    expect(en?.title).toMatch(/Tong Kung Lei/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Keung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /tail of number ninety-nine/i.test(b.text))).toBe(true);
+  });
 });

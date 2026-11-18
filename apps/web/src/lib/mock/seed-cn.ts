@@ -3708,6 +3708,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-tseung-kwan-o-100-bakery-chronicle', title: '早上六点四十分：将军澳——唐宫里——阿强的百番甜面包（香港系列 · 第一百章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：早上六点四十分的将军澳唐宫里——阿强把今天第九十九个甜面包发好，第九十九之后，是又一轮。',
+    title_en: 'Twenty to seven in the morning — Tseung Kwan O, Tong Kung Lei, Ah Keung’s a hundred sweet-bun numbers (HK series, Ch. 100)',
+    description_en: 'A synthetic guide (not travel advice): twenty to seven at Tong Kung Lei in Tseung Kwan O — Ah Keung ships the ninety-ninth sweet bun of the day; after ninety-nine, there is another round.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): twenty to seven in the morning. Tong Kung Lei, Tseung Kwan O (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Keung ships today’s ninety-ninth sweet bun and sets it on the shelf.' },
+      { type: 'heading', text: 'I · Sugar-oil and the night shift' },
+      { type: 'paragraph', text: 'At 6:40 in the morning, only the warm oven light and the sweet smell of sweet buns remain at Tong Kung Lei. Ah Keung has sold forty buns — the whole night-shift constellation — same time every day, same batch — no customer has ever said their name.' },
+      { type: 'cards', title: 'Tong Kung Lei, what to see', items: [] },
+      { type: 'heading', text: 'II · The person behind the numbers' },
+      { type: 'paragraph', text: 'Ah Keung says behind every single bun stands “a person who bought and did not even cough up a word” — someone buying for his grandfather, someone taking the old route and only buying a small batch, someone making the trip again and again. “Not a businessman doing business — it is an old partner at his old spot waiting for the old news.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Tong Kung Lei, what to hear', items: [] },
+      { type: 'heading', text: 'III · The tail of number ninety-nine' },
+      { type: 'paragraph', text: 'While Ah Keung loaded the ninety-ninth bun into the paper bag, he made one mistake; he repeated the ninety-eighth step — he does not trust numbers, but he trusts buns lined up in order.' },
+      { type: 'cards', title: 'Tong Kung Lei, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tseung Kwan O sweet buns” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上六点四十分。将军澳唐宫里（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——阿强把今天第九十九个甜面包发好、上架。' },
       { type: 'heading', text: '一、糖油与夜班' },
