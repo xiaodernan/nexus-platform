@@ -1535,4 +1535,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Three o’clock bell/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 104 (Ah Ho’s Wellington Street jazz) ships in three arms too', () => {
+    const hk = mockGuide('hk-wellington-street-jazz-club-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/威靈頓街——阿豪的鼓與散場後的威靈頓街/);
+    const cn = mockGuide('hk-wellington-street-jazz-club-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/威灵顿街——阿豪的鼓与散场后的威灵顿街/);
+    const en = mockGuide('hk-wellington-street-jazz-club-chronicle', 'en');
+    expect(en?.title).toMatch(/Wellington Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Ho/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /after-hours is when it really begins/i.test(b.text))).toBe(true);
+  });
 });

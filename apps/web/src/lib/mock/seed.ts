@@ -4563,6 +4563,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-wellington-street-jazz-club-chronicle', title: '晚上十一點一刻：中環——威靈頓街——阿豪的鼓與散場後的威靈頓街（香港系列 · 第一百零四章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：晚上十一點一刻的威靈頓街——打工人的散場，與一條整夜不熄的燈。',
+    title_en: 'A quarter past eleven in the evening — Central, Wellington Street, Ah Ho and the drum, and Wellington Street after the crowd leaves (HK series, Ch. 104)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past eleven on Wellington Street — the workers spill out of the shows, and the one lamp that never goes dark.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past eleven. Wellington Street, Central (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the footsteps along Wellington Street are thin now; the drumsticks come to rest on the drum. As jazz drummer Ah Ho (synthetic narrative, not a real person) packs up the kit, the sea air mixed with petrol drifts past him — the lamp by the door still burns.' },
+      { type: 'heading', text: 'I · The after-hours is when it really begins' },
+      { type: 'paragraph', text: 'Wellington Street at this hour; the only lit place left is here — the glass reflects both ends of the street; the signboards have all rotated: embroidered characters, hand-written characters, electronic, neon — each with the afterimage of a soy-egg. Ah Ho packs the drumsticks back into the wooden box — inside the box lies a pair of bamboo chopsticks his grandfather carved from a beam, the thing he held at fourteen the night his first band went on stage.' },
+      { type: 'cards', title: 'Wellington Street, what to see', items: [] },
+      { type: 'heading', text: 'II · The lower half drums, the upper half says good night' },
+      { type: 'paragraph', text: 'Boss Ah Chun (synthetic narrative, not a real person) sets a jug of lemon honey-water and a plate of salted peanuts on the counter — “tonight the crowd is thin, but practise as early as you like.” Ah Ho takes one sip of the lemon honey-water: “there are twelve drums here, and each one speaks one character — ‘hold on.’” Ah Chun rolls her eyes and laughs: “then I’ll stock twelve more slabs of floor.”' },
+      { type: 'cards', title: 'Wellington Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · The quarter-past-eleven lamp' },
+      { type: 'paragraph', text: 'At midnight, Wellington Street keeps only Ah Ho. He leans the last drumstick against the menu board by the door — the board belongs to the street canteen, listing tonight’s dishes, the second line reads “after the crowd: Wellington Street’s last echo.” The lamp by the door dies last; Wellington Street’s deep night keeps breathing — tomorrow it will open one more round.' },
+      { type: 'cards', title: 'Wellington Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Wellington Street jazz” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上十一點一刻。中環——威靈頓街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——威靈頓街上的腳步聲稀稀落落，鼓棒也落回鼓上。爵士鼓手阿豪（合成敘事，非真實人物）收拾架子鼓的時候，聽見晚風裡海水和汽油混合的氣味——門口那盞燈還亮著。' },
       { type: 'heading', text: '一、散場後才真正開始' },
