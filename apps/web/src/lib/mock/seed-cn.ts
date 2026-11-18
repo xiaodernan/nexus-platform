@@ -3005,6 +3005,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-wong-tai-sin-temple-incense-chronicle', title: '晚上八点四十五分：黄大仙——黄大仙祠——黄先生来上香（香港系列 · 第八十一章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：晚上八点四十五分的黄大仙祠——黄先生每晚的一柱香与他三十年的黄大仙祠归位。',
+    title_en: 'A quarter to nine in the evening — Wong Tai Sin Temple, Mr Wong comes to light incense (HK series, Ch. 81)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to nine at Wong Tai Sin Temple — Mr Wong’s one stick of incense every night, and his thirty-year way of settling himself inside the temple.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to nine in the evening. Wong Tai Sin Temple (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — every night at this hour, that one stick of incense is where Mr Wong’s time lands.' },
+      { type: 'heading', text: 'I · The nightly incense' },
+      { type: 'paragraph', text: 'Mr Wong is not a particularly devout man — he says for sixty-odd years he has “done” Wong Tai Sin. The temple staff all know this old gentleman: he arrives on time every night, buys one stick of incense for himself, and goes back. He says, “only this one stick left.”' },
+      { type: 'cards', title: 'Wong Tai Sin Temple, what to see', items: [] },
+      { type: 'heading', text: 'II · Thirty years of incense' },
+      { type: 'paragraph', text: 'The incense furnace has not gone cold for decades. The temple people say: the Wong Tai Sin furnace is always tended — whether one believes or does not believe, those who come here always stop to think. Mr Wong has carried this for thirty years, and he carried out of it his own resting place.' },
+      { type: 'cards', title: 'Wong Tai Sin Temple, what to hear', items: [] },
+      { type: 'heading', text: 'III · A promise to the family' },
+      { type: 'paragraph', text: 'Mr Wong’s daughter has grown up — office worker, painter, once assistant to an uncle. When his daughter visits Wong Tai Sin to see her father, he does the one thing he knows how to do — lights one stick of incense, and repays on behalf of the family thirty years of a vow.' },
+      { type: 'cards', title: 'Wong Tai Sin Temple, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Wong Tai Sin Temple” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上八点四十五分。黄大仙祠（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——每晚这一柱香，就是黄先生的时间的落点。' },
       { type: 'heading', text: '一、每晚来上香' },

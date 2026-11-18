@@ -1190,4 +1190,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /store at dusk/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 81 (the Wong Tai Sin incense) ships in three arms too', () => {
+    const hk = mockGuide('hk-wong-tai-sin-temple-incense-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/黃大仙祠——黃先生來上香/);
+    const cn = mockGuide('hk-wong-tai-sin-temple-incense-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/黄大仙祠——黄先生来上香/);
+    const en = mockGuide('hk-wong-tai-sin-temple-incense-chronicle', 'en');
+    expect(en?.title).toMatch(/Wong Tai Sin/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mr Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /thirty years of incense/i.test(b.text))).toBe(true);
+  });
 });
