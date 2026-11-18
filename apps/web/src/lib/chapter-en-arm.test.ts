@@ -1265,4 +1265,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /forty-one years of black sugar water/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 86 (Brother Siu’s midnight pharmacy) ships in three arms too', () => {
+    const hk = mockGuide('hk-yauma-tei-midnight-pharmacy-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/廟街——蕭哥藥房/);
+    const cn = mockGuide('hk-yauma-tei-midnight-pharmacy-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/庙街——萧哥药房/);
+    const en = mockGuide('hk-yauma-tei-midnight-pharmacy-chronicle', 'en');
+    expect(en?.title).toMatch(/Brother Siu/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Brother Siu/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Brother Siu’s lamp/i.test(b.text))).toBe(true);
+  });
 });

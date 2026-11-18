@@ -3897,6 +3897,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-yauma-tei-midnight-pharmacy-chronicle', title: '半夜一點四十五分：油麻地——廟街——蕭哥藥房，凌晨還在開（香港系列 · 第八十六章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：半夜一點四十五分的廟街——蕭哥的藥房是油麻地唯一一家深夜還營業的老店，味辛的熱氣騰起來。',
+    title_en: 'Quarter to two in the morning — Yau Ma Tei, Temple Street, Brother Siu’s pharmacy, still open before dawn (HK series, Ch. 86)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to two on Temple Street — Brother Siu’s pharmacy, Yau Ma Tei’s only old shop open late at night, the sharp steam rising.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to two in the morning. Temple Street — this old Yau Ma Tei street (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the morning-tea smell not yet washed away is still hanging in the air.' },
+      { type: 'heading', text: 'I · Brother Siu’s lamp' },
+      { type: 'paragraph', text: 'The quiet of this street at night — nobody has the spare heart for trouble — so Brother Siu’s lamp stays lit. He inherited the pharmacy from his father; many years on, he discovers he is keeping not only himself company.' },
+      { type: 'cards', title: 'Temple Street, what to see', items: [] },
+      { type: 'heading', text: 'II · The nurse in the small hours' },
+      { type: 'paragraph', text: 'Around 1:45, a night-shift nurse steps in, dragging her fatigue. “Sick, old Siu.” “You have been running too many shifts this month.” She laughs. He takes a box of medicine from the small cabinet and sets it beside the cash register.' },
+      { type: 'cards', title: 'Temple Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · He is back at six in the morning' },
+      { type: 'paragraph', text: 'Brother Siu thinks of her fatigue — so light, yet still smiling — as he files away his own name on the small keyboard of the cash register. Midnight after midnight: either leave, or not leave. In the morning he will come back again.' },
+      { type: 'cards', title: 'Temple Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Yau Ma Tei pharmacy” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：半夜一點四十五分。廟街——油麻地這條老街——還聞得到白天沒洗乾淨的早茶味。' },
       { type: 'heading', text: '一、蕭哥這盞燈' },
