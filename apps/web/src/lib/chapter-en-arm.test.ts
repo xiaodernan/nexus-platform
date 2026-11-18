@@ -1205,4 +1205,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /thirty years of incense/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 82 (Ah Leung’s Snow Factory Street tailor) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-snow-factory-street-tailor-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/雪廠街——阿良的西裝舖/);
+    const cn = mockGuide('hk-central-snow-factory-street-tailor-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/雪厂街——阿良的西装舖/);
+    const en = mockGuide('hk-central-snow-factory-street-tailor-chronicle', 'en');
+    expect(en?.title).toMatch(/Snow Factory Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Leung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /evening on Snow Factory Street/i.test(b.text))).toBe(true);
+  });
 });

@@ -3042,6 +3042,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-central-snow-factory-street-tailor-chronicle', title: '晚上九点一刻：中环——雪厂街——阿良的西装舖（香港系列 · 第八十二章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：晚上九点一刻的雪厂街——阿良做了四十年的西装舖今天的最后一件，雪厂街对阿良来说就是一种记录。',
+    title_en: 'A quarter past nine in the evening — Snow Factory Street in Central, the last suit in Ah Leung’s tailor shop (HK series, Ch. 82)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past nine on Snow Factory Street — the last suit after forty years of work at Ah Leung’s shop; for him, the street is a kind of archive.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past nine in the evening. Snow Factory Street, Central (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ah Leung is filing down the last seam on the suit he wears.' },
+      { type: 'heading', text: 'I · Ah Leung’s tape measure' },
+      { type: 'paragraph', text: 'When Ah Leung measures a guest’s waist, what he wants is not the number, but the person’s attitude: “when a man still has strength in his heart, that is the only time his suit is willing to be the version he wants to be. I read people from their shoulders — shoulders will talk.”' },
+      { type: 'cards', title: 'The tailor shop, what to see', items: [] },
+      { type: 'heading', text: 'II · An evening on Snow Factory Street' },
+      { type: 'paragraph', text: 'Snow Factory Street is not a street people usually pass through; it is the one where merchants clear the road. Ah Leung sits in the same seat every night and knows the closing-down fragrance of each stall — the sticky-rice chicken has become every suit he has ever made.' },
+      { type: 'cards', title: 'The tailor shop, what to hear', items: [] },
+      { type: 'heading', text: 'III · The spring suit' },
+      { type: 'paragraph', text: 'March is for the spring festival — Ah Leung’s daughter cuts most of this old suit down. “Dad, you wear it.” He laughs. He laughs without having to drop ten years of weight from his back, at ease.' },
+      { type: 'cards', title: 'The tailor shop, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Central Ah Leung tailor” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：晚上九点一刻。中环雪厂街（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——阿良把身上最后一件西装的接缝锉好。' },
       { type: 'heading', text: '一、阿良的尺子' },
