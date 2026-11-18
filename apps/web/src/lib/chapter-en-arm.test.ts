@@ -1250,4 +1250,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /tail-end of Ging Fa Street/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 85 (the late-night Jordan Road sugar water) ships in three arms too', () => {
+    const hk = mockGuide('hk-jordan-way-shu-lao-sugar-water-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/佐敦道——謝老人的深夜糖水/);
+    const cn = mockGuide('hk-jordan-way-shu-lao-sugar-water-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/佐敦道——谢老人的深夜糖水/);
+    const en = mockGuide('hk-jordan-way-shu-lao-sugar-water-chronicle', 'en');
+    expect(en?.title).toMatch(/Jordan Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Uncle Tse/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /forty-one years of black sugar water/i.test(b.text))).toBe(true);
+  });
 });

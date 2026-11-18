@@ -3153,6 +3153,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-jordan-way-shu-lao-sugar-water-chronicle', title: '半夜十二点一刻：九龙——佐敦道——谢老人的深夜糖水（香港系列 · 第八十五章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实商户建议）：半夜十二点一刻的佐敦道——谢老人把最后一锅黑糖水打下去，还是给自己和妈妈，让自己不要睡。',
+    title_en: 'A quarter past midnight — Jordan Road, Uncle Tse, the late-night sugar water (HK series, Ch. 85)',
+    description_en: 'A synthetic guide (not travel advice): a quarter past midnight on Jordan Road — Uncle Tse ladles down the last pot of black sugar water, still for himself and for mother, so he does not have to sleep.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter past midnight. Jordan Road (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Uncle Tse ladles down the last spoonful of black sugar water.' },
+      { type: 'heading', text: 'I · The midnight lamp' },
+      { type: 'paragraph', text: 'Even when Jordan Road is asleep, few people hear the sound the sugar water makes. Uncle Tse stands there until the pot goes away. He says the most faithful thing on Jordan Road is that one lamp that only flames at midnight.' },
+      { type: 'cards', title: 'Jordan Road, what to see', items: [] },
+      { type: 'heading', text: 'II · The forty-one years of black sugar water' },
+      { type: 'paragraph', text: 'Uncle Tse followed his mother into the sugar-water shop at seven years old, learning the ladle. Forty-odd years, wherever he walks, the night walks with him. He says the most precise skill he owns is not the taste of the sugar water; it is the order of a whole bowl.' },
+      { type: 'cards', title: 'Jordan Road, what to hear', items: [] },
+      { type: 'heading', text: 'III · This night, no customers' },
+      { type: 'paragraph', text: 'Tonight there are no customers. Uncle Tse keeps one hand on the bowl and one hand on the pot, setting aside this bowl for tonight himself. He is not a man ruled by impulsiveness — but he knows this bowl, if kept for customers, is gone by dawn; the relationship begins with this bowl.' },
+      { type: 'cards', title: 'Jordan Road, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Jordan Road sugar water” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：半夜十二点一刻。佐敦道（合成叙事地点，非真实商户与真实时刻——时刻与场景全部是叙事建构）——谢老人把最后一勺黑糖水打下去。' },
       { type: 'heading', text: '一、深夜的一盏灯' },
