@@ -2487,6 +2487,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-man-kam-to-second-truck-chronicle', title: '早上八点一刻：文锦渡口岸榕记米业——浩明的第二辆米车（香港系列 · 第六十七章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：早上八点一刻的文锦渡口岸——浩明早班的第二辆米车出闸、春韭记帐的最后一笔、口岸栈板上的早班交班时刻。',
+    title_en: 'Quarter past eight in the morning — Ho Ming’s second rice truck at “Yung Kee Rice” at Man Kam To Port (HK series, Ch. 67)',
+    description_en: 'A synthetic guide (not travel advice): quarter past eight at Man Kam To Port — Ho Ming’s morning second rice truck rolls out through the gate, the last ledger entry for the spring greens, and the early-shift handover on the port pallets.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past eight. Yung Kee Rice at Man Kam To Port (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Ho Ming’s second rice truck is already loaded, the vehicle footing checked, the rice-face mark pressed; ready to go through the gate.' },
+      { type: 'heading', text: 'I · What is different about the second truck' },
+      { type: 'paragraph', text: 'After the first rice truck leaves, the warehouse holds only the morning spring-greens stock and a few bags of germ rice. Ho Ming does not load the spring-greens rice onto the second — he says it belongs to the second customer: “settled as agreed.” Nobody else spoke.' },
+      { type: 'cards', title: 'Yung Kee, what to see', items: [] },
+      { type: 'heading', text: 'II · The handover on the pallet' },
+      { type: 'paragraph', text: 'The pallets still hold yesterday’s “San Cha” rice, not yet signed into accounts. Chief Accountant Chan hands Ho Ming a small slip: “count it, sign it.” Ho Ming counts and signs — he never says anything, he only counts with steadiness.' },
+      { type: 'cards', title: 'Yung Kee, what to hear', items: [] },
+      { type: 'heading', text: 'III · The mark before the gate' },
+      { type: 'paragraph', text: 'Before going through the gate, he adds beside the bucket’s mark a small wax seal in the shape of a banyan leaf — something he has started doing this year. The mark is his number; the leaf seal is the words he will not say.' },
+      { type: 'cards', title: 'Yung Kee, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Man Kam To Yung Kee” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：早上八点一刻。文锦渡口岸榕记米业（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——浩明（合成叙事，非真实人物）的第二辆米车已经装好、检好车脚、按了米面记号，准备出闸。' },
       { type: 'heading', text: '一、第二辆米车的差别' },

@@ -980,4 +980,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /accuracy of the bucket/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 67 (Ho Ming’s second rice truck) ships in three arms too', () => {
+    const hk = mockGuide('hk-man-kam-to-second-truck-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/浩明的第二輛米車/);
+    const cn = mockGuide('hk-man-kam-to-second-truck-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/浩明的第二辆米车/);
+    const en = mockGuide('hk-man-kam-to-second-truck-chronicle', 'en');
+    expect(en?.title).toMatch(/second rice truck/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/banyan leaf/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /different about the second truck/i.test(b.text))).toBe(true);
+  });
 });
