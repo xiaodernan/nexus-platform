@@ -1235,4 +1235,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /lights-out ritual/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 84 (Granny Tam Wa’s siu mai) ships in three arms too', () => {
+    const hk = mockGuide('hk-mong-kok-ging-fa-shu-mai-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/金花街——譚華阿婆的最後一鍋燒賣/);
+    const cn = mockGuide('hk-mong-kok-ging-fa-shu-mai-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/金花街——谭华阿婆的最后一锅烧卖/);
+    const en = mockGuide('hk-mong-kok-ging-fa-shu-mai-chronicle', 'en');
+    expect(en?.title).toMatch(/Ging Fa Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Granny Tam Wa/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /tail-end of Ging Fa Street/i.test(b.text))).toBe(true);
+  });
 });

@@ -3823,6 +3823,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-mong-kok-ging-fa-shu-mai-chronicle', title: '晚上十一點半：旺角——金花街——譚華阿婆的最後一鍋燒賣（香港系列 · 第八十四章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：晚上十一點半的金花街——譚華阿婆的最後一鍋燒賣、還是熱的、留給自己還是小孩子吃。',
+    title_en: 'Half-past eleven at night — Mong Kok, Ging Fa Street, Granny Tam Wa’s last pot of siu mai (HK series, Ch. 84)',
+    description_en: 'A synthetic guide (not travel advice): half-past eleven on Ging Fa Street — Granny Tam Wa’s last pot of siu mai, still warm, for herself or for the kids who line up late.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): half-past eleven at night. Ging Fa Street (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Granny Tam Wa looks down at the last pot of siu mai still steaming.' },
+      { type: 'heading', text: 'I · The tail-end of Ging Fa Street' },
+      { type: 'paragraph', text: 'Ging Fa Street is where the old herbal shops now scatter. Granny Tam Wa’s selling siu mai for thirty years — tonight is the last pot. It is not a “closing”; it is “the last pot of the night” — she recognises only two kinds: warm, and not warm.' },
+      { type: 'cards', title: 'Ging Fa Street, what to see', items: [] },
+      { type: 'heading', text: 'II · She has not finished counting' },
+      { type: 'paragraph', text: 'Granny Tam Wa keeps stacking cups softly in front of her stall. “Two small kids traipse about until the middle of the night, but I knew all along this side would give them a few pieces.” “this can’t be taken in — tomorrow the stall scatters.” (synthetic dialogue, not a real person)' },
+      { type: 'cards', title: 'Ging Fa Street, what to hear', items: [] },
+      { type: 'heading', text: 'III · Still warm' },
+      { type: 'paragraph', text: 'Granny Tam Wa smiles, opens a bamboo steamer and plucks out two siu mai. “This pot is for my today.” She tastes one — after a life of making siu mai, today they are still warm; warm is the one thing she has stood by, and refused to leave at dawn.' },
+      { type: 'cards', title: 'Ging Fa Street, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Mong Kok Ging Fa Street” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上十一點半。金花街（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——譚華阿婆低頭看最後一鍋燒賣還在冒熱氣。' },
       { type: 'heading', text: '一、金花街的尾聲' },
