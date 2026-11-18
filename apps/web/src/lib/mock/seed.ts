@@ -4600,6 +4600,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-star-ferry-last-sailing-chronicle', title: '晚上十一點四十五分：尖沙咀——天星碼頭——船長炳與最後一班船（香港系列 · 第一百零五章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實行程建議）：晚上十一點四十五分的天星碼頭——熄燈之後，海還在笑。',
+    title_en: 'Quarter to twelve in the evening — Tsim Sha Tsui, the Star Ferry pier, Captain Ping and the last sailing (HK series, Ch. 105)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to twelve at the Star Ferry pier — after the lights go out, the sea is still smiling.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to twelve in the evening. The Star Ferry pier, Tsim Sha Tsui (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — the sea’s last evening sailing still has not cut its lights. Captain Ping (synthetic narrative, not a real person) does the pre-departure checks a third time — even the wind dares not rush him.' },
+      { type: 'heading', text: 'I · The boat sails, the sea still burns' },
+      { type: 'cards', title: 'Star Ferry pier, what to see', items: [] },
+      { type: 'paragraph', text: 'The harbour lamps sweep across the water one ring at a time, like moving tree-rings. Two kinds of passengers stand on the deck — tired workers, and those who refuse to go home — two kinds of people looking at the same black sea. Captain Ping asks: “Central?” Everyone nods; the pier ticket-keeper stuffs seawater-wet paper scraps into the cashbox — today’s takings are memory, not profit.' },
+      { type: 'heading', text: 'II · The captain with fifty-nine years of no customers' },
+      { type: 'cards', title: 'Star Ferry pier, what to hear', items: [] },
+      { type: 'paragraph', text: 'He has run this waterline for fifty-nine years — not days, but crossings. Near lights-out he lights one cigarette. Today’s last guest is an old foreigner heading for Chek Lap Kok — no rolling luggage, only the strength of his wrists; Captain Ping laughs: “of this whole boat, only this foreigner will laugh tonight.” A harbour lamp leans half a lamp toward him.' },
+      { type: 'heading', text: 'III · Between two masts' },
+      { type: 'cards', title: 'Star Ferry pier, what to wait for', items: [] },
+      { type: 'paragraph', text: 'The last stretch of water falls completely silent — anything could be written here. Captain Ping stands between the two masts, the ember at his cigarette tip holding steady in the wind, as if it refuses to go out. Before zero fourteen return? No chance. The boat will turn back along the same line anyway — the Star Ferry pier’s midnight never closes, it only changes channels and keeps broadcasting.' },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Tsim Sha Tsui Star Ferry” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上十一點四十五分。尖沙咀——天星碼頭（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——海面上最後一班晚航還沒有熄燈。船長炳（合成敘事，非真實人物）把啟航前的檢查做過三次，連風都不忍心替他催促。' },
       { type: 'heading', text: '一、船開了，海還亮著' },

@@ -40,9 +40,9 @@ describe('chapter 106 ships in three arms', () => {
   });
 
   it('a chapter without an EN arm renders its Traditional HK text in en mode — honest fallback by design', () => {
-    const guide = mockGuide('hk-star-ferry-last-sailing-chronicle', 'en');
+    const guide = mockGuide('sha-tin-date-plan', 'en');
     expect(guide).not.toBeNull();
-    expect(guide?.title).toContain('船長炳');
+    expect(guide?.title).toContain('沙田約會');
   });
 
   it('the arc opener (chapter 1) ships in three arms too', () => {
@@ -1549,5 +1549,20 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/Ah Ho/i);
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /after-hours is when it really begins/i.test(b.text))).toBe(true);
+  });
+
+  it('chapter 105 (Captain Ping’s last Star Ferry sailing) ships in three arms too', () => {
+    const hk = mockGuide('hk-star-ferry-last-sailing-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/船長炳與最後一班船/);
+    const cn = mockGuide('hk-star-ferry-last-sailing-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/船长炳与最后一班船/);
+    const en = mockGuide('hk-star-ferry-last-sailing-chronicle', 'en');
+    expect(en?.title).toMatch(/Captain Ping/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Captain Ping/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /between two masts/i.test(b.text))).toBe(true);
   });
 });
