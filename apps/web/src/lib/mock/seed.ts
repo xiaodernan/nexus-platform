@@ -3786,6 +3786,22 @@ export const DEMO_GUIDES: Guide[] = [
   {
     slug: 'hk-wan-chai-night-court-chronicle', title: '晚上九點四十五分：灣仔——軒尼詩道——書記官黃姐關小法庭前的最後幾分鐘（香港系列 · 第八十三章）', city: 'hong-kong', category: 'activities',
     description: '合成敘事指南（非真實商戶建議）：晚上九點四十五分的軒尼詩道——灣仔小法庭每晚最後四件事情、書記官黃姐三十年關燈的儀式。',
+    title_en: 'A quarter to ten in the evening — Wan Chai, Hennessy Road, Clerk Sister Wong’s last four steps before the night court closes (HK series, Ch. 83)',
+    description_en: 'A synthetic guide (not travel advice): a quarter to ten on Hennessy Road — the last four steps of Wan Chai’s little night court each evening, and Sister Wong the clerk’s thirty-year ritual of the lights-out.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): a quarter to ten in the evening. Hennessy Road (synthetic place — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Clerk Sister Wong performs the last four things before the night court closes.' },
+      { type: 'heading', text: 'I · Sister Wong’s lights-out ritual' },
+      { type: 'paragraph', text: 'Sister Wong has been a clerk on Hennessy Road for thirty years — the last four steps are written into her bones: turn off the lights, shut the machines, close the file cabinets, give the boss one tap. She is still able to hold it together for another three minutes.' },
+      { type: 'cards', title: 'Hennessy Road, what to see', items: [] },
+      { type: 'heading', text: 'II · The last four cases' },
+      { type: 'paragraph', text: 'Four cases today. A brother owed back pay; a small probate errand for an aunty whose time is almost up; a stall ruled as having to close — and one receipt he will never see again. “Sometimes I feel this post of mine is just a person who turns the lights off.”' },
+      { type: 'cards', title: 'Hennessy Road, what to hear', items: [] },
+      { type: 'heading', text: 'III · The last lamp' },
+      { type: 'paragraph', text: 'When Sister Wong turns the lights off, she watches the lamps go dark one by one. Thirty, forty, fifty years. People do not remember each case’s particulars — but Sister Wong remembers each one’s breathing.' },
+      { type: 'cards', title: 'Hennessy Road, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Wan Chai Sister Wong clerk” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成敘事示例（非真實行程建議）：晚上九點四十五分。軒尼詩道（合成敘事地點，非真實商戶與真實時刻——時刻與場景全部是敘事建構）——書記官黃姐關小法庭前最後四件事情。' },
       { type: 'heading', text: '一、黃姐的關燈儀式' },

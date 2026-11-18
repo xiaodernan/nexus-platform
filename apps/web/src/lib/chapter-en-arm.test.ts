@@ -1220,4 +1220,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /evening on Snow Factory Street/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 83 (Sister Wong’s night court) ships in three arms too', () => {
+    const hk = mockGuide('hk-wan-chai-night-court-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/軒尼詩道——書記官黃姐/);
+    const cn = mockGuide('hk-wan-chai-night-court-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/轩尼诗道——书记官黄姐/);
+    const en = mockGuide('hk-wan-chai-night-court-chronicle', 'en');
+    expect(en?.title).toMatch(/Hennessy Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Sister Wong/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /lights-out ritual/i.test(b.text))).toBe(true);
+  });
 });
