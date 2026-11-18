@@ -905,4 +905,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /traffic control in the radio/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 62 (Lo Wu’s night-market stalls) ships in three arms too', () => {
+    const hk = mockGuide('hk-shenzhen-luohu-night-market-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/羅湖口岸以南的夜市小販/);
+    const cn = mockGuide('hk-shenzhen-luohu-night-market-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/罗湖口岸以南的夜市小贩/);
+    const en = mockGuide('hk-shenzhen-luohu-night-market-chronicle', 'en');
+    expect(en?.title).toMatch(/night-market stalls south of Lo Wu/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Old Tiao/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /memories of the cans/i.test(b.text))).toBe(true);
+  });
 });

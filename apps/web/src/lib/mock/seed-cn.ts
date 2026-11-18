@@ -2302,6 +2302,22 @@ export const DEMO_GUIDES_CN: Guide[] = [
   {
     slug: 'hk-shenzhen-luohu-night-market-chronicle', title: '凌晨三点四十五分：罗湖口岸以南的夜市小贩——最后的油条与最后的汽笛（香港系列 · 第六十二章）', city: 'hong-kong', category: 'activities',
     description: '合成叙事指南（非真实行程建议）：凌晨三点四十五分的罗湖口岸以南——小贩的油条、汽笛的最后一声、与深夜跨境客的零碎交易。',
+    title_en: '3:45 in the morning — the night-market stalls south of Lo Wu, the last youtiao and the last whistle (HK series, Ch. 62)',
+    description_en: 'A synthetic guide (not travel advice): the night market south of Lo Wu Port at 3:45 — the fryer’s youtiao, the last whistle, and the fragmentary trades of late cross-border travellers.',
+    body_blocks_en: [
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): 3:45 in the morning. The night-market street south of Lo Wu Port (synthetic narrative — not a real merchant or a real moment; the hour and the scene are narrative constructions) — Old Tiao the youtiao fryer (synthetic narrative, not a real person) has just pulled a fresh batch of batter. A whistle comes from the train-station side — another week, another 3am.' },
+      { type: 'heading', text: 'I · The last youtiao' },
+      { type: 'paragraph', text: 'Old Tiao wakes at 2am and sells till 4. He does not want to sleep. He says this trade does not suit his hours — only that the small hours deserve one hot thing in the belly. Today’s last sale is the seventh bag of youtiao… whatever the customer asks, he fries. He says: “Customers do not ask the price; they only ask whether it is worth it.”' },
+      { type: 'cards', title: 'Lo Wu night market, what to see', items: [] },
+      { type: 'heading', text: 'II · The memories of the cans' },
+      { type: 'paragraph', text: 'To Old Tiao’s left is a girl who sells canned goods — Ah Fong (synthetic narrative, not a real person). She has never told anyone her surname; customers just call her “Can Ah Fong.” Beef-and-offal cold-plate cans, osmanthus syrup cans, coffee cans — all two-year-old clearance stock; all sold out.' },
+      { type: 'cards', title: 'Lo Wu night market, what to hear', items: [] },
+      { type: 'heading', text: 'III · After the whistle' },
+      { type: 'paragraph', text: 'At four sharp, the whistle shakes the whole night market’s smoke. Old Tiao coughs into his throat and pulls the iron gate down. After the whistle the market empties completely — emptied is the oil smoke, the silk cloth, the few bags of dried shallots. He knows: this season’s whistle is the end of this rhythm, always.' },
+      { type: 'cards', title: 'Lo Wu night market, what to wait for', items: [] },
+      { type: 'heading', text: 'Afterword' },
+      { type: 'paragraph', text: 'Synthetic narrative example: every merchant, every scene, every story here is a narrative construction, written to demonstrate the presentation layer of NEXUS. In a hurry? SearchBox for “Lo Wu night market” first.' },
+    ],
     body_blocks: [
       { type: 'paragraph', text: '合成叙事示例（非真实行程建议）：凌晨三点四十五分。罗湖口岸以南的夜市一条街（合成叙事，非真实商户与真实时刻——时刻与场景全部是叙事建构）——卖油条的条爷（合成叙事，非真实人物）刚刚拉好一锅新面糊。汽笛从火车站的方向传来——又是个星期的凌晨三点。' },
       { type: 'heading', text: '一、最后的油条' },
