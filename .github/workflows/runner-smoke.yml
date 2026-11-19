@@ -1,0 +1,29 @@
+name: runner-smoke
+# One-shot sanity probe for the operator's self-hosted runner (nexus-host-xintong).
+# Dispatch-only; never push/scheduled. Costs nothing (no provider calls, no services).
+# Keep this file so the operator can prove the local runner is alive any time:
+#   gh workflow run runner-smoke.yml   (or dispatch from the Actions tab)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Report the plane
+        shell: bash
+        run: |
+          echo "runner name: $RUNNER_NAME"
+          echo "runner os:   $RUNNER_OS"
+          echo "runner arch: $RUNNER_ARCH"
+          echo "repo root:   $GITHUB_WORKSPACE"
+          git log --oneline -1
+          node --version
+          npm --version
+          echo "runner-smoke OK"
