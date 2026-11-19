@@ -2166,4 +2166,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Between the letters|disciple left/i.test(b.text))).toBe(true);
   });
+  it('chapter 147 (Happy Valley east gate — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-late-afternoon-east-gate-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/東門/);
+    const cn = mockGuide('hk-happy-valley-racecourt-late-afternoon-east-gate-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/东门/);
+    const en = mockGuide('hk-happy-valley-racecourt-late-afternoon-east-gate-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Muk/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Ah Muk.s bowl|Horse number 228|Ah Muk.s hands/.test(b.text))).toBe(true);
+  });
 });

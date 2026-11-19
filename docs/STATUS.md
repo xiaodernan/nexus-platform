@@ -46675,3 +46675,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **150**. verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP arc = 146 chapters · Layer P opens (15:00 slot).
 - Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+## 1354. D1450 — chapter 147 joins Layer P; arc stands at 147
+
+**What landed.**
+- `hk-happy-valley-racecourt-late-afternoon-east-gate-chronicle` → chapter 147 （黃昏——東門——阿樂把最後一疊牌釘上；阿穆捧蠶豆碗；「228」那隻馬；阿穆父親的那支筆；外衣下的皮革手套）。zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`; audit-driven corrections were applied (ch.141 zh-time already consistent; 7-timeline contradictions reviewed — see diary) — no forced edits on narrator voice; audit findings catalogued for review.
+- `chapter-en-arm.test.ts` — assertion count **151**. verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP arc = 147 chapters — the 17:00 slot closes Layer P's first day.
+- Tokened study: one 58,957-token context (Layer L→P corpus audit) cached 2,807 / 58,957 = 4.8% on cold call (no warm prefix yet — first ever invocation of this prompt); expected 87%+ warm on identical-call replay (measured previously on D1436).
