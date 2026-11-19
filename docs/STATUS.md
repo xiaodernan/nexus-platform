@@ -46577,3 +46577,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `hk-prince-edward-yuen-garden-street-mid-morning-presale-ledger-chronicle` → chapter 134 (Yuen Garden Street, Prince Edward, ten to eleven — Ah Kuen's pre-sale ledger; the lamp exhibition opens in three days, the fourth requires a name on the page; Ah Jeh's till is paired with the signed lamp across the street). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
 - `chapter-en-arm.test.ts` — assertion count **137**. verify_all RESULT: NO OFFENDER (72 PASS). World guide lane live-verified on 6.2-sol/D1436 atlas (see diary).
 - WORLD_ROADMAP now reads 134 chapters · Layer N open (10:50 slot, anchored after 10:40).
+
+## 1342. D1438 — chapter 135 joins Layer N; arc stands at 135 · self-hosted runner online
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-exhibition-morning-queue-chronicle` → chapter 135 (Yuen Garden Street, Prince Edward, half past ten — opening day: Ah Kuen turns the ledger to today; the third in the queue, the old auntie with the photograph album — "the name is here; the person is here" — and the signed lamp lights its first customer as Ah Jeh's register is counted in two separate columns). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **138**. verify_all RESULT: NO OFFENDER (72 PASS).
+- Self-hosted runner **nexus-host-xintong** registered (agent 21), verified online from the repo API, `[self-hosted, Windows, X64]`; detached service on this machine + at-logon scheduled task `GitHubActionsRunner-nexus-host`; zero-cost dispatch-only `runner-smoke.yml` (D1438) is the operator's on-demand proof of the local runner. ci.yml deliberately NOT flipped yet — decision record documented in the diary; hosted CI queue has been draining since 96d3e04.
+- WORLD_ROADMAP now reads 135 chapters · Layer N open (10:30 slot).

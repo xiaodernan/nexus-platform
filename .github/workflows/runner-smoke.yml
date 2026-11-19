@@ -17,12 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Report the plane
-        shell: bash
+        shell: pwsh
         run: |
-          echo "runner name: $RUNNER_NAME"
-          echo "runner os:   $RUNNER_OS"
-          echo "runner arch: $RUNNER_ARCH"
-          echo "repo root:   $GITHUB_WORKSPACE"
+          echo "runner name: $env:RUNNER_NAME"
+          echo "runner os:   $env:RUNNER_OS"
+          echo "runner arch: $env:RUNNER_ARCH"
+          echo "repo root:   $env:GITHUB_WORKSPACE"
           git log --oneline -1
           node --version
           npm --version
