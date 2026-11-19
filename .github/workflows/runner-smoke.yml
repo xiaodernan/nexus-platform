@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Report the plane
-        shell: pwsh
+        shell: powershell
         run: |
           echo "runner name: $env:RUNNER_NAME"
           echo "runner os:   $env:RUNNER_OS"
