@@ -1896,4 +1896,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The scale first/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 129 (Tuen Mun ferry pier sampan) ships in three arms too', () => {
+    const hk = mockGuide('hk-tuen-mun-ferry-pier-afternoon-sampan-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/屯門碼頭.*吉叔/);
+    const cn = mockGuide('hk-tuen-mun-ferry-pier-afternoon-sampan-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/屯门码头.*吉叔/);
+    const en = mockGuide('hk-tuen-mun-ferry-pier-afternoon-sampan-chronicle', 'en');
+    expect(en?.title).toMatch(/Tuen Mun|Ferry Pier/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Kat/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The pole must reach the bottom/i.test(b.text))).toBe(true);
+  });
 });
