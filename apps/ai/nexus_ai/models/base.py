@@ -278,13 +278,15 @@ class HttpLLMAdapter:
 
     def __init__(self, *, base_url: str = "", api_key: str = "",
                  models: dict[str, str] | None = None, timeout_s: float = 20.0,
-                 client: Any = None, cache_cost_factor: float = 1.0):
+                 client: Any = None, cache_cost_factor: float = 1.0,
+                 proxy: str = ""):
         self.base_url = (base_url or "").rstrip("/")
         self.api_key = api_key or ""
         self.models = {**self.default_models, **(models or {})}
         self.timeout_s = timeout_s
         self._client = client
         self.cache_cost_factor = float(cache_cost_factor)
+        self.proxy = (proxy or "").strip()
         if not self.base_url or not self.api_key:
             raise LLMError(
                 f"{type(self).__name__}: NEXUS_LLM_BASE_URL / NEXUS_LLM_API_KEY are not set — "
@@ -296,7 +298,7 @@ class HttpLLMAdapter:
         if self._client is None:
             import httpx
 
-            self._client = httpx.AsyncClient(timeout=self.timeout_s)
+            self._client = httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None)
         return self._client
 
     async def health(self) -> dict[str, Any]:

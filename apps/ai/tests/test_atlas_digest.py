@@ -38,7 +38,7 @@ def test_atlas_lists_the_real_corpus_front_to_back():
     for no in (1, 2, 21, 13, 46, 100, 108, 130, 138, 144, 147):
         assert f"{no:3d} ·" in text, no
     assert "車仔麵" in text
-    assert "阿權的行燈" in text
+    assert "十八點半" in text
 
 
 def test_world_guide_system_is_grounded_and_fenced():

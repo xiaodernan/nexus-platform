@@ -39,6 +39,7 @@ def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
                     "reason": settings.llm_model_reason},
             timeout_s=timeout_s,
             cache_cost_factor=getattr(settings, "cache_cost_factor", 1.0),
+            proxy=getattr(settings, "llm_proxy", ""),
         )
     elif provider == "openai":
         pool["openai"] = OpenAIAdapter(
@@ -48,6 +49,7 @@ def build_adapters(settings: Any) -> dict[str, LLMAdapter]:
                     "reason": settings.llm_model_reason},
             timeout_s=timeout_s,
             cache_cost_factor=getattr(settings, "cache_cost_factor", 1.0),
+            proxy=getattr(settings, "llm_proxy", ""),
         )
     pool["mock"] = MockAdapter()
     return pool
@@ -61,7 +63,7 @@ def pool_key(settings: Any) -> str:
     silently misses and the test measures the mock floor while believing it measured live.
     D983 added the timeout term here and that coupling bit CI until this function existed.
     """
-    return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"
+    return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}|{getattr(settings, 'llm_proxy', '')}"
 
 
 def get_pool(settings: Any | None = None) -> dict[str, LLMAdapter]:
