@@ -1,12 +1,13 @@
 /**
  * `POST /api/nexus/ai/chapter-ask` — one chapter answers one reader, grounded.
  *
- * Body: `{ question, chapterSlug, locale? }`. The handler loads the chapter through the SAME
+ * Body: `{ question, chapterSlug, locale?, history? }`. The handler loads the chapter through the SAME
  * read path the reader already uses (`guideBySlug`, the mock plane in CI/offline, the platform
  * read in live mode) and hands the model the WHOLE chapter below the char limit (or the top
- * lexical window above it) — nothing else in the product is a source of truth here. The AI
- * plane additionally carries the frozen 147-chapter world atlas inside its system contract,
- * so the model answers with the world in mind instead of a single paragraph slice.
+ * lexical window above it), the chapter's place in the 147-chapter world atlas (frozen into the
+ * AI plane's system contract) and, optionally, up to eight of this session's prior Q/A pairs —
+ * every one already fence-validated. The codex-style growing history lets the provider's prefix
+ * cache serve the conversation turn-over-turn. Mock mode is inert; failures fail closed.
  *
  * In mock mode (`NEXT_PUBLIC_DATA_MODE=mock`, the default for tests and CI) the lane is inert:
  * `degraded:true, reason:'mock_provider'`, and the client island never mounts. In live mode the
@@ -34,6 +35,25 @@ const PICKED = 12;
 // A full chapter on this arc runs ~1.2–5.5K chars. Below the limit we send the WHOLE chapter —
 // the model sees every paragraph, so any question about the chapter is grounded in the real text.
 const FULL_CHAPTER_CHAR_LIMIT = 28_000;
+const HISTORY_LIMIT = 8;
+
+type AskTurn = { question: string; answer: string };
+
+function sanitizeHistory(raw: unknown): AskTurn[] {
+  if (!Array.isArray(raw)) return [];
+  const out: AskTurn[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const q = typeof (item as { question?: unknown }).question === 'string'
+      ? (item as { question: string }).question.trim().slice(0, MAX_QUESTION)
+      : '';
+    const a = typeof (item as { answer?: unknown }).answer === 'string'
+      ? (item as { answer: string }).answer.trim().slice(0, 480)
+      : '';
+    if (q && a) out.push({ question: q, answer: a });
+  }
+  return out.slice(-HISTORY_LIMIT);
+}
 
 type Excerpt = { id: string; kicker: string; title: string; body: string; index: number };
 
@@ -114,6 +134,7 @@ export async function POST(request: Request): Promise<Response> {
   if (question.length < 3) {
     return json({ degraded: true, reason: 'question_too_short', answer: '', citations: [], confidence: 'low' });
   }
+  const history = sanitizeHistory(body.history);
   const chapterSlug = typeof body.chapterSlug === 'string' ? body.chapterSlug.trim().slice(0, 200) : '';
   if (chapterSlug.length < 1) {
     return json({ degraded: true, reason: 'chapter_required', answer: '', citations: [], confidence: 'low' });
@@ -154,6 +175,7 @@ export async function POST(request: Request): Promise<Response> {
         chapter_id: guide.slug,
         chapter_title: guide.title,
         sections,
+        history,
       },
     });
     return json({ ...data, picked: picked.map((p) => p.id) });

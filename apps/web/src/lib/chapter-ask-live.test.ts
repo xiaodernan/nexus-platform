@@ -46,8 +46,8 @@ describe('chapter-ask-live island', () => {
   });
 
   it('it renders only answer + excerpt ids the server passed through (never invented text)', () => {
-    expect(island).toContain('phase.answer');
-    expect(island).toContain('phase.citations');
+    expect(island).toContain('t.answer');
+    expect(island).toContain('t.citations');
     expect(island).not.toContain('dangerouslySetInnerHTML');
   });
 });

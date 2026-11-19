@@ -95,7 +95,7 @@ async def admin_digest(request: Request, body: AdminDigestRequest) -> JSONRespon
 
     payload = {"events": body.events.model_dump(), "locale": body.locale}
     allowed = _allowed_numbers(payload)
-    corpus = json.dumps(payload, ensure_ascii=False, indent=2)
+    corpus = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
     req = LLMRequest(
         task_class="summary",

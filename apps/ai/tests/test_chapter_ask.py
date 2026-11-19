@@ -65,7 +65,7 @@ def _resp(text: str, *, cached: int = 0, prompt: int = 140, completion: int = 48
     )
 
 
-def _ask(client: TestClient, router, question: str = "what time is it?", sections=None) -> dict:
+def _ask(client: TestClient, router, question: str = "what time is it?", sections=None, history=None) -> dict:
     from dataclasses import replace
 
     app = client.app
@@ -75,13 +75,16 @@ def _ask(client: TestClient, router, question: str = "what time is it?", section
     deps.router = lambda: router  # type: ignore[assignment]
     deps.settings = replace(original_settings, llm_provider="openai")  # type: ignore[assignment]
     try:
-        resp = client.post("/ai/v1/chapter/ask", json={
+        payload: dict[str, object] = {
             "question": question,
             "chapter_id": "hk-cha-chaan-teng-dawn",
             "chapter_title": "茶餐廳・早朝",
             "sections": sections if sections is not None else SECTIONS,
             "locale": "zh-HK",
-        })
+        }
+        if history is not None:
+            payload["history"] = history
+        resp = client.post("/ai/v1/chapter/ask", json=payload)
         assert resp.status_code == 200, resp.text
         return resp.json()
     finally:
@@ -125,6 +128,36 @@ class TestGroundedLane:
             assert cid in prompt
         assert "woks wake before the shutter [p1]" not in prompt  # the model's own reply is never echoed back
         assert "JSON only." in prompt
+
+    def test_history_pairs_ride_the_prompt_in_order(self):
+        client = _client()
+        canned = _CannedRouter(_resp(json.dumps({
+            "answer": "The woks come up first [p1].",
+            "citations": [{"id": "p1", "title": "Chapter 5 · dawn over the cha chaan teng"}],
+            "confidence": "high",
+        })))
+        body = _ask(client, canned, history=[
+            {"question": "What wakes first?", "answer": "The wok fires wake first [p1]."},
+            {"question": "And who carries them?", "answer": "The owner's wife [p3]."},
+        ])
+        prompt = canned.calls[0].prompt  # type: ignore[attr-defined]
+        assert "Conversation so far (oldest first" in prompt
+        assert prompt.index("Q1: What wakes first?") < prompt.index("Q2: And who carries them?")
+        assert "A1 (previously fenced answer): The wok fires wake first [p1]." in prompt
+        assert prompt.index("Content (") < prompt.index("Conversation so far") < prompt.index("Question: ")
+        assert "JSON only." in prompt
+
+    def test_history_is_capped_at_eight_pairs_by_the_contract(self):
+        client = _client()
+        resp = client.post("/ai/v1/chapter/ask", json={
+            "question": "what time is it?",
+            "chapter_id": "hk-cha-chaan-teng-dawn",
+            "chapter_title": "茶餐廳・早朝",
+            "sections": SECTIONS,
+            "locale": "zh-HK",
+            "history": [{"question": f"Q{i}?", "answer": f"A{i}."} for i in range(9)],
+        })
+        assert resp.status_code == 422
 
     def test_a_url_in_the_answer_is_refused(self):
         client = _client()

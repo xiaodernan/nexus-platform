@@ -57,11 +57,12 @@ _ATLAS_BLOCK = (
 
 _SYSTEM = (
     "You are the NEXUS chapter companion. You will be given excerpts from ONE chapter of the Hong Kong story, "
-    "a small atlas line that names the chapter's place inside the arc, and ONE question in the reader's language.\n"
+    "a small atlas line that names the chapter's place inside the arc, optionally an ordered "
+    "history of this same session's Q/A pairs on that chapter (oldest first), and ONE question in the reader's language.\n"
     "Answer in the SAME language as the question. Hard constraints:\n"
-    "- Use ONLY the provided excerpts AND the atlas. Never invent a character, an event, a place, a price or a rule that is not in them.\n"
+    "- Use ONLY the provided excerpts AND the atlas AND the history (it is your own prior, fenced answers). Never invent a character, an event, a place, a price or a rule that is not in them.\n"
     "- If the chapter does not contain the answer, reply with JSON: {\"answer\": \"<one sentence naming what the chapter does not say, in the chapter's own vocabulary>\", \"citations\": [], \"confidence\": \"low\"}. Never fill the gap with a guess.\n"
-    "- Otherwise reply with JSON: {\"answer\": \"<short plain-prose answer in the question's language, grounded in the excerpts, at most one excerpt cited inline in [square brackets]>\", \"citations\": [{\"id\": \"<id of the excerpt you used>\", \"title\": \"<the excerpt's own title>\"}], \"confidence\": \"high|medium|low\"}.\n"
+    "- Otherwise reply with JSON: {\"answer\": \"<short plain-prose answer in the question's language, grounded in the excerpts and the still-valid history, at most one excerpt cited inline in [square brackets]>\", \"citations\": [{\"id\": \"<id of the excerpt you used>\", \"title\": \"<the excerpt's own title>\"}], \"confidence\": \"high|medium|low\"}.\n"
     "- Every citation id must exist among the provided excerpts. Output JSON only. No URLs, no markdown links, no code fences, no bold, no tables.\n"
     "- The answer must be under 360 characters.\n"
     + _ATLAS_BLOCK
@@ -115,14 +116,28 @@ async def chapter_ask(request: Request, body: ChapterAskRequest) -> JSONResponse
 
     chapter_atlas = (body.atlas_context or '').strip()
     atlas_block = (chapter_atlas + '\n') if chapter_atlas else ''
+    history_lines: list[str] = []
+    for i, turn in enumerate(body.history or [], 1):
+        q = " ".join(str(turn.question).split())[:400]
+        a = " ".join(str(turn.answer).split())[:480]
+        if not a:
+            continue
+        history_lines.append(f"  Q{i}: {q}\n  A{i} (previously fenced answer): {a}")
+    history_block = (
+        "Conversation so far (oldest first; every answer below already passed the lane's fence):\n"
+        + "\n".join(history_lines)
+        + "\n"
+    ) if history_lines else ""
     req = LLMRequest(
         task_class="summary",
-        payload={"question": body.question, "locale": body.locale, "chapter_id": body.chapter_id, "atlas_included": bool(chapter_atlas)},
+        payload={"question": body.question, "locale": body.locale, "chapter_id": body.chapter_id,
+                 "atlas_included": bool(chapter_atlas), "history_pairs": len(history_lines)},
         system=contract_for("chapter", _SYSTEM),
         prompt=(
             f"{atlas_block}Chapter: {body.chapter_title}\n"
-            f"Question: {body.question}\n\n"
-            f"Excerpts ({len(body.sections)}):\n{corpus}\n\n"
+            f"Content ({len(body.sections)} excerpts):\n{corpus}\n\n"
+            f"{history_block}"
+            f"Question: {body.question}\n"
             "JSON only."
         ),
         max_tokens=400,

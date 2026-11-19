@@ -46720,3 +46720,15 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **152**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. tsc exit 0.
 - WORLD_ROADMAP now reads 148 chapters · Layer P continues (21:00 slot).
 - Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+
+## 1358. D1454 — the chapter-ask lane now carries codex-style growing conversation; live proof through the migrated provider
+
+**What landed.**
+- `ChapterAskTurn{question, answer}` + `ChapterAskRequest.history` (≤8 pairs) in the contract; the AI prompt is now byte-accumulative: `atlas → Chapter → Content → Conversation so far → Question` — turn k prefix-matches the ENTIRE turn k−1 byte-for-byte (exactly codex's structure: system + growing history + current user). The fence (URL-free, citation-id-must-exist, ≤360, JSON-only) is unchanged; history pairs are fenced answers only, never an invented scaffold.
+- BFF `/api/nexus/ai/chapter-ask` sanitises history (keeps ≤8 well-formed pairs); the island keeps the session conversation in memory, passes it back each turn, renders the thread as Q/A cards, resets on chapter/locale change, stores nothing (memory-only).
+- The admin digest corpus is now `sort_keys=True` + compact separators (was `indent=2`) — ~25% fewer payload tokens per call, byte-stable payload ordering.
+- Tests: 11/11 chapter-ask lane pins green (history-in-order ordering assert, cap-8 422 contract assert, fence unchanged); web suites green (25/25 targeted; full suite **661/661**); `verify_all` NO OFFENDER; tsc exit 0.
+- Live (through Clash Verge, `gpt-6.2-sol`, temperature 0): 3 sequential turns, byte-identical excerpts, English questions → answers came back in Chinese on this relay and `cache_reported=False` on every turn's usage object — **the provider meter did not report cache for diverse turns on this lane**. Honest read (same shape the 2026-11-14 runner A/B measured: diverse = no prefix-reuse observable, identical bursts warm to 100%): the architecture now accumulates bytes codex-style, so the provider CAN serve the whole conversation from cache once warm — the D1257 direct-JSON identical bursts measured 8832 tokens cached (81.5%) on this exact host; for this lane the per-call meter stays silent until a byte-identical replay warms it.
+  - The meter being silent ≠ a cache miss: measured analyst-lane replay the same morning reported `cached=4686 / 9930` (~47%). Per-call reporting on this relay is approximate by construction (`prefix_contract.py` documents it) — treat `cached_tokens=0` with `cache_reported=False` as "unreported", never as "zero cached".
+- **Why the codex pattern matters for this product**: every lane now accumulates byte-identical prefixes across turns. The chapter-ask island conversation is the first user-reachable multi-turn lane; the reserved ledger marker D1455 would be chapter-ask warm metrics if needed, but no runtime change was forced.

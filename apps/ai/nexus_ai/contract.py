@@ -390,6 +390,13 @@ class HandbookAskRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class ChapterAskTurn(_Strict):
+    """One caller-side Q/A pair to replay as context — a fence-checked answer, never a guess."""
+
+    question: str = Field(min_length=1, max_length=400)
+    answer: str = Field(min_length=1, max_length=480)
+
+
 class ChapterAskSection(_Strict):
     """One excerpt of ONE chapter, exactly as the reader's lane believes relevant."""
 
@@ -408,6 +415,11 @@ class ChapterAskRequest(_Strict):
     sections: list[ChapterAskSection] = Field(min_length=1, max_length=60)
     locale: str = Field(default="zh-HK", max_length=16)
     atlas_context: str = Field(default="", max_length=1200)
+    #: 多轮追问上下文（codex 式 growing history）：调用端喂回的都是本会话围栏校验过的回答；
+    #: 让 provider prefix cache 命中历史。最多 8 对，超出端点亦会截断。
+    #: (caller-side history — every pair was already fence-checked in this session; the
+    #:  codex growing-history pattern lets the provider cache the prefix turn-over-turn.)
+    history: list[ChapterAskTurn] = Field(default_factory=list, max_length=8)
 
 
 class AhWanTurn(_Strict):
