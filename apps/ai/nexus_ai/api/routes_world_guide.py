@@ -31,6 +31,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import WorldGuideRequest
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 from nexus_ai.orchestrator.world_guide_graph import run_guide
 
 log = logging.getLogger("nexus_ai.api.routes_world_guide")
@@ -95,7 +96,7 @@ async def world_guide(request: Request, body: WorldGuideRequest) -> JSONResponse
             task_class="summary",
             payload={"surface": surface, "locale": locale, "minutes": body.minutes,
                      "current_title": body.current_title},
-            system=system,
+            system=contract_for("world_guide", system),
             prompt=prompt,
             max_tokens=max_tokens,
             temperature=0.0,

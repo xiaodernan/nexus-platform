@@ -32,6 +32,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import ChapterAskRequest
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 
 log = logging.getLogger("nexus_ai.api.routes_chapter")
 
@@ -95,7 +96,7 @@ async def chapter_ask(request: Request, body: ChapterAskRequest) -> JSONResponse
     req = LLMRequest(
         task_class="summary",
         payload={"question": body.question, "locale": body.locale, "chapter_id": body.chapter_id},
-        system=_SYSTEM,
+        system=contract_for("chapter", _SYSTEM),
         prompt=(
             f"Chapter: {body.chapter_title}\n"
             f"Question: {body.question}\n\n"

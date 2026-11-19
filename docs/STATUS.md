@@ -46402,3 +46402,22 @@ chapter 110 as the second one in Layer L.
 - Showcase already carries the D1418 heavy-milestone pack; cadence holds — the io pages absorb Layer M at its closure.
 
 **Verification.** `chapter-en-arm` 124/124 · `check_simplified_seed` PASS · `verify_all` NO OFFENDER · 15/15 AI unit green (6.2-sol id swap) · live probe re-measured (95.1% identical-burst).
+
+## 1324. D1420 — every lane rides the frozen head: cross-lane cache sharing measured live (95%+ warm)
+
+**Why.** The operator's complaint, restated as data: "多个并行会话跟你同时打这个api导致缓存区分不明显、用乱了、缓存不命中" — across six lanes the app sent six *different* near-floor private prefixes, below the provider's cacheable floor, sharing nothing. Codex-style apps share one frozen head; we now do too.
+
+**What landed.**
+- `routes_world_guide`, `routes_npc_ahwan`, `routes_chapter`, `routes_admin` (digest), `routes_insights` (narrative) now prepend the same frozen `_SHARED_PREAMBLE` (7,394 chars ≈ 1,850 tokens, version v1, sha `bb8ae53bed5a0c33`) via `contract_for(lane, TASK_SYSTEM)`. Task instructions stay strictly AFTER the head. With `NEXUS_PREFIX_CONTRACT=off` the pre-D1432 prompts are restored verbatim (falsifier arm unchanged).
+- All five lanes import `contract_for`; `prefix_contract.py` docstring gains the D1432 note.
+
+**Live re-measure (CloAK :7897 → aizzz.xyz/v1, gpt-6.2-sol, interleaved A/B lanes, 2026-11-19).**
+```
+lane A turn1 6263 cached=None   · lane B turn1 6332 cached=None     (cold, expected)
+lane A turn2 6316 cached=6080   · lane B turn2 6369 cached=6080     ← B warmed on A's head (95%+)
+lane A turn3 6358 cached=6080   · lane B turn3 6408 cached=6079
+lane A turn4 6397 cached=None (one eviction blip) · lane B turn4 6451 cached=6207 (96.3%)
+```
+Growing-history baseline: turns 3–4 at 6080/6355 (**95.7%**), 6080/6391 (**95.1%**). Cross-lane head reuse — previously 0 — now shows on every warm call. Honest caveat, stated in the docs: this relay occasionally evicts under account-wide pressure (1 blip in 12 calls ≈ 92% warm); no client can control server-side KV eviction, only byte-stability and shape — which we now hold app-wide.
+
+**Verification.** 71/71 targeted lane tests green (world_guide / npc_ahwan / chapter / admin / insights / prefix-contract) · merchant growing-history + cache-reporting + transport-retry + openai-stream + intent-contract-gate: 41/41 · prefix-contract byte-stability: PASS · full JS `verify_all` → NO OFFENDER (72 PASS) · `tsc` clean.

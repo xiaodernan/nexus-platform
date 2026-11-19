@@ -38,6 +38,13 @@ Discipline
   prompts exactly. That is the falsifier arm for the live probe, and the escape hatch for
   a proxy that bills cached prefix tokens at full price.
 
+D1432 (2026-11-19): the contract is no longer only the summary/intent lanes. Every
+model-facing lane now rides the same preamble — ``routes_stream`` (merchant growing
+history), ``pipeline`` (intent + summary), ``routes_world_guide``, ``routes_npc_ahwan``,
+``routes_chapter``, ``routes_admin`` (digest) and ``routes_insights`` (narrative) — so ALL
+calls from this process share one byte-stable head instead of each lane carrying its own
+near-floor private prefix. Task instructions live strictly AFTER the head.
+
 Measured against wkapi.pro after landing (2026-11-13, ``gpt-6.2-sol``, temperature 0):
 
 * plain chat + this system head: identical calls served from cache at **100%** of the

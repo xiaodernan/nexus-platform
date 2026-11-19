@@ -29,6 +29,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import AhWanDialogueRequest
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 from nexus_ai.orchestrator.npc_ahwan_dialogue import run_dialogue
 
 log = logging.getLogger("nexus_ai.api.routes_npc_ahwan")
@@ -81,7 +82,7 @@ async def npc_ah_wan(request: Request, body: AhWanDialogueRequest) -> JSONRespon
         req = LLMRequest(
             task_class="summary",
             payload={"locale": locale, "history_turns": len(history)},
-            system=system,
+            system=contract_for("npc_ahwan", system),
             prompt=prompt,
             max_tokens=max_tokens,
             temperature=0.0,

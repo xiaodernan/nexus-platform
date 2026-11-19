@@ -26,6 +26,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import InsightsNarrativeRequest
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 
 log = logging.getLogger("nexus_ai.api.routes_insights")
 
@@ -102,7 +103,7 @@ async def insights_narrative(request: Request, body: InsightsNarrativeRequest) -
     req = LLMRequest(
         task_class="summary",
         payload={"locale": body.locale},
-        system=_SYSTEM,
+        system=contract_for("insights_narrative", _SYSTEM),
         prompt=(
             f"Locale: {body.locale}\n"
             f"Replay stats JSON:\n{json.dumps(stats, ensure_ascii=False, sort_keys=True)}\n\n"

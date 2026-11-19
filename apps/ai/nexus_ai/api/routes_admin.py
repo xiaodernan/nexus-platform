@@ -30,6 +30,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import AdminDigestRequest
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 
 log = logging.getLogger("nexus_ai.api.routes_admin")
 
@@ -99,7 +100,7 @@ async def admin_digest(request: Request, body: AdminDigestRequest) -> JSONRespon
     req = LLMRequest(
         task_class="summary",
         payload={"locale": body.locale},
-        system=_SYSTEM,
+        system=contract_for("admin_digest", _SYSTEM),
         prompt=(
             f"Real counters from the backend event stream ({body.locale}):\n{corpus}\n\n"
             "JSON only."
