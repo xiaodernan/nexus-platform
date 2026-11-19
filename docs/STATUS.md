@@ -46508,3 +46508,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **129**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP arc now reads 126 chapters · Layer M open (01:30 → 09:00 span so far).
 
+## 1333. D1429 — chapter 127 joins Layer M; arc stands at 127 chapters
+
+**What landed.**
+- `hk-yau-ma-tei-a-li-street-noon-peanut-candy-chronicle` → chapter 127 (ten past eleven, A Li Street, Yau Ma Tei — Ah Lun's peanut candy; "the kitchen works too"). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **130**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP arc now reads 127 chapters · Layer M open.
+

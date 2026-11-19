@@ -1866,4 +1866,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The oars he carved/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 127 (A Li Street peanut candy) ships in three arms too', () => {
+    const hk = mockGuide('hk-yau-ma-tei-a-li-street-noon-peanut-candy-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/鴉厘街.*阿倫/);
+    const cn = mockGuide('hk-yau-ma-tei-a-li-street-noon-peanut-candy-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/鸦厘街.*阿伦/);
+    const en = mockGuide('hk-yau-ma-tei-a-li-street-noon-peanut-candy-chronicle', 'en');
+    expect(en?.title).toMatch(/Yau Ma Tei|A Li Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lun/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Pounding the peanuts/i.test(b.text))).toBe(true);
+  });
 });
