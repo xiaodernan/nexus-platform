@@ -1655,4 +1655,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /gate opens and closes twice/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 113 (Wan Chai Pak Tai Street fishballs) ships in three arms too', () => {
+    const hk = mockGuide('hk-wanchai-pak-tai-street-afternoon-fishballs-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/四分街.*阿仔/);
+    const cn = mockGuide('hk-wanchai-pak-tai-street-afternoon-fishballs-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/四分街.*阿仔/);
+    const en = mockGuide('hk-wanchai-pak-tai-street-afternoon-fishballs-chronicle', 'en');
+    expect(en?.title).toMatch(/Wan Chai|Pak Tai Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Jai/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The hands/i.test(b.text))).toBe(true);
+  });
 });
