@@ -46345,6 +46345,16 @@ chapter 110 as the second one in Layer L.
 - `WORLD_ROADMAP.md` records the corpus at 113 chapters after D1408–D1409.
 
 **Verification.**
-- Master CI `D1406` (#549) GREEN; D1407 (#550) GREEN. D1409 in-band with D1408.
+- Master CI `D1406` (#549) GREEN; D1407 (#550) GREEN; D1408 (#553) GREEN; D1409 (#554) GREEN.
 - showcase latest.json confirmed `head 726a9f9` / `milestone D1407` / `commits 1634`.
 - `verify_all.mjs --report` = `RESULT: NO OFFENDER`.
+
+## 1320. D1410 — chapter 114 lands; corpus reaches 114
+
+**Why.** The infinite world keeps growing; Layer L arc continues.
+
+**What landed.**
+- `hk-kwun-tong-south-industry-road-afternoon-room-chronicle` → chapter 114 (South Industrial Road, Kwun Tong — Ah Sun, a cousin visiting a small plastic-works that never had a visitor before; the silent box). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count 117. verify_all RESULT: NO OFFENDER (72 PASS).
+- `WORLD_ROADMAP.md` records the corpus at 114 chapters after D1410.
+
