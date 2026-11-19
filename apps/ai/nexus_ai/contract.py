@@ -400,12 +400,12 @@ class ChapterAskSection(_Strict):
 
 
 class ChapterAskRequest(_Strict):
-    """The chapter-companion lane's request — one chapter, the top excerpts; the model owns nothing else."""
+    """The chapter-companion lane's request — one chapter, its full body (or a relevance-picked window); the model owns nothing else."""
 
     question: str = Field(min_length=1, max_length=400)
     chapter_id: str = Field(min_length=1, max_length=120)
     chapter_title: str = Field(min_length=1, max_length=200)
-    sections: list[ChapterAskSection] = Field(min_length=1, max_length=8)
+    sections: list[ChapterAskSection] = Field(min_length=1, max_length=60)
     locale: str = Field(default="zh-HK", max_length=16)
     atlas_context: str = Field(default="", max_length=1200)
 

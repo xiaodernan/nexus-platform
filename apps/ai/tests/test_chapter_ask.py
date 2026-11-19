@@ -188,7 +188,7 @@ class TestGroundedLane:
 
     def test_excerpts_are_required_and_capped(self):
         client = _client()
-        too_many = [{"id": f"p{i}", "kicker": "", "title": f"T{i}", "body": "b"} for i in range(9)]
+        too_many = [{"id": f"p{i}", "kicker": "", "title": f"T{i}", "body": "b"} for i in range(61)]
         resp = client.post("/ai/v1/chapter/ask", json={
             "question": "what time?",
             "chapter_id": "hk-cha-chaan-teng-dawn",

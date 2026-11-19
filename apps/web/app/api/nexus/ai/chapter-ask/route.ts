@@ -3,8 +3,10 @@
  *
  * Body: `{ question, chapterSlug, locale? }`. The handler loads the chapter through the SAME
  * read path the reader already uses (`guideBySlug`, the mock plane in CI/offline, the platform
- * read in live mode) and hands the model the top excerpts that overlap the question — nothing
- * else in the product is a source of truth here.
+ * read in live mode) and hands the model the WHOLE chapter below the char limit (or the top
+ * lexical window above it) — nothing else in the product is a source of truth here. The AI
+ * plane additionally carries the frozen 147-chapter world atlas inside its system contract,
+ * so the model answers with the world in mind instead of a single paragraph slice.
  *
  * In mock mode (`NEXT_PUBLIC_DATA_MODE=mock`, the default for tests and CI) the lane is inert:
  * `degraded:true, reason:'mock_provider'`, and the client island never mounts. In live mode the
@@ -28,8 +30,10 @@ export const dynamic = 'force-dynamic';
 
 const MAX_QUESTION = 300;
 const PARA_LIMIT = 1600;
-const NEIGHBOR_BLOCK_LIMIT = 700;
 const PICKED = 12;
+// A full chapter on this arc runs ~1.2–5.5K chars. Below the limit we send the WHOLE chapter —
+// the model sees every paragraph, so any question about the chapter is grounded in the real text.
+const FULL_CHAPTER_CHAR_LIMIT = 28_000;
 
 type Excerpt = { id: string; kicker: string; title: string; body: string; index: number };
 
@@ -50,19 +54,6 @@ function tokenize(text: string): Set<string> {
     if (run.length >= 3) tokens.add(run);
   }
   return tokens;
-}
-
-function atlasHeaderLine(guide: Guide, locale: string): string {
-  const loc = normalizeLocale(locale);
-  const line = (guide.title || '').split('：', 1)[0].split('—', 1)[0].trim();
-  const total = guide.title_en || '';
-  if (loc === 'en') {
-    return `[CHAPTER CONTEXT — The Hong Kong arc made real. This chapter is one of 130+ narrative constructions; every merchant is synthetic. The present chapter: ${total}]`;
-  }
-  if (loc === 'zh-CN') {
-    return `[章节上下文 — 香港系列合成叙事。本篇是 130+ 章之一；所有商户均为虚构示例。本篇：${line}]`;
-  }
-  return `[章節上下文 — 香港系列合成敘事。本篇是 130+ 章之一；所有商戶均為虛構示例。本篇：${line}]`;
 }
 
 function excerptParagraphs(guide: Guide): Excerpt[] {
@@ -148,15 +139,11 @@ export async function POST(request: Request): Promise<Response> {
   if (excerpts.length === 0) {
     return json({ degraded: true, reason: 'chapter_empty', answer: '', citations: [], confidence: 'low' });
   }
-  const picked = pickExcerpts(question, excerpts);
-  // Compose a big-context payload: atlas line + up to PICKED excerpts + the chapter's full synopsis.
-  const fullEnumerate = excerpts.length <= PICKED;
-  // When only 6 paragraphs total, send fullExcerpts instead — every paragraph, not a subset.
-  const fullBlock = fullEnumerate
-    ? excerpts.map((p) => `[${p.id}] ${p.title}\n${p.body}`).join('\n\n')
-    : picked.map((p) => `[${p.id}] ${p.title}\n${p.body}`).join('\n\n');
-  const atlasLine = atlasHeaderLine(guide, locale);
-  const augment = atlasLine;
+  // Full-chapter grounding: below the char limit we send every paragraph — not a relevance-picked subset.
+  const totalChars = excerpts.reduce((acc, p) => acc + p.body.length, 0);
+  const fullChapter = totalChars <= FULL_CHAPTER_CHAR_LIMIT;
+  const picked = fullChapter ? excerpts : pickExcerpts(question, excerpts);
+  const sections = picked.map((p) => ({ id: p.id, kicker: p.kicker, title: p.title, body: p.body }));
 
   try {
     const data = await nexusGet<Record<string, unknown>>('ai', '/ai/v1/chapter/ask', {
@@ -166,8 +153,7 @@ export async function POST(request: Request): Promise<Response> {
         locale,
         chapter_id: guide.slug,
         chapter_title: guide.title,
-        sections: picked.map((p) => ({ id: p.id, kicker: p.kicker, title: p.title, body: p.body })),
-        atlas_context: augment,
+        sections,
       },
     });
     return json({ ...data, picked: picked.map((p) => p.id) });

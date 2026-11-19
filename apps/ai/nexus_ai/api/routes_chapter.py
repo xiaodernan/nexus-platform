@@ -22,6 +22,7 @@ import json
 import logging
 import re
 import time
+from pathlib import Path
 
 from typing import Any
 
@@ -38,18 +39,37 @@ log = logging.getLogger("nexus_ai.api.routes_chapter")
 
 router = APIRouter()
 
+_ATLAS_INDEX_PATH = Path(__file__).resolve().parent.parent / "models" / "atlas_index.txt"
+_ATLAS_INDEX: str = ""
+try:
+    _ATLAS_INDEX = _ATLAS_INDEX_PATH.read_text(encoding="utf-8").strip()
+except OSError:
+    log.warning("chapter ask: atlas_index unreadable — falling back to bare contract")
+
+_ATLAS_BLOCK = (
+    "\n\nTHE 147-CHAPTER HONG KONG ARC — order is chronological. Use it to understand\n"
+    "where this chapter sits in the world. The atlas grounds your answer in the world that actually exists.\n"
+    "The chapter arc is synthetic narrative, never travel advice; merchants are fictional.\n"
+    "Never name a character, place or rule beyond the provided excerpts.\n"
+    + _ATLAS_INDEX
+    + "\n"
+) if _ATLAS_INDEX else ""
+
+_SYSTEM = (
+    "You are the NEXUS chapter companion. You will be given excerpts from ONE chapter of the Hong Kong story, "
+    "a small atlas line that names the chapter's place inside the arc, and ONE question in the reader's language.\n"
+    "Answer in the SAME language as the question. Hard constraints:\n"
+    "- Use ONLY the provided excerpts AND the atlas. Never invent a character, an event, a place, a price or a rule that is not in them.\n"
+    "- If the chapter does not contain the answer, reply with JSON: {\"answer\": \"<one sentence naming what the chapter does not say, in the chapter's own vocabulary>\", \"citations\": [], \"confidence\": \"low\"}. Never fill the gap with a guess.\n"
+    "- Otherwise reply with JSON: {\"answer\": \"<short plain-prose answer in the question's language, grounded in the excerpts, at most one excerpt cited inline in [square brackets]>\", \"citations\": [{\"id\": \"<id of the excerpt you used>\", \"title\": \"<the excerpt's own title>\"}], \"confidence\": \"high|medium|low\"}.\n"
+    "- Every citation id must exist among the provided excerpts. Output JSON only. No URLs, no markdown links, no code fences, no bold, no tables.\n"
+    "- The answer must be under 360 characters.\n"
+    + _ATLAS_BLOCK
+)
+
 _MAX_SECTION_BODY = 1600
 
 _URL_RE = re.compile(r"https?://|www\.", re.IGNORECASE)
-
-_SYSTEM = """You are the NEXUS chapter companion. You will be given excerpts from ONE chapter of the Hong Kong story, a small atlas line that names the chapter's place inside the arc, and ONE question in the reader's language.
-Answer in the SAME language as the question. Hard constraints:
-- Use ONLY the provided excerpts AND the atlas line. Never invent a character, an event, a place, a price or a rule that is not in them.
-- If the chapter does not contain the answer, reply with JSON: {"answer": "<one sentence naming what the chapter does not say, in the chapter's own vocabulary>", "citations": [], "confidence": "low"}. Never fill the gap with a guess.
-- Otherwise reply with JSON: {"answer": "<short plain-prose answer in the question's language, grounded in the excerpts, at most one excerpt cited inline in [square brackets]>", "citations": [{"id": "<id of the excerpt you used>", "title": "<the excerpt's own title>"}], "confidence": "high|medium|low"}.
-- Every citation id must exist among the provided excerpts. Output JSON only. No URLs, no markdown links, no code fences, no bold, no tables.
-- The answer must be under 360 characters.
-"""
 
 
 def _degraded(reason: str) -> JSONResponse:

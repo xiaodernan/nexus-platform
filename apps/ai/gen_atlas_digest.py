@@ -25,11 +25,11 @@ SRC = ROOT + r"/apps/web/src/lib/mock/seed.ts"
 DST = ROOT + r"/apps/ai/nexus_ai/models/atlas_digest.txt"
 
 HEADER = """# THE HONG KONG ARC · 香港系列 · THE SYNTHETIC WORLD
-# 00:00→23:00 · 133 chapters · three arms (zh-HK Traditional / zh-CN opencc fold / full English prose)
+# 00:00→23:00+ · {total} chapters · three arms (zh-HK Traditional / zh-CN opencc fold / full English prose)
 # demo:true · every scene is narrative construction; merchants and people are fictional; the arc is flags:{demo:true}
-# Layer A–N; Layer L CLOSED (109–120, the return arc) · Layer M CLOSED at ch.130 (Central Pier last sailing) · Layer N open (the counting hours)
+# Layers A–M CLOSED · Layer N CLOSED at ch.138 (the afternoon last count) · Layer O CLOSED at ch.144 (after the meet) · Layer P open (the east gate, D1450)
 # World constitution:
-#   · the arc is one long Hong Kong day told in one hundred and thirty-three rooms
+#   · the arc is one long Hong Kong day told in {words} rooms
 #   · each chapter is a single shopfront, crossing or dawn queue — a place you can almost touch
 #   · characters reappear across layers (the cash register never lies; dragon-gate, Octopus, the harbour)
 #   · money is counted, lamps are lit, ledgers close before notices — no drama without a witness
@@ -79,6 +79,26 @@ def chapter_no(title: str) -> int:
     return parse_cn(m.group(1)) if m else -1
 
 
+def _cn_words(n: int) -> str:
+    """English words for small integers in the constitution header (e.g. 147 → 'one hundred and forty-seven')."""
+    ones = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+    teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+    tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+    def two(x: int) -> str:
+        if x < 10:
+            return ones[x]
+        if x < 20:
+            return teens[x - 10]
+        t, o = divmod(x, 10)
+        return tens[t] + ("-" + ones[o] if o else "")
+
+    if n < 100:
+        return two(n)
+    h, rest = divmod(n, 100)
+    return two(h) + " hundred" + (" and " + two(rest) if rest else "")
+
+
 def main() -> None:
     s = io.open(SRC, encoding="utf-8").read()
     entries: dict[int, tuple[str, str]] = {}
@@ -98,12 +118,15 @@ def main() -> None:
         else:
             clock, scene = "", title.split("（")[0].strip()
         entries[no] = (clock, scene)
-    missing = [n for n in range(1, 134) if n not in entries]
+    total = max(entries)
+    missing = [n for n in range(1, total + 1) if n not in entries]
     if missing:
         raise SystemExit(f"missing chapters: {missing}")
+    words = _cn_words(total)
+    header = HEADER.replace("{total}", str(total)).replace("{words}", words)
     lines = [f"{no:3d} · {clock} · {scene}" for no, (clock, scene) in sorted(entries.items())]
-    io.open(DST, "w", encoding="utf-8", newline="\n").write(HEADER + "\n".join(lines) + "\n")
-    print(f"atlas_digest regenerated: 133 chapters · {len(io.open(DST,'rb').read())} bytes")
+    io.open(DST, "w", encoding="utf-8", newline="\n").write(header + "\n".join(lines) + "\n")
+    print(f"atlas_digest regenerated: {total} chapters · {len(io.open(DST,'rb').read())} bytes")
 
 
 if __name__ == "__main__":
