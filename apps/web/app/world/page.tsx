@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { currentLocale } from '@/lib/i18n/server';
 import { getDict, type Dict } from '@/lib/i18n';
 import { Container } from '@nexus/ui';
+import { StoryRecap } from '@/components/story-recap';
 
 /**
  * `/world` — the atlas page. A single-scroll dossier of the entire HK-series corpus,
@@ -82,6 +83,15 @@ export default async function WorldPage() {
       </section>
 
       <Container size="shell" className="py-10">
+        <StoryRecap
+          locale={locale}
+          copy={{
+            cta: t.recapCta,
+            pending: t.recapPending,
+            proven: t.recapProven,
+            watchLabel: t.recapWatchLabel,
+          }}
+        />
         <nav aria-label={t.clockLabel} className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
           {t.layers.map((layer) => (
             <a

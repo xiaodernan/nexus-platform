@@ -2111,6 +2111,10 @@ export const zhCN: Dict = {
       { code: 'nightlife', title: '陆 · 夜市楼长街（19:00 – 21:00）', blurb: '庙街彻夜不撤，粥府的长台，粤剧老倌一个一个亮相散场——这座城的夜不收摊，只收人。' },
       { code: 'late', title: '柒 · 夜猫子与通风口（21:30 – 00:00）', blurb: '纸箱老伯、菲律宾中环、平利果皮批发、车仔面、威灵顿街爵士、天星末班船——熬得最久的一批人；这座城的一整天，由他们收尾。' },
     ],
+    recapCta: '一句话回顾最近十二章',
+    recapPending: '正在读世界地图…',
+    recapProven: 'AI 措辞 · 只引用本世界地图 · 每次按钮一次调用',
+    recapWatchLabel: '下一条线：',
     footerNote: '每个章名都是可点的门。全系列合成叙事，与真实商户、真实人物全不相关。',
     atlasLinkHints: {
       hongKong: '读香港终日——全系列按时辰连贯读完的首页',

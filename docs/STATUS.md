@@ -46855,3 +46855,13 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer P continues** — the 1960 championship is reconstructed as process and witness, not as a trophy; the brush-ink sender remains unnamed.
 - `chapter-en-arm.test.ts` — assertion count **160**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 156 chapters · Layer P continues (14:00 slot). Showcase io fact pack was synced at D1466 (`5274f9de`, 1,712 commits, 155 chapters) and verified live with a green Pages deploy (`44606005273`); it advances at the next "big improvement" cadence, not on every chapter commit.
+
+
+## 1372. D1468 — the story-recap StateGraph lands on /world, and the frozen atlas catches up to 156
+
+**What landed.**
+- Staleness found while wiring the new lane: `atlas_digest.txt` and `atlas_index.txt` were frozen at **147 chapters** while the arc had reached 156 — the chapter-ask system prompt had been telling the model the world ended nine chapters early. Regenerated both through the checked-in scripts (`gen_atlas_digest.py` → 156 chapters / 12,530 B; `gen_atlas_index.py` → 156 lines / 11,643 B), moved the pinning tests to 156, and corrected the hard-coded `THE 147-CHAPTER HONG KONG ARC` fence in `routes_chapter.py` to 156. This is exactly the drift the frozen-artifact discipline exists to catch.
+- `apps/ai/nexus_ai/orchestrator/story_recap_graph.py` — a sixth real `StateGraph` (`locate` → `phrase` → `verify`, refusal short-circuits to END): selects ≤12 ordered atlas lines (default last 12), ONE temperature-0 call phrases them, fences refuse URLs, chapter numbers outside the window, wrong-script drafts, field overruns and canonical character-name drift. An empty recap with a reason is the honest failure.
+- `POST /ai/v1/story/recap` (contract `StoryRecapRequest`, registered in `app.py`) + web BFF `POST /api/nexus/ai/story-recap` + button island `src/components/story-recap.tsx` mounted on `/world`. **No auto-call**: the reader clicks, one model call is spent; mock mode is inert. Four dict keys per arm (zh-HK / en + regenerated Simplified fold), Traditional-corrected after `check_ui_script` found five Simplified glyphs in the first draft.
+- Tests: 9 graph/route green, 2 BFF green; full web suite 75 files / **671 passed**; AI atlas pins green; `verify_all` NO OFFENDER; tsc 0; contract drift and UI-script gates green (new endpoint row added to API_CONTRACT.md).
+- Showcase fact-pack remains at D1466 and LIVE-verified; it advances at the big-improvement cadence, not per commit.

@@ -517,6 +517,14 @@ class InsightsAnalystRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class StoryRecapRequest(_Strict):
+    """The reader's orientation ask: an optional atlas window, otherwise the last twelve chapters."""
+
+    locale: str = Field(default="zh-HK", max_length=16)
+    start: int = Field(default=0, ge=0, le=1000)
+    end: int = Field(default=0, ge=0, le=1000)
+
+
 class SearchRequest(_Strict):
     intent: Optional[Intent] = None
     query: Optional[str] = None

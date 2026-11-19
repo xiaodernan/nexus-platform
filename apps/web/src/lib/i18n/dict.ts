@@ -1204,9 +1204,13 @@ export interface Dict {
     analystVerdictFlat: string;
     analystVerdictFalling: string;
   };
-  /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
+  /** D1210/D1468: the /world atlas — seven layers plus one on-demand recap CTA. */
   world: {
     eyebrow: string;
+    recapCta: string;
+    recapPending: string;
+    recapProven: string;
+    recapWatchLabel: string;
     title: string;
     intro: string;
     clockLabel: string;
@@ -3327,6 +3331,10 @@ const zhHK: Dict = {
       { code: 'nightlife', title: '陸 · 夜市樓長街（19:00 – 21:00）', blurb: '廟街徹夜不撤，粥府的長枱，粵劇老倌一個一個亮相散場——這座城的夜不收攤，只收人。' },
       { code: 'late', title: '柒 · 夜貓子與通風口（21:30 – 00:00）', blurb: '紙箱老伯、菲律賓中環、平利果皮批發、車仔麵、威靈頓街爵士、天星末班船——熬得最久的一批人；這座城的一整天，由他們收尾。' },
     ],
+    recapCta: '一句話回顧最近十二章',
+    recapPending: '正在讀世界地圖…',
+    recapProven: 'AI 措辭 · 只引用本世界地圖 · 每次按鈕一次調用',
+    recapWatchLabel: '下一條線：',
     footerNote: '每個章名都是可點的門。全系列合成敘事，與真實商戶、真實人物全不相關。',
     atlasLinkHints: {
       hongKong: '讀香港終日——全系列按時辰連貫讀完的首頁',
@@ -5450,6 +5458,10 @@ const en: Dict = {
       { code: 'nightlife', title: 'VI · The night-market row (19:00 – 21:00)', blurb: 'Temple Street never disbands; the congee communal table; the opera shuffling out — the city’s nights don’t close, they dissipate.' },
       { code: 'late', title: 'VII · The stayers (21:30 – 00:00)', blurb: 'The cardboard uncle under the lift, Filipina Central, Ping Li’s citrus grocery, cart noodles, Wellington Street jazz, the Star Ferry’s last sailing — the latest risers; the city’s day ends on their terms.' },
     ],
+    recapCta: 'Recap the last twelve chapters',
+    recapPending: 'Reading the atlas…',
+    recapProven: 'AI phrasing · this atlas only · one call per click',
+    recapWatchLabel: 'Open thread:',
     footerNote: 'Every chapter name is a door. The whole series is synthetic fiction — no real merchant, no real person.',
     atlasLinkHints: {
       hongKong: 'Read Hong Kong end to end — the whole series, in one clock-order sitting',
