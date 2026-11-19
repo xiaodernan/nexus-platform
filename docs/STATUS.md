@@ -46810,3 +46810,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer P continues** — the reunion arc: the torch passes without a speech; the noon light lands on the 1960 red plate.
 - `chapter-en-arm.test.ts` — assertion count **157**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 153 chapters · Layer P continues (12:00 slot). Showcase fact pack stays on D1447 (cadence rule); Layer P closure = next heavy milestone.
+
+
+## 1367. D1463 — chapter 154 joins Layer P; arc stands at 154
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-misdelivered-parcel-chronicle` — chapter 154 （下午一點——東門——快遞員送來一個收件人寫著陳炳的牛皮紙包；阿樂只講「收著」，「明天才拆。今日你已經釘過牌了。」兩個不同年代的紙在關燈後的同一張桌上等天黑）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc opens a new hook without answering it: the parcel's sender stays unnamed, the opening deferred to a future chapter. Synthetic narrative: no real merchant, courier or person.
+- `chapter-en-arm.test.ts` — assertion count **158**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 154 chapters · Layer P continues (13:00 slot). Showcase fact pack stays on D1447 (cadence rule); Layer P closure = next heavy milestone.

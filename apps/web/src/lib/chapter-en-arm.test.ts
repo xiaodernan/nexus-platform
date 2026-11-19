@@ -2264,4 +2264,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /steps back|first tag|hammer falls/.test(b.text))).toBe(true);
   });
+  it('chapter 154 (Happy Valley Chan Bok parcel — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-misdelivered-parcel-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/下午一點/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-misdelivered-parcel-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/下午一点/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-misdelivered-parcel-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|parcel/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lok/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /addressee|weight|Tomorrow/.test(b.text))).toBe(true);
+  });
 });
