@@ -46631,3 +46631,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer O continues** — the odds floor arc keeps the 05:50→16:15 ladder; the **young man watching the ponters finally recognizes his father across the race**.
 - `chapter-en-arm.test.ts` — assertion count **144**. verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP arc now reads 141 chapters · Layer O opens (16:15 slot).
+
+## 1349. D1445 — chapter 142 joins Layer O; arc stands at 142
+
+**What landed.**
+- `hk-happy-valley-racecourt-evening-close-chronicle` → chapter 142 （跑馬地——晚上七點关锚灯/关 · "父亲在板凳上一遍到最后还没动"）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer O continues** — the odds floor arc closes its first day; the two-pivot hands-off (Ah Yau was practice/attendant) becomes the bench scene (father unchanged).
+- `chapter-en-arm.test.ts` — assertion count **145** (3 new arms). verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP currently 142 chapters — anchored by 16:15 / 19:00 pair.
+- WORLD_ROADMAP dirty index slot + target rows: arc now has one entry for every 10 minutes between 16:15 and 19:00 · Layer O arc engine intact.
