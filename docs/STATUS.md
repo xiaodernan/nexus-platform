@@ -46819,3 +46819,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer P continues** — the reunion arc opens a new hook without answering it: the parcel's sender stays unnamed, the opening deferred to a future chapter. Synthetic narrative: no real merchant, courier or person.
 - `chapter-en-arm.test.ts` — assertion count **158**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 154 chapters · Layer P continues (13:00 slot). Showcase fact pack stays on D1447 (cadence rule); Layer P closure = next heavy milestone.
+
+
+## 1368. D1464 — the three-arm drafting bench: a StateGraph drafts the EN arm under a deterministic fence
+
+**What landed.**
+- `apps/ai/draft_en_arm_bench.py` — a real `StateGraph` (`read` -> `phrase` -> `verify`, conditional edges straight to END on any refusal): reads a chapter by slug from the canonical `seed.ts`, ONE temperature-0 `gpt-6.2-sol` call drafts the full English arm (title/description/blocks), then a deterministic fence checks block count/type parity, URL-free text, no CJK in English prose, the synthetic-narrative marker, field caps and **canonical character names**. Never writes to `seed.ts`; it hands an empty patch + reason on any refusal.
+- Live proof (one deliberate call, via Clash 7897): chapter 154's arm came back structurally perfect (12 matching blocks, synthetic marker, no CJK/URL) — but the model had silently re-named 陳炳 to "Chan Ping" and 阿穆 to "Ah Mu". The fence was therefore extended with `NAME_MAP` and a `name_drift:*` refusal; all 9 bench tests green (including a name-drift falsifier), ruff clean, no artifact left in the tree (drafts go to the OS temp dir).
+- This is the LLM's role in the CONTENT FLOW, not a vanity endpoint: the model phrases across the language boundary, the code owns facts, identity and structure — exactly the discipline that keeps the operator's own identity lock and the arc's fictional people intact.
+- Showcase cadence unchanged (D1447); Layer P closure remains the next heavy-milestone sync.
