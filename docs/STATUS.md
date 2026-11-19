@@ -46391,3 +46391,14 @@ chapter 110 as the second one in Layer L.
 - Layer L closure is the designated heavy milestone → showcase latest.json refreshes in the same window (D1419).
 
 **Showcase (D1419 window).** `assets/nexus-platform/latest.json` on `xiaodernan.github.io` will carry milestone D1418 — 120 chapters, the EN arm complete end-to-end; gated behind identity-guard; live-verified after the Pages dispatch.
+
+## 1323. D1419 — Layer M opens: the city after midnight (chapter 121)
+
+**Why.** Layer L closed at 00:00; the infinite world does not stop there. Layer M is the arc the clock never had — the small hours, one bowl at a time.
+
+**What landed.**
+- `hk-central-queens-road-midnight-congee-chronicle` → chapter 121 (half past one, Central — Ah Long's congee wok; the world counts again). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **124**. verify_all RESULT: NO OFFENDER (72 PASS). ATLAS untouched; `WORLD_ROADMAP.md` gains the Layer M section.
+- Showcase already carries the D1418 heavy-milestone pack; cadence holds — the io pages absorb Layer M at its closure.
+
+**Verification.** `chapter-en-arm` 124/124 · `check_simplified_seed` PASS · `verify_all` NO OFFENDER · 15/15 AI unit green (6.2-sol id swap) · live probe re-measured (95.1% identical-burst).

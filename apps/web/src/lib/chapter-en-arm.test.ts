@@ -1775,4 +1775,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /bell rings three times/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 121 (Queen’s Road congee) opens Layer M', () => {
+    const hk = mockGuide('hk-central-queens-road-midnight-congee-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/畢打街.*阿朗/);
+    const cn = mockGuide('hk-central-queens-road-midnight-congee-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/毕打街.*阿朗/);
+    const en = mockGuide('hk-central-queens-road-midnight-congee-chronicle', 'en');
+    expect(en?.title).toMatch(/Central|Queen/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Long/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /first turn of the wok/i.test(b.text))).toBe(true);
+  });
 });
