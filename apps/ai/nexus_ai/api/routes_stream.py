@@ -102,7 +102,7 @@ async def _merchant_agent_events(body: MerchantAgentRequest, deps: Deps,
     run_id = runs.new_id()
     # D1314 — codex-style growing lead: the model re-reads the conversation oldest → newest every
     # turn, so the prefix is byte-stable and provider-side cache can serve it turn after turn
-    # (measured on aizzz/gpt-6.1-terra: warm-state ≈96% cached). Fetched BEFORE the current turn
+    # (measured on aizzz/gpt-6.2-sol: warm-state ≈96% cached). Fetched BEFORE the current turn
     # is persisted so the just-asked question never doubles itself inside the lead.
     history_items: list[dict[str, Any]] = []
     _internal_token = str(getattr(deps.settings, "internal_token", "") or "")

@@ -11,7 +11,7 @@ Clash at 127.0.0.1:7897 — the host is geo-blocked to direct):
     text-embedding-3-small  HTTP 503  model_not_found  ("分组 GPT特价 下模型 … 无可用渠道")
     text-embedding-3-large  HTTP 503  model_not_found  (同)
     text-embedding-ada-002  TCP/proxy error            (no channel)
-    gpt-6.1-terra           HTTP 404  model_not_found  (chat model, not an embedding account)
+    gpt-6.2-sol           HTTP 404  model_not_found  (chat model, not an embedding account)
     nexus-embed-1024        HTTP 503  model_not_found  (默认型號並未注册 upstream)
 
 Exit 0 with "AN EMBEDDING MODEL IS AVAILABLE" when at least one candidate answered a
@@ -42,7 +42,7 @@ CANDIDATES = [
     "nexus-embed-1024",
     "text-embedding-3",
     # Sanity: the chat model must NOT be accepted as an embedding lane answer
-    "gpt-6.1-terra",
+    "gpt-6.2-sol",
 ]
 
 PROBE = "香港荔枝角の拉麵 / Hong Kong ramen at Lai Chi Kok"

@@ -147,7 +147,7 @@ def cost_usd(tier: str, prompt_tokens: int, completion_tokens: int, *,
 def sanitize_usage(raw_pt: Any, raw_ct: Any, text: str, max_tokens: int) -> tuple[int, int, bool]:
     """D980 — bound untrusted provider `usage` before it reaches the cost ledger.
 
-    A live OpenAI-compatible proxy was measured (2026-11, api.aizzz.xyz/v1, `gpt-6.1-terra`) returning
+    A live OpenAI-compatible proxy was measured (2026-11, api.aizzz.xyz/v1, `gpt-6.2-sol`) returning
     `completion_tokens=533` for a request with `max_tokens=32` — 16x the ceiling the request
     imposed, physically impossible. (Its `prompt_tokens` was also non-deterministic across calls,
     but a prompt has no natural per-request ceiling to clamp against, so only physically-implausible

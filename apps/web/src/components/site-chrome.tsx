@@ -17,6 +17,7 @@ import { getDict, type Dict } from '@/lib/i18n';
 import { cityPath, labelFor } from '@/lib/directory';
 import { ThemeToggle } from './theme-toggle';
 import { LocaleToggle } from './locale-toggle';
+import { WheelDirectionToggle } from './wheel-direction-toggle';
 
 /**
  * The one place that decides whether the `/{city}` directory may be advertised. `/guides` and
@@ -115,6 +116,13 @@ export function SiteHeader({ locale }: { locale: string }) {
               toHk: dict.nav.toHk,
               toCn: dict.nav.toCn,
               toEn: dict.nav.toEn,
+            }}
+          />
+          <WheelDirectionToggle
+            labels={{
+              native: dict.nav.wheelNative,
+              reversed: dict.nav.wheelReversed,
+              hint: dict.nav.wheelHint,
             }}
           />
           <ThemeToggle labels={{ toDark: dict.nav.themeToDark, toLight: dict.nav.themeToLight }} />

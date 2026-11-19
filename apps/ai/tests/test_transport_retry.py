@@ -51,7 +51,7 @@ def _adapter(monkeypatch, script):
     adapter = OpenAIAdapter(
         base_url="https://api.aizzz.xyz/v1",
         api_key="sk-fake",
-        models={"cheap": "gpt-6.1-terra", "mid": "gpt-6.1-terra", "reason": "gpt-6.1-terra"},
+        models={"cheap": "gpt-6.2-sol", "mid": "gpt-6.2-sol", "reason": "gpt-6.2-sol"},
         timeout_s=1.0,
     )
     monkeypatch.setattr(adapter, "_http", lambda: fake)
@@ -64,7 +64,7 @@ class TestTransportRetry:
             "choices": [{"message": {"content": "ok", "finish_reason": "stop"},
                          "finish_reason": "stop"}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 2},
-            "model": "gpt-6.1-terra",
+            "model": "gpt-6.2-sol",
         }
         adapter, fake = _adapter(
             monkeypatch,

@@ -6,7 +6,7 @@ Run on the operator plane (Clash Verge — direct traffic is geo-blocked):
     NEXUS_LLM_PROVIDER=openai \
     NEXUS_LLM_BASE_URL=https://api.aizzz.xyz/v1 \
     NEXUS_LLM_API_KEY=sk-... \
-    NEXUS_LLM_MODEL_CHEAP=gpt-6.1-terra NEXUS_LLM_MODEL_MID=gpt-6.1-terra NEXUS_LLM_MODEL_REASON=gpt-6.1-terra \
+    NEXUS_LLM_MODEL_CHEAP=gpt-6.2-sol NEXUS_LLM_MODEL_MID=gpt-6.2-sol NEXUS_LLM_MODEL_REASON=gpt-6.2-sol \
     uv run python admin_digest_probe.py
 
 Never run in CI: conftest forces `NEXUS_LLM_PROVIDER=mock` there.

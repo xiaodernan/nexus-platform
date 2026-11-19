@@ -21,6 +21,9 @@ export const zhCN: Dict = {
     hkType: '香港人格',
     handbook: '说明书',
     daily: '今日',
+    wheelNative: '卷动方向：跟随系统',
+    wheelReversed: '卷动方向：已反转',
+    wheelHint: '滑鼠滚轮上下反转了吗（往上滑却看下面、往下滑却看上面）？揿一下：往上滑看上方、往下滑看下方。再揿一次就还原为跟随系统。',
     demoTitle: '示例数据声明',
     hints: {
       search: '一句话揾今天的主意——输入预算、地区、心情，AI 理解后推荐',
@@ -33,6 +36,7 @@ export const zhCN: Dict = {
       hongKong: '香港系列全部章节的总入口——由罗湖到皇岗，一路睇晒成个系列',
       quizCta: '测试你的香港人格',
       searchCta: '立即搜索今天的香港',
+      wheel: '上下滚轮反转了就揿呢个掣修正——往上滑看上方、往下滑看下方',
     },
     newbie: '新手教学',
   },

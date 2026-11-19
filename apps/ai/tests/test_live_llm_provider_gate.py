@@ -28,9 +28,9 @@ def _live_env() -> dict[str, str] | None:
         return None
     return {"provider": provider, "base_url": base,
             "api_key": key,
-            "cheap": (os.environ.get("NEXUS_LLM_MODEL_CHEAP") or "gpt-6.1-terra").strip(),
-            "mid": (os.environ.get("NEXUS_LLM_MODEL_MID") or "gpt-6.1-terra").strip(),
-            "reason": (os.environ.get("NEXUS_LLM_MODEL_REASON") or "gpt-6.1-terra").strip()}
+            "cheap": (os.environ.get("NEXUS_LLM_MODEL_CHEAP") or "gpt-6.2-sol").strip(),
+            "mid": (os.environ.get("NEXUS_LLM_MODEL_MID") or "gpt-6.2-sol").strip(),
+            "reason": (os.environ.get("NEXUS_LLM_MODEL_REASON") or "gpt-6.2-sol").strip()}
 
 
 live = _live_env()

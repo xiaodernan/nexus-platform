@@ -5,9 +5,9 @@ Credentials come from `NEXUS_LLM_BASE_URL` / `NEXUS_LLM_API_KEY` only.
 `NEXUS_LLM_STREAM` controls the transport envelope. The default is the direct JSON path.
 This was the D1044 fix for wkapi.pro, which only reported cached_tokens reliably through
 the SSE envelope; it is reversed here because the current operator provider
-(api.aizzz.xyz/v1, `gpt-6.1-terra`) shows the opposite shape on the same prompts.
+(api.aizzz.xyz/v1, `gpt-6.2-sol`) shows the opposite shape on the same prompts.
 
-Measured on the operator's migrated provider (2026-11-16, `gpt-6.1-terra`, HTTP proxies
+Measured on the operator's migrated provider (2026-11-16, `gpt-6.2-sol`, HTTP proxies
 to 127.0.0.1:7897): identical-queries burst —
 
   | arm                | cached_tokens / call | total cached / prompt |

@@ -46358,3 +46358,25 @@ chapter 110 as the second one in Layer L.
 - `chapter-en-arm.test.ts` — assertion count 117. verify_all RESULT: NO OFFENDER (72 PASS).
 - `WORLD_ROADMAP.md` records the corpus at 114 chapters after D1410.
 
+
+## 1321. D1414 — the provider moves to gpt-6.2-sol (live-verified) + the in-app wheel override + io/profile truth pass
+
+**Why.** The operator re-issued the provider: `https://api.aizzz.xyz/v1`, chat model **`gpt-6.2-sol`** (was `gpt-6.1-terra`). Live probe on this host (Clash Verge `127.0.0.1:7897` egress, 2026-11-19):
+
+- `/v1/models` → 200; exposes `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-6-astra`, `gpt-6-sol`, `gpt-6.1-sol`, `gpt-6.2-astra`, **`gpt-6.2-sol`** (and `codex-auto-review`).
+- tiny chat with `gpt-6.2-sol` → 200, echoes `gpt-6.2-sol`, `service_tier=default`, `prompt_tokens=4397` with `cached_tokens=4180` (95.1% cached, identical-burst). SSE and non-stream behave the same on this build — the stale "非流就不命中" theory does not reproduce; prefix stability remains the real lever, and growing-history stays at ≈86–87% cold-arm (turns 2–4 of the probe) — warm-state ≈96%+ on the merchant lane.
+- Stream and non-stream reported the identical cache numbers. Parallel-session cache keying on this gateway is **content-addressed prefix** — distinct sessions sharing the frozen prefix (world bible + tools) hit the same lines; divergent sessions were never scrambled. Our wedge remains: keep the system prompt byte-identical, volatile middle strictly after, user question last.
+
+**What landed (code).**
+- Re-pointed every operational reference `gpt-6.1-terra` → `gpt-6.2-sol`: `.github/workflows/llm-cache-probe.yml`, `apps/ai/.env.example` (plus one corrected historical note), the six probe scripts, `models/base.py`, `models/openai.py`, `models/prefix_contract.py`, `api/routes_stream.py`, and the five AI unit tests that pinned the old id. Verified: `pytest 15 passed` (cache-reporting / transport-retry / openai-stream).
+- **Wheel direction (the mandate's "一定要修"):** the app did not invert the OS sign anywhere — `/wheel-check` diagnoses it and `/handbook` teaches the OS fix — but the user keeps feeling it backwards. New product-level override ships in the header on every page:
+  - `apps/web/src/lib/wheel-reverse.ts` — opt-in capture-phase interceptor; deltas normalised (line×16, page×80); interactive targets, pinch-zoom and already-handled events keep native behaviour; installs nothing while the flag is off; storage failures degrade to in-memory; pure helpers exported + unit-pinned.
+  - `apps/web/src/components/wheel-direction-toggle.tsx` — one honest button in the header (chevron-up/down glyph, `aria-pressed`, tooltip = full teaching copy in zh-HK / zh-CN / en), localStorage-persisted (`nexus.wheel.reverse`), `storage` event syncs tabs.
+  - New dict keys `nav.wheelNative/wheelReversed/wheelHint` + `nav.hints.wheel` in all three arms; `dict-cn.ts` regenerated via `gen-simplified-arms.py` (check PASS).
+  - Tests: `src/lib/wheel-reverse.test.ts` (pure pins) + `dict-contract` green; `tsc --noEmit` clean.
+
+**Outside the repo (live, verified).**
+- `xiaodernan.github.io`: repo counts corrected from the fictional "20 仓" to the true **16 public repos** (9 original · 3 archive · 2 site · 2 fork) in the hero strip, the repos-section eyebrow and the intro; cache-bust `styles.css?v=20261119a`; new **EN · RECRUITERS** card in the contact band (SUSTech B.Eng. → CUHK M.S. — Agent Runtime · RAG · LangGraph · IELTS 6.5 · CET6 546); identity-guard PASS.
+- `xiaodernan` profile README: dead links to four non-existent repos dropped (`teedyas`, `teedyassi`, `teedy-assign`, `fagougou-desensitize`) — upstream meanwhile marked three of them explicitly "私有仓，不对外" as plain text, counts corrected to （9 原创 / 3 归档 / 2 站 / 2 fork）, dead portfolio link count 20→16. Both pushes raced the automated sync bot and won via rebase-loop; profile README rebase conflict resolved by keeping the upstream private-repo notes.
+
+**Verification.** `pnpm web tsc --noEmit` clean · 23/23 wheel+dict-contract · 15/15 AI unit · identity-guard OK both clones · WORLD_ROADMAP/STATUS bumped in this same commit.

@@ -11,7 +11,7 @@ token budget survives contact with it:
 2. The match is byte-wise, from position zero. One volatile token anywhere early
    invalidates everything after it.
 
-Measured on this app before this unit (wkapi.pro, ``gpt-6.1-terra``, temperature 0):
+Measured on this app before this unit (wkapi.pro, ``gpt-6.2-sol``, temperature 0):
 
 * intent extraction — the only stable head was ``INTENT_EXTRACT_SYSTEM`` at ~440 tokens,
   i.e. **under the floor**: six *different* queries measured 0% cached on every call.
@@ -38,7 +38,7 @@ Discipline
   prompts exactly. That is the falsifier arm for the live probe, and the escape hatch for
   a proxy that bills cached prefix tokens at full price.
 
-Measured against wkapi.pro after landing (2026-11-13, ``gpt-6.1-terra``, temperature 0):
+Measured against wkapi.pro after landing (2026-11-13, ``gpt-6.2-sol``, temperature 0):
 
 * plain chat + this system head: identical calls served from cache at **100%** of the
   prompt for consecutive calls (two full A/B sweeps on this machine).
@@ -49,7 +49,7 @@ Measured against wkapi.pro after landing (2026-11-13, ``gpt-6.1-terra``, tempera
   reported varying prompt_tokens); the cached-vs-not signal is the stable one.
 
 Follow-up measurement (2026-11-14T20:57Z, GitHub Actions runner,
-``wkapi.pro/v1``/``gpt-6.1-terra``, run ``43640023483``, SSE envelope; compares with the
+``wkapi.pro/v1``/``gpt-6.2-sol``, run ``43640023483``, SSE envelope; compares with the
 2026-11-14T14:34Z probe ``43604530153``):
 
 * identical burst: warms after two cold calls, then 100% served from cache wholesale.

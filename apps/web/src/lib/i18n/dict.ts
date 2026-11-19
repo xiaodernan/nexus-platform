@@ -55,6 +55,10 @@ export interface Dict {
     /** The theme switch's accessible name, per direction: the theme it moves TO. */
     themeToDark: string;
     themeToLight: string;
+    /** D1430: the in-app wheel-direction override for an inverted OS/driver wheel sign — the control the header renders and the page honors. */
+    wheelNative: string;
+    wheelReversed: string;
+    wheelHint: string;
     /* D1276: the three destination glyphs of the locale cycle zh-HK → zh-CN → en. */
     toHk: string;
     toCn: string;
@@ -76,6 +80,7 @@ export interface Dict {
       hongKong: string;
       quizCta: string;
       searchCta: string;
+      wheel: string;
     };
     /** The demo badge's accessible name. */
     demoTitle: string;
@@ -1222,6 +1227,9 @@ const zhHK: Dict = {
     hkType: '香港人格',
     handbook: '說明書',
     daily: '今日',
+    wheelNative: '捲動方向：跟隨系統',
+    wheelReversed: '捲動方向：已反轉',
+    wheelHint: '滑鼠滾輪上下反轉了嗎（往上滑卻看下面、往下滑卻看上面）？撳一下：往上滑看上方、往下滑看下方。再撳一次就還原為跟隨系統。',
     demoTitle: '示例數據聲明',
     hints: {
       search: '一句話搵今天的主意——輸入預算、地區、心情，AI 理解後推薦',
@@ -1234,6 +1242,7 @@ const zhHK: Dict = {
       hongKong: '香港系列全部章節的總入口——由羅湖到皇崗，一路睇晒成個系列',
       quizCta: '測試你的香港人格',
       searchCta: '立即搜索今天的香港',
+      wheel: '上下滾輪反轉了就撳呢個掣修正——往上滑看上方、往下滑看下方',
     },
     newbie: '新手教學',
   },
@@ -3328,6 +3337,9 @@ const en: Dict = {
     hkType: 'HK quiz',
     handbook: 'Handbook',
     daily: 'Daily',
+    wheelNative: 'Wheel: system',
+    wheelReversed: 'Wheel: reversed',
+    wheelHint: 'Mouse wheel scrolls backwards here (wheel up goes down, wheel down goes up)? Press once: up looks up, down looks down. Press again to follow your system.',
     demoTitle: 'Demo data notice',
     hints: {
       search: 'Say what you want — budget, district, mood — AI parses it and recommends',
@@ -3340,6 +3352,7 @@ const en: Dict = {
       hongKong: 'The full HK chapter series — Lok Ma Chau to Huanggang, one arc at a time',
       quizCta: 'Test your HK archetype',
       searchCta: 'Search today’s Hong Kong',
+      wheel: 'Wheel inverted on this machine? Press to fix — up looks up, down looks down',
     },
     newbie: 'How to play',
   },
