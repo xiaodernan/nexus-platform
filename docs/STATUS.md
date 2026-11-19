@@ -46434,3 +46434,15 @@ Growing-history baseline: turns 3–4 at 6080/6355 (**95.7%**), 6080/6391 (**95.
 - Wheel override present in the live header, localStorage-persisted (`nexus.wheel.reverse`).
 - Admin surfaces confirmed wired: `/insights` renders `<InsightsNarrative>` (model-voiced ghost-replay read via `/api/nexus/ai/insights-read`), `/admin/system` renders `<AdminDigest>` (model-voiced operator digest via `/api/nexus/admin/digest`, §68 cookie-gated), `/command` renders the public password-123 console (REAL-TRACE rows measured from actual Playwright journeys).
 - AI lanes measure ~95%+ cache warm with the shared frozen head (D1420/§1324).
+
+## 1326. D1422 — the full stack brought up locally and verified: PG + Redis + platform + AI + web renders live
+
+**Why.** The mandate's 前后端联动 path was only half-true in this session: the web app ran against nothing — every `/hong-kong`, `/[city]` and merchant page threw `NexusApiError: upstream_unreachable` into the error boundary (the warning "Only plain objects can be passed to Client Components … Error objects are not supported"). Root cause: substrate services simply weren't running, not a code defect: the Phase-1 path (postgres 5433 + redis 6380 on the sidelined project ports, platform on 8090, AI on 8010, web on 3300 — 3000 is taken by an unrelated long-running AI Career OS instance on this host and was left untouched) had never been started in this session.
+
+**What was done (measured, in order).**
+- `docker start nexus-platform-postgres nexus-platform-redis` → postgres healthy, redis up.
+- `scripts/db_apply_migrations.sh` → 14 migrations present; V13 (`llm_calls.cached_tokens`) + V14 (`llm_calls.cache_reported`) applied on top of the existing ledger; `00_roles.sql` refreshed; tables=59 · migrations=14 · tenant hong-kong=1. `--seed` → idempotent seeds OK.
+- `services/platform` → Spring Boot **on 8090** under profile dev: HikariPool-1 connected, `bootstrap_tenant slug=hong-kong created=0`. `/actuator/health` → `{"status":"UP"}` · `/api/v1/health` → `{"status":"ok","service":"nexus-platform","profiles":["dev"],...}`.
+- `apps/ai` → uvicorn **on 8010**: `provider:"mock", "offline":true, database:{configured,available:true}` — the AI lane's DB reads reach the real PG.
+- Web on 3300 → `/hong-kong` renders the full live arc (chapters LXXXVI through CXII, hub quiz, daily block) — no error boundary, no `upstream_unreachable`. The `/hong-kong` 502 that previously bubbled to the boundary is gone.
+- Note for honesty: the `[city]` segment's re-throw of genuine faults is the documented §105/D32 "never launder a fault into a clean-looking miss" path — kept by design; with the backends up it no longer triggers.
