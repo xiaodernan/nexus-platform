@@ -46837,3 +46837,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `live_arc_audit_probe.py` refactored to route through the graph; its output is now the fenced audit plus measured prompt/completion/cached/latency, not the raw reply. A separate D1464 live run had already shown that a structurally perfect model reply can silently re-name people; the same discipline applies to a continuity audit.
 - Tests: 8/8 on the audit graph (empty window refuses before any call, name/number/URL/confidence falsifiers) + 9/9 on the EN-arm bench; ruff clean; no live tokens spent this turn.
 - Showcase cadence unchanged (D1447); Layer P closure remains the next heavy-milestone sync. Arc stands at 154 chapters.
+
+
+## 1370. D1466 — chapter 155 joins Layer P; arc stands at 155
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-parcel-opened-chronicle` — chapter 155 （早上八點——門房——牛皮紙包裡是1960年冠軍賽秩序冊，末頁毛筆字：「給最後的值夜人。」阿樂不伸手去接，只說「是最後一個還記得要數的人」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the parcel from ch.154 is opened without resolving the mystery; the brush-ink hand is the same one that wrote the addressee. Cross-chapter economy, not a deus ex machina.
+- `chapter-en-arm.test.ts` — assertion count **159**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 155 chapters · Layer P continues (08:00 slot). Showcase fact pack stays on D1447 (cadence rule); Layer P closure = next heavy milestone.
