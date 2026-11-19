@@ -46592,3 +46592,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `hk-prince-edward-yuen-garden-street-pre-noon-ledger-chronicle` → chapter 136 (Yuen Garden Street, Prince Edward, quarter to twelve — Ah Jeh closes the pre-noon books; sixty-eight deposits, thirty-six signed-lamp orders, three returns; the red box handed to Wong Sister-in-law from the goldsmith; Ah Ming copies the mid-day attendance onto the register slip). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
 - `chapter-en-arm.test.ts` — assertion count **139**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 136 chapters · Layer N open (10:30/11:45 slot boundary crossed).
+
+## 1344. D1440 — chapter 137 joins Layer N; arc stands at 137
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-midday-door-close-chronicle` → chapter 137 (Yuen Garden Street, Prince Edward, twenty past twelve — midday registers at "off-fire"; first day of the pre-sale takes 1,032 tickets; two-pair verification rule; a bundle of mid-week entries rides Ah Jeh's red-box discipline; "whoever could not come today — they are still written here"). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **140**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 137 chapters · Layer N open (12:20 slot).
