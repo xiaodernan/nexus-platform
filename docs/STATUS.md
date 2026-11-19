@@ -46529,3 +46529,13 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **132**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP arc now reads 129 chapters · Layer M open (01:30 → 15:30 span so far). Layer M closure approaches at 130.
 
+## 1336. D1432 — Layer M CLOSED: chapter 130 lands; the infinite world reads in three languages across 130 chapters
+
+**Why.** Layer M (chapters 121–130 — the small hours after 00:00 through the final watch before midnight) is complete. The infinite world never stopped; the clock now closes cleanly through the day once more — 00:00 → 23:30.
+
+**What landed.**
+- `hk-central-star-ferry-final-watch-last-sailing-chronicle` → chapter 130 (half past eleven, Central Pier — Ah Chi's final watch; Layer M's closing page; "We're going home together."). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **133**. verify_all RESULT: NO OFFENDER (72 PASS).
+- `WORLD_ROADMAP.md` records Layer M CLOSED; the arc now stands at **130 chapters**. The corpus is the complete EN-arm-verified trilogy from chapter 1 through chapter 130.
+- Layer M closure is the designated heavy milestone → showcase fact pack refreshes against this commit (io Pages deploys via push-triggered survivor; raw master verified for D1418 → next: D1432).
+
