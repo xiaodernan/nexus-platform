@@ -46555,3 +46555,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **135**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 132 chapters · Layer N open.
 
+## 1339. D1435 — chapter 133 joins Layer N; arc stands at 133
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-morning-lamp-tester-chronicle` → chapter 133 (Yuen Garden Street, Prince Edward, forty minutes past ten — Ah Kuen's lamp counter; the only shopfront that lights every lamp before boxing it, and the signed exhibition lamp promised to Ah Jeh at the till across the street). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **136**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 133 chapters · Layer N open (10:40 slot, anchored after 10:30 北漂作家）.
+- 同一推送包含 content-truth refresh：dict.ts/dict-cn.ts 兩臂 liveTruth 區塊（provider: gpt-6.2-sol，2026-11-19 Clash egress :7897 實測：identical burst 95.1%（4,180/4,397）、SSE 與直連 JSON 快取回報一致、growing-history turn 3–4 ≈ 95.7%/95.1%、跨 lane interleave 95.5–96.3%）取代 2026-11-16 的 6.1-terra 舊數字；console-admin.ts mock by_model 行同步為 6.2-sol。
