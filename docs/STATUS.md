@@ -46657,3 +46657,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **147**. verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 144 chapters · Layer O CLOSED · next milestone = the new-layer's first chapter.
 **Heavy milestone reached: showcase fact pack refreshes against D1447 (per cadence rule).**
+
+## 1352. D1448 — Layer P opens: chapter 145 lands; arc stands at 145
+
+**What landed.**
+- `hk-happy-valley-racecourt-morning-after-car-park-chronicle` → chapter 145 （九點——賽馬會停車場——阿樂掛停車牌；他右手食指一年到頭是綠的——他的背心底下兜着一本皮革簿子——第一頁寫的是陳炳）。zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P OPENS** — "the reunion — old Happy Valley Hand" （跑馬地——被時間推回跑馬地的騎師變做停車場管理員；陳炳這條線在這裡收束，但陳炳是真的——環球馬場的師傅永遠在紙上）。
+- `chapter-en-arm.test.ts` — assertion count **149**. verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 145 chapters · Layer P opens (09:00 slot, marked as a new layer — the valley arc returns at last).
+- Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
