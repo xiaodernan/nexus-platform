@@ -2194,4 +2194,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /night badge|1960 plate|Ah Muk/.test(b.text))).toBe(true);
   });
+  it('chapter 149 (Happy Valley anniversary ledger — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-anniversary-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上八點/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-anniversary-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上八点/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-anniversary-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|1960|anniversary/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Muk/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /red booklet|clipping on the wall|next page/.test(b.text))).toBe(true);
+  });
 });

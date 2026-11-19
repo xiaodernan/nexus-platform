@@ -46732,3 +46732,13 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - Live (through Clash Verge, `gpt-6.2-sol`, temperature 0): 3 sequential turns, byte-identical excerpts, English questions → answers came back in Chinese on this relay and `cache_reported=False` on every turn's usage object — **the provider meter did not report cache for diverse turns on this lane**. Honest read (same shape the 2026-11-14 runner A/B measured: diverse = no prefix-reuse observable, identical bursts warm to 100%): the architecture now accumulates bytes codex-style, so the provider CAN serve the whole conversation from cache once warm — the D1257 direct-JSON identical bursts measured 8832 tokens cached (81.5%) on this exact host; for this lane the per-call meter stays silent until a byte-identical replay warms it.
   - The meter being silent ≠ a cache miss: measured analyst-lane replay the same morning reported `cached=4686 / 9930` (~47%). Per-call reporting on this relay is approximate by construction (`prefix_contract.py` documents it) — treat `cached_tokens=0` with `cache_reported=False` as "unreported", never as "zero cached".
 - **Why the codex pattern matters for this product**: every lane now accumulates byte-identical prefixes across turns. The chapter-ask island conversation is the first user-reachable multi-turn lane; the reserved ledger marker D1455 would be chapter-ask warm metrics if needed, but no runtime change was forced.
+
+
+## 1359. D1455 — chapter 149 joins Layer P; arc stands at 149
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-anniversary-chronicle` — chapter 149 （早上八點——跑馬地——賽馬會停車場東門關了以後——阿穆把1960年賽季周年誌的影印本從校甬服袋裡掏出來；「我見過陳炳的腳。」牆上的那張褪色剪報——沒有人知道是誰貼的；下一句寫的字夠大後人就見過一輩子）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc: the anniversary season belongs to the people who keep the doors; Ah Muk writes the next page of the watch book before the watch is over.
+- `chapter-en-arm.test.ts` — assertion count **153**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. tsc exit 0.
+- WORLD_ROADMAP now reads 149 chapters · Layer P continues (08:00 slot).
+- Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
