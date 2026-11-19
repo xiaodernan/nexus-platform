@@ -46801,3 +46801,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `growth.chapterAsk.hint` in both arms updated for D1454: the chapter companion now tells the reader that follow-ups stay in the current browsing session and switching chapters clears the thread (the actual behaviour of the island).
 - `src/components/insights-analyst.tsx` renders the hint under the panel title; `/insights` page passes it from the dict. No new strings are hard-coded in English-only components.
 - vitest 74 files / **665 passed** (maxWorkers=1); tsc exit 0; fold `--check` lockstep; verify_all NO OFFENDER. Two earlier `--maxWorkers=2` runs showed the familiar mock-mode beforeAll timeout flake on this host; serial run clean, no product change.
+
+
+## 1366. D1462 — chapter 153 joins Layer P; arc stands at 153
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-first-solo-tag-chronicle` — chapter 153 （中午十二點——跑馬地——東門輪更——阿樂把釘牌的小鎚交給阿穆，自己往後退兩步：「你釘你的——我企後面。」阿穆第三次比位置，最後選了父親一貫用的那個孔；鎚子一聲，阿樂只講「明天你在這裡」）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc: the torch passes without a speech; the noon light lands on the 1960 red plate.
+- `chapter-en-arm.test.ts` — assertion count **157**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 153 chapters · Layer P continues (12:00 slot). Showcase fact pack stays on D1447 (cadence rule); Layer P closure = next heavy milestone.

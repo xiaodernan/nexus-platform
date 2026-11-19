@@ -2250,4 +2250,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /edges|ink|Ask next year/.test(b.text))).toBe(true);
   });
+  it('chapter 153 (Happy Valley first solo tag — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-first-solo-tag-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/中午十二點/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-first-solo-tag-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/中午十二点/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-first-solo-tag-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|solo tag/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Muk/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /steps back|first tag|hammer falls/.test(b.text))).toBe(true);
+  });
 });
