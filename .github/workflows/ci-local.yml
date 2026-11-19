@@ -4,7 +4,7 @@ name: ci-local
 # Runs on the operator's machine (runner nexus-host-xintong, [self-hosted, Windows, X64])
 # so we get fast, zero-cost signal even when hosted runners are backlogged.
 # Every push to master triggers it; every PR lets its own backers see the local verdict.
-# NEVER fails the world; local gates are the source of truth on this host.
+# Local gates are the source of truth on this host.
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
 
 concurrency:
   group: ci-local-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -22,12 +22,13 @@ permissions:
 jobs:
   local-gates:
     runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+
       - name: Install workspace dependencies (npm workspaces)
         shell: powershell
         run: npm ci
