@@ -46761,3 +46761,13 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
   - `/handbook` 128/128 OK p50=1019ms p99=1705ms (28.5 req/s) · `/insights` p50=3363ms p99=4968ms (9.0 req/s) · `/hong-kong` p50=4251ms p99=4623ms (7.2 req/s) · `/command` p50=2523ms p99=2932ms (12.5 req/s) · `/guides/hk-food-chronicle` p50=3051ms p99=4174ms (10.0 req/s)
   - zero timeouts, zero 5xx, zero transport errors. Not an SLO; a measurement of this machine under this load, honestly labelled. (The :3000 instance on this host is NOT the NEXUS app — it is AI Career OS; NEXUS dev/prod planes live on :3002 by design, and :3000 stays untouched.)
 - D-value note: entries 1360–1361 reserve D1456/D1457 for this turn; STATUS/WORLD_ROADMAP updated.
+
+
+## 1362. D1458 — the whole-arc continuity auditor, checked in for deliberate runs
+
+**What landed.**
+- `apps/ai/live_arc_audit_probe.py` — a checked-in probe (never part of any request path, never on a schedule): reads `seed.ts`, assembles the requested chapter window into one corpus, hands it to the model ONCE per run with a continuity-audit task (`reason` tier, temperature 0, JSON only), and prints `prompt/completion/cached` plus the reply. The L→P window (109–150) measures **42 chapters / 174,489 chars ≈ ~87K tokens** — the 5–9万 input scale the operator asked about, as a single, affordable, deliberate call.
+- The audit output shape (inconsistencies with mandatory chapter numbers, empty-list preferred over a plausible guess) is honest by construction; no key is committed anywhere; exits 3 with setup instructions when `NEXUS_LLM_*` is unset.
+- Not run this turn (deliberate token conservation): running it is the operator's call, one decision-grade call at a time with the proxy honored. Measurements from the 2026-11-19 L→P run (58,957 prompt / cached 2,807 / 2,813 completion) are ledger-recorded in STATUS for comparison.
+- Live io page identity sweep (read-only, all arms): every canonical string present at expected multiplicity (赵欣曈 14 · 南方科技大学 8 · 香港中文大学 8 · 计算机科学与技术 8 · 全国中学生物理竞赛 4 · 法狗狗 7 · 隐盾 26 · SUSTech 7 · CUHK 7 · 雅思 6.5 9-ish count for CET6 546=9); zero occurrences of 隐图/南方科大/港中大/南方科技大学繁/香港中央大学/法国狗狗; NaN=0 (bytes panel: 138.21 MB / 18 languages). The CET6 label uses the house style `CET6 546` — consistent, not an error; left as-is.
+- Showcase cadence unchanged (D1447). Layer P closure remains the next heavy-milestone sync.
