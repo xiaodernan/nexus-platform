@@ -46648,3 +46648,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer O continues** — the odds floor arc settles into its evening wind-down (six 單一 sections: checkpoints, the walk, the tea, the door).
 - `chapter-en-arm.test.ts` — assertion count **146**. verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP tracks the day as 143 chapters · the 21:30 slot now closes Layer O's first day.
+
+## 1351. D1447 — Layer O CLOSED: chapter 144 lands; arc stands at 144 · showcase fact pack refreshes
+
+**What landed.**
+- `hk-happy-valley-racecourt-after-meet-leave-chronicle` → chapter 144 （跑馬地——散場後父親東去；陳炳1960年名片收進口袋；「Whoever next morning keeps this racecourse — mine has sleeves too」）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer O CLOSED** — the 05:50 → 21:30 → 07:00 Happy Valley arc （漢白玉小點 / 母亲五百元 / Eleven win / Closing the lights / Walking home — 6 chapters from dawn-odds-board → final-walk-east).
+- `chapter-en-arm.test.ts` — assertion count **147**. verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 144 chapters · Layer O CLOSED · next milestone = the new-layer's first chapter.
+**Heavy milestone reached: showcase fact pack refreshes against D1447 (per cadence rule).**

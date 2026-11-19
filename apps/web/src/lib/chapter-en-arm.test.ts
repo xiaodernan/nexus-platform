@@ -2110,4 +2110,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /stone path/i.test(b.text))).toBe(true);
   });
+  it('chapter 144 (Happy Valley after the meet — Layer O CLOSED) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-after-meet-leave-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/散場後/);
+    const cn = mockGuide('hk-happy-valley-racecourt-after-meet-leave-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/散场后/);
+    const en = mockGuide('hk-happy-valley-racecourt-after-meet-leave-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|Racecourse|after|meet/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Yau/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /[Ss]weep/i.test(b.text))).toBe(true);
+  });
 });
