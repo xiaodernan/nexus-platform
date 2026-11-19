@@ -1715,4 +1715,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /charcoal stove/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 117 (Third Street char siu) ships in three arms too', () => {
+    const hk = mockGuide('hk-sai-ying-pun-third-street-char-siu-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/第三街.*阿七/);
+    const cn = mockGuide('hk-sai-ying-pun-third-street-char-siu-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/第三街.*阿七/);
+    const en = mockGuide('hk-sai-ying-pun-third-street-char-siu-chronicle', 'en');
+    expect(en?.title).toMatch(/Sai Ying Pun|Third Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chat/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The light before the knife/i.test(b.text))).toBe(true);
+  });
 });
