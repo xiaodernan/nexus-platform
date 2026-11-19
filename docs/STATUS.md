@@ -46490,3 +46490,14 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **128**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP arc now reads 125 chapters · Layer M open (01:30 → 07:15 span so far).
 
+## 1331. D1427 — chapter 125 EN arm re-tightened after one gpt-6.2-sol audit call
+
+**Why.** The operator explicitly authorised calling gpt-6.2-sol for decision-relevant judgment ("有不会的 拿不准的 都可以问他") and concurrently forbade waste ("珍惜我这个token 不要浪费了"). One 5,265-token call was spent auditing chapter 125's EN arm and asking for the honest weakest-mandate signal.
+
+**The audit (verbatim: naturalness 5, idiom_leaks listed).**
+- Flagged: "the harbour's new turnover" / "lays out every stall on the fish street" / "Each fish is laid down differently" / "monkfish cold-handled" / "He has laid this street for seventeen years" / "The tuna wakes up".
+- Applied: "Today's catch is new to the harbour" · "lays out every stall along the street" · "fish is cut a little differently … monkfish kept over ice" · "Ah Kit has run this street for seventeen years". Kept the poetic "The tuna wakes up" deliberately — the page's signature line, mirrored from 金槍魚醒咗.
+- The audit's other note (password-123 undermines the consoles) was received; the public demo console keeps password **123 by operator specification** (mandate §9) and the real operator gate (`/admin/system`) is cookie-role-gated stronger (§68). Documented, not changed.
+
+**Verification.** 128/128 en-arm green after the edit · seed-cn opencc fold PASS (EN-only edit; Simplified regenerated, not hand-edited) · verify_all unchanged since D1426 (NO OFFENDER).
+

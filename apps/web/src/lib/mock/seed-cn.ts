@@ -4643,9 +4643,9 @@ export const DEMO_GUIDES_CN: Guide[] = [
       { type: 'paragraph', text: '合成叙事示例：商户、场景、故事全部是叙事建构，用于演示 NEXUS 内容层的呈现能力。赶时间的话，先去 SearchBox 搜「柴湾 小西湾 鱼街」。' },
     ],
     body_blocks_en: [
-      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past seven in the morning. Siu Sai Wan, Chai Wan (synthetic place — not a real merchant; the hour and the scene are narrative constructions) — Ah Kit (synthetic narrative, not a real person) lays out every stall on the fish street. Today is the harbour’s new turnover: tuna, eel, and monkfish — all brought in last night from Sam Mun Tsai.' },
+      { type: 'paragraph', text: 'Synthetic narrative (not travel advice): quarter past seven in the morning. Siu Sai Wan, Chai Wan (synthetic place — not a real merchant; the hour and the scene are narrative constructions) — Ah Kit (synthetic narrative, not a real person) lays out every stall along the street. Today’s catch is new to the harbour: tuna, eel, and monkfish, brought in last night from Sam Mun Tsai.' },
       { type: 'heading', text: 'I · The lay-out of the fish' },
-      { type: 'paragraph', text: 'Ah Kit has laid this street for seventeen years. Each fish is laid down differently — tuna thick-cut, eel cut oblique, monkfish cold-handled. He says fish are not laid out to be looked at — they are to be weighed, thought through, then taken away. This morning, as he opened up, he set one tuna aside for a regular who has not been by in a long time.' },
+      { type: 'paragraph', text: 'Ah Kit has run this street for seventeen years. Each fish is cut a little differently — tuna thick, eel oblique, monkfish kept over ice. He says fish are not laid out to be looked at; they are to be weighed, thought through, then taken away. This morning, as he opened up, he set one tuna aside for a regular who has not been by in a long time.' },
       { type: 'cards', title: 'Siu Sai Wan, what to see', items: [] },
       { type: 'heading', text: 'II · A woman named Ah Man' },
       { type: 'paragraph', text: 'At half past seven, Siu Sai Wan is busy. Ah Kit says to everyone who walks in, “Pick whichever you trust — no mistakes today.” Nobody answers. He knows — Ah Man worked as a hairstylist in Melbourne, and today she flew back especially; she bought a bowl of wonton noodles at the corner shop, then this street.' },
