@@ -7,6 +7,7 @@ import { realTrace } from '@/lib/real-trace';
 import { Container, Icon } from '@nexus/ui';
 import Link from 'next/link';
 import { InsightsNarrative } from '@/components/insights-narrative';
+import { InsightsAnalyst } from '@/components/insights-analyst';
 
 /**
  * `/insights` — the operator's daily ghost scan. Everything on the page is rebuilt from the
@@ -151,6 +152,21 @@ export default async function InsightsPage() {
           pendingLabel={t.narrativePending}
           provenLabel={t.narrativeProven}
           focusLabel={t.narrativeFocusLabel}
+        />
+
+        {/* D1451 — the analyst StateGraph: verdict + forecast + up to three measures; progressive, fail-closed. */}
+        <InsightsAnalyst
+          locale={locale}
+          copy={{
+            title: t.analystTitle,
+            pending: t.analystPending,
+            proven: t.analystProven,
+            watchLabel: t.analystWatchLabel,
+            measuresLabel: t.analystMeasuresLabel,
+            verdictRising: t.analystVerdictRising,
+            verdictFlat: t.analystVerdictFlat,
+            verdictFalling: t.analystVerdictFalling,
+          }}
         />
 
         {/* REAL-TRACE — the operator's mirror, with the real Playwright traces that shipped this build */}

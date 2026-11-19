@@ -42,6 +42,14 @@
  * expect tag while the real plane holds. D954 no-op guard, D959 line-anchored `## 983.` heading,
  * and a GREEN control (a legitimate comment edit) keep the judge honest.
  *
+ * D1451 FOLLOW-THROUGH: the outbound proxy joins the pool identity and the httpx client.
+ * `NEXUS_LLM_PROXY` (e.g. the operator's Clash Verge at http://127.0.0.1:7897, required for
+ * api.aizzz.xyz from mainland — HTTP 403 without it) threads into BOTH live adapters and into
+ * `httpx.AsyncClient(timeout=..., proxy=self.proxy or None)`, and joins `pool_key` as a FOURTH
+ * segment: two settings that differ only by proxy must not share a cached httpx client — the
+ * D983 bug class, one dimension wider. The `self.proxy` store and the Settings/env wiring are
+ * pinned here too, and the self-test reddens for each.
+ *
  * WHAT THIS DOES NOT SAY: that a live proxy was called by CI (it is not); that 45s is the right
  * production value (operators tune it); that any bill was paid; or that the §7.1 Intent schema
  * changed (D982 owns that). The falsifier is "did the code speak the wired-timeout shape?"
@@ -119,8 +127,8 @@ export function judge(files, present, ciPath = CI) {
      through it AND the framing probe pre-seeds through it, so a future cache-key dimension
      cannot silently decouple the injection from the lookup again (CI 43212889312). */
   has(FACTORY, 'def pool_key(settings: Any) -> str:', 'the single pool-identity function exists', 'POOL-KEY');
-  has(FACTORY, 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"',
-      'pool_key is the ONE place the 3-segment identity is spelled', 'POOL-KEY-SHAPE');
+  has(FACTORY, 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}|{getattr(settings, \'llm_proxy\', \'\')}"',
+      'pool_key is the ONE place the 4-segment identity is spelled', 'POOL-KEY-SHAPE');
   has(FACTORY, 'key = pool_key(settings)', 'get_pool looks up through the shared function', 'POOL-KEY-LOOKUP');
   countAtLeast(FRAMING, 'factory.pool_key(live_settings)', 2,
       'the framing probe derives BOTH injection keys from pool_key', 'FRAMING-KEY');
@@ -131,10 +139,23 @@ export function judge(files, present, ciPath = CI) {
   has(CONFIG, 'request_timeout_s: float = 45.0', 'the Settings default is the bounded 45s', 'CFG-DEFAULT');
   has(CONFIG, 'float(_env("NEXUS_REQUEST_TIMEOUT_S") or 45)', 'the env parser feeds the knob', 'CFG-ENV');
 
+  /* 2c — D1451 follow-through: the outbound proxy is a FOURTH pool-identity segment and
+     rides the real httpx client. `NEXUS_LLM_PROXY` (operator's Clash Verge at
+     http://127.0.0.1:7897 — api.aizzz.xyz answers 403 from mainland without it) threads to
+     both adapters and to the HTTPX client; two settings that differ only by proxy must not
+     share a cached httpx client (the D983 bug class, one dimension wider). */
+  has(CONFIG, 'llm_proxy: str = ""', 'the Settings default carries an empty proxy', 'CFG-PROXY');
+  has(CONFIG, 'llm_proxy=_env("NEXUS_LLM_PROXY"),', 'the env parser feeds the proxy knob', 'CFG-PROXY-ENV');
+  countAtLeast(FACTORY, 'proxy=getattr(settings, "llm_proxy", ""),', 2,
+      'BOTH live adapters receive proxy', 'PROXY-TWO-ADAPTERS');
+  has(BASE, 'proxy: str = ""', 'the base adapter accepts the proxy kwarg', 'PROXY-PARAM');
+  has(BASE, 'self.proxy = (proxy or "").strip()', 'the adapter stores the proxy', 'STORE-PROXY');
+
   /* 4 — honest-wire contracts survive: the httpx client is built from self.timeout_s, the
      degrade ladder floor + order are untouched, and the adapters keep their real shape. */
   has(BASE, 'self.timeout_s = timeout_s', 'the adapter stores the deadline', 'STORE');
-  has(BASE, 'httpx.AsyncClient(timeout=self.timeout_s)', 'the real httpx client uses the deadline', 'HTTPX');
+  has(BASE, 'httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None)',
+      'the real httpx client uses the deadline and the proxy', 'HTTPX');
   has(BASE, 'timeout_s: float = 20.0', 'the base default remains a safe fallback for direct ctors', 'BASE-DEFAULT');
   has(FACTORY, 'pool["mock"] = MockAdapter()', 'the §105 mock floor is still installed', 'MOCK-FLOOR');
   has(BASE, 'class HttpLLMAdapter', 'the honest wire adapter base still exists', 'HONEST-BASE');
@@ -202,12 +223,18 @@ if (SELF_TEST) {
     ['both adapters timeout_s dropped', mutate(real, FACTORY, 'timeout_s=timeout_s,', '# timeout_s dropped'), 'TWO-ADAPTERS'],
     ['cache key timeout dropped', mutate(real, FACTORY, '|{_request_timeout(settings)}', ''), 'CACHE-KEY'],
     ['pool_key helper erased', mutate(real, FACTORY, 'def pool_key(settings: Any) -> str:', 'def pool_key_disabled(settings: Any) -> str:'), 'POOL-KEY'],
-    ['pool_key 3-segment shape broken', mutate(real, FACTORY, 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"', 'return f"{settings.llm_provider}|{settings.llm_base_url}"'), 'POOL-KEY-SHAPE'],
+    ['pool_key 3-segment shape broken', mutate(real, FACTORY, 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}|{getattr(settings, \'llm_proxy\', \'\')}"', 'return f"{settings.llm_provider}|{settings.llm_base_url}|{_request_timeout(settings)}"'), 'POOL-KEY-SHAPE'],
+    ['pool proxy segment dropped', mutate(real, FACTORY, "|{getattr(settings, 'llm_proxy', '')}", ''), 'POOL-KEY-SHAPE'],
+    ['proxy dropped from both adapters', mutate(real, FACTORY, 'proxy=getattr(settings, "llm_proxy", ""),', '# proxy dropped'), 'PROXY-TWO-ADAPTERS'],
+    ['httpx client built without proxy', mutate(real, BASE, 'proxy=self.proxy or None', ''), 'HTTPX'],
+    ['store-proxy erased', mutate(real, BASE, 'self.proxy = (proxy or "").strip()', ''), 'STORE-PROXY'],
+    ['adapter proxy kwarg erased', mutate(real, BASE, 'proxy: str = ""', ''), 'PROXY-PARAM'],
+    ['config env proxy parser cut', mutate(real, CONFIG, 'llm_proxy=_env("NEXUS_LLM_PROXY"),', ''), 'CFG-PROXY-ENV'],
     ['get_pool bypasses pool_key', mutate(real, FACTORY, 'key = pool_key(settings)', 'key = f"hand|rolled|key"'), 'POOL-KEY-LOOKUP'],
     ['framing probe reverts to hand-rolled key', mutate(real, FRAMING, 'factory.pool_key(live_settings)', 'f"{live_settings.llm_provider}|{live_settings.llm_base_url}"'), 'FRAMING-KEY'],
     ['config default reverted', mutate(real, CONFIG, 'request_timeout_s: float = 45.0', 'request_timeout_s: float = 12.0'), 'CFG-DEFAULT'],
     ['config env parser cut', mutate(real, CONFIG, 'float(_env("NEXUS_REQUEST_TIMEOUT_S") or 45)', '12.0'), 'CFG-ENV'],
-    ['httpx client built without deadline', mutate(real, BASE, 'httpx.AsyncClient(timeout=self.timeout_s)', 'httpx.AsyncClient()'), 'HTTPX'],
+    ['httpx client built without deadline', mutate(real, BASE, 'httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None)', 'httpx.AsyncClient(timeout=0, proxy=self.proxy or None)'), 'HTTPX'],
     ['mock floor removed', mutate(real, FACTORY, 'pool["mock"] = MockAdapter()', 'pool["_gone"] = None'), 'MOCK-FLOOR'],
     ['probe both-adapters arm erased', mutate(real, PROBE, 'def test_both_live_adapters_receive_the_operator_timeout():', 'def _both_removed():'), 'P-BOTH'],
     ['probe env-flow arm erased', mutate(real, PROBE, 'def test_env_value_flows_from_load_settings_through_the_pool_to_the_client(monkeypatch):', 'def _env_removed(monkeypatch):'), 'P-ENV'],

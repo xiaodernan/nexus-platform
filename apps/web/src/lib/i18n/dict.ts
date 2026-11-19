@@ -1193,6 +1193,15 @@ export interface Dict {
     narrativePending: string;
     narrativeProven: string;
     narrativeFocusLabel: string;
+    /** D1451: the analyst StateGraph — two model calls standing on the same replay. */
+    analystTitle: string;
+    analystPending: string;
+    analystProven: string;
+    analystWatchLabel: string;
+    analystMeasuresLabel: string;
+    analystVerdictRising: string;
+    analystVerdictFlat: string;
+    analystVerdictFalling: string;
   };
   /** D1210: the /world atlas — the HK-series corpus read by the hour, in seven layers. */
   world: {
@@ -3277,6 +3286,14 @@ const zhHK: Dict = {
     narrativePending: '大模型正在讀這頁的幽靈數據…',
     narrativeProven: 'AI 措辭 · 只引用本 replay 數字',
     narrativeFocusLabel: '下一步觀察',
+    analystTitle: '分析師快報 · 趨勢與措施',
+    analystPending: '分析師管線正在量度同預測…',
+    analystProven: 'AI 分析師 · 兩次呼叫 · 只引用本 replay 數字',
+    analystWatchLabel: '下週盯住：',
+    analystMeasuresLabel: '下一步措施',
+    analystVerdictRising: '回暖',
+    analystVerdictFlat: '平盤',
+    analystVerdictFalling: '下滑',
     fmtDwell: (sec: number) => `${sec} 秒`,
     weekTitle: '過去七天——誰來、誰留',
     weekHint: '按香港日期重放過去一週：每一格是一日的全幽靈數與平均掉拍率；底全是本地數據，不是監控。',
@@ -5391,6 +5408,14 @@ const en: Dict = {
     narrativePending: 'The model is reading the ghost data…',
     narrativeProven: 'AI phrasing · numbers only from this replay',
     narrativeFocusLabel: 'Observe next',
+    analystTitle: 'Analyst readout · trend & measures',
+    analystPending: 'The analyst is measuring and forecasting…',
+    analystProven: 'AI analyst · two model calls · replay numbers only',
+    analystWatchLabel: 'Watch next week:',
+    analystMeasuresLabel: 'Next measures',
+    analystVerdictRising: 'warming',
+    analystVerdictFlat: 'flat',
+    analystVerdictFalling: 'cooling',
     fmtDwell: (sec: number) => `${sec}s`,
     weekTitle: 'Seven days — who came, who stayed',
     weekHint: 'Replay of the last seven HK dates: each cell is a day’s ghost total and average drop-off. All local, no tracking.',

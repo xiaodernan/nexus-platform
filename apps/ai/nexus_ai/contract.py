@@ -498,6 +498,13 @@ class InsightsNarrativeRequest(_Strict):
     locale: str = Field(default="zh-HK", max_length=16)
 
 
+class InsightsAnalystRequest(_Strict):
+    """The analyst's subject — the same seeded replay stats; the model sees no store, no session, no identity."""
+
+    stats: InsightsStats
+    locale: str = Field(default="zh-HK", max_length=16)
+
+
 class SearchRequest(_Strict):
     intent: Optional[Intent] = None
     query: Optional[str] = None
