@@ -2054,4 +2054,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Odds are set/i.test(b.text))).toBe(true);
   });
+  it('chapter 140 (Happy Valley odds board — Layer O continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-afternoon-first-bet-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/跑馬地.*白板/);
+    const cn = mockGuide('hk-happy-valley-racecourt-afternoon-first-bet-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/跑马地.*白板/);
+    const en = mockGuide('hk-happy-valley-racecourt-afternoon-first-bet-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|Racecourse/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Yau/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /new order/i.test(b.text))).toBe(true);
+  });
 });

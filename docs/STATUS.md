@@ -46615,3 +46615,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer O opened** — "the odds floor" (跑馬地——賠率檯 — odds boards, tickets, the price of knowing horses; the grandstand morning that makes the afternoon race we never see). Another revenue engine of the day, rooted in the same city.
 - `chapter-en-arm.test.ts` — assertion count **142**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 139 chapters · Layer O opens (06:50 slot, anchored between 06:45 冰室 and 07:00 隔水渡輪）.
+
+## 1347. D1443 — chapter 140 joins Layer O; arc stands at 140
+
+**What landed.**
+- `hk-happy-valley-racecourt-afternoon-first-bet-chronicle` → chapter 140 (Happy Valley Racecourse, two in the afternoon — Ah Yau erases and rewrites the whiteboard; the afternoon regulars (Eastern-District man with old paper slip; a neighboring woman asking for Ah Sister); father signs the board in his own name, "I witness — I owe"). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer O continues** — "the odds floor" （跑馬地 — the Happy Valley racing fanatic community in the afternoon draw; odds-as-knowledge vs prediction).
+- `chapter-en-arm.test.ts` — assertion count **143** (the new ch140 arm adds one). verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 140 chapters · Layer O opens (14:00 slot — I did not back-date 14:00 in arm 0 yet; will be tagged formally when Layer O closes).
