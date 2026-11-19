@@ -1640,4 +1640,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Four years of flights/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 112 (Castle Peak Road at 4:30) ships in three arms too', () => {
+    const hk = mockGuide('hk-tuen-mun-castle-peak-road-second-departure-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/青山公路.*阿安/);
+    const cn = mockGuide('hk-tuen-mun-castle-peak-road-second-departure-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/青山公路.*阿安/);
+    const en = mockGuide('hk-tuen-mun-castle-peak-road-second-departure-chronicle', 'en');
+    expect(en?.title).toMatch(/Castle Peak Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah On/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /gate opens and closes twice/i.test(b.text))).toBe(true);
+  });
 });
