@@ -1745,4 +1745,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /hydraulic jack/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 119 (Lung Cheung Road herbal tea) ships in three arms too', () => {
+    const hk = mockGuide('hk-wong-tai-sin-lung-cheung-late-herbal-tea-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/龍翔道.*阿信/);
+    const cn = mockGuide('hk-wong-tai-sin-lung-cheung-late-herbal-tea-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/龙翔道.*阿信/);
+    const en = mockGuide('hk-wong-tai-sin-lung-cheung-late-herbal-tea-chronicle', 'en');
+    expect(en?.title).toMatch(/Wong Tai Sin|Lung Cheung/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Sun/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /cauldron/i.test(b.text))).toBe(true);
+  });
 });
