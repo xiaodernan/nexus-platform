@@ -46501,3 +46501,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 
 **Verification.** 128/128 en-arm green after the edit · seed-cn opencc fold PASS (EN-only edit; Simplified regenerated, not hand-edited) · verify_all unchanged since D1426 (NO OFFENDER).
 
+## 1332. D1428 — chapter 126 joins Layer M; arc stands at 126 chapters
+
+**What landed.**
+- `hk-sai-kung-fishing-harbour-nine-sampan-chronicle` → chapter 126 (nine in the morning, Sai Kung fishing harbour — Ah Suk's sampan; the Harbour's last ice-lolly run of the season, sold until ten; Ah Wai returns from Singapore — "Eat first. Settle later."). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **129**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP arc now reads 126 chapters · Layer M open (01:30 → 09:00 span so far).
+
