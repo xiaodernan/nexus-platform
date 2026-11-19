@@ -457,7 +457,7 @@ export interface Dict {
       title: string;
       blurb: string;
     };
-    /** D1284: the chapter's live companion — one voice, grounded in the chapter alone. */
+    /** D1284/D1454: the chapter's live companion — one voice, grounded in the chapter, multi-turn in-session. */
     chapterAsk: {
       eyebrow: string;
       title: string;
@@ -1195,6 +1195,7 @@ export interface Dict {
     narrativeFocusLabel: string;
     /** D1451: the analyst StateGraph — two model calls standing on the same replay. */
     analystTitle: string;
+    analystHint: string;
     analystPending: string;
     analystProven: string;
     analystWatchLabel: string;
@@ -1986,7 +1987,7 @@ const zhHK: Dict = {
     chapterAsk: {
       eyebrow: '章節伴讀 · 大模型',
       title: '問問這一章',
-      hint: '只用這一章的原文作答、附出處；答唔到就話答唔到——不會替章節補腦生情節、名字同價格。',
+      hint: '只用這一章的原文作答、附出處；答唔到就話答唔到——不會替章節補腦生情節、名字同價格。可以連續追問，對話只留在這次瀏覽；換章即清空。',
       placeholder: '問一問：「黃生係邊個？」「這一章喺邊度場？」「點解會咁做？」',
       submit: '問',
       pending: '大模型正在這一章裡面搵答案…',
@@ -3287,6 +3288,7 @@ const zhHK: Dict = {
     narrativeProven: 'AI 措辭 · 只引用本 replay 數字',
     narrativeFocusLabel: '下一步觀察',
     analystTitle: '分析師快報 · 趨勢與措施',
+    analystHint: '同一份幽靈重放經兩道模型關卡：先量度，再預測，再給措施；每一步都受數字圍欄約束，答唔到就唔講。',
     analystPending: '分析師管線正在量度同預測…',
     analystProven: 'AI 分析師 · 兩次呼叫 · 只引用本 replay 數字',
     analystWatchLabel: '下週盯住：',
@@ -4105,7 +4107,7 @@ const en: Dict = {
     chapterAsk: {
       eyebrow: 'CHAPTER COMPANION · MODEL',
       title: 'Ask this chapter',
-      hint: 'Answers only from this chapter’s own text, with excerpt IDs. If the chapter does not say, it says so — no invented characters, places or prices.',
+      hint: 'Answers only from this chapter’s own text, with excerpt IDs. If the chapter does not say, it says so — no invented characters, places or prices. Follow-up questions stay in this browsing session; switching chapters clears the thread.',
       placeholder: 'Ask: “Who is Mr Wong?” “Where is this set?” “Why does it happen?”',
       submit: 'Ask',
       pending: 'The model is looking for the answer inside this chapter…',
@@ -5409,6 +5411,7 @@ const en: Dict = {
     narrativeProven: 'AI phrasing · numbers only from this replay',
     narrativeFocusLabel: 'Observe next',
     analystTitle: 'Analyst readout · trend & measures',
+    analystHint: 'The same ghost replay passes through two model passes — measure, then project, then prescribe. Every number is fenced; where the replay cannot answer, the panel stays silent.',
     analystPending: 'The analyst is measuring and forecasting…',
     analystProven: 'AI analyst · two model calls · replay numbers only',
     analystWatchLabel: 'Watch next week:',

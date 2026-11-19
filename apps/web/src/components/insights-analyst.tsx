@@ -20,6 +20,7 @@ export function InsightsAnalyst({
 }: {
   locale: string;
   copy: {
+    hint: string;
     pending: string;
     proven: string;
     title: string;
@@ -112,6 +113,7 @@ export function InsightsAnalyst({
           {verdictLabel}
         </span>
       </div>
+      <p className="max-w-prose text-xs leading-relaxed text-ink-muted">{copy.hint}</p>
       <div className="flex flex-col gap-3 p-5">
         <p className="max-w-prose text-sm leading-relaxed text-ink-strong">{state.forecast}</p>
         {state.watch.trim() ? (

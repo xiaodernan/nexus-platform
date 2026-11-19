@@ -771,7 +771,7 @@ export const zhCN: Dict = {
     chapterAsk: {
       eyebrow: '章节伴读 · 大模型',
       title: '问问这一章',
-      hint: '只用这一章的原文作答、附出处；答唔到就话答唔到——不会替章节补脑生情节、名字同价格。',
+      hint: '只用这一章的原文作答、附出处；答唔到就话答唔到——不会替章节补脑生情节、名字同价格。可以连续追问，对话只留在这次浏览；换章即清空。',
       placeholder: '问一问：「黄生系边个？」「这一章喺边度场？」「点解会咁做？」',
       submit: '问',
       pending: '大模型正在这一章里面揾答案…',
@@ -2072,6 +2072,7 @@ export const zhCN: Dict = {
     narrativeProven: 'AI 措辞 · 只引用本 replay 数字',
     narrativeFocusLabel: '下一步观察',
     analystTitle: '分析师快报 · 趋势与措施',
+    analystHint: '同一份幽灵重放经两道模型关卡：先量度，再预测，再给措施；每一步都受数字围栏约束，答唔到就唔讲。',
     analystPending: '分析师管线正在量度同预测…',
     analystProven: 'AI 分析师 · 两次呼叫 · 只引用本 replay 数字',
     analystWatchLabel: '下周盯住：',

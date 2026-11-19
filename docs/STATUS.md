@@ -46792,3 +46792,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - io showcase `xiaodernan.github.io` master `cd7f116` — three PHANTOM repos deleted from the all-repos grid (`teedyas`, `teedyassi`, `teedy-assign` — none exist, confirmed against the authenticated `/users/xiaodernan/repos` listing); counters corrected to 16 public = 14 original + 2 forks; phantom names added to identity-guard's ban list; guard OK; rebased past a concurrent auto-sync (`15c46e0`) and pushed. Real data beats plausible data.
 - WORLD_ROADMAP now reads 152 chapters · Layer P continues (11:00 slot).
 - Showcase NEXUS fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+
+## 1365. D1461 — in-product teaching copy catches up with the new lanes
+
+**What landed.**
+- `insights.analystHint` added to both authored dict arms (zh-HK / en) + regenerated Simplified fold: the /insights analyst panel now teaches its own two-pass measure -> project -> prescribe shape and the "silent when the replay cannot answer" fence, instead of dropping a badge with no explanation.
+- `growth.chapterAsk.hint` in both arms updated for D1454: the chapter companion now tells the reader that follow-ups stay in the current browsing session and switching chapters clears the thread (the actual behaviour of the island).
+- `src/components/insights-analyst.tsx` renders the hint under the panel title; `/insights` page passes it from the dict. No new strings are hard-coded in English-only components.
+- vitest 74 files / **665 passed** (maxWorkers=1); tsc exit 0; fold `--check` lockstep; verify_all NO OFFENDER. Two earlier `--maxWorkers=2` runs showed the familiar mock-mode beforeAll timeout flake on this host; serial run clean, no product change.

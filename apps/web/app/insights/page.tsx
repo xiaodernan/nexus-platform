@@ -159,6 +159,7 @@ export default async function InsightsPage() {
           locale={locale}
           copy={{
             title: t.analystTitle,
+            hint: t.analystHint,
             pending: t.analystPending,
             proven: t.analystProven,
             watchLabel: t.analystWatchLabel,
