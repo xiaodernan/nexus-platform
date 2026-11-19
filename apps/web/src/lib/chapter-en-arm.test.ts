@@ -1685,4 +1685,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /silent box/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 115 (Catchick Street noodles) ships in three arms too', () => {
+    const hk = mockGuide('hk-kennedy-town-catchick-street-afternoon-noodle-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/吉席街.*阿海/);
+    const cn = mockGuide('hk-kennedy-town-catchick-street-afternoon-noodle-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/吉席街.*阿海/);
+    const en = mockGuide('hk-kennedy-town-catchick-street-afternoon-noodle-chronicle', 'en');
+    expect(en?.title).toMatch(/Kennedy Town|Catchick Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Hoi/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The pull of the noodles/i.test(b.text))).toBe(true);
+  });
 });
