@@ -28,6 +28,7 @@ suggestion list the caller renders comes from the deterministic selection, not f
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any, Awaitable, Callable, TypedDict
 
 import logging
@@ -44,8 +45,6 @@ _STOPWORDS = {
     "at", "the", "of", "on", "and", "to", "in", "a", "an", "or", "its", "his", "her",
     "we", "you", "your", "my", "is", "are", "was", "be", "as", "by", "for", "with",
 }
-
-from pathlib import Path
 
 _ATLAS_PATH = Path(__file__).resolve().parent.parent / "models" / "atlas_digest.txt"
 
