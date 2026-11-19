@@ -122,7 +122,7 @@ describe('live mode is a grounded seam, never a shortcut', () => {
     };
     expect(sent.chapter_id).toBe('hk-cha-chaan-teng-dawn');
     expect(sent.sections.length).toBeGreaterThan(0);
-    expect(sent.sections.length).toBeLessThanOrEqual(6);
+    expect(sent.sections.length).toBeLessThanOrEqual(12);
     for (const s of sent.sections) {
       expect(s.id).toMatch(/^p[0-9]+$/);
       expect(s.body.length).toBeLessThanOrEqual(1600);

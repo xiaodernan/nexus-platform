@@ -407,6 +407,7 @@ class ChapterAskRequest(_Strict):
     chapter_title: str = Field(min_length=1, max_length=200)
     sections: list[ChapterAskSection] = Field(min_length=1, max_length=8)
     locale: str = Field(default="zh-HK", max_length=16)
+    atlas_context: str = Field(default="", max_length=1200)
 
 
 class AhWanTurn(_Strict):

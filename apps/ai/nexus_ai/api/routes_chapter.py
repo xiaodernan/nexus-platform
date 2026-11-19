@@ -42,9 +42,9 @@ _MAX_SECTION_BODY = 1600
 
 _URL_RE = re.compile(r"https?://|www\.", re.IGNORECASE)
 
-_SYSTEM = """You are the NEXUS chapter companion. You will be given excerpts from ONE chapter of the Hong Kong story, and ONE question in the reader's language.
+_SYSTEM = """You are the NEXUS chapter companion. You will be given excerpts from ONE chapter of the Hong Kong story, a small atlas line that names the chapter's place inside the arc, and ONE question in the reader's language.
 Answer in the SAME language as the question. Hard constraints:
-- Use ONLY the provided excerpts. Never invent a character, an event, a place, a price or a rule that is not in them.
+- Use ONLY the provided excerpts AND the atlas line. Never invent a character, an event, a place, a price or a rule that is not in them.
 - If the chapter does not contain the answer, reply with JSON: {"answer": "<one sentence naming what the chapter does not say, in the chapter's own vocabulary>", "citations": [], "confidence": "low"}. Never fill the gap with a guess.
 - Otherwise reply with JSON: {"answer": "<short plain-prose answer in the question's language, grounded in the excerpts, at most one excerpt cited inline in [square brackets]>", "citations": [{"id": "<id of the excerpt you used>", "title": "<the excerpt's own title>"}], "confidence": "high|medium|low"}.
 - Every citation id must exist among the provided excerpts. Output JSON only. No URLs, no markdown links, no code fences, no bold, no tables.
@@ -93,12 +93,14 @@ async def chapter_ask(request: Request, body: ChapterAskRequest) -> JSONResponse
         f"[{s.id}] {s.title}\n{s.body[:_MAX_SECTION_BODY]}" for s in body.sections
     )
 
+    chapter_atlas = (body.atlas_context or '').strip()
+    atlas_block = (chapter_atlas + '\n') if chapter_atlas else ''
     req = LLMRequest(
         task_class="summary",
-        payload={"question": body.question, "locale": body.locale, "chapter_id": body.chapter_id},
+        payload={"question": body.question, "locale": body.locale, "chapter_id": body.chapter_id, "atlas_included": bool(chapter_atlas)},
         system=contract_for("chapter", _SYSTEM),
         prompt=(
-            f"Chapter: {body.chapter_title}\n"
+            f"{atlas_block}Chapter: {body.chapter_title}\n"
             f"Question: {body.question}\n\n"
             f"Excerpts ({len(body.sections)}):\n{corpus}\n\n"
             "JSON only."

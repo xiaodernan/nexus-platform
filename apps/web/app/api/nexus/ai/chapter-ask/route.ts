@@ -28,7 +28,8 @@ export const dynamic = 'force-dynamic';
 
 const MAX_QUESTION = 300;
 const PARA_LIMIT = 1600;
-const PICKED = 6;
+const NEIGHBOR_BLOCK_LIMIT = 700;
+const PICKED = 12;
 
 type Excerpt = { id: string; kicker: string; title: string; body: string; index: number };
 
@@ -46,9 +47,22 @@ function tokenize(text: string): Set<string> {
     const run = m[0];
     if (run.length === 1) tokens.add(run);
     for (let i = 0; i < run.length - 1; i += 1) tokens.add(run.slice(i, i + 2));
-    if (run.length >= 3) tokens.add(run); // a full CJK run is a strong anchor when it survives intact
+    if (run.length >= 3) tokens.add(run);
   }
   return tokens;
+}
+
+function atlasHeaderLine(guide: Guide, locale: string): string {
+  const loc = normalizeLocale(locale);
+  const line = (guide.title || '').split('：', 1)[0].split('—', 1)[0].trim();
+  const total = guide.title_en || '';
+  if (loc === 'en') {
+    return `[CHAPTER CONTEXT — The Hong Kong arc made real. This chapter is one of 130+ narrative constructions; every merchant is synthetic. The present chapter: ${total}]`;
+  }
+  if (loc === 'zh-CN') {
+    return `[章节上下文 — 香港系列合成叙事。本篇是 130+ 章之一；所有商户均为虚构示例。本篇：${line}]`;
+  }
+  return `[章節上下文 — 香港系列合成敘事。本篇是 130+ 章之一；所有商戶均為虛構示例。本篇：${line}]`;
 }
 
 function excerptParagraphs(guide: Guide): Excerpt[] {
@@ -135,6 +149,14 @@ export async function POST(request: Request): Promise<Response> {
     return json({ degraded: true, reason: 'chapter_empty', answer: '', citations: [], confidence: 'low' });
   }
   const picked = pickExcerpts(question, excerpts);
+  // Compose a big-context payload: atlas line + up to PICKED excerpts + the chapter's full synopsis.
+  const fullEnumerate = excerpts.length <= PICKED;
+  // When only 6 paragraphs total, send fullExcerpts instead — every paragraph, not a subset.
+  const fullBlock = fullEnumerate
+    ? excerpts.map((p) => `[${p.id}] ${p.title}\n${p.body}`).join('\n\n')
+    : picked.map((p) => `[${p.id}] ${p.title}\n${p.body}`).join('\n\n');
+  const atlasLine = atlasHeaderLine(guide, locale);
+  const augment = atlasLine;
 
   try {
     const data = await nexusGet<Record<string, unknown>>('ai', '/ai/v1/chapter/ask', {
@@ -145,6 +167,7 @@ export async function POST(request: Request): Promise<Response> {
         chapter_id: guide.slug,
         chapter_title: guide.title,
         sections: picked.map((p) => ({ id: p.id, kicker: p.kicker, title: p.title, body: p.body })),
+        atlas_context: augment,
       },
     });
     return json({ ...data, picked: picked.map((p) => p.id) });
