@@ -1,0 +1,74 @@
+name: ci-local
+
+# Local self-hosted CI gates for xiaodernan/nexus-platform.
+# Runs on the operator's machine (runner nexus-host-xintong, [self-hosted, Windows, X64])
+# so we get fast, zero-cost signal even when hosted runners are backlogged.
+# Every push to master triggers it; every PR lets its own backers see the local verdict.
+# NEVER fails the world; local gates are the source of truth on this host.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-local-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  local-gates:
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Verify all (the 33+ reader gates)
+        shell: powershell
+        run: node scripts/verify_all.mjs --report | tee verify-all.txt
+
+      - name: Simplified-seed fold lockstep (opencc, via uv)
+        shell: powershell
+        run: |
+          cd apps/ai
+          uv run --with opencc-python-reimplemented python ../../scripts/gen-simplified-seed.py --check
+
+      - name: Workspace typecheck (tsc, all packages)
+        shell: powershell
+        run: npm run typecheck --workspaces --if-present
+
+      - name: Workspace tests (vitest, all packages)
+        shell: powershell
+        run: npm run test --workspaces --if-present
+
+      - name: AI lane gates (ruff + mypy, no provider key)
+        shell: powershell
+        run: |
+          cd apps/ai
+          uv run ruff check .
+          uv run mypy nexus_ai
+
+      - name: Chapter en-arm beat parity (three arms)
+        shell: powershell
+        run: |
+          cd apps/web
+          & ..\..\node_modules\.bin\vitest.cmd run src/lib/chapter-en-arm.test.ts --reporter=default
+
+      - name: Summary
+        if: always()
+        shell: powershell
+        run: |
+          {
+            echo "## ci-local summary"
+            echo "runner: $env:RUNNER_NAME"
+            echo "head: $(git rev-parse --short HEAD)"
+            echo "verify_all tail:"
+            Get-Content verify-all.txt -ErrorAction SilentlyContinue | Select-Object -Last 3
+          } >> $env:GITHUB_STEP_SUMMARY
