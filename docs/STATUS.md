@@ -46599,3 +46599,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `hk-prince-edward-yuen-garden-street-midday-door-close-chronicle` → chapter 137 (Yuen Garden Street, Prince Edward, twenty past twelve — midday registers at "off-fire"; first day of the pre-sale takes 1,032 tickets; two-pair verification rule; a bundle of mid-week entries rides Ah Jeh's red-box discipline; "whoever could not come today — they are still written here"). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
 - `chapter-en-arm.test.ts` — assertion count **140**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 137 chapters · Layer N open (12:20 slot).
+
+## 1345. D1441 — Layer N CLOSED: chapter 138 lands; arc stands at 138
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-afternoon-final-count-chronicle` → chapter 138 (Yuen Garden Street, Prince Edward, half past two — the closing count of the two-day pre-sale; Ah Jeh hands the reserve-ticket discipline across to Ah Ming; "closing is not ending; closing is remembering"). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer N CLOSED** （太子——花園街 arc 131–138 — Ah Yan's brass-weight ledger → Ah Jeh's counting counter: two-day pre-sale closed, the red box sealed, the door shut, the ledger remembered).
+- `chapter-en-arm.test.ts` — assertion count **141**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 138 chapters · Layer N CLOSED · Layer O to open next (candidate: the exhibition's last day — the lights from 147 of those preview tickets come down; or a Kowloon-side shopfront arc).

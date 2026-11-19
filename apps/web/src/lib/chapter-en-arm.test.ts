@@ -2026,4 +2026,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The midday page/i.test(b.text))).toBe(true);
   });
+  it('chapter 138 (Yuen Garden Street afternoon last count — Layer N closes) ships in three arms too', () => {
+    const hk = mockGuide('hk-prince-edward-yuen-garden-street-afternoon-final-count-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/花園街.*最後一道數/);
+    const cn = mockGuide('hk-prince-edward-yuen-garden-street-afternoon-final-count-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/花园街.*最后一道/);
+    const en = mockGuide('hk-prince-edward-yuen-garden-street-afternoon-final-count-chronicle', 'en');
+    expect(en?.title).toMatch(/Prince Edward|Yuen Garden/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Jeh/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The last pile|The closing count/i.test(b.text))).toBe(true);
+  });
 });
