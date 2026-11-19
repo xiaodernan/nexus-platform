@@ -46585,3 +46585,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **138**. verify_all RESULT: NO OFFENDER (72 PASS).
 - Self-hosted runner **nexus-host-xintong** registered (agent 21), verified online from the repo API, `[self-hosted, Windows, X64]`; detached service on this machine + at-logon scheduled task `GitHubActionsRunner-nexus-host`; zero-cost dispatch-only `runner-smoke.yml` (D1438) is the operator's on-demand proof of the local runner. ci.yml deliberately NOT flipped yet — decision record documented in the diary; hosted CI queue has been draining since 96d3e04.
 - WORLD_ROADMAP now reads 135 chapters · Layer N open (10:30 slot).
+
+## 1343. D1439 — chapter 136 joins Layer N; arc stands at 136
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-pre-noon-ledger-chronicle` → chapter 136 (Yuen Garden Street, Prince Edward, quarter to twelve — Ah Jeh closes the pre-noon books; sixty-eight deposits, thirty-six signed-lamp orders, three returns; the red box handed to Wong Sister-in-law from the goldsmith; Ah Ming copies the mid-day attendance onto the register slip). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **139**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 136 chapters · Layer N open (10:30/11:45 slot boundary crossed).
