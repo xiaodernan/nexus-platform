@@ -1881,4 +1881,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Pounding the peanuts/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 128 (Eastern Harbourfront fish market) ships in three arms too', () => {
+    const hk = mockGuide('hk-sai-wan-ho-eastern-harborfront-afternoon-fish-paddle-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/東區海旁.*阿偉/);
+    const cn = mockGuide('hk-sai-wan-ho-eastern-harborfront-afternoon-fish-paddle-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/东区海旁.*阿伟/);
+    const en = mockGuide('hk-sai-wan-ho-eastern-harborfront-afternoon-fish-paddle-chronicle', 'en');
+    expect(en?.title).toMatch(/Sai Wan Ho|Eastern Harbourfront/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Wai/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /The scale first/i.test(b.text))).toBe(true);
+  });
 });

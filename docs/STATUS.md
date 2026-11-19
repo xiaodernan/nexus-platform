@@ -46515,3 +46515,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **130**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP arc now reads 127 chapters · Layer M open.
 
+## 1334. D1430 — chapter 128 joins Layer M; arc stands at 128 chapters
+
+**What landed.**
+- `hk-sai-wan-ho-eastern-harborfront-afternoon-fish-paddle-chronicle` → chapter 128 (one in the afternoon, Eastern Harbourfront, Sai Wan Ho — Ah Wai's fish paddle; a swordfish kept back for Ah Chi in Ho Chi Minh City — "Eat first. Tonight — I'm buying."). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **131**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP arc now reads 128 chapters · Layer M open (01:30 → 13:00 span so far).
+
