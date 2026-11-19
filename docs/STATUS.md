@@ -46710,3 +46710,13 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 
 **Showcase fact-pack stays on D1447 (cadence rule). Layer P closure remains the next heavy milestone.**
 
+
+
+## 1357. D1453 — chapter 148 joins Layer P; arc stands at 148
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-evening-count-chronicle` — chapter 148 （晚上九點——跑馬地——賽馬會停車場東門辦公室——阿樂把1960年的紅底牌掛出去；「牌不是掛給馬牠們看的，是掛給後來數牌的人。」值夜的臂章、陳炳、228、門房牆角、下一頁留給最後的值夜人——那本皮革簿子). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc: after the last tag on the east gate comes down (ch.147), the gatekeeper's evening ritual begins — the night badge, the 1960 red-bottomed plate （陳炳 · 228 · 第十四場）, and the page in the leather book with Ah Muk's name in it.
+- `chapter-en-arm.test.ts` — assertion count **152**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. tsc exit 0.
+- WORLD_ROADMAP now reads 148 chapters · Layer P continues (21:00 slot).
+- Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
