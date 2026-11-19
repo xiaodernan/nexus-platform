@@ -157,6 +157,7 @@ class _AnalystState(TypedDict, total=False):
     forecast_confidence: str
     measures: list[dict[str, str]]
     measures_confidence: str
+    measures_guard: str
     confidence: str
     source: str
     guard: str
@@ -303,7 +304,8 @@ async def _measures_node(state: _AnalystState) -> _AnalystState:
     llm_call = state.get("llm_call")
     if llm_call is None:
         return {"measures": _measures_fallback(locale, measured),
-                "measures_confidence": "low"}
+                "measures_confidence": "low",
+                "measures_guard": "no_model"}
 
     prompt = (
         f"Locale: {locale}\n"
@@ -320,7 +322,8 @@ async def _measures_node(state: _AnalystState) -> _AnalystState:
 
     if not isinstance(reply, dict):
         return {"measures": _measures_fallback(locale, measured),
-                "measures_confidence": "low"}
+                "measures_confidence": "low",
+                "measures_guard": "model_unavailable"}
 
     raw = reply.get("measures") if isinstance(reply.get("measures"), list) else []
     measures: list[dict[str, str]] = []
@@ -331,6 +334,10 @@ async def _measures_node(state: _AnalystState) -> _AnalystState:
         why = str(item.get("why") or "").strip()
         if action and why:
             measures.append({"action": action, "why": why})
+    if not measures:
+        return {"measures": _measures_fallback(locale, measured),
+                "measures_confidence": "low",
+                "measures_guard": "no_usable_rows"}
     return {"measures": measures,
             "measures_confidence": str(reply.get("confidence") or "low").lower()}
 
@@ -388,16 +395,23 @@ def _verify_node(state: _AnalystState) -> _AnalystState:
         if action is None or why is None:
             continue
         clean.append({"action": action, "why": why})
+    partial_measures = bool(clean) and len(clean) != len(measures)
     if not clean:
         fallback_used.append("measures")
         clean = _measures_fallback(locale, measured)
         measures_confidence = "low"
 
-    source = "llm" if not fallback_used else ("mixed" if clean and "measures" not in fallback_used else "fallback")
-    if fallback_used == ["watch"] and clean and "measures" not in fallback_used and "forecast" not in fallback_used:
+    node_guards = {g for g in (state.get("guard"), state.get("measures_guard")) if g}
+    essential = node_guards | ({"forecast"} & set(fallback_used)) | ({"measures"} & set(fallback_used))
+    if essential:
+        source = "fallback"
+    elif fallback_used or partial_measures:
+        # only the watched clause softened, or some measures dropped, none collapsed
         source = "mixed"
+    else:
+        source = "llm"
     confidence = "medium"
-    if "low" in {forecast_confidence, measures_confidence} or fallback_used:
+    if "low" in {forecast_confidence, measures_confidence} or fallback_used or node_guards:
         confidence = "low"
     elif forecast_confidence == "high" and measures_confidence == "high":
         confidence = "high"
@@ -409,8 +423,9 @@ def _verify_node(state: _AnalystState) -> _AnalystState:
         "source": source,
         "confidence": confidence,
     }
-    if fallback_used:
-        out["guard"] = "\u002f".join(sorted(fallback_used))
+    reported_guards = set(node_guards) | set(fallback_used)
+    if reported_guards:
+        out["guard"] = "\u002f".join(sorted(reported_guards))
     return out
 
 

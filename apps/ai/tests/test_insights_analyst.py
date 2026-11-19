@@ -182,8 +182,8 @@ def test_a_digit_the_replay_never_carried_collapses_the_forecast():
     assert status == 200
     # the forecast leaked 3491/77 (never in the payload) -> the graph substitutes its own
     assert "3491" not in body["forecast"]
-    assert body["source"] != "llm"
-    assert body.get("reason", "").startswith("forecast")
+    assert body["source"] == "fallback"
+    assert "forecast" in body.get("reason", "")
     # the measures node still runs and its clean rows survive the fence
     assert body["measures"]
 
@@ -193,9 +193,22 @@ def test_urls_in_every_measure_collapse_to_the_fallback():
     router = _CannedRouter([_resp(_GOOD_FORECAST), _resp(_URL_MEASURES)])
     status, body = _ask(client, router, "en")
     assert status == 200
+    assert body["source"] == "fallback"
     joined = " ".join(m["action"] + " " + m["why"] for m in body["measures"])
     assert "https://" not in joined
     assert "Cap the first screen" in joined  # the deterministic fallback measure
+
+
+def test_a_dead_model_degrades_to_fallback_and_says_so():
+    client = _client()
+    router = _CannedRouter([RuntimeError("model is down"), RuntimeError("model is down")])
+    status, body = _ask(client, router, "en")
+    assert status == 200
+    assert body["source"] == "fallback"
+    assert "model_unavailable" in body.get("reason", "")
+    # the page still gets the deterministic readout, never a lie about provenance
+    assert body["forecast"]
+    assert body["measures"]
 
 
 def test_the_wrong_language_is_refused():
