@@ -46771,3 +46771,13 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - Not run this turn (deliberate token conservation): running it is the operator's call, one decision-grade call at a time with the proxy honored. Measurements from the 2026-11-19 L→P run (58,957 prompt / cached 2,807 / 2,813 completion) are ledger-recorded in STATUS for comparison.
 - Live io page identity sweep (read-only, all arms): every canonical string present at expected multiplicity (赵欣曈 14 · 南方科技大学 8 · 香港中文大学 8 · 计算机科学与技术 8 · 全国中学生物理竞赛 4 · 法狗狗 7 · 隐盾 26 · SUSTech 7 · CUHK 7 · 雅思 6.5 9-ish count for CET6 546=9); zero occurrences of 隐图/南方科大/港中大/南方科技大学繁/香港中央大学/法国狗狗; NaN=0 (bytes panel: 138.21 MB / 18 languages). The CET6 label uses the house style `CET6 546` — consistent, not an error; left as-is.
 - Showcase cadence unchanged (D1447). Layer P closure remains the next heavy-milestone sync.
+
+
+## 1363. D1459 — chapter 151 joins Layer P; arc stands at 151 (Ah Wan cross-arc)
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-wanita-greeting-chronicle` — chapter 151 （上午十點半——跑馬地——賽馬會停車場東門門口——總推著水桶從總徑來、拖整片東門地板的阿穩過來，停了三個字；阿穆知道了這個地板早被她接管過）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — Ah Wan is the SAME Ah Wan from chapter 24 (`hk-night-cleaner-chronicle`, 塔樓清潔工）: the arc reuses its own people; her "she knows the colour, never the room" is the world economy the arc is built on.
+- `chapter-en-arm.test.ts` — assertion count **155**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 151 chapters · Layer P continues (10:30 slot).
+- Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
