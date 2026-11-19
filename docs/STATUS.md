@@ -46570,3 +46570,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `world_guide_graph.py`: SYSTEM = base contract (unchanged) + `_load_atlas()`-built frozen atlas block (fail-open to the bare contract if the artifact is unreadable — the reader is never blocked). The lane's fences hold: model still may only choose between the two curated doors; no place named beyond them; pick 1|2; ≤420 chars; URL/CJK/fence verification; StateGraph unchanged; budget 1 call per turn.
 - The lane went from ~0.7 KB of context to **11,455 bytes** (≈2,900 tokens). The prefix is byte-stable per build; cross-lane frozen-head cache mechanics apply; no measured cache regression expected on this lane's warm calls.
 - Tests: new `apps/ai/tests/test_atlas_digest.py` pins the artifact (size 4–16 KB, 133-corpus front-to-back markers, byte-stable SYSTEM, unchanged fences). world_guide/atlas/prefix/contract lanes: **61/61 pass**. verify_all RESULT: NO OFFENDER.
+
+## 1341. D1437 — chapter 134 joins Layer N; arc stands at 134
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-mid-morning-presale-ledger-chronicle` → chapter 134 (Yuen Garden Street, Prince Edward, ten to eleven — Ah Kuen's pre-sale ledger; the lamp exhibition opens in three days, the fourth requires a name on the page; Ah Jeh's till is paired with the signed lamp across the street). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **137**. verify_all RESULT: NO OFFENDER (72 PASS). World guide lane live-verified on 6.2-sol/D1436 atlas (see diary).
+- WORLD_ROADMAP now reads 134 chapters · Layer N open (10:50 slot, anchored after 10:40).
