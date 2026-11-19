@@ -1,4 +1,8 @@
-"""D1458 — the whole-arc continuity auditor, checked in for the operator to run deliberately.
+"""D1458/D1465 — the whole-arc continuity auditor, checked in for the operator to run deliberately.
+Since D1465 the probe routes through `nexus_ai.orchestrator.arc_audit_graph` (assemble -> audit
+-> verify): the model writes, the code fences (chapter numbers must exist in the window, no URLs,
+no over-long fields, an all-invalid reply degrades to an empty audit). Nothing raw reaches the
+operator as "findings".
 
 The layer L->P continuity audit run on 2026-11-19 consumed a 58,957-prompt-token context and
 returned usable contradictions (all later rejected as false positives — but the tool paid for
@@ -27,6 +31,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import io
+import json
 import os
 import re
 import sys
@@ -107,42 +112,41 @@ def main():
     print(f'corpus chars: {len(corpus)} (~{len(corpus) // 2:,} tokens)')
     print('One call, temperature 0. This is deliberate spending; nothing else is charged until you say so.')
 
-    system = (
-        'You are the continuity auditor for a synthetic Hong Kong arc written in three arms '
-        '(Traditional HK, opencc-folded Simplified, full English). '
-        'Read the supplied corpus ONCE. Output JSON ONLY with this shape:\n'
-        '{"inconsistencies": [{"chapter_a": <int>, "chapter_b": <int>, "issue": "<one sentence>"} <= five items],\n'
-        ' "thematic_line": "<one sentence arc-level reading>",\n'
-        ' "head_reader_question": "<the single unaddressed question a careful reader still has at the top of this window>",\n'
-        ' "confidence": "low|medium|high"}\n'
-        'Hard rules: chapter numbers mandatory for every inconsistency; do not invent merchants, places or people; '
-        'if none found, return an empty list rather than a plausible one.'
-    )
-    prompt = (
-        f'Window: {args.start}-{args.end} of the arc.\n\n'
-        f'CORPUS:\n{corpus}\n\n'
-        'JSON only.'
-    )
+    from nexus_ai.orchestrator.arc_audit_graph import run_arc_audit
+    from nexus_ai.models.prefix_contract import contract_for
 
-    async def run():
+    measured: dict[str, object] = {}
+
+    async def llm_call(system: str, prompt: str, max_tokens: int):
         started = time.perf_counter()
         req = LLMRequest(
             task_class='reason',
             payload={'window': f'{args.start}-{args.end}', 'chapters': [n for n, _, _ in entries]},
-            system=system,
+            system=contract_for('arc_audit', system),
             prompt=prompt,
-            max_tokens=1200,
+            max_tokens=int(max_tokens),
             temperature=0.0,
             json_hint='json_object',
         )
         call = await adapter.complete(req)
-        ms = int((time.perf_counter() - started) * 1000)
-        print(f'\ncall: prompt_tokens={call.prompt_tokens} completion_tokens={call.completion_tokens} '
-              f'cached_tokens={call.cached_tokens} cache_reported={bool(call.cache_reported)} latency_ms={ms}')
-        print('\n--- raw reply (first 2500 chars) ---')
-        print((call.text or '')[:2500])
+        measured.update({
+            'prompt_tokens': call.prompt_tokens,
+            'completion_tokens': call.completion_tokens,
+            'cached_tokens': call.cached_tokens,
+            'cache_reported': bool(call.cache_reported),
+            'latency_ms': int((time.perf_counter() - started) * 1000),
+        })
+        try:
+            parsed = json.loads(call.text) if call.text else None
+        except Exception:
+            parsed = None
+        return parsed if isinstance(parsed, dict) else None
 
-    asyncio.run(run())
+    result = asyncio.run(run_arc_audit(start=args.start, end=args.end, llm_call=llm_call))
+    print('\n--- graph result (fenced) ---')
+    print(json.dumps(result, ensure_ascii=False, indent=2)[:3000])
+    print('\n--- measured (one call) ---')
+    print(json.dumps(measured, ensure_ascii=False))
 
 
 if __name__ == '__main__':

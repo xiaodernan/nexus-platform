@@ -46828,3 +46828,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - Live proof (one deliberate call, via Clash 7897): chapter 154's arm came back structurally perfect (12 matching blocks, synthetic marker, no CJK/URL) — but the model had silently re-named 陳炳 to "Chan Ping" and 阿穆 to "Ah Mu". The fence was therefore extended with `NAME_MAP` and a `name_drift:*` refusal; all 9 bench tests green (including a name-drift falsifier), ruff clean, no artifact left in the tree (drafts go to the OS temp dir).
 - This is the LLM's role in the CONTENT FLOW, not a vanity endpoint: the model phrases across the language boundary, the code owns facts, identity and structure — exactly the discipline that keeps the operator's own identity lock and the arc's fictional people intact.
 - Showcase cadence unchanged (D1447); Layer P closure remains the next heavy-milestone sync.
+
+
+## 1369. D1465 — the arc-audit StateGraph: the 87K-token probe now fences its own findings
+
+**What landed.**
+- `apps/ai/nexus_ai/orchestrator/arc_audit_graph.py` — a fifth real `StateGraph` (`read` -> `think` -> `check`, conditional END on any refusal): assembles the requested chapter window from `seed.ts`, ONE `reason`-tier temperature-0 call, then deterministic fences — every reported chapter number must exist in the window, issues URL-free and <=240 chars, at most five rows, thematic line and reader question bounded, confidence enum pinned; an all-invalid reply degrades to an empty audit with a reason, never a confident fabrication.
+- `live_arc_audit_probe.py` refactored to route through the graph; its output is now the fenced audit plus measured prompt/completion/cached/latency, not the raw reply. A separate D1464 live run had already shown that a structurally perfect model reply can silently re-name people; the same discipline applies to a continuity audit.
+- Tests: 8/8 on the audit graph (empty window refuses before any call, name/number/URL/confidence falsifiers) + 9/9 on the EN-arm bench; ruff clean; no live tokens spent this turn.
+- Showcase cadence unchanged (D1447); Layer P closure remains the next heavy-milestone sync. Arc stands at 154 chapters.
