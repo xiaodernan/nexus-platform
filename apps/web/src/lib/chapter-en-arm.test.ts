@@ -1670,4 +1670,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The hands/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 114 (South Industrial Road silent box) ships in three arms too', () => {
+    const hk = mockGuide('hk-kwun-tong-south-industry-road-afternoon-room-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/南區工業路.*阿信/);
+    const cn = mockGuide('hk-kwun-tong-south-industry-road-afternoon-room-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/南区工业路.*阿信/);
+    const en = mockGuide('hk-kwun-tong-south-industry-road-afternoon-room-chronicle', 'en');
+    expect(en?.title).toMatch(/South Industrial Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Sun/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /silent box/i.test(b.text))).toBe(true);
+  });
 });
