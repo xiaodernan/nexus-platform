@@ -22,16 +22,22 @@ permissions:
 jobs:
   local-gates:
     runs-on: [self-hosted, Windows, X64]
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Cache the npm HTTP cache between runs
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-npm-
 
-      - name: Install workspace dependencies (npm workspaces)
+      - name: Install workspace dependencies (npm workspaces, offline-aware)
         shell: powershell
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Verify all (33+ reader gates)
         shell: powershell
