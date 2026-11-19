@@ -28,9 +28,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
+      - name: Install workspace dependencies (npm workspaces)
+        shell: powershell
+        run: npm ci
 
-      - name: Verify all (the 33+ reader gates)
+      - name: Verify all (33+ reader gates)
         shell: powershell
         run: node scripts/verify_all.mjs --report | tee verify-all.txt
 
