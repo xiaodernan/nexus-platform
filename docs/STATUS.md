@@ -46326,3 +46326,16 @@ chapter 110 as the second one in Layer L.
 - `hk-sham-shui-po-pawnshop-chronicle` → chapter 106. zh-HK/zh-CN/en 三臂完整。
 - `chapter-en-arm.test.ts` — assertion count 113. verify_all RESULT: NO OFFENDER.
 - `WORLD_ROADMAP.md` updated: arc stands at 110 chapters (D1404).
+
+## 1318. D1406 — chapter 111 lands; corpus reaches 111
+
+**Why.** The infinite world keeps growing. Each new chapter carries a full zh-HK / zh-CN / en trilogy.
+
+**What landed.**
+- `hk-tsim-shui-po-shaftesbury-avenue-anam-return-chronicle` → chapter 111 (Shaftesbury Avenue, Tsim Sha Tsui — Ah Nam, a boy four years migrated, three round trips a year, walks this Avenue and has Nelly’s juice stand back). zh-HK prose + English body_blocks_en; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count 114. verify_all RESULT: NO OFFENDER (71 PASS + 1 host-load TIMEOUT).
+
+**Verification.**
+- Master CI `D1405` (#544) GREEN (D1405); D1406 (#549) pending dispatcher runs are the next automated green.
+- Showcase latest.json live snapshot checked via webfetch: `milestone` updated to **D1405**; `head:74b97ae`; `total_commits:1633`; error-free JSON; identity-guard confirms 雅思 6.5 · CET-6 546 · 隐盾 · 赵欣曈 remain.
+- `verify_all.mjs --report` = `RESULT: NO OFFENDER`.
