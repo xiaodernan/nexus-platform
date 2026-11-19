@@ -46640,3 +46640,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **145** (3 new arms). verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP currently 142 chapters — anchored by 16:15 / 19:00 pair.
 - WORLD_ROADMAP dirty index slot + target rows: arc now has one entry for every 10 minutes between 16:15 and 19:00 · Layer O arc engine intact.
+
+## 1350. D1446 — chapter 143 joins Layer O; arc stands at 143
+
+**What landed.**
+- `hk-happy-valley-racecourt-night-walk-home-chronicle` → chapter 143 （晚上九點半——散場——父亲走在前面帶了一個薑棗杞茶包；阿游在大門外記住父亲的腳步）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer O continues** — the odds floor arc settles into its evening wind-down (six 單一 sections: checkpoints, the walk, the tea, the door).
+- `chapter-en-arm.test.ts` — assertion count **146**. verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP tracks the day as 143 chapters · the 21:30 slot now closes Layer O's first day.
