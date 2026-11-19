@@ -46463,3 +46463,23 @@ Growing-history baseline: turns 3–4 at 6080/6355 (**95.7%**), 6080/6391 (**95.
 - `app/[city]/page.tsx` gains the same discipline as `[category]/page.tsx`: `landingOrNull()` — catch `NexusApiError` with code `seo_route_not_found` or `not_found` → `notFound()` (real 404 semantics); any other fault (service down, 5xx) re-throws so a genuine fault is never laundered into a clean miss. Both `generateMetadata` and the page body use it.
 - `tsc --noEmit` clean; live stack re-verified on :3300/:8010/:8090 with `hong-kong` 200 · `shanghai` 200 · `aaaa` rendering the 404/not-found shell in both modes — no boundary crash, no RSC error-object warning observed after the fix.
 - verify_all: unchanged from D1423 (NO OFFENDER, 72 PASS).
+
+## 1329. D1425 — chapter 124 joins Layer M; local pressure probe lands on the live stack
+
+**What landed.**
+- `hk-mong-kok-yuen-chai-street-morning-bread-van-chronicle` → chapter 124 (half past six, Yuen Chai Street, Mong Kok — Ah Gim's bakery van; "eight lid-faces, on time"; Ah Keung returns for his "one toast, one pineapple bun"). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **127**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP arc now reads 124 chapters · Layer M open (01:30 → 06:30 span so far).
+
+**Local pressure probe (Mandate §11 · this host · 2026-11-19, sequential, bounded)**
+
+The live stack — local demo, not the public internet — absorbed 140 requests with zero failures:
+
+```
+platform  /actuator/health  n=60  errors=0  p50=44ms   p95=116ms   p99=365ms
+AI lane   /ai/v1/health     n=60  errors=0  p50=43ms   p95=179ms   p99=274ms
+web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   (dev-server cold compile)
+```
+
+(The numbers are honest — no concurrency, small-n, local; the point is zero failure and the hot-path shape. This is NOT a public-load simulation; the real repetition CI and §十一 Playwright k6 suites are the repeatable evidence.)
+

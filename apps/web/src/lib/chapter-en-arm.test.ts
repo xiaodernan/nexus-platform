@@ -1820,4 +1820,20 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Three lifts/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 124 (Yuen Chai Street bakery van) ships in three arms too', () => {
+    const hk = mockGuide('hk-mong-kok-yuen-chai-street-morning-bread-van-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/煙廠街.*阿劍/);
+    const cn = mockGuide('hk-mong-kok-yuen-chai-street-morning-bread-van-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/烟厂街/);
+    expect(cn?.title).toMatch(/阿剑/);
+    const en = mockGuide('hk-mong-kok-yuen-chai-street-morning-bread-van-chronicle', 'en');
+    expect(en?.title).toMatch(/Mong Kok|Yuen Chai/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Gim/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /lid-faces/i.test(b.text))).toBe(true);
+  });
 });
