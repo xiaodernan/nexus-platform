@@ -46666,3 +46666,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **149**. verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 145 chapters · Layer P opens (09:00 slot, marked as a new layer — the valley arc returns at last).
 - Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+## 1353. D1449 — chapter 146 joins Layer P; arc stands at 146
+
+**What landed.**
+- `hk-happy-valley-racecourt-noon-old-jockey-brings-son-chronicle` → chapter 146 （下午三點——阿樂攤開陳炳那本皮革簿子——『陳炳還在這裡——陳炳一輩子在這裡。』最後一頁空白：給最徒弟等的那個）。zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc: the former jockey's son learns to keep silence and to read the one page that nobody ever wrote.
+- `chapter-en-arm.test.ts` — assertion count **150**. verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP arc = 146 chapters · Layer P opens (15:00 slot).
+- Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.

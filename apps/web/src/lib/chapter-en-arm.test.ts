@@ -2152,4 +2152,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /horses at a time|leather book/i.test(b.text))).toBe(true);
   });
+  it('chapter 146 (Happy Valley Tang Bok book — Layer P opens) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-noon-old-jockey-brings-son-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/阿樂教阿穆/);
+    const cn = mockGuide('hk-happy-valley-racecourt-noon-old-jockey-brings-son-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/阿乐教阿穆/);
+    const en = mockGuide('hk-happy-valley-racecourt-noon-old-jockey-brings-son-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|car park/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Muk|Chan Bok/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Between the letters|disciple left/i.test(b.text))).toBe(true);
+  });
 });
