@@ -46539,3 +46539,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `WORLD_ROADMAP.md` records Layer M CLOSED; the arc now stands at **130 chapters**. The corpus is the complete EN-arm-verified trilogy from chapter 1 through chapter 130.
 - Layer M closure is the designated heavy milestone → showcase fact pack refreshes against this commit (io Pages deploys via push-triggered survivor; raw master verified for D1418 → next: D1432).
 
+## 1337. D1433 — Layer N opens: the counting hours (chapter 131)
+
+**Why.** The infinite world's third great arc begins. After Layer L (the return arc) and Layer M (the small hours), Layer N picks up what the day is made of: repetition, duty, objects — the weights of brass, the coin that never leaves the tray.
+
+**What landed.**
+- `hk-prince-edward-tong-mei-road-morning-scale-chronicle` → chapter 131 (Tong Mei Road, Prince Edward — Ah Yan's brass weights; the fourth generation of the hundred-year-old scales-repair shop opens the season). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **134**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP gains the Layer N section; arc stands at **131 chapters**. Showcase stays on the D1432 fact pack (cadence rule).
+
