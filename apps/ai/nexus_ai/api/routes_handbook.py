@@ -34,6 +34,7 @@ from nexus_ai.api import runs
 from nexus_ai.api.deps import Deps
 from nexus_ai.contract import HandbookAskRequest
 from nexus_ai.models.base import LLMRequest
+from nexus_ai.models.prefix_contract import contract_for
 
 log = logging.getLogger("nexus_ai.api.routes_handbook")
 
@@ -99,7 +100,7 @@ async def handbook_ask(request: Request, body: HandbookAskRequest) -> JSONRespon
     req = LLMRequest(
         task_class="summary",
         payload={"question": body.question, "locale": body.locale},
-        system=_SYSTEM,
+        system=contract_for("handbook", _SYSTEM),
         prompt=(
             f"Question: {body.question}\n\n"
             f"Sections ({len(body.sections)}):\n{corpus}\n\n"

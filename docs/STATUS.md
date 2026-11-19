@@ -46742,3 +46742,22 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **153**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. tsc exit 0.
 - WORLD_ROADMAP now reads 149 chapters · Layer P continues (08:00 slot).
 - Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+
+## 1360. D1456 — chapter 150 joins Layer P; arc stands at 150
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-chalkboard-1960-chronicle` — chapter 150 （早上九點半——跑馬地——賽馬會停車場東門辦公室——阿樂把昨天值夜的那塊白板翻過來；四匹馬畫成四個灰點：白腳步、甩尾、翻鏡、228；阿樂說「獸醫說牠永遠不會，牠在夜場跑了二十二場，最後一個彎道都不敢進——第五十六個場才敢。」）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc: 228's bend arrives exactly when Ah Muk circles it; the whiteboard is the ledger before the ledger.
+- `chapter-en-arm.test.ts` — assertion count **154**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. tsc exit 0.
+- WORLD_ROADMAP now reads 150 chapters · Layer P continues (09:30 slot).
+- Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+## 1361. D1457 — the handbook lane rides the shared frozen preamble; stress harness re-measured on the production build
+
+**What landed & measured.**
+- Contract census across every `LLMRequest(` in the service: 10/10 production call sites now ride `contract_for`. The one outlier found and fixed — `routes_handbook` passed its ~170-token `_SYSTEM` RAW, below the provider's ~1024-token cache floor, so the handbook was 0% cacheable in diverse traffic (every other lane was already riding the 2.3K-token frozen head since D1432). Now `contract_for("handbook", _SYSTEM)`. Handbook contract tests 10/10 green; ruff + mypy clean; background full AI pytest 37,904 passed / 0 failed.
+- **§十一 压力测试 re-measured** on the production build (`next build`, `next start` :3002 mock plane; the Next dev plane returns 32× burst failures only from on-demand compile, never from capacity — the prior failures were compile latency, not load): 640 requests total @ 32-way concurrency:
+  - `/handbook` 128/128 OK p50=1019ms p99=1705ms (28.5 req/s) · `/insights` p50=3363ms p99=4968ms (9.0 req/s) · `/hong-kong` p50=4251ms p99=4623ms (7.2 req/s) · `/command` p50=2523ms p99=2932ms (12.5 req/s) · `/guides/hk-food-chronicle` p50=3051ms p99=4174ms (10.0 req/s)
+  - zero timeouts, zero 5xx, zero transport errors. Not an SLO; a measurement of this machine under this load, honestly labelled. (The :3000 instance on this host is NOT the NEXUS app — it is AI Career OS; NEXUS dev/prod planes live on :3002 by design, and :3000 stays untouched.)
+- D-value note: entries 1360–1361 reserve D1456/D1457 for this turn; STATUS/WORLD_ROADMAP updated.

@@ -2208,4 +2208,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /red booklet|clipping on the wall|next page/.test(b.text))).toBe(true);
   });
+  it('chapter 150 (Happy Valley 1960 chalkboard — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-chalkboard-1960-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上九點半/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-chalkboard-1960-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上九点半/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-chalkboard-1960-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|whiteboard|1960/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Muk/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /board from the watch|four horses|learned the bend/.test(b.text))).toBe(true);
+  });
 });
