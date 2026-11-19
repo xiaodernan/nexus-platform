@@ -46623,3 +46623,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer O continues** — "the odds floor" （跑馬地 — the Happy Valley racing fanatic community in the afternoon draw; odds-as-knowledge vs prediction).
 - `chapter-en-arm.test.ts` — assertion count **143** (the new ch140 arm adds one). verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 140 chapters · Layer O opens (14:00 slot — I did not back-date 14:00 in arm 0 yet; will be tagged formally when Layer O closes).
+
+## 1348. D1444 — chapter 141 joins Layer O; arc stands at 141
+
+**What landed.**
+- `hk-happy-valley-racecourt-afternoon-win-slip-chronicle` → chapter 141 （香港跑马地——第六场衝線——黃啤拌第一；父親站起來那一刻整个賽場安靜了一秒）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer O continues** — the odds floor arc keeps the 05:50→16:15 ladder; the **young man watching the ponters finally recognizes his father across the race**.
+- `chapter-en-arm.test.ts` — assertion count **144**. verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP arc now reads 141 chapters · Layer O opens (16:15 slot).
