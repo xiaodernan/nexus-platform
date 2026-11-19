@@ -46483,3 +46483,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 
 (The numbers are honest — no concurrency, small-n, local; the point is zero failure and the hot-path shape. This is NOT a public-load simulation; the real repetition CI and §十一 Playwright k6 suites are the repeatable evidence.)
 
+## 1330. D1426 — chapter 125 joins Layer M; arc stands at 125
+
+**What landed.**
+- `hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle` → chapter 125 (quarter past seven, Siu Sai Wan, Chai Wan — Ah Kit's seventeen-year fish-mart; the tuna reserved for someone who has been away for a long time). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **128**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP arc now reads 125 chapters · Layer M open (01:30 → 07:15 span so far).
+

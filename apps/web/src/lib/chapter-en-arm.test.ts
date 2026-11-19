@@ -1836,4 +1836,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /lid-faces/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 125 (Chai Wan fish market) ships in three arms too', () => {
+    const hk = mockGuide('hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/小西灣.*阿杰/);
+    const cn = mockGuide('hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/小西湾.*阿杰/);
+    const en = mockGuide('hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle', 'en');
+    expect(en?.title).toMatch(/Chai Wan|Siu Sai Wan/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Kit/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /lay-out of the fish/i.test(b.text))).toBe(true);
+  });
 });
