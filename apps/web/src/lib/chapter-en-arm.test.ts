@@ -1941,4 +1941,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The brass weights/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 132 (Yuen Garden Street cash register) ships in three arms too', () => {
+    const hk = mockGuide('hk-prince-edward-yuen-garden-street-morning-cashier-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/花園街.*阿姐/);
+    const cn = mockGuide('hk-prince-edward-yuen-garden-street-morning-cashier-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/花园街.*阿姐/);
+    const en = mockGuide('hk-prince-edward-yuen-garden-street-morning-cashier-chronicle', 'en');
+    expect(en?.title).toMatch(/Prince Edward|Yuen Garden/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Jeh/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Starting from zero/i.test(b.text))).toBe(true);
+  });
 });

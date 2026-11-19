@@ -46548,3 +46548,10 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **134**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP gains the Layer N section; arc stands at **131 chapters**. Showcase stays on the D1432 fact pack (cadence rule).
 
+## 1338. D1434 — chapter 132 continues Layer N; arc stands at 132
+
+**What landed.**
+- `hk-prince-edward-yuen-garden-street-morning-cashier-chronicle` → chapter 132 (Yuen Garden Street, Prince Edward — Ah Jeh's cash register; a decade-old IOU and Ah Ming's return for the Tsing Yi reminiscence pass). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **135**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 132 chapters · Layer N open.
+
