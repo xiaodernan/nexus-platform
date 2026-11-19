@@ -1760,4 +1760,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /cauldron/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 120 (Causeway Bay Tram Loop final run) closes Layer L', () => {
+    const hk = mockGuide('hk-causeway-bay-tram-loop-midnight-last-run-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/電車路.*阿峯/);
+    const cn = mockGuide('hk-causeway-bay-tram-loop-midnight-last-run-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/电车路.*阿[峯峰]/);
+    const en = mockGuide('hk-causeway-bay-tram-loop-midnight-last-run-chronicle', 'en');
+    expect(en?.title).toMatch(/Causeway Bay|Tram Loop/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Fung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /bell rings three times/i.test(b.text))).toBe(true);
+  });
 });

@@ -46380,3 +46380,14 @@ chapter 110 as the second one in Layer L.
 - `xiaodernan` profile README: dead links to four non-existent repos dropped (`teedyas`, `teedyassi`, `teedy-assign`, `fagougou-desensitize`) — upstream meanwhile marked three of them explicitly "私有仓，不对外" as plain text, counts corrected to （9 原创 / 3 归档 / 2 站 / 2 fork）, dead portfolio link count 20→16. Both pushes raced the automated sync bot and won via rebase-loop; profile README rebase conflict resolved by keeping the upstream private-repo notes.
 
 **Verification.** `pnpm web tsc --noEmit` clean · 23/23 wheel+dict-contract · 15/15 AI unit · identity-guard OK both clones · WORLD_ROADMAP/STATUS bumped in this same commit.
+
+## 1322. D1418 — Chapter 120 closes Layer L: the return arc ends at 00:00, corpus reaches 120
+
+**Why.** The infinite world's second great arc is complete. Layer L (chapters 109–120, "the return arc — the city's departing children come back") landed in full: North Point's rail driver → Causeway Bay's laksa counter → Shaftesbury Avenue → Castle Peak Road → Pak Tai Street → South Industrial Road → Catchick Street → Tai Wo Road → Third Street (char siu) → Sun Tin Dei Street (garage) → Lung Cheung Road (herbal tea) → Causeway Bay Tram Loop (the last run, midnight). Every chapter ships in all three arms, beat parity asserted by `chapter-en-arm.test.ts`.
+
+**What landed.**
+- `hk-causeway-bay-tram-loop-midnight-last-run-chronicle` → chapter 120 (Causeway Bay — the 00:00 anchor; Ah Fung's last tram; "the car wakes up — never the key" discipline; this closes Layer L and returns the arc to its 00:00 origin). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **123**. verify_all RESULT: NO OFFENDER (72 PASS). `WORLD_ROADMAP.md` now records Layer L complete; the arc stands at **120 chapters**.
+- Layer L closure is the designated heavy milestone → showcase latest.json refreshes in the same window (D1419).
+
+**Showcase (D1419 window).** `assets/nexus-platform/latest.json` on `xiaodernan.github.io` will carry milestone D1418 — 120 chapters, the EN arm complete end-to-end; gated behind identity-guard; live-verified after the Pages dispatch.
