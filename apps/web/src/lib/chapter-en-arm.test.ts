@@ -1700,4 +1700,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The pull of the noodles/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 116 (Tai Wo Road claypot rice) ships in three arms too', () => {
+    const hk = mockGuide('hk-tai-po-tai-wo-road-early-evening-claypot-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/太和路.*阿聰/);
+    const cn = mockGuide('hk-tai-po-tai-wo-road-early-evening-claypot-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/太和路.*阿聪/);
+    const en = mockGuide('hk-tai-po-tai-wo-road-early-evening-claypot-chronicle', 'en');
+    expect(en?.title).toMatch(/Tai Po|Tai Wo Road/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Chung/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /charcoal stove/i.test(b.text))).toBe(true);
+  });
 });
