@@ -5723,6 +5723,8 @@ export const DEMO_GUIDES: Guide[] = [
       { type: 'heading', text: 'Afterword' },
       { type: 'paragraph', text: 'Synthetic narrative example: merchants, places, stories — all of what you just read is narrative construction, made to demonstrate how NEXUS carries content. In a hurry? SearchBox for “Prince Edward Yuen Garden Street exhibition opening” first.' },
     ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
   {
     slug: 'hk-prince-edward-yuen-garden-street-pre-noon-ledger-chronicle', title: '早上十一點四十五分：太子——花園街——阿姐的結帳（香港系列 · 第一百三十六章 · Layer N）', city: 'hong-kong', category: 'activities',
@@ -5757,6 +5759,8 @@ export const DEMO_GUIDES: Guide[] = [
       { type: 'heading', text: 'Afterword' },
       { type: 'paragraph', text: 'Synthetic narrative example: merchants, places, stories — all of what you just read is narrative construction, made to demonstrate how NEXUS carries content. In a hurry? SearchBox for “Prince Edward Yuen Garden Street pre-noon ledger” first.' },
     ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
   {
     slug: 'hk-prince-edward-yuen-garden-street-midday-door-close-chronicle', title: '早上十二點二十分：太子——花園街——阿姐的午時（香港系列 · 第一百三十七章 · Layer N）', city: 'hong-kong', category: 'activities',
