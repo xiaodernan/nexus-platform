@@ -1610,4 +1610,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /A quarter to eight/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 110 (Percival Street at dusk) ships in three arms too', () => {
+    const hk = mockGuide('hk-causeway-bay-polish-street-return-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/波斯富街.*阿拔/);
+    const cn = mockGuide('hk-causeway-bay-polish-street-return-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/波斯富街.*阿拔/);
+    const en = mockGuide('hk-causeway-bay-polish-street-return-chronicle', 'en');
+    expect(en?.title).toMatch(/Percival Street/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah But/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /first lamp at dusk/i.test(b.text))).toBe(true);
+  });
 });
