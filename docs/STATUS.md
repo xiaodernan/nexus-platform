@@ -46607,3 +46607,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer N CLOSED** （太子——花園街 arc 131–138 — Ah Yan's brass-weight ledger → Ah Jeh's counting counter: two-day pre-sale closed, the red box sealed, the door shut, the ledger remembered).
 - `chapter-en-arm.test.ts` — assertion count **141**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 138 chapters · Layer N CLOSED · Layer O to open next (candidate: the exhibition's last day — the lights from 147 of those preview tickets come down; or a Kowloon-side shopfront arc).
+
+## 1346. D1442 — Layer O opens: chapter 139 lands; arc stands at 139
+
+**What landed.**
+- `hk-happy-valley-racecourt-morning-odds-teller-chronicle` → chapter 139 (Happy Valley Racecourse, ten to seven — Ah Yau at the odds board; odds are priced by the knowledge of horses, never by machine or mood; the seventh slot fills with a man whose mother slipped him five hundred the night before; the cap-wearing regular leaves his father's name on an unbet "eighteen" card; the father who has sat at the gate forty years). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer O opened** — "the odds floor" (跑馬地——賠率檯 — odds boards, tickets, the price of knowing horses; the grandstand morning that makes the afternoon race we never see). Another revenue engine of the day, rooted in the same city.
+- `chapter-en-arm.test.ts` — assertion count **142**. verify_all RESULT: NO OFFENDER (72 PASS).
+- WORLD_ROADMAP now reads 139 chapters · Layer O opens (06:50 slot, anchored between 06:45 冰室 and 07:00 隔水渡輪）.
