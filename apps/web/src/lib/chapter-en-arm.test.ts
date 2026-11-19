@@ -1730,4 +1730,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /The light before the knife/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 118 (Sun Tin Dei Street garage) ships in three arms too', () => {
+    const hk = mockGuide('hk-yau-ma-tei-sun-tin-dei-night-garage-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/新填地街.*阿銀/);
+    const cn = mockGuide('hk-yau-ma-tei-sun-tin-dei-night-garage-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/新填地街.*阿银/);
+    const en = mockGuide('hk-yau-ma-tei-sun-tin-dei-night-garage-chronicle', 'en');
+    expect(en?.title).toMatch(/Yau Ma Tei|Sun Tin Dei/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Ngan/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /hydraulic jack/i.test(b.text))).toBe(true);
+  });
 });
