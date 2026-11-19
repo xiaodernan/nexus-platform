@@ -46309,3 +46309,20 @@ green end-to-end; the next heavy milestone (showcase badge move) gates on `ci#54
 **Resolved 2026-11-19 03:30 UTC.** CI run #543 closed green (changes / contract-drift / lint-type / e2e /
 required). D1398 (`5ad51fa`) is master tip. `.workbuddy/memory/2026-11-19.md` records gate results
 (`RESULT: NO OFFENDER` 72 PASS, `chapter-en-arm` 110/110).
+
+## 1317. D1404 — chapter 110 continues `Layer L — the return arc`; corpus reaches 110
+
+**Why.** The operator pushed the infinite-world requirement much further: every chapter ships in
+three arms — Traditional HK, opencc-Simplified, English. New pages keep growing. This row pins
+chapter 110 as the second one in Layer L.
+
+**What landed.**
+- `hk-causeway-bay-polish-street-return-chronicle` → chapter 110 (Percival Street, Causeway Bay).
+  After a two-year absence Ah But returns to find the old laksa stall gone, meets the old man who
+  once worked with his grandfather, and is left with a pocketful of unfamiliar things.
+  zh-HK prose + English body_blocks_en; `flags:{demo:true}`.
+- `hk-north-point-return-rail-driver-chronicle` → chapter 109 (King's Road, North Point). Layer L opens.
+- `hk-tai-ping-shan-noodle-chronicle` → chapter 107; `hk-wan-chai-radio-shop-chronicle` → chapter 108.
+- `hk-sham-shui-po-pawnshop-chronicle` → chapter 106. zh-HK/zh-CN/en 三臂完整。
+- `chapter-en-arm.test.ts` — assertion count 113. verify_all RESULT: NO OFFENDER.
+- `WORLD_ROADMAP.md` updated: arc stands at 110 chapters (D1404).
