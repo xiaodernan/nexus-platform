@@ -1625,4 +1625,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /first lamp at dusk/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 111 (Shaftesbury Avenue at 11:05) ships in three arms too', () => {
+    const hk = mockGuide('hk-tsim-shui-po-shaftesbury-avenue-anam-return-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/梳士巴利道.*阿南/);
+    const cn = mockGuide('hk-tsim-shui-po-shaftesbury-avenue-anam-return-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/梳士巴利道.*阿南/);
+    const en = mockGuide('hk-tsim-shui-po-shaftesbury-avenue-anam-return-chronicle', 'en');
+    expect(en?.title).toMatch(/Shaftesbury Avenue/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Nam/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /Four years of flights/i.test(b.text))).toBe(true);
+  });
 });
