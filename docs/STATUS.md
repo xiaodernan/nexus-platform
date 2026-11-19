@@ -46562,3 +46562,11 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **136**. verify_all RESULT: NO OFFENDER (72 PASS).
 - WORLD_ROADMAP now reads 133 chapters · Layer N open (10:40 slot, anchored after 10:30 北漂作家）.
 - 同一推送包含 content-truth refresh：dict.ts/dict-cn.ts 兩臂 liveTruth 區塊（provider: gpt-6.2-sol，2026-11-19 Clash egress :7897 實測：identical burst 95.1%（4,180/4,397）、SSE 與直連 JSON 快取回報一致、growing-history turn 3–4 ≈ 95.7%/95.1%、跨 lane interleave 95.5–96.3%）取代 2026-11-16 的 6.1-terra 舊數字；console-admin.ts mock by_model 行同步為 6.2-sol。
+
+## 1340. D1436 — world guide reads the real atlas (deep model grounding, frozen prefix)
+
+**What landed.**
+- New frozen artifact `apps/ai/nexus_ai/models/atlas_digest.txt` (10,382 bytes): the real HK arc snapshot — all 133 chapters (`001 · 05:45 · 三餐的血` … `133 · 早上十點四十分 · 太子——花園街——阿權的行燈`), the world constitution (demo:true, fictional merchants, layers A–N, Layer M CLOSED, Layer N open), and an explicit BACKGROUND-ONLY clause. Generated from `apps/web/src/lib/mock/seed.ts` via `apps/ai/gen_atlas_digest.py`; never hand-edited (the frozen prefix is the prompt cache's working surface).
+- `world_guide_graph.py`: SYSTEM = base contract (unchanged) + `_load_atlas()`-built frozen atlas block (fail-open to the bare contract if the artifact is unreadable — the reader is never blocked). The lane's fences hold: model still may only choose between the two curated doors; no place named beyond them; pick 1|2; ≤420 chars; URL/CJK/fence verification; StateGraph unchanged; budget 1 call per turn.
+- The lane went from ~0.7 KB of context to **11,455 bytes** (≈2,900 tokens). The prefix is byte-stable per build; cross-lane frozen-head cache mechanics apply; no measured cache regression expected on this lane's warm calls.
+- Tests: new `apps/ai/tests/test_atlas_digest.py` pins the artifact (size 4–16 KB, 133-corpus front-to-back markers, byte-stable SYSTEM, unchanged fences). world_guide/atlas/prefix/contract lanes: **61/61 pass**. verify_all RESULT: NO OFFENDER.

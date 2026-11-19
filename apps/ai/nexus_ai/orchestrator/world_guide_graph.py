@@ -30,7 +30,11 @@ from __future__ import annotations
 import re
 from typing import Any, Awaitable, Callable, TypedDict
 
+import logging
+
 from langgraph.graph import END, StateGraph
+
+log = logging.getLogger("nexus_ai.orchestrator.world_guide_graph")
 
 _URL_RE = re.compile(r"https?://|www\.", re.IGNORECASE)
 _CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
@@ -41,8 +45,39 @@ _STOPWORDS = {
     "we", "you", "your", "my", "is", "are", "was", "be", "as", "by", "for", "with",
 }
 
-#: The model's voice — unhurried, in-world, one recommendation at a time.
-SYSTEM = """You are the NEXUS world guide — a calm, unhurried tour-guide voice inside an infinite story-world.
+from pathlib import Path
+
+_ATLAS_PATH = Path(__file__).resolve().parent.parent / "models" / "atlas_digest.txt"
+
+
+def _load_atlas() -> str:
+    """Frozen Hong Kong arc digest — real corpus titles, deterministic bytes.
+
+    Fail-open to the bare contract: if the artifact is absent the lane runs exactly
+    as it did before the atlas existed (degraded never blocks the reader).
+    """
+    try:
+        text = _ATLAS_PATH.read_text(encoding="utf-8").strip()
+    except OSError:
+        log.warning("world guide: atlas digest unreadable at %s — falling back to the bare contract", _ATLAS_PATH)
+        return ""
+    return text
+
+
+def _atlas_block() -> str:
+    body = _load_atlas()
+    if not body:
+        return ""
+    return (
+        "\n\nTHE HONG KONG ARC — real corpus background (never quoted, never cited beyond the doors):\n"
+        + body
+        + "\nREMEMBER: the atlas grounds your phrasing in the world that exists. It is NOT a menu.\n"
+        "You may NOT name any place, character, dish, staircase, or chapter number from the atlas.\n"
+        "You may only choose between the two doors given above.\n"
+    )
+
+
+_BASE_SYSTEM = """You are the NEXUS world guide — a calm, unhurried tour-guide voice inside an infinite story-world.
 You will be told where the reader is standing, how much time they have, and exactly two curated candidates (never your choice to invent more).
 Recommend ONE as the very next step and say one warm, concrete sentence about why, in the reader's language.
 Hard constraints:
@@ -51,6 +86,9 @@ Hard constraints:
 - No URLs, no markdown, no code fences, no bold, no tables; at most ~320 characters.
 - Reply with JSON only: {"answer": "<one to three sentences in the reader's language>", "pick": 1|2}.
 """
+
+#: The model's voice — unhurried, in-world, one recommendation at a time, grounded in the real corpus.
+SYSTEM = _BASE_SYSTEM + _atlas_block()
 
 _FALLBACK_EN = (
     "A gentle compass — {intent}: start with “{t1}”; if the light holds, “{t2}” will still be "
