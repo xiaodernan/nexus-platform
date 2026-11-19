@@ -10,18 +10,29 @@ import { JsonLd } from '@/components/json-ld';
 import { Breadcrumbs } from '@/components/directory-view';
 
 /**
- * `/{city}` (§29): the index a market can legitimately publish. It is not a template with the city
- * name swapped in — the page shows the categories that actually hold listings, with the count each
- * one holds today, which is the difference §30 draws between a useful programmatic page and spam.
+ * A `/{city}` the platform cannot route is a real 404, not an error boundary (§8). The platform
+ * answers `seo_route_not_found` when the market id is outside the directory grammar — mirrored from
+ * the `[category]` segment's own `NOT_ROUTABLE` discipline. Anything else (service down, 5xx) bubbles
+ * so a genuine fault is never laundered into a clean miss.
  */
+const NOT_ROUTABLE = new Set(['seo_route_not_found', 'not_found']);
 
 type Props = { params: Promise<{ city: string }> };
+
+async function landingOrNull(city: string, locale: string) {
+  try {
+    return await cityLanding(city, locale);
+  } catch (cause) {
+    if (NOT_ROUTABLE.has((cause as { code?: string })?.code ?? '')) return null;
+    throw cause;
+  }
+}
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const { city } = await props.params;
-  const landing = await cityLanding(decodeURIComponent(city), locale);
+  const landing = await landingOrNull(decodeURIComponent(city), locale);
   if (!landing) notFound();
   return {
     title: dict.seo.cityHeading(landing.cityName),
@@ -35,7 +46,7 @@ export default async function CityPage(props: Props) {
   const locale = await currentLocale();
   const dict = getDict(locale);
   const { city } = await props.params;
-  const landing = await cityLanding(decodeURIComponent(city), locale);
+  const landing = await landingOrNull(decodeURIComponent(city), locale);
   if (!landing) notFound();
 
   return (

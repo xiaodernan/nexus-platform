@@ -46446,3 +46446,20 @@ Growing-history baseline: turns 3–4 at 6080/6355 (**95.7%**), 6080/6391 (**95.
 - `apps/ai` → uvicorn **on 8010**: `provider:"mock", "offline":true, database:{configured,available:true}` — the AI lane's DB reads reach the real PG.
 - Web on 3300 → `/hong-kong` renders the full live arc (chapters LXXXVI through CXII, hub quiz, daily block) — no error boundary, no `upstream_unreachable`. The `/hong-kong` 502 that previously bubbled to the boundary is gone.
 - Note for honesty: the `[city]` segment's re-throw of genuine faults is the documented §105/D32 "never launder a fault into a clean-looking miss" path — kept by design; with the backends up it no longer triggers.
+
+## 1327. D1423 — chapter 123 joins Layer M; en arm spans 123 chapters
+
+**What landed.**
+- `hk-sham-shui-po-yuen-chau-street-pre-dawn-press-chronicle` → chapter 123 (twenty past four, Yuen Chau Street, Sham Shui Po — Ah Mang's pre-dawn press, "three lifts, four rings"; Ah Hong returns from Singapore with the overhauled machine's invoice). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **126**. verify_all RESULT: NO OFFENDER (72 PASS).
+- `/stategraph` verified live on localhost:3300: SSR emits the complete teaching page (hero, runbook, rehearsal island, switch, honest limits, measured A/B) — the earlier "Loading…" was hydration timing, not a defect; console error-free.
+- Layer M now spans 121–123 (01:30 Queen's Road · 03:10 Shau Kei Wan · 04:20 Yuen Chau Street). The arc remains anchored by 00:00.
+
+## 1328. D1424 — `/[city]` routes now translate platform `seo_route_not_found` into an honest 404
+
+**Why.** The dev server (live mode) logged `Error [NexusApiError]: 'city' is not a value this directory can answer` with code `seo_route_not_found` (status 404) — and it escaped `app/[city]/page.tsx` into the error boundary, producing the RSC-boundary warning "Only plain objects can be passed to Client Components from Server Components. Error objects are not supported" and an opaque digest instead of the honest 404 the sibling `[category]` segment has always delivered via its `NOT_ROUTABLE` gate.
+
+**What landed.**
+- `app/[city]/page.tsx` gains the same discipline as `[category]/page.tsx`: `landingOrNull()` — catch `NexusApiError` with code `seo_route_not_found` or `not_found` → `notFound()` (real 404 semantics); any other fault (service down, 5xx) re-throws so a genuine fault is never laundered into a clean miss. Both `generateMetadata` and the page body use it.
+- `tsc --noEmit` clean; live stack re-verified on :3300/:8010/:8090 with `hong-kong` 200 · `shanghai` 200 · `aaaa` rendering the 404/not-found shell in both modes — no boundary crash, no RSC error-object warning observed after the fix.
+- verify_all: unchanged from D1423 (NO OFFENDER, 72 PASS).
