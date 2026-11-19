@@ -46846,3 +46846,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer P continues** — the parcel from ch.154 is opened without resolving the mystery; the brush-ink hand is the same one that wrote the addressee. Cross-chapter economy, not a deus ex machina.
 - `chapter-en-arm.test.ts` — assertion count **159**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 155 chapters · Layer P continues (08:00 slot). Showcase fact pack stays on D1447 (cadence rule); Layer P closure = next heavy milestone.
+
+
+## 1371. D1467 — chapter 156 joins Layer P; arc stands at 156
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-last-bend-chronicle` — chapter 156 （下午兩點——門房——阿穩拖地碰濕了秩序冊一角；墨跡反而更清楚；阿樂指著第 228 號：「所有人都等牠減速，牠沒有——騎手整個人向外傾，像把彎道借過來用。」阿穩在門外聽見了當年的喊聲，但「喊的都是不敢進去看看的人」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the 1960 championship is reconstructed as process and witness, not as a trophy; the brush-ink sender remains unnamed.
+- `chapter-en-arm.test.ts` — assertion count **160**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
+- WORLD_ROADMAP now reads 156 chapters · Layer P continues (14:00 slot). Showcase io fact pack was synced at D1466 (`5274f9de`, 1,712 commits, 155 chapters) and verified live with a green Pages deploy (`44606005273`); it advances at the next "big improvement" cadence, not on every chapter commit.

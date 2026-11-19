@@ -2292,4 +2292,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /brown paper|last page|last keeper/.test(b.text))).toBe(true);
   });
+  it('chapter 156 (Happy Valley last bend — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-last-bend-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/下午兩點/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-last-bend-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/下午两点/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-last-bend-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|last bend/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lok/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /ink still|last bend|Wan.s one sentence/.test(b.text))).toBe(true);
+  });
 });
