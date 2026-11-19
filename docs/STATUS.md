@@ -46421,3 +46421,16 @@ lane A turn4 6397 cached=None (one eviction blip) · lane B turn4 6451 cached=62
 Growing-history baseline: turns 3–4 at 6080/6355 (**95.7%**), 6080/6391 (**95.1%**). Cross-lane head reuse — previously 0 — now shows on every warm call. Honest caveat, stated in the docs: this relay occasionally evicts under account-wide pressure (1 blip in 12 calls ≈ 92% warm); no client can control server-side KV eviction, only byte-stability and shape — which we now hold app-wide.
 
 **Verification.** 71/71 targeted lane tests green (world_guide / npc_ahwan / chapter / admin / insights / prefix-contract) · merchant growing-history + cache-reporting + transport-retry + openai-stream + intent-contract-gate: 41/41 · prefix-contract byte-stability: PASS · full JS `verify_all` → NO OFFENDER (72 PASS) · `tsc` clean.
+
+## 1325. D1421 — chapter 122 continues Layer M; en arm now spans 122 chapters
+
+**What landed.**
+- `hk-shau-kei-wan-shau-kei-wan-road-clock-chronicle` → chapter 122 (ten past three, Shau Kei Wan — Ah Man's clock shop; the Swiss chain-watch that finally comes home). zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- `chapter-en-arm.test.ts` — assertion count **125**. verify_all RESULT: NO OFFENDER (72 PASS).
+
+**Product-side verification (this host).**
+- Dev server: port 3300 (3000 is occupied locally by an unrelated long-running AI Career OS instance — left untouched per ownership).
+- localhost:3300 renders the full zh-CN homepage (nav with teaching titles on every control, hero, daily almanac, world-guide beacon); **one-click zh⇄en round-trip verified in the browser**: `<html lang="zh-CN">` → EN click → `<html lang="en">`, English title, English nav labels, English wheel teaching copy ("Wheel: system" + full hint) — and back.
+- Wheel override present in the live header, localStorage-persisted (`nexus.wheel.reverse`).
+- Admin surfaces confirmed wired: `/insights` renders `<InsightsNarrative>` (model-voiced ghost-replay read via `/api/nexus/ai/insights-read`), `/admin/system` renders `<AdminDigest>` (model-voiced operator digest via `/api/nexus/admin/digest`, §68 cookie-gated), `/command` renders the public password-123 console (REAL-TRACE rows measured from actual Playwright journeys).
+- AI lanes measure ~95%+ cache warm with the shared frozen head (D1420/§1324).

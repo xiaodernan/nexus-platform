@@ -1790,4 +1790,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /first turn of the wok/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 122 (Shau Kei Wan clock shop) ships in three arms too', () => {
+    const hk = mockGuide('hk-shau-kei-wan-shau-kei-wan-road-clock-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/筲箕灣道.*阿晚/);
+    const cn = mockGuide('hk-shau-kei-wan-shau-kei-wan-road-clock-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/筲箕.*阿晚/);
+    const en = mockGuide('hk-shau-kei-wan-shau-kei-wan-road-clock-chronicle', 'en');
+    expect(en?.title).toMatch(/Shau Kei Wan/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Man/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /ticking that never stops/i.test(b.text))).toBe(true);
+  });
 });
