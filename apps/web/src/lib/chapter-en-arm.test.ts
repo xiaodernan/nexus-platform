@@ -2236,4 +2236,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /gate floor|Three words|knows the plate/.test(b.text))).toBe(true);
   });
+  it('chapter 152 (Happy Valley saddle leather — Layer P continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-saddle-receipt-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/上午十一點/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-saddle-receipt-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/上午十一点/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-saddle-receipt-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|saddle/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Lok/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /edges|ink|Ask next year/.test(b.text))).toBe(true);
+  });
 });

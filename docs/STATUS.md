@@ -46781,3 +46781,14 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `chapter-en-arm.test.ts` — assertion count **155**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
 - WORLD_ROADMAP now reads 151 chapters · Layer P continues (10:30 slot).
 - Showcase fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
+
+
+## 1364. D1460 — chapter 152 joins Layer P; arc stands at 152
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-saddle-receipt-chronicle` — chapter 152 （上午十一點——跑馬地——東門——阿穆把陳炳騎過的那片鞍皮量進手裡；「那根墨筆跟馬廄備的，馬廄備的第二枝墨分開存。」「1949年寫過一行，今年再寫一行。」「明年再問，明年再給話。」）. zh-HK prose + English body_blocks_en + zh-CN opencc fold; `flags:{demo:true}`.
+- **Layer P continues** — the reunion arc: the material object (saddle leather) replaces the missing person; the secret is deferred to a future chapter, not discharged with a confident answer.
+- `chapter-en-arm.test.ts` — assertion count **156**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER.
+- io showcase `xiaodernan.github.io` master `cd7f116` — three PHANTOM repos deleted from the all-repos grid (`teedyas`, `teedyassi`, `teedy-assign` — none exist, confirmed against the authenticated `/users/xiaodernan/repos` listing); counters corrected to 16 public = 14 original + 2 forks; phantom names added to identity-guard's ban list; guard OK; rebased past a concurrent auto-sync (`15c46e0`) and pushed. Real data beats plausible data.
+- WORLD_ROADMAP now reads 152 chapters · Layer P continues (11:00 slot).
+- Showcase NEXUS fact pack stays on D1447 (cadence rule). Layer P closure = next heavy milestone.
