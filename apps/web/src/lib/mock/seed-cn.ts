@@ -4908,6 +4908,8 @@ export const DEMO_GUIDES_CN: Guide[] = [
       { type: 'heading', text: 'Afterword' },
       { type: 'paragraph', text: 'Synthetic narrative example: merchants, places, stories — all of what you just read is narrative construction, made to demonstrate how NEXUS carries content. In a hurry? SearchBox for “Prince Edward Yuen Garden Street cash register” first.' },
     ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
   {
     slug: 'hk-prince-edward-yuen-garden-street-morning-lamp-tester-chronicle', title: '早上十点四十分：太子——花园街——阿权的行灯（香港系列 · 第一百三十三章 · Layer N）', city: 'hong-kong', category: 'activities',
@@ -4942,6 +4944,8 @@ export const DEMO_GUIDES_CN: Guide[] = [
       { type: 'heading', text: 'Afterword' },
       { type: 'paragraph', text: 'Synthetic narrative example: merchants, places, stories — all of what you just read is narrative construction, made to demonstrate how NEXUS carries content. In a hurry? SearchBox for “Prince Edward Yuen Garden Street lamp tester” first.' },
     ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
   {
     slug: 'hk-prince-edward-yuen-garden-street-mid-morning-presale-ledger-chronicle', title: '早上十点五十分：太子——花园街——阿权的预售登记簿（香港系列 · 第一百三十四章 · Layer N）', city: 'hong-kong', category: 'activities',
@@ -4976,6 +4980,8 @@ export const DEMO_GUIDES_CN: Guide[] = [
       { type: 'heading', text: 'Afterword' },
       { type: 'paragraph', text: 'Synthetic narrative example: merchants, places, stories — all of what you just read is narrative construction, made to demonstrate how NEXUS carries content. In a hurry? SearchBox for “Prince Edward Yuen Garden Street presale ledger” first.' },
     ],
+    generated_by: 'ai', reviewed_by_human: false,
+    published_at: new Date().toISOString(), updated_at: new Date().toISOString(), flags: { demo: true },
   },
   {
     slug: 'hk-prince-edward-yuen-garden-street-exhibition-morning-queue-chronicle', title: '早上十点半：太子——花园街——排队的那条线（香港系列 · 第一百三十五章 · Layer N）', city: 'hong-kong', category: 'activities',
