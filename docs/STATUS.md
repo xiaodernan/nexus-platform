@@ -46973,3 +46973,19 @@ the recommendations out. The D19 amendment is the one write-side widening this s
 the privilege wave, and it is recorded here with the reason beside it.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+## 1384. the pressure evidence: the stack absorbed a two-thousand-RPS burst and the brute-force bucket throttled the stuffing (D371)
+
+The §十一 probe ran four legs against the live demo plane and the numbers are the capacity statement.
+The read load drove the AI search at twelve workers: one hundred forty-four requests, zero errors, p50
+676ms. The auth burst drove the demo door at two thousand requests per second: sixteen thousand one
+hundred fifty-six requests, zero transport errors, and sixteen thousand fifty-seven answered 429 — the
+brute-force bucket throttled the abuse at five milliseconds a reject while the ninety-nine successes
+slipped through under the limit. The credential-stuffing leg drove fifteen thousand wrong-credential
+attempts: every one answered 429, none crashed, none leaked. The two-hundred-request spike from a cold
+start: all two hundred answered 200, the p50 degrading to seven seconds under the burst and recovering.
+The stack held: no 5xx, no crash, no data-plane failure — and the rate limiter is the reason the auth
+door survived, which is the finding: the §十一 capacity question is answered by the defense the
+platform already carries, not by something this unit had to build.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
