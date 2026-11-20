@@ -46937,3 +46937,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer Q continues** — the drawn-open drawer turns a mystery into an inheritance: the answer is handed on as a duty to answer, not as a final disclosure.
 - Frozen artifacts: `gen_atlas_digest.py` → 162 chapters / 13,184 B; `gen_atlas_index.py` → 162 lines / 12,297 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (151–162) advanced; `check_atlas_lockstep` PASS at 162/162/162. `chapter-en-arm.test.ts` — **166** assertions; 18 atlas/recap tests green; verify_all NO OFFENDER.
 - WORLD_ROADMAP now reads 162 chapters · Layer Q continues (14:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.
+
+
+## 1381. D1477 — Spring Cloud plane compiles clean on this host (mandate §三 verification)
+
+**What was checked, not assumed.** The operator's §三 asks for Spring Cloud microservice elements; the tree already ships `services/cloud/{config-server,eureka-server,gateway,admin-server,dispatcher-service,events-service,insight-service}` alongside `services/platform`. On this machine (Maven 3.9.15 / JDK 25) both reactors were compiled with tests skipped:
+- `cd services/platform && mvn -q -DskipTests compile` → exit 0
+- `cd services/cloud && mvn -q -DskipTests compile` → exit 0
+
+This is a compile-level check, not a claim that the service-dependent suites passed (those need the DB/Redis/Eureka plane CI boots separately). The frontend/AI gates remain `verify_all` NO OFFENDER; no code changed in this unit, no LLM token spent.
