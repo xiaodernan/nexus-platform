@@ -214,6 +214,9 @@ BEGIN
   IF to_regclass('public.events') IS NOT NULL THEN
     EXECUTE 'GRANT INSERT ON TABLE events TO nexus_ai';
     EXECUTE 'GRANT USAGE, SELECT ON SEQUENCE events_id_seq TO nexus_ai';
+    -- D370: the §九 admin behavior-analytics read (密码123 gate) needs the aggregate SELECT —
+    -- the INSERT-only rule (D19) still holds for the write path; this widens reads only.
+    EXECUTE 'GRANT SELECT ON TABLE events TO nexus_ai';
   ELSE
     RAISE NOTICE 'skipping append grant on events (table not created yet)';
   END IF;

@@ -46957,3 +46957,19 @@ This is a compile-level check, not a claim that the service-dependent suites pas
 - WORLD_ROADMAP now reads 163 chapters · Layer Q continues (16:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.
 
 
+
+## 1383. the behavior-analytics door built end to end: the read granted, the route live, the page gated by the published password (D370)
+
+The §九 build landed in three files: the AI service answers the behavior read — per-day counts, the
+per-session streams, the hourly histogram, a least-squares projection seven days out, and the
+recommendations the data derives (the search-only stream flagged, the missing reservation events named,
+the thin-window caution) — gated by the password the owner published; the roles grant the read needs is
+amended into the roles file with the D19-style reason (the INSERT-only rule holds for the write path,
+this widens reads only); and the admin console carries the analytics page gated by the same password,
+its copy locale-switched from the page's own map (dict.ts is a hot file both streams append to — the
+analytics copy lives in the page so the two streams do not collide on one block). The route was live-
+verified against the demo plane: 3637 events in the window, thirteen daily buckets, the projection and
+the recommendations out. The D19 amendment is the one write-side widening this surface has had since
+the privilege wave, and it is recorded here with the reason beside it.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
