@@ -2348,4 +2348,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /Someone at the gate|a name first|three keys/.test(b.text))).toBe(true);
   });
+  it('chapter 160 (Happy Valley second dawn — Layer Q continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-second-dawn-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/清晨六點半/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-second-dawn-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/清晨六点半/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-second-dawn-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|broken umbrella/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Ching/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /actually came|first key|waits for tomorrow/.test(b.text))).toBe(true);
+  });
 });

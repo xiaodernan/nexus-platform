@@ -46892,3 +46892,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer Q OPENS — the keepers after.** The world continues past the original cast: the gate is handed forward, the next keeper is a stranger whose name is deliberately deferred. Infinite-world discipline: close one layer, open another with a new question rather than a finale.
 - Frozen artifacts advanced in lockstep: `gen_atlas_digest.py` → 159 chapters / 12,879 B; `gen_atlas_index.py` → 159 lines / 11,991 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (148–159) updated. `chapter-en-arm.test.ts` — **163** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
 - WORLD_ROADMAP now reads 159 chapters · Layer Q opens (06:00 slot). Showcase fact-pack stays on the live-verified D1470 closure value; the next sync follows the heavy-milestone cadence.
+
+
+## 1376. D1472 — chapter 160 joins Layer Q; arc stands at 160
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-second-dawn-chronicle` — chapter 160 （清晨六點半——門外那把壞傘真的回來了；姑娘報上名字：阿晴；阿穆把東門那條鎖匙放在她掌心「先認這條的聲音」；問起抽屜裡的舊冊子，得到的答案是「明天再講——你來了，才有明天」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer Q continues** — the next keeper keeps her word; the deferred answer becomes the engine that brings her back. The arc's clock advances by thirty minutes, not by a cliffhanger.
+- Frozen artifacts in lockstep: `gen_atlas_digest.py` → 160 chapters / 12,967 B; `gen_atlas_index.py` → 160 lines / 12,084 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (149–160) updated. `chapter-en-arm.test.ts` — **164** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
+- WORLD_ROADMAP now reads 160 chapters · Layer Q continues (06:30 slot). Showcase fact-pack stays on the live-verified D1470 closure value; next sync at the next heavy milestone.
