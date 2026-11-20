@@ -46910,3 +46910,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - The stamp page's "eighty-seven chapters / eighty-seven stamps" copy was checked and **left alone**: the stamp island is driven by the 87-entry `home.hkHub.clock`, so that number is correct for the mechanic it describes. Tests pinning it remain green.
 - A latent TypeScript regression introduced with the D1468 BFF test surfaced under a fresh `tsc --noEmit`: an unused `beforeAll` import and an untyped `vi.fn` making `mock.calls[0]?.[1]` a 0-tuple. Fixed both; the canned recap window was also brought to 149–160. tsc exit 0, targeted test 2/2, full web suite 75 files / 675 passed, verify_all NO OFFENDER.
 - Showcase fact-pack unchanged at the live-verified D1470 closure value; this is a copy-level correctness fix, not a heavy milestone.
+
+
+## 1378. D1474 — a gate now refuses atlas drift (the D1468 bug class, closed)
+
+**What landed.**
+- `scripts/check_atlas_lockstep.mjs` — a new read-only reader: four sources must agree on the chapter count N — canonical `seed.ts` (max 第N章), `atlas_digest.txt` (header + ordered lines), `atlas_index.txt` (ordered lines) and the hard-coded `THE N-CHAPTER HONG KONG ARC` fence in `routes_chapter.py`. Currently **160 / 160 / 160 / 160**, PASS. D1468 found the frozen atlas nine chapters behind the corpus; the generators were there, the refusing reader was not.
+- Wired where the repo demands: `verify_all` discovers `check_*.mjs` automatically; `check_reader_reachability` now sees 75/75 invoked (the invocation was appended to an existing `ci.yml` step — adding a new line would have moved cited line numbers and reddened `check_d952`, so the line count was preserved); ATLAS.md lists the reader with full paths so `check_atlas` can verify every cited path.
+- `check_atlas` PASS (451 cited paths), `check_reader_reachability` PASS, `check_d952` PASS, `verify_all` NO OFFENDER. No LLM token spent.
+- The world continues past chapter 160; this is the engineering fence that keeps every future chapter milestone honest without relying on memory.
