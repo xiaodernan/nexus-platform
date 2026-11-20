@@ -46946,3 +46946,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `cd services/cloud && mvn -q -DskipTests compile` → exit 0
 
 This is a compile-level check, not a claim that the service-dependent suites passed (those need the DB/Redis/Eureka plane CI boots separately). The frontend/AI gates remain `verify_all` NO OFFENDER; no code changed in this unit, no LLM token spent.
+
+
+## 1382. D1478 — chapter 163 joins Layer Q; arc stands at 163
+
+**What landed** (a stalled in-tree lane, folded forward and finished — the chapter was fully drafted in three arms with atlas pins advanced but no docs lockstep or commit):
+- `hk-happy-valley-racecourt-east-gate-horse-still-here-chronicle` — chapter 163 （下午四點——東門——阿晴對著秩序冊念出第 228 號那一欄，問「牠還在嗎？」阿穆指著紙上的字：「寫在這裡，就在。」她用鉛筆在空白處補一格，替下一次念到這裡的人留位置）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer Q continues** — the answer is not in the horse, it is in the line that keeps being read: a name written down outlives the thing it named. The empty square Ah Ching draws is the arc's own metaphor for an endless world — a place left for the next reader, not a closing.
+- Frozen artifacts: `gen_atlas_digest.py` → 163 chapters / 13,289 B; `gen_atlas_index.py` → 163 lines / 12,400 B; atlas pins, the `routes_chapter.py` fence (162→163) and the story-recap window (152–163) advanced; `check_atlas_lockstep` PASS at 163/163/163. `chapter-en-arm.test.ts` — **167** assertions; 18 atlas/recap tests green; verify_all NO OFFENDER.
+- WORLD_ROADMAP now reads 163 chapters · Layer Q continues (16:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.

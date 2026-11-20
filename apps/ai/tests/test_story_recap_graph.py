@@ -9,18 +9,18 @@ from nexus_ai.orchestrator import story_recap_graph as g
 def _good(locale: str) -> dict:
     if locale == "en":
         return {
-            "recap": "Chapters 151 to 162 stay at the east gate: Ah Lok keeps the old books, Ah Muk hangs the tags, Ah Wan works the floor, and a parcel arrives from Chan Bok's past.",
+            "recap": "Chapters 152 to 163 stay at the east gate: Ah Lok keeps the old books, Ah Muk hangs the tags, Ah Wan works the floor, and a parcel arrives from Chan Bok's past.",
             "watch": "The brush-ink sender is still unnamed.",
             "confidence": "medium",
         }
     return {
-        "recap": "151至162章都在東門：老騎師守著簿子，包裹從陳炳的舊年送來，值夜的手藝交了下去。",
+        "recap": "152至163章都在東門：老騎師守著簿子，包裹從陳炳的舊年送來，值夜的手藝交了下去。",
         "watch": "毛筆字的寄件人仍然沒有名字。",
         "confidence": "medium",
     }
 
 
-async def _run(locale="en", start=151, end=162, reply=None):
+async def _run(locale="en", start=152, end=163, reply=None):
     calls = {"n": 0}
 
     async def llm(system, prompt, max_tokens):
@@ -54,7 +54,7 @@ def test_zh_reply_must_carry_cjk():
 
 def test_invented_chapter_number_refused():
     bad = _good("en")
-    bad["recap"] = bad["recap"].replace("151", "999")
+    bad["recap"] = bad["recap"].replace("152", "999")
     out, _ = asyncio.run(_run(reply=bad))
     # the fabricated-number recap is dropped; with no surviving text the whole artifact degrades
     assert "999" not in str(out)
@@ -73,6 +73,6 @@ def test_model_unavailable_degrades():
     async def llm(*a, **k):
         raise RuntimeError("down")
 
-    out = asyncio.run(g.run_recap(locale="en", start=151, end=162, llm_call=llm))
+    out = asyncio.run(g.run_recap(locale="en", start=152, end=163, llm_call=llm))
     assert out["degraded"] is True
     assert out["reason"] == "model_unavailable"
