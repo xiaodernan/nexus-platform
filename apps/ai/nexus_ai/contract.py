@@ -525,6 +525,18 @@ class StoryRecapRequest(_Strict):
     end: int = Field(default=0, ge=0, le=1000)
 
 
+class WayfinderRequest(_Strict):
+    """D1479 — a reader-state transition: where they are, how they feel.
+
+    `position` 0 means a new reader. `mood` is a fixed vocabulary, never free-form text,
+    so a reader cannot smuggle an instruction into the model call.
+    """
+
+    locale: str = Field(default="zh-HK", max_length=16)
+    position: int = Field(default=0, ge=0, le=1000)
+    mood: str = Field(default="continue", max_length=32)
+
+
 class SearchRequest(_Strict):
     intent: Optional[Intent] = None
     query: Optional[str] = None
