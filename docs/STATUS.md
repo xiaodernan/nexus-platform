@@ -46919,3 +46919,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - Wired where the repo demands: `verify_all` discovers `check_*.mjs` automatically; `check_reader_reachability` now sees 75/75 invoked (the invocation was appended to an existing `ci.yml` step — adding a new line would have moved cited line numbers and reddened `check_d952`, so the line count was preserved); ATLAS.md lists the reader with full paths so `check_atlas` can verify every cited path.
 - `check_atlas` PASS (451 cited paths), `check_reader_reachability` PASS, `check_d952` PASS, `verify_all` NO OFFENDER. No LLM token spent.
 - The world continues past chapter 160; this is the engineering fence that keeps every future chapter milestone honest without relying on memory.
+
+
+## 1379. D1475 — chapter 161 joins Layer Q; the new atlas gate did its job on this chapter
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-third-key-chronicle` — chapter 161 （上午十點——門前阿穆退後一步，讓阿晴自己把鎖匙插進孔裡；第三次才對準，鎖芯咔的一聲；門開了她先聽見自己的呼吸，然後才是阿穩的水桶輪子。「今天可以講抽屜裡的事了。」「明天再講——我今天是來開門的。」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **D1474's gate exercised for real**: immediately after regenerating the corpus, `check_atlas_lockstep.mjs` correctly refused the still-160 `routes_chapter.py` fence (`RESULT: FAIL — routes_chapter fence 160 != corpus 161`). After advancing pins/fence/recap window it reports PASS at 161. The drift class is now mechanically closed, not remembered.
+- Frozen artifacts: `gen_atlas_digest.py` → 161 chapters / 13,067 B; `gen_atlas_index.py` → 161 lines / 12,180 B. `chapter-en-arm.test.ts` — **165** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
+- WORLD_ROADMAP now reads 161 chapters · Layer Q continues (10:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.
