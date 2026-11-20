@@ -46989,3 +46989,18 @@ door survived, which is the finding: the §十一 capacity question is answered 
 platform already carries, not by something this unit had to build.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+
+## 1385. the wayfinder surface lands: the committed app's own import satisfied, and the 38 collection errors resolve (D372)
+
+The committed plane could not boot its AI app: app.py imports routes_wayfinder, but the route and its
+graph lived only in the working copy — the D1479 unit that built the reader-state StateGraph staged its
+own code into app.py and left the modules untracked, so every test that boots the app collected a
+ModuleNotFoundError and the committed plane carried thirty-eight dead imports. The remedy is the landing
+the owner's directive orders for locked surfaces: both files commit as they stand (the route 106 lines,
+the graph 241 — the live wayfinder that answered with chapter 41 and a 12674-token prompt is the code
+being landed), additive, nothing else touched. The 38 collection errors resolve into the suite; the
+committed plane's app boots; and the wave's own wayfinder tests — the ones the first census counted as
+untracked-surface reds — join the committed count.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
