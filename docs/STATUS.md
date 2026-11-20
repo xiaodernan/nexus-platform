@@ -46928,3 +46928,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **D1474's gate exercised for real**: immediately after regenerating the corpus, `check_atlas_lockstep.mjs` correctly refused the still-160 `routes_chapter.py` fence (`RESULT: FAIL — routes_chapter fence 160 != corpus 161`). After advancing pins/fence/recap window it reports PASS at 161. The drift class is now mechanically closed, not remembered.
 - Frozen artifacts: `gen_atlas_digest.py` → 161 chapters / 13,067 B; `gen_atlas_index.py` → 161 lines / 12,180 B. `chapter-en-arm.test.ts` — **165** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
 - WORLD_ROADMAP now reads 161 chapters · Layer Q continues (10:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.
+
+
+## 1380. D1476 — chapter 162 joins Layer Q; arc stands at 162
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-drawer-lesson-chronicle` — chapter 162 （下午兩點——門房——抽屜裡兩件舊東西：1960 秩序冊與鞍皮；阿晴只問「寫字的人，最後去了哪裡？」阿穆答「去了他寫給的那個人還在的地方」；「有人問，就有人講——今天輪到我們講」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer Q continues** — the drawn-open drawer turns a mystery into an inheritance: the answer is handed on as a duty to answer, not as a final disclosure.
+- Frozen artifacts: `gen_atlas_digest.py` → 162 chapters / 13,184 B; `gen_atlas_index.py` → 162 lines / 12,297 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (151–162) advanced; `check_atlas_lockstep` PASS at 162/162/162. `chapter-en-arm.test.ts` — **166** assertions; 18 atlas/recap tests green; verify_all NO OFFENDER.
+- WORLD_ROADMAP now reads 162 chapters · Layer Q continues (14:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.
