@@ -1,7 +1,7 @@
 /**
  * D1468 — the story-recap BFF seam: mock inert, live forwards the window, failures fail closed.
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 type Post = (request: Request) => Promise<Response>;
 
@@ -36,14 +36,14 @@ describe('story-recap BFF', () => {
 
   it('live mode forwards locale/window and passes measured through', async () => {
     const post = await load('live');
-    const spy = vi.fn(async () => Promise.resolve(new Response(JSON.stringify({
-      recap: 'Chapters 145 to 156 stay at the east gate.', watch: 'The sender is unnamed.',
+    const spy = vi.fn(async (_url: unknown, _init?: unknown) => Promise.resolve(new Response(JSON.stringify({
+      recap: 'Chapters 149 to 160 stay at the east gate.', watch: 'The sender is unnamed.',
       confidence: 'medium', degraded: false, measured: { cached_tokens: 400 },
     }), { status: 200, headers: { 'content-type': 'application/json' } })));
     vi.stubGlobal('fetch', spy);
-    const res = await post(request({ locale: 'en', start: 145, end: 156 }));
+    const res = await post(request({ locale: 'en', start: 149, end: 160 }));
     const init = spy.mock.calls[0]?.[1] as RequestInit;
-    expect(JSON.parse(String(init.body))).toEqual({ locale: 'en', start: 145, end: 156 });
+    expect(JSON.parse(String(init.body))).toEqual({ locale: 'en', start: 149, end: 160 });
     const body = await res.json();
     expect(body.degraded).toBe(false);
     expect(body.measured.cached_tokens).toBe(400);

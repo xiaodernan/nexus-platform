@@ -46901,3 +46901,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer Q continues** — the next keeper keeps her word; the deferred answer becomes the engine that brings her back. The arc's clock advances by thirty minutes, not by a cliffhanger.
 - Frozen artifacts in lockstep: `gen_atlas_digest.py` → 160 chapters / 12,967 B; `gen_atlas_index.py` → 160 lines / 12,084 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (149–160) updated. `chapter-en-arm.test.ts` — **164** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
 - WORLD_ROADMAP now reads 160 chapters · Layer Q continues (06:30 slot). Showcase fact-pack stays on the live-verified D1470 closure value; next sync at the next heavy milestone.
+
+
+## 1377. D1473 — in-product handbook stops claiming a 105-chapter world; tsc regression in a test fixed
+
+**What landed.**
+- The `/world` route card inside the embedded handbook still described the series as **105 chapters** (zh-HK and en). At 160 chapters that is a visible falsehood in the very page a new reader is told to open. Corrected both authored arms to the honest distinction: **160 chapters in the corpus, 87 hourly coordinates mapped** (the atlas clock is a curated 87-entry view, not the whole corpus). Simplified fold regenerated; `check_ui_script` green.
+- The stamp page's "eighty-seven chapters / eighty-seven stamps" copy was checked and **left alone**: the stamp island is driven by the 87-entry `home.hkHub.clock`, so that number is correct for the mechanic it describes. Tests pinning it remain green.
+- A latent TypeScript regression introduced with the D1468 BFF test surfaced under a fresh `tsc --noEmit`: an unused `beforeAll` import and an untyped `vi.fn` making `mock.calls[0]?.[1]` a 0-tuple. Fixed both; the canned recap window was also brought to 149–160. tsc exit 0, targeted test 2/2, full web suite 75 files / 675 passed, verify_all NO OFFENDER.
+- Showcase fact-pack unchanged at the live-verified D1470 closure value; this is a copy-level correctness fix, not a heavy milestone.

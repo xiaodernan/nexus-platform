@@ -1627,7 +1627,7 @@ export const zhCN: Dict = {
       { href: '/llm-ops', label: '模型手术台', title: '大模型怎么在产品里流转 — envelope A/B · prefix cache · router · weekly probe（真机实测）' },
       { href: '/chronicle', label: '系列全书', title: '一座城的一天 — 一百零六章、三幕、一段史诗的全书锚位' },
       { href: '/afterward', label: '收工之后', title: '第二十四版全书的尾巴——零点到天亮之间的五个守夜瞬间' },
-      { href: '/world', label: '世界地图', title: '全景地图 — 全系列 105 章按时辰摊开，七层一次读完' },
+      { href: '/world', label: '世界地图', title: '世界地图 · 全系列 160 章；地图按时辰选 87 个坐标，七层一次读完' },
     ],
   },
   handbook: {
