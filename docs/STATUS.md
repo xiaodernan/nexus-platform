@@ -47004,3 +47004,19 @@ committed plane's app boots; and the wave's own wayfinder tests — the ones the
 untracked-surface reds — join the committed count.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+
+## 1386. the committed-plane AI suite measured whole: 37940 passed, 6 failed — every failure is the wave's own self-consistency gap (D372)
+
+The full suite ran on the committed plane with the venv python: thirty-seven thousand nine hundred forty
+passed, six failed, five hundred eighteen skipped — the suite the wrap landed is the real one, not the
+three hundred forty-one the pre-wave measurement saw. The six failures decompose into one family: the
+dead-code and vocabulary self-consistency tests catching the D339-D357 wave's own additions — constants
+the new modules declare that the dead-code detector does not see called, and characters the new test
+files use that the product's vocabulary does not know. The wave pinned the contracts by tests; the
+self-consistency layer underneath did not grow with it. The remedy is the AI lane's: wire the new
+symbols into the detector and the vocabulary, or the tests keep red. The five hundred eighteen skips
+are the live-database integration tests this plane cannot reach without the credentials — recorded,
+not hidden.
+
+- readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
