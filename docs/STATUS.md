@@ -46883,3 +46883,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Layer P CLOSED** — the reunion arc (145–158) ends by handing the watch to the next keeper; the mystery was answered as an instruction, not an exposition dump. This is a heavy milestone: the showcase fact-pack is due for its cadence sync after this push.
 - Frozen artifacts advanced in lockstep: `gen_atlas_digest.py` → 158 chapters / 12,766 B; `gen_atlas_index.py` → 158 lines / 11,877 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (147–158) all updated. `chapter-en-arm.test.ts` — **162** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
 - WORLD_ROADMAP now reads 158 chapters · Layer P CLOSED (22:00 slot). Showcase fact-pack sync + Pages deploy + live verification follow in the next step of this milestone.
+
+
+## 1375. D1471 — chapter 159 opens Layer Q; arc stands at 159
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-next-keeper-chronicle` — chapter 159 （清晨六點——東門——值了一夜的阿穆遇見門外一個拿著壞傘的姑娘：「明天我可以來學守門嗎？」他先報上自己的名字：「名字明天再講也可以——明天你真的來，再講。」三條鎖匙按回掌心，「這句話他昨夜自己對自己講過一次；今日講給門外的人聽，覺得它變大了」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer Q OPENS — the keepers after.** The world continues past the original cast: the gate is handed forward, the next keeper is a stranger whose name is deliberately deferred. Infinite-world discipline: close one layer, open another with a new question rather than a finale.
+- Frozen artifacts advanced in lockstep: `gen_atlas_digest.py` → 159 chapters / 12,879 B; `gen_atlas_index.py` → 159 lines / 11,991 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (148–159) updated. `chapter-en-arm.test.ts` — **163** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
+- WORLD_ROADMAP now reads 159 chapters · Layer Q opens (06:00 slot). Showcase fact-pack stays on the live-verified D1470 closure value; the next sync follows the heavy-milestone cadence.
