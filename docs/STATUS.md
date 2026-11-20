@@ -46865,3 +46865,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - `POST /ai/v1/story/recap` (contract `StoryRecapRequest`, registered in `app.py`) + web BFF `POST /api/nexus/ai/story-recap` + button island `src/components/story-recap.tsx` mounted on `/world`. **No auto-call**: the reader clicks, one model call is spent; mock mode is inert. Four dict keys per arm (zh-HK / en + regenerated Simplified fold), Traditional-corrected after `check_ui_script` found five Simplified glyphs in the first draft.
 - Tests: 9 graph/route green, 2 BFF green; full web suite 75 files / **671 passed**; AI atlas pins green; `verify_all` NO OFFENDER; tsc 0; contract drift and UI-script gates green (new endpoint row added to API_CONTRACT.md).
 - Showcase fact-pack remains at D1466 and LIVE-verified; it advances at the big-improvement cadence, not per commit.
+
+
+## 1373. D1469 — chapter 157 joins Layer P; arc stands at 157 (atlas regenerated in lockstep)
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-cover-name-chronicle` — chapter 157 （早上九點——門房——阿穆把秩序冊對著窗光，封面內側浮出陳炳兩個字；阿樂：「那不是寄件人，是寫這本冊子的人——留給還肯守著它的人。」阿穆把冊子收進最下面的抽屜，和鞍皮放在一起）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Frozen-artifact discipline exercised on this chapter** (the D1468 lesson): `gen_atlas_digest.py` → 157 chapters / 12,661 B; `gen_atlas_index.py` → 157 lines / 11,772 B; pins in `test_atlas_digest.py` / `test_atlas_index.py` and the `routes_chapter.py` fence advanced to 157; story-recap test windows advanced to 146–157. No chapter may leave the atlas nine stories behind again.
+- `chapter-en-arm.test.ts` — assertion count **161**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. 18 atlas/recap tests green.
+- WORLD_ROADMAP now reads 157 chapters · Layer P continues (09:00 slot). Showcase fact pack stays at the live-verified D1466 value; the next upgrade follows the big-improvement cadence.
