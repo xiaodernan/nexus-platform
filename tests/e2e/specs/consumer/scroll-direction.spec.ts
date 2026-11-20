@@ -3,37 +3,58 @@ import { test, expect } from '../../lib/fixture.js';
 /**
  * `/` and the chapter strip — the §五 scroll contract, pinned in a browser.
  *
- * The standing complaint ("往上滑看下面、往下滑看上面") is only ever true when something on
- * the plane intercepts a raw wheel delta and forwards it to a scroller that travels the other
- * way. This spec makes that untestable: the page itself is asserted to move down on a down
- * wheel and up on an up wheel, the horizontal chapter strip is asserted to bridge a down
- * wheel into sideways travel *without* moving the page (fine pointers only), and the four
- * busiest routes are asserted to never force a horizontal page scrollbar.
+ * The product's default (the D328/D329 wave): the wheel follows the reader — a down
+ * wheel moves the viewport up, so what a native page shows on an up wheel is what the
+ * reader sees on their down wheel — because the owner's driver inverts the OS sign and
+ * the reversed interceptor is the product-level counter-act. The header toggle flips the
+ * page back to the native OS sign for readers whose driver behaves; the chapter strip
+ * keeps its deliberate sideways bridge under both contracts (the interceptor exempts the
+ * strip), and no busy route ever grows a horizontal page scrollbar.
  */
 
-test('wheel down scrolls the page down; wheel up scrolls the page up', async ({ page }) => {
+test('wheel down scrolls the page up by default; the toggle restores the native sign', async ({ page }) => {
   await page.goto('/');
-  // The home route streams; give the document its own first paint.
   await page.locator('main').waitFor({ state: 'visible' });
-  // A mouse wheel does not exist on the touch plane (mobile WebKit refuses it outright);
-  // the contract this spec pins is the desktop pointer's.
   const fine = await page.evaluate(() => window.matchMedia('(hover: hover) and (pointer: fine)').matches);
   test.skip(!fine, 'touch plane: no wheel to send — the desktop wheel contract is what is pinned');
 
   await page.mouse.move(640, 420);
+  // The page needs scroll room on both sides: pin the middle after walking down.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+  await page.waitForTimeout(150);
   const y0 = await page.evaluate(() => window.scrollY);
+  expect(y0).toBeGreaterThan(0);
+
+  // The default contract: a down wheel travels the viewport up — the reader's down wheel
+  // shows the content a native page shows above, counter-acting the inverted driver.
   await page.mouse.wheel(0, 600);
-  await page.waitForFunction((y) => window.scrollY > y, y0);
+  await page.waitForFunction((y) => window.scrollY < y, y0);
   const y1 = await page.evaluate(() => window.scrollY);
-  expect(y1).toBeGreaterThan(y0);
+  expect(y1).toBeLessThan(y0);
 
   await page.mouse.wheel(0, -600);
-  await page.waitForFunction((y) => window.scrollY < y, y1);
+  await page.waitForFunction((y) => window.scrollY > y, y1);
   const y2 = await page.evaluate(() => window.scrollY);
-  expect(y2).toBeLessThan(y1);
+  expect(y2).toBeGreaterThan(y1);
+
+  // The header toggle restores the native OS sign: a down wheel scrolls the page down.
+  const toggle = page.getByRole('button', { name: /滾輪|滚轮|wheel|捲動|direction/i }).first();
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await page.mouse.wheel(0, 600);
+  await page.waitForFunction((y) => window.scrollY > y, y2);
+  const y3 = await page.evaluate(() => window.scrollY);
+  expect(y3).toBeGreaterThan(y2);
+
+  // Flip back — the reversed contract returns for the rest of the session.
+  await toggle.click();
+  await page.mouse.wheel(0, 600);
+  await page.waitForFunction((y) => window.scrollY < y, y3);
 });
 
-test('on fine pointers the chapter strip bridges a vertical wheel sideways and leaves the page alone', async ({ page }) => {
+test('on fine pointers the chapter strip bridges a vertical wheel sideways and leaves the page alone', async ({
+  page,
+}) => {
   await page.goto('/hong-kong');
   const strip = page.locator('section[aria-labelledby="arc-timeline-title"] ol');
   await strip.scrollIntoViewIfNeeded();

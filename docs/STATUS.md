@@ -46955,3 +46955,5 @@ This is a compile-level check, not a claim that the service-dependent suites pas
 - **Layer Q continues** — the answer is not in the horse, it is in the line that keeps being read: a name written down outlives the thing it named. The empty square Ah Ching draws is the arc's own metaphor for an endless world — a place left for the next reader, not a closing.
 - Frozen artifacts: `gen_atlas_digest.py` → 163 chapters / 13,289 B; `gen_atlas_index.py` → 163 lines / 12,400 B; atlas pins, the `routes_chapter.py` fence (162→163) and the story-recap window (152–163) advanced; `check_atlas_lockstep` PASS at 163/163/163. `chapter-en-arm.test.ts` — **167** assertions; 18 atlas/recap tests green; verify_all NO OFFENDER.
 - WORLD_ROADMAP now reads 163 chapters · Layer Q continues (16:00 slot). Showcase fact-pack stays at the live-verified D1470 closure value; next sync at the next heavy milestone.
+
+

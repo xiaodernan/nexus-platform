@@ -41,11 +41,17 @@ export function isInteractiveWheelTarget(target: unknown): boolean {
     typeof (target as { closest?: unknown }).closest === 'function'
   ) {
     try {
-      return Boolean(
-        (target as Element).closest(
-          'input, textarea, select, [contenteditable="true"], [role="textbox"], [role="slider"]',
-        ),
-      );
+      const el = (target as Element);
+      if (el.closest('input, textarea, select, [contenteditable="true"], [role="textbox"], [role="slider"]')) {
+        return true;
+      }
+      // The arc-timeline strip owns a deliberate vertical-wheel bridge (D1184): a wheel
+      // over it scrolls the strip sideways. The reversed interceptor must leave that
+      // feature whole — exempt anything inside the strip.
+      if (el.closest('[aria-labelledby="arc-timeline-title"]')) {
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
@@ -68,11 +74,20 @@ export function wheelReverseShouldIntercept(event: {
 }
 
 export function readWheelReversePreference(storage: Pick<Storage, 'getItem'> | null): boolean {
-  if (!storage) return false;
+  // The stored value is explicit: '1' = reversed, '0' = native (a reader who flipped the
+  // toggle back has spoken). No stored value inherits the product default — reversed,
+  // because the owner's driver inverts the wheel sign and the §五 contract is that the
+  // page follows the reader: wheel-up shows upper content, wheel-down shows lower.
+  // (The scroll-direction spec pinned the site's own scroll as native-correct in a clean
+  // browser; the inversion lives in the driver, and this default is the product-level
+  // counter-act for readers who cannot or will not touch the OS setting.)
+  if (!storage) return true;
   try {
-    return storage.getItem(WHEEL_REVERSE_KEY) === '1';
+    const stored = storage.getItem(WHEEL_REVERSE_KEY);
+    if (stored === null) return true;
+    return stored === '1';
   } catch {
-    return false;
+    return true;
   }
 }
 
