@@ -46874,3 +46874,12 @@ web SSR   /hong-kong        n=20  errors=0  p50=1983ms p95=4354ms  p99=5805ms   
 - **Frozen-artifact discipline exercised on this chapter** (the D1468 lesson): `gen_atlas_digest.py` → 157 chapters / 12,661 B; `gen_atlas_index.py` → 157 lines / 11,772 B; pins in `test_atlas_digest.py` / `test_atlas_index.py` and the `routes_chapter.py` fence advanced to 157; story-recap test windows advanced to 146–157. No chapter may leave the atlas nine stories behind again.
 - `chapter-en-arm.test.ts` — assertion count **161**. `mock/seed-cn.ts` regenerated (fold lockstep PASS). verify_all RESULT: NO OFFENDER. 18 atlas/recap tests green.
 - WORLD_ROADMAP now reads 157 chapters · Layer P continues (09:00 slot). Showcase fact pack stays at the live-verified D1466 value; the next upgrade follows the big-improvement cadence.
+
+
+## 1374. D1470 — chapter 158 closes Layer P; arc stands at 158
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-first-night-watch-chronicle` — chapter 158 （晚上十點——東門——阿樂把最後三條鎖匙交給阿穆；抽屜裡是陳炳的秩序冊與鞍皮；「十一點、十二點、一點——他數著，像有人教過他那樣。」天亮前沒有人來接班）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- **Layer P CLOSED** — the reunion arc (145–158) ends by handing the watch to the next keeper; the mystery was answered as an instruction, not an exposition dump. This is a heavy milestone: the showcase fact-pack is due for its cadence sync after this push.
+- Frozen artifacts advanced in lockstep: `gen_atlas_digest.py` → 158 chapters / 12,766 B; `gen_atlas_index.py` → 158 lines / 11,877 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (147–158) all updated. `chapter-en-arm.test.ts` — **162** assertions; `mock/seed-cn.ts` regenerated; 18 atlas/recap tests green; verify_all NO OFFENDER.
+- WORLD_ROADMAP now reads 158 chapters · Layer P CLOSED (22:00 slot). Showcase fact-pack sync + Pages deploy + live verification follow in the next step of this milestone.
