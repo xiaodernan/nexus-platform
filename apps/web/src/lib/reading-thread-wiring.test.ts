@@ -53,8 +53,13 @@ describe('D1517 the reading thread wiring', () => {
   it('both arms carry the copy, and the tour teaches it', () => {
     const dict = read(DICT);
     expect(dict).toContain('readingThread: {');
-    expect(dict).toContain('progress: (read, total) =>');
-    expect(dict).toContain('percent: (percent) =>');
+    // D1521: the counters and the 《title》 wrapper are TEMPLATES, not functions - a function in
+    // this payload is what made Next.js refuse the whole page at render time.
+    expect(dict).toContain("progress: '\u5df2\u8b80 {read} / {total} \u7ae0'");
+    expect(dict).toContain("percent: '\u5b8c\u6210\u5ea6 {percent}%'");
+    expect(dict).toContain("via: '\u300a{title}\u300b'");
+    expect(dict).toContain("progress: '{read} of {total} chapters read'");
+    expect(dict).toContain("percent: '{percent}% complete'");
     expect(dict).toContain("title: '續讀線 · /guides'");
     expect(dict).toContain("title: 'Reading thread · /guides'");
   });

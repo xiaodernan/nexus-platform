@@ -47602,3 +47602,50 @@ reachable, not comfortable. And `INTENT_EXTRACT_SYSTEM` is the tail of a byte-st
 (D1050) — this unit appended to it, which moves that prefix's bytes and therefore invalidates the
 provider-side cache for one generation; the next measurement should confirm the hit rate recovers,
 and that is D1050's own question, not something this unit claims.
+
+## 1424. D1521 — the reading thread was invisible in the browser while every test was green (§七)
+
+**The gap, found by looking at the page.** D1517's gates were all green — 12 engine legs, 5 wiring legs,
+the handbook coverage, the dict contract, 230 adjacent tests, `tsc` 0, `eslint` clean. The feature was
+shipped. Then the dev server rendered `/guides` and the page answered 加載失敗:
+
+    Functions cannot be passed directly to Client Components unless you explicitly expose it by
+    marking it with "use server". Or maybe you meant to call this function rather than return it.
+    {eyebrow: …, title: "下一章讀邊本？", intro: …, progress: …, percent: …, …, via: function via, …}
+
+**The root cause is the boundary, not the feature.** `/guides` is a Server Component and
+`ReadingThread` a Client Component, and the copy it was handed carried three ARROW FUNCTIONS
+(`progress`, `percent`, `via`). Next.js cannot serialise a function across that boundary, so it refused
+the payload and took the whole route down with it — while the unit tests, which read the dictionary as
+text, never looked at the payload's shape. A feature that renders nothing and passes everything is the
+failure mode §七 is about: the manual and the product must agree with what a reader actually sees.
+
+**The fix is templates.** The counters and the 《title》 wrapper are now strings with placeholders —
+`已讀 {read} / {total} 章`, `完成度 {percent}%`, `《{title}》` — filled on the client by one local
+`fill()`. The localisation stays in the dictionary where it belongs; nothing that crosses the boundary
+is a function.
+
+**Verified in a real browser, in both locales** (dev server, mock plane, 2026-11-22): the zh-HK page
+renders the eyebrow 續讀線 · 讀過咩就續咁, the title 下一章讀邊本？, the progress 已讀 0 / 179 章 · 完成度 0%
+and the empty state 世界仲未開始 with its body; the `en` page (Accept-Language) renders
+`READING THREAD · FROM WHAT YOU FINISHED`, `Which chapter next?`, `0 of 179 chapters read · 0% complete`
+and `The world has not started yet`. No error, no overlap, no mixed-script residue in the section.
+
+**The gate is the shape, not the text.** `reading-thread.test.ts` gains two legs that would have caught
+this on the day it shipped: every value of `growth.readingThread` is a `string` in ALL THREE locales
+(read through `getDict`, not through a text scan — a text scan is exactly what missed it), and every
+template names the placeholders it will be filled with. The wiring reader's copy leg was re-aimed to the
+template spellings. Falsified by restoring one arrow function in the zh arm: the new legs redden and the
+wiring leg reddens with them.
+
+**Adjacent**, run and green, never full: the reading-thread engine and wiring, the handbook coverage,
+the dict contract's locale parity, the world-corpus atlas, the stamp collection, the count claims, the
+corpus-count sanity, the hk-type and home-series-rail pages, `chapter-en-arm` (182) and the
+afterward/chronicle pages — **239 passed**. `tsc --noEmit` 0; `eslint` clean on all four touched files;
+both Simplified mirrors regenerate and verify in lockstep.
+
+**Filed, not claimed.** The island is gated on `IS_MOCK`, which is the product's default but is NOT what
+this developer machine runs (`NEXT_PUBLIC_DATA_MODE=live` in `apps/web/.env.local`) — so the feature is
+invisible on a live-plane dev box by the same convention that hides the featured HK series and the demo
+banner there. Whether the reading thread should also exist for platform-served guides is the live-plane
+question D1517 already filed.

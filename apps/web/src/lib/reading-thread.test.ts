@@ -33,6 +33,34 @@ const CORPUS: Guide[] = [
   guide('d', '完全無關的一章', '量子 潮汐 恆星 演算 尺規'),
 ];
 
+describe('the copy crosses into a client island, so it is all strings', () => {
+  // D1521: D1517 shipped this copy with three arrow functions in it. The page is a Server
+  // Component and the island a Client Component, so Next.js refused the payload at render time
+  // and the whole /guides page answered 加載失敗 — the feature was invisible in the browser
+  // while every unit test was green, because no test looked at the payload's SHAPE. The
+  // counters and the 《title》 wrapper are templates now, and this leg is the guard.
+  it('carries no function in any locale', async () => {
+    const { getDict } = await import('./i18n');
+    for (const locale of ['zh-HK', 'zh-CN', 'en'] as const) {
+      const copy = getDict(locale).growth.readingThread as Record<string, unknown>;
+      for (const [key, value] of Object.entries(copy)) {
+        expect(typeof value, `${locale}.growth.readingThread.${key}`).toBe('string');
+      }
+    }
+  });
+
+  it('every template names the placeholders it will be filled with', async () => {
+    const { getDict } = await import('./i18n');
+    for (const locale of ['zh-HK', 'zh-CN', 'en'] as const) {
+      const copy = getDict(locale).growth.readingThread;
+      expect(copy.progress).toContain('{read}');
+      expect(copy.progress).toContain('{total}');
+      expect(copy.percent).toContain('{percent}');
+      expect(copy.via).toContain('{title}');
+    }
+  });
+});
+
 describe('threadTokens', () => {
   it('carries CJK bigrams and Latin words, and nothing else', () => {
     const tokens = threadTokens('叉燒 Ra men 叉燒');

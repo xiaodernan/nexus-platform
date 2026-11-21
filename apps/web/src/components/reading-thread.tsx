@@ -26,17 +26,20 @@ export interface ReadingThreadCopy {
   title: string;
   intro: string;
   /** (read, total) */
-  progress: (read: number, total: number) => string;
-  percent: (percent: number) => string;
+  progress: string;
+  percent: string;
   emptyTitle: string;
   emptyBody: string;
   doneTitle: string;
   doneBody: string;
   because: string;
   shared: string;
-  via: (title: string) => string;
+  via: string;
   open: string;
 }
+
+const fill = (template: string, values: Record<string, string | number>): string =>
+  template.replace(/\{(read|total|percent|title)\}/g, (_m, key: string) => String(values[key] ?? ""));
 
 export function ReadingThread({ guides, copy }: { guides: readonly Guide[]; copy: ReadingThreadCopy }) {
   const [read, setRead] = useState<readonly string[]>([]);
@@ -60,7 +63,8 @@ export function ReadingThread({ guides, copy }: { guides: readonly Guide[]; copy
         </h2>
         <p className="max-w-prose text-sm leading-relaxed text-ink-muted">{copy.intro}</p>
         <p className="text-xs text-ink-faint" data-testid="reading-thread-progress">
-          {copy.progress(progress.read, progress.total)} · {copy.percent(progress.percent)}
+          {fill(copy.progress, { read: progress.read, total: progress.total })} ·{" "}
+          {fill(copy.percent, { percent: progress.percent })}
         </p>
       </header>
 
@@ -88,7 +92,7 @@ export function ReadingThread({ guides, copy }: { guides: readonly Guide[]; copy
                 <span className="text-sm font-semibold leading-snug text-ink-strong">{step.title}</span>
                 <span className="text-2xs leading-relaxed text-ink-muted">
                   {copy.because}
-                  {step.via ? copy.via(titles.get(step.via) ?? step.via) : null}
+                  {step.via ? fill(copy.via, { title: titles.get(step.via) ?? step.via }) : null}
                   {step.shared.length > 0 ? ` · ${copy.shared}${step.shared.join('、')}` : null}
                 </span>
                 <span className="mt-auto text-2xs font-semibold uppercase tracking-wide text-accent">{copy.open}</span>

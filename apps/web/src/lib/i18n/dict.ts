@@ -504,20 +504,27 @@ export interface Dict {
       cta: string;
       pending: string;
     };
-    /** D1517: the reading thread — the next doors, read off what the reader already finished. */
+    /**
+     * D1517/D1521: the reading thread — the next doors, read off what the reader already finished.
+     * The two counters are TEMPLATES, not functions: the copy crosses the server/client boundary
+     * into a client island, and a function in that payload is the error Next.js raises
+     * ("Functions cannot be passed directly to Client Components"). `{read}` / `{total}` /
+     * `{percent}` are filled on the client.
+     */
     readingThread: {
       eyebrow: string;
       title: string;
       intro: string;
-      progress: (read: number, total: number) => string;
-      percent: (percent: number) => string;
+      progress: string;
+      percent: string;
       emptyTitle: string;
       emptyBody: string;
       doneTitle: string;
       doneBody: string;
       because: string;
       shared: string;
-      via: (title: string) => string;
+      /** D1521: a template, not a function — the same server/client boundary as the counters. */
+      via: string;
       open: string;
     };
   };
@@ -2126,15 +2133,15 @@ const zhHK: Dict = {
       eyebrow: '續讀線 · 讀過啥就續啥',
       title: '下一章讀邊本？',
       intro: '你讀過的章節決定下一度門。完全本機計算，零 token、零網絡——同一個讀過清單，永遠指同一條路。',
-      progress: (read, total) => `已讀 ${read} / ${total} 章`,
-      percent: (percent) => `完成度 ${percent}%`,
+      progress: '已讀 {read} / {total} 章',
+      percent: '完成度 {percent}%',
       emptyTitle: '世界仲未開始',
       emptyBody: '讀過任何一章，呢度就會按你讀過的內容，指出下一步最值得開的三度門。',
       doneTitle: '全本書讀完',
       doneBody: '所有章節都讀過了——世界仲在加新章。去 /world 問反座城其他嚇。',
       because: '因為你讀過',
       shared: '共同關鍵詞：',
-      via: (title) => `《${title}》`,
+      via: '《{title}》',
       open: '開門',
     },
   },
@@ -4365,15 +4372,15 @@ const en: Dict = {
       eyebrow: 'READING THREAD · FROM WHAT YOU FINISHED',
       title: 'Which chapter next?',
       intro: 'The chapters you have already finished decide the next doors. Computed on this machine — zero tokens, zero network — so the same read-set always opens the same path.',
-      progress: (read, total) => `${read} of ${total} chapters read`,
-      percent: (percent) => `${percent}% complete`,
+      progress: '{read} of {total} chapters read',
+      percent: '{percent}% complete',
       emptyTitle: 'The world has not started yet',
       emptyBody: 'Read any one chapter and this will name the three doors most worth opening next, from what you have already read.',
       doneTitle: 'The whole book is read',
       doneBody: 'Every chapter is behind you — and the world keeps adding new ones. Ask the city something else at /world.',
       because: 'Because you read',
       shared: 'Shared words: ',
-      via: (title) => `“${title}”`,
+      via: '“{title}”',
       open: 'Open the door',
     },
   },
