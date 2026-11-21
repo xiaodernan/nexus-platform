@@ -48001,3 +48001,49 @@ at the same leaf paths), the world-corpus atlas, the stamp collection, the count
 corpus-count sanity, the hk-type and home-series-rail pages, the try-flow, the admin analytics, the
 world-answer UI and the world-guide/chapter-ask live panels, and `chapter-en-arm` (182) — **440 passed**.
 `tsc --noEmit` 0; both Simplified mirrors regenerate and verify in lockstep.
+
+## 1435. D1532 — a first-time reader is offered the hubs, not "start anywhere" (§六、§七)
+
+**The gap.** D1517's reading thread needs a read-set. A first-time visitor has none, so the island
+answered 世界仲未開始 / 讀過任何一章… — which is honest and useless: §六 asks for enough guidance that a
+reader does not get lost or lose patience, and the reader with the LEAST context was the one getting
+the least help.
+
+**The feature.** `starterChapters` (`reading-thread.ts`) ranks the corpus by affinity MASS — the sum
+of the cosine overlaps against every other chapter — and offers the top three as the doors to start
+from: the chapters most connected to the rest of the book, so wherever the reader goes next, the path
+back into the world is short. The empty state now renders them under the same 世界仲未開始 heading, each
+with its reason, and they disappear the moment there is a read-set to thread instead.
+
+**The measurement that shaped the copy.** The DEGREE — how many other chapters a chapter connects to —
+saturates on the shipped corpus: with a one-shared-bigram threshold every chapter already connects to
+all 178 others, and with a two-bigram threshold nothing connects at all. So the degree is a true
+statement about reach and NOT the ranking; the mass spreads (44.55 at the top, 43.70 next, down from
+there) and is what actually separates a hub from a leaf. The copy therefore says
+全書相連度最高的起點之一 rather than printing a number that would be true and meaningless — and the leg
+records why.
+
+**The boundary reader caught this unit's own regression.** The first cut put `starterBecause: (degree)
+=> …` in the copy the page hands the island, and `client-boundary-copy.test.ts` reddened on
+`ReadingThread.copy <- dict.growth.readingThread is serialisable` before the commit — the fifth instance
+of the D1521 class, caught by the reader that class produced. The reason is a sentence now, so there is
+no function and no template to fill.
+
+**Verified in a real browser** (dev server, mock plane, 2026-11-22): `/guides` renders 世界仲未開始, the
+body, then three doors — 下午五點四十五分：觀塘——牛頭角——魚蛋檔的黃生關燈（第七十七章）,
+早上六點四十分：將軍澳——唐宮裡——阿強的百番甜麵包（第一百章）,
+晚上十一點三十分：中環——中環碼頭——阿智的最後一程（第一百三十章）— each carrying its reason. No error, no
+overlap.
+
+**Gates.** `reading-thread-starters.test.ts` (6 legs: the hubs, never an unconnected chapter,
+determinism, the too-small corpus, degree-then-mass order, and the real hubs in the shipped corpus with
+a leg proving a hub really is one — the radar from it finds neighbours) and
+`reading-thread-starters-wiring.test.ts` (4 legs: the island computes them only when the read-set is
+empty, both arms carry the copy, the reason is a sentence, and the island forwards no new copy object).
+Adjacent, run and green, never full: the starter gates, the reading-thread engine and wiring, the
+boundary reader (167 crossings), the chapter radar and its wiring, the handbook coverage, the dict
+contract's locale parity, the world-corpus atlas, the stamp collection, the count claims and the
+corpus-count sanity, the hk-type and home-series-rail pages, the try-flow, the admin analytics, the
+world-answer UI and the world-guide/chapter-ask live panels, and `chapter-en-arm` (182) — **450
+passed**. `tsc --noEmit` 0; `eslint` clean on every touched file; both Simplified mirrors regenerate
+and verify in lockstep.

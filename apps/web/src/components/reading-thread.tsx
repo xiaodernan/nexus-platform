@@ -18,7 +18,7 @@ import { useEffect, useState } from 'react';
 import { Icon } from '@nexus/ui';
 
 import { readChapters } from '@/lib/chapter-read';
-import { readingThread, threadProgress } from '@/lib/reading-thread';
+import { readingThread, starterChapters, threadProgress } from '@/lib/reading-thread';
 import type { Guide } from '@/lib/types';
 
 export interface ReadingThreadCopy {
@@ -30,6 +30,9 @@ export interface ReadingThreadCopy {
   percent: string;
   emptyTitle: string;
   emptyBody: string;
+  starterTitle: string;
+  /** D1532: a template, not a function — this payload crosses into a client island. */
+  starterBecause: string;
   doneTitle: string;
   doneBody: string;
   because: string;
@@ -39,7 +42,7 @@ export interface ReadingThreadCopy {
 }
 
 const fill = (template: string, values: Record<string, string | number>): string =>
-  template.replace(/\{(read|total|percent|title)\}/g, (_m, key: string) => String(values[key] ?? ""));
+  template.replace(/\{(read|total|percent|title|degree)\}/g, (_m, key: string) => String(values[key] ?? ""));
 
 export function ReadingThread({ guides, copy }: { guides: readonly Guide[]; copy: ReadingThreadCopy }) {
   const [read, setRead] = useState<readonly string[]>([]);
@@ -53,6 +56,9 @@ export function ReadingThread({ guides, copy }: { guides: readonly Guide[]; copy
   const titles = new Map(guides.map((guide) => [guide.slug, guide.title]));
   const progress = threadProgress(guides, read);
   const thread = ready ? readingThread(guides, read, { steps: 3 }) : [];
+  // D1532: a reader with no history gets the HUBS rather than "start anywhere" — the chapters
+  // that connect to the most other chapters, so the path back into the world is short.
+  const starters = ready && progress.read === 0 ? starterChapters(guides, { steps: 3 }) : [];
 
   return (
     <section aria-labelledby="reading-thread-title" className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5">
@@ -69,13 +75,29 @@ export function ReadingThread({ guides, copy }: { guides: readonly Guide[]; copy
       </header>
 
       {!ready ? null : thread.length === 0 ? (
-        <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface-2 p-4" data-testid="reading-thread-empty">
+        <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface-2 p-4" data-testid="reading-thread-empty">
           <p className="text-sm font-semibold text-ink-strong">
             {progress.read === 0 ? copy.emptyTitle : copy.doneTitle}
           </p>
           <p className="text-sm leading-relaxed text-ink-muted">
             {progress.read === 0 ? copy.emptyBody : copy.doneBody}
           </p>
+          {progress.read === 0 && starters.length > 0 ? (
+            <ul className="grid gap-2 sm:grid-cols-3" data-testid="reading-thread-starters">
+              {starters.map((entry) => (
+                <li key={entry.slug}>
+                  <Link
+                    href={entry.href}
+                    data-testid="reading-thread-starter"
+                    className="group flex h-full flex-col gap-1 rounded-xl border border-accent-line/70 bg-surface p-3 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
+                  >
+                    <span className="text-sm font-semibold leading-snug text-ink-strong">{entry.title}</span>
+                    <span className="text-2xs text-ink-muted">{copy.starterBecause}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : (
         <ul className="grid gap-2 sm:grid-cols-3">

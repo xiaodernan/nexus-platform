@@ -227,3 +227,71 @@ export function relatedChapters(
     .sort((a, b) => b.score - a.score || a.slug.localeCompare(b.slug))
     .slice(0, steps);
 }
+
+
+export interface StarterChapter {
+  slug: string;
+  title: string;
+  /** How many other chapters this one connects to — the hub's degree in the affinity graph. */
+  degree: number;
+  href: string;
+}
+
+/**
+ * Where a reader with NO history should start.
+ *
+ * The thread needs a read-set and the radar needs a current chapter; a first-time visitor has
+ * neither, and "start anywhere" is the answer that loses them (§六: 防止迷失、失去耐心). The honest
+ * replacement is the HUBS: the chapters that share words with the most other chapters, so wherever
+ * the reader goes next, the path back into the world is short. Deterministic — the same corpus
+ * always names the same three doors.
+ */
+export function starterChapters(
+  guides: readonly Guide[],
+  options: { steps?: number } = {},
+): StarterChapter[] {
+  const steps = Math.max(1, options.steps ?? 3);
+  if (guides.length < 2) return [];
+
+  const tokens = new Map<string, Set<string>>();
+  for (const guide of guides) tokens.set(guide.slug, threadTokens(guideText(guide)));
+
+  // Measured on the shipped corpus: the DEGREE saturates — with a one-shared-bigram threshold
+  // every chapter already connects to all 178 others, and with a two-bigram threshold nothing
+  // connects at all. So the degree is a true statement about reach ("this chapter connects to
+  // essentially the whole book") and NOT the ranking; the ranking is the affinity MASS, which
+  // spreads (44.55 at the top against 43.70 and down from there) and is what actually separates a
+  // hub from a leaf. Both are computed; the degree is displayed, the mass decides.
+  const degrees = new Map<string, number>();
+  const mass = new Map<string, number>();
+  for (const guide of guides) {
+    const mine = tokens.get(guide.slug) ?? new Set<string>();
+    let degree = 0;
+    let total = 0;
+    for (const other of guides) {
+      if (other.slug === guide.slug) continue;
+      const theirs = tokens.get(other.slug) ?? new Set<string>();
+      let shared = 0;
+      for (const token of mine) if (theirs.has(token)) shared += 1;
+      if (shared >= 1) {
+        degree += 1;
+        total += shared / Math.sqrt(mine.size * theirs.size || 1);
+      }
+    }
+    degrees.set(guide.slug, degree);
+    mass.set(guide.slug, total);
+  }
+
+  return guides
+    .map((guide) => ({
+      slug: guide.slug,
+      title: guide.title,
+      degree: degrees.get(guide.slug) ?? 0,
+      href: `/guides/${guide.slug}`,
+    }))
+    .filter((entry) => entry.degree > 0)
+    .sort((a, b) => b.degree - a.degree
+      || (mass.get(b.slug) ?? 0) - (mass.get(a.slug) ?? 0)
+      || a.slug.localeCompare(b.slug))
+    .slice(0, steps);
+}

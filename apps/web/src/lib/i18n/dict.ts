@@ -534,6 +534,12 @@ export interface Dict {
       percent: string;
       emptyTitle: string;
       emptyBody: string;
+      /** D1532: the hub doors a reader with no history is offered instead of "start anywhere". */
+      starterTitle: string;
+      /** D1532: why the hub is offered. A sentence, not a number: the degree saturates on
+       * the shipped corpus (every chapter already connects to all 178 others), so a
+       * count would be true and meaningless. */
+      starterBecause: string;
       doneTitle: string;
       doneBody: string;
       because: string;
@@ -2163,6 +2169,8 @@ const zhHK: Dict = {
       percent: '完成度 {percent}%',
       emptyTitle: '世界仲未開始',
       emptyBody: '讀過任何一章，呢度就會按你讀過的內容，指出下一步最值得開的三度門。',
+      starterTitle: '一無所有的讀者，從這三度門開始；它們連住最多其他章節，走到哪裡都快回來。',
+      starterBecause: '全書相連度最高的起點之一，走到哪裡都快回來。',
       doneTitle: '全本書讀完',
       doneBody: '所有章節都讀過了——世界仲在加新章。去 /world 問反座城其他嚇。',
       because: '因為你讀過',
@@ -4411,6 +4419,8 @@ const en: Dict = {
       percent: '{percent}% complete',
       emptyTitle: 'The world has not started yet',
       emptyBody: 'Read any one chapter and this will name the three doors most worth opening next, from what you have already read.',
+      starterTitle: 'A reader with nothing behind them starts here: these three connect to the most other chapters, so any road back into the world is short.',
+      starterBecause: 'One of the best-connected starting points in the book - any road back into the world is short.',
       doneTitle: 'The whole book is read',
       doneBody: 'Every chapter is behind you — and the world keeps adding new ones. Ask the city something else at /world.',
       because: 'Because you read',

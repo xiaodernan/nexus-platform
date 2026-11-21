@@ -849,6 +849,8 @@ export const zhCN: Dict = {
       percent: '完成度 {percent}%',
       emptyTitle: '世界仲未开始',
       emptyBody: '读过任何一章，呢度就会按你读过的内容，指出下一步最值得开的三度门。',
+      starterTitle: '一无所有的读者，从这三度门开始；它们连住最多其他章节，走到哪里都快回来。',
+      starterBecause: '全书相连度最高的起点之一，走到哪里都快回来。',
       doneTitle: '全本书读完',
       doneBody: '所有章节都读过了——世界仲在加新章。去 /world 问反座城其他吓。',
       because: '因为你读过',
