@@ -48047,3 +48047,41 @@ corpus-count sanity, the hk-type and home-series-rail pages, the try-flow, the a
 world-answer UI and the world-guide/chapter-ask live panels, and `chapter-en-arm` (182) — **450
 passed**. `tsc --noEmit` 0; `eslint` clean on every touched file; both Simplified mirrors regenerate
 and verify in lockstep.
+
+## 1436. D1533 — chapter 178 opens Layer S, and the corpus's own vocabulary is the only safe source (§六)
+
+**The gap.** §六 asks for the world to keep growing. It stopped at 177 chapters, and the Layer R thread
+D1479 opened at the Happy Valley east gate had run its course. This unit opens a new layer — Layer S, at
+Sha Tin's Shui Chuen O, a morning bus stop and a stack of thirteen tickets — and ships it in all three
+arms.
+
+**The lesson this unit paid for, in full.** Writing Chinese through this pipeline mangles codepoints —
+including inside `\uXXXX` escapes (a `\u6558` written for 敘 arrived as `\u6555`). The chapter's first draft
+came out reading 合成敕事指南, 一叠票, 輪子呕一聲 and 被颤起來. The repair was not a proofread; it was an
+invariant: **every CJK character a new chapter uses must already exist somewhere in the rest of the
+corpus**, because the corpus's own vocabulary is the only set of characters this pipeline has been shown
+to carry. The census found six strangers, four of them mangled (疊→叠, 嘶→呕, 敘→敕, 掀→颤) and two
+legitimate (泉 for the real place name 水泉澳邨, 邀 for "invite"). The four were repaired against the
+corpus's own spellings; the two were kept and recorded. The EN-arm census leg then caught the last gap —
+the English body was missing entirely — before the commit.
+
+**The chapter.** 上午十點一刻：沙田——水泉澳邨——早班巴士第一車（第一百七十八章 · Layer S opens）: the first
+morning bus has not arrived, Ah Man sorts thirteen tickets under the stop sign, the last one carries no
+name — only a time — and the bus comes at ten-something while one ticket is left lifting in the draught.
+Full English arm in the same register as the 177 that already had one; Simplified arm by the opencc fold.
+
+**The ripple, measured rather than assumed.** The corpus is now 178 `hk-*` chapters plus the two demo
+guides. The dictionary named the series 177 in sixteen places and the chronicle page's comment said 177;
+all now read 178, and the six tests that pinned the old count were re-aimed rather than deleted, with
+the reason in the handbook coverage leg's comment.
+
+**Gates.** `chapter-en-arm.test.ts` grew to 183 legs — one three-arm leg for chapter 178 (HK glyph, CN
+fold, EN arm with no CJK anywhere in its prose, and the chapter's own headings matched) plus the §八
+census that asserts every shipped chapter carries a complete EN arm, which is the leg that caught the
+missing English body. Adjacent, run and green, never full: the chapter-en-arm census, the count claims,
+the corpus-count sanity, the handbook coverage, the dict contract's locale parity, the hk-type and
+home-series-rail pages, the stamp collection, the reading-thread engine and starters, the boundary
+reader (167 crossings), the chapter radar and its wiring, the world-corpus atlas, the afterward and
+chronicle pages, the try-flow, the admin analytics and the world-answer / world-guide / chapter-ask live
+panels — **451 passed**. `tsc --noEmit` 0; both Simplified mirrors regenerate and verify in lockstep;
+`check_console_i18n` PASS.

@@ -2641,4 +2641,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[一-鿿]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /one gust|the cleaner|card is still there/i.test(b.text))).toBe(true);
   });
+ it('chapter 178 (Sha Tin Shui Chuen O the first morning bus — Layer S opens) ships in three arms too', () => {
+    const hk = mockGuide('hk-sha-tin-shui-chuen-o-morning-bus-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/上午十點一刻/);
+    const cn = mockGuide('hk-sha-tin-shui-chuen-o-morning-bus-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/上午十点一刻/);
+    const en = mockGuide('hk-sha-tin-shui-chuen-o-morning-bus-chronicle', 'en');
+    expect(en?.title).toMatch(/Sha Tin|Shui Chuen O|first morning bus/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/tickets/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /first bus has not arrived|weight of the tickets|the bus comes/i.test(b.text))).toBe(true);
+  });
 });

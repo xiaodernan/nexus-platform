@@ -68,12 +68,12 @@ describe('D1177 /stamp collection island', () => {
     const dict = read(DICT);
     expect(dict).toContain("completeKicker: '終章獎 — 天下無雙'");
     expect(dict).toContain("completeKicker: 'The final seal — THE COMPLETE PASSPORT'");
-    expect(dict).toContain("completeWax: '香港終日 · 一百七十七章讀竟'");
-    expect(dict).toContain("completeWax: 'Hong Kong — one hundred and seventy-seven chapters, one pass'");
+    expect(dict).toContain("completeWax: '香港終日 · 一百七十八章讀竟'");
+    expect(dict).toContain("completeWax: 'Hong Kong — one hundred and seventy-eight chapters, one pass'");
     expect(dict).toContain("completeButton: '印一枚蠟印'");
     expect(dict).toContain("completeButton: 'Print the wax seal'");
-    expect(dict).toContain('一百七十七章香港系列');
-    expect(dict).toContain('One hundred and seventy-seven chapters, one hundred and seventy-seven stamps');
+    expect(dict).toContain('一百七十八章香港系列');
+    expect(dict).toContain('One hundred and seventy-eight chapters, one hundred and seventy-eight stamps');
     expect(dict).not.toContain('五十章香港系列');
     expect(dict).not.toContain('Fifty chapters, fifty stamps');
   });
