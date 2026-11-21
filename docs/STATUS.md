@@ -47248,3 +47248,12 @@ not hidden.
   1. With `NEXT_PUBLIC_DATA_MODE=live` and no services on :8090/:8010, pages stream an unresolved Suspense skeleton (`加载中…`) — the verifier had been measuring that skeleton and calling it clean. It now refuses to judge (exit 2) when a skeleton template/status is present.
   2. It charged `sr-only` text (clipped by design) and the cards' `overflow-hidden` decorative ghost numerals (112 false positives on `/hong-kong`). It now excludes sr-only and measures only non-absolute leaf TEXT nodes against the content box. An unnecessary card-height edit made from the false positive was reverted.
 - Verified after the fix: 5 routes, 0 offenders. `dom-verifier-honesty.test.ts` (4 pins) locks the refusal / exclusions / text-child measurement / settled-layout wait. `verify_all` NO OFFENDER · tsc 0.
+
+
+## 1409b. D1507 — mock-mode render verified in a real browser; verifier refuses stale builds
+
+- Investigated why the local plane showed an unresolved Suspense skeleton. Confirmed two separate causes, neither a product defect:
+  1. `NEXT_PUBLIC_DATA_MODE=live` (the repo's `.env.local`) with no services on :8090/:8010 → the server streams `app/loading.tsx` and never resolves. Expected without a backend.
+  2. Running `next start` and then REBUILDING leaves the live process referencing old CSS/chunk hashes → a genuine client-side exception. Restarting the process after every build is required; recorded here as an operational rule.
+- Rebuilt with `NEXT_PUBLIC_DATA_MODE=mock` (temporarily, `.env.local` restored + rebuilt live afterward — no config change committed) and verified with Playwright: the homepage rendered **fully** (7,928 chars of main text, 159 links, no template, zero console errors). The in-app browser's locale toggle also worked, confirming client JS executes.
+- `verify_dom_clipping.mjs` now also refuses (exit 2) on a broken Next.js page (`Application error` / `client-side exception`) — verified against a deliberately stale plane. `dom-verifier-honesty.test.ts` 5/5 with the new pin.

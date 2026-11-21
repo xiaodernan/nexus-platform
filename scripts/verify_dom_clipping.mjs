@@ -73,14 +73,24 @@ async function main() {
       // Honesty gate: a streaming Suspense skeleton is not a rendered page. Measuring it
       // would produce a clean bill of health for a page that never showed its content.
       const mainText = document.querySelector('main')?.innerText || '';
+      const bodyText = document.body.innerText || '';
       const skeleton = /加载中|Loading/.test(mainText)
         || !!document.querySelector('main template[id^="B:"]');
+      // A stale `next start` build (rebuild while the server is running) serves old CSS
+      // and chunk hashes as text/html, producing a client exception. That is a broken
+      // plane, not a clean page — refuse rather than measure the error shell.
+      const broken = /Application error|client-side exception/.test(bodyText);
       return {
         hOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         clipped,
         skeleton,
+        broken,
       };
     });
+    if (r.broken) {
+      console.error(`verify_dom_clipping.mjs: ${path} is a broken Next.js page (stale build?) — refusing to judge`);
+      process.exit(2);
+    }
     if (r.skeleton) {
       console.error(`verify_dom_clipping.mjs: ${path} is an unresolved streaming skeleton — refusing to judge`);
       process.exit(2);

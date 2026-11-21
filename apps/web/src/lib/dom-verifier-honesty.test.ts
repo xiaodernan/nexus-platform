@@ -27,4 +27,10 @@ describe('DOM clipping verifier honesty', () => {
   it('waits for layout to settle before measuring', () => {
     expect(src).toContain('document.fonts.ready');
   });
+
+
+  it('refuses to judge a broken stale-build page', () => {
+    expect(src).toContain('Application error|client-side exception');
+    expect(src).toContain('is a broken Next.js page (stale build?) — refusing to judge');
+  });
 });
