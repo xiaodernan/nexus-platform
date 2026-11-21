@@ -2555,4 +2555,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /second brass tag|supplied name|dry corner/i.test(b.text))).toBe(true);
   });
+  it('chapter 174 (Happy Valley rain-loosened card — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-rain-loosened-card-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/傍晚六點四十二分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-rain-loosened-card-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/傍晚六点四十二分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-rain-loosened-card-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|rain-loosened card/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/brass tag/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /catching it|waiting out the rain|two minutes/i.test(b.text))).toBe(true);
+  });
 });

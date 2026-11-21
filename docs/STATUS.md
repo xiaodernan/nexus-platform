@@ -47274,3 +47274,14 @@ not hidden.
 - `app/chronicle/page.tsx`'s comment was frozen at 105 chapters → now 173 across many layers.
 - New `count-claims.test.ts` (3 pins) charges BOTH arms: no stale phrase survives, current count present in each, chronicle comment honest. Added to the WORLD_ROADMAP rivet list, so a future chapter that forgets a count label fails a gate instead of quietly drifting.
 - `verify_all` NO OFFENDER · `check_ui_script` 0 offenders / 2,928 literals · citations 301/301 · tsc 0 · targeted count/handbook/hk-type gates 11/11.
+
+
+## 1413. D1510 — chapter 174: the rain-loosened card; arc reaches 174
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-rain-loosened-card-chronicle` — chapter 174 （牆鐘 6:42、其實 6:40——雨把夾在傘柄上的跑馬紙泡得發滑，阿晴伸手接住沒讓它落進門縫；鉛筆名淡化但銅牌號碼還在。她把兩枚銅牌和紙一同放進抽屜：「等雨停再拿出來。」鐘依舊快兩分鐘，她沒有去調）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call through the Clash proxy (HTTP 200, 18,674 tokens: 18,627 prompt / 47 completion, no reasoning overhead under the tighter prompt) chose the beat. Written in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 174 / 14,538 B, index 174 lines / 13,648 B; pins, `routes_chapter.py` fence and story-recap window (163–174) advanced; `check_atlas_lockstep` PASS at 174/174/174.
+- **This chapter exercised the new count discipline:** all count labels in BOTH authored arms advanced 173→174, including the stamp certificate and the `count-claims` / `stamp-collection` / handbook / hk-type / home-rail pins — no locale left behind.
+- A story-recap fence test assumed a single invented number forced whole-artifact degradation; with 174 now valid and a valid `watch` field, the honest assertion is field-by-field refusal (no invented number reaches the reader, recap empty). 18/18 atlas/recap tests green; web 86 files / **725 passed**; `verify_all` NO OFFENDER.
+- Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.

@@ -4,7 +4,7 @@ The chapter-ask lane (nexus_ai.api.routes_chapter) embeds the full arc chronolog
 its system contract so a reader asking "what happens next?" never gets a confident guess —
 the model is looking at the real world map instead.
 
-This test pins the artifact, not the prose: bounded size, 173 ordered lines, byte-stable
+This test pins the artifact, not the prose: bounded size, 174 ordered lines, byte-stable
 (prefix cache), and the system contract carrying the atlas.
 """
 from __future__ import annotations
@@ -28,18 +28,18 @@ def test_atlas_index_exists_and_is_bounded():
 
 def test_atlas_index_lists_the_real_arc_front_to_back():
     text = _index_path().read_text(encoding="utf-8")
-    for no in (1, 34, 37, 109, 130, 133, 144, 147, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173):
+    for no in (1, 34, 37, 109, 130, 133, 144, 147, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174):
         assert f"{no:3d} ·" in text, no
     body_lines = [ln for ln in text.splitlines() if ln[:3].strip().isdigit()]
-    assert len(body_lines) == 173
+    assert len(body_lines) == 174
     numbers = [int(ln.split("·", 1)[0]) for ln in body_lines]
-    assert numbers == sorted(numbers) == list(range(1, 174))
+    assert numbers == sorted(numbers) == list(range(1, 175))
 
 
 def test_chapter_system_carries_the_atlas():
     system = routes_chapter._SYSTEM
     assert "THE HONG KONG ARC" in system
-    assert "173 ·" in system
+    assert "174 ·" in system
     # the chapter-lane fence is still the chapter-lane fence, not the guide's
     assert "Use ONLY the provided excerpts" in system
     assert "Reply with JSON only" not in system or "Output JSON only" in system

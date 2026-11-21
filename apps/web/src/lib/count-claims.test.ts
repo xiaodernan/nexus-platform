@@ -23,9 +23,9 @@ const STALE = [
   'Eighty-seven chapters', 'eighty-seven chapters',
 ];
 const CURRENT = [
-  '一百七十三章反覆走完一個 HK', '一百七十三章香港系列指南',
-  '一百七十三章香港系列', '一百七十三章讀竟',
-  'One hundred and seventy-three chapters',
+  '一百七十四章反覆走完一個 HK', '一百七十四章香港系列指南',
+  '一百七十四章香港系列', '一百七十四章讀竟',
+  'One hundred and seventy-four chapters',
 ];
 
 describe('chapter-count claims across locales', () => {
@@ -41,6 +41,6 @@ describe('chapter-count claims across locales', () => {
   it('the chronicle page comment is not frozen at 105', () => {
     const page = read('apps/web/app/chronicle/page.tsx');
     expect(page).not.toContain('one city, one day, 105 chapters');
-    expect(page).toContain('173 chapters');
+    expect(page).toContain('174 chapters');
   });
 });
