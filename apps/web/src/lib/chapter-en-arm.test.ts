@@ -2432,4 +2432,21 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /third key|walking home|corridor lights/.test(b.text))).toBe(true);
   });
+  it('chapter 166 (Happy Valley Layer Q closure — three keys on her own nail) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourt-east-gate-three-keys-own-nail-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/晚上十一點/);
+    expect(hk?.title).toMatch(/Layer Q CLOSED/);
+    const cn = mockGuide('hk-happy-valley-racecourt-east-gate-three-keys-own-nail-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/晚上十一点/);
+    const en = mockGuide('hk-happy-valley-racecourt-east-gate-three-keys-own-nail-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|three keys/i);
+    expect(en?.title).toMatch(/Layer Q CLOSED/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Ching/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(prose).toMatch(/wet-floor sign/i);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /own nail|slick tiles|paper under the sign/.test(b.text))).toBe(true);
+  });
 });

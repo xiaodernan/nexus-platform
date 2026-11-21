@@ -47,7 +47,7 @@ except OSError:
     log.warning("chapter ask: atlas_index unreadable — falling back to bare contract")
 
 _ATLAS_BLOCK = (
-    "\n\nTHE 165-CHAPTER HONG KONG ARC — order is chronological. Use it to understand\n"
+    "\n\nTHE 166-CHAPTER HONG KONG ARC — order is chronological. Use it to understand\n"
     "where this chapter sits in the world. The atlas grounds your answer in the world that actually exists.\n"
     "The chapter arc is synthetic narrative, never travel advice; merchants are fictional.\n"
     "Never name a character, place or rule beyond the provided excerpts.\n"
