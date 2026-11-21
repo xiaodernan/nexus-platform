@@ -56,6 +56,10 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:  # pragma: no cover - import-time hints only
     from nexus_ai.models.base import LLMRequest, LLMResponse
 
+# D1519: a runtime import, not a TYPE_CHECKING hint - `_wire_default` is called on every
+# payload this module serialises. `models.base` imports nothing from `api`, so no cycle.
+from nexus_ai.models.base import _wire_default
+
 log = logging.getLogger("nexus_ai.api.llm_response_cache")
 
 _CLIENT: Optional[Any] = None
@@ -154,8 +158,13 @@ def _user_text(req: "LLMRequest") -> str:
     if req.prompt:
         return _fold_ws_str(req.prompt)
     # same canonicalisation as HttpLLMAdapter._user_text (sort_keys, compact separators),
-    # with the D1160 whitespace fold so near-identical intents share one replay key
-    return json.dumps(_fold_ws(req.payload), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    # with the D1160 whitespace fold so near-identical intents share one replay key.
+    # D1519: `default=_wire_default` — the SECOND place the payload is serialised, and the one
+    # that raised first. `pipeline.understand` puts a `now` datetime in the context, and this key
+    # builder refused it, so every turn that named a moment died inside the cache lookup before
+    # the provider was ever called and the pipeline answered from its floor, degraded.
+    return json.dumps(_fold_ws(req.payload), ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"), default=_wire_default)
 
 
 def _ttl_s() -> int:

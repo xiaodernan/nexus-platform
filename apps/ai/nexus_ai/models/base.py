@@ -7,6 +7,8 @@ pricing and the shared httpx plumbing. The concrete adapters live in `mock.py`,
 
 from __future__ import annotations
 
+from datetime import date, datetime
+
 import json
 import re
 import time
@@ -264,6 +266,24 @@ def record_top_reason(rec: dict[str, Any]) -> str:
     return ""
 
 
+def _wire_default(value: Any) -> str:
+    """A value the JSON encoder cannot write becomes its own text — D1519.
+
+    `pipeline.understand` hands the model a context, and the context a caller actually writes
+    carries `now` as a `datetime`. `json.dumps` refuses those outright, so every turn that named a
+    moment raised TypeError inside the router, was caught by the pipeline's blanket
+    `except Exception`, and was answered by the deterministic floor — `degraded=True`,
+    `note=model_unavailable`, with the live model never called at all. The payload is a WIRE
+    format, not a Python object: what the model needs is the same reading the rule lane uses, and
+    a datetime's ISO text is exactly that. Nothing that JSON can already write takes this path,
+    so the canonical byte-shape — and with it the prefix cache — is unchanged for every payload
+    that worked before.
+    """
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    return str(value)
+
+
 class HttpLLMAdapter:
     """Shared httpx plumbing for live providers.
 
@@ -314,7 +334,8 @@ class HttpLLMAdapter:
             return req.prompt
         # sort_keys + fixed separators: identical payloads serialize byte-identically regardless
         # of construction order, so provider-side prefix caches have one canonical shape to hit.
-        return json.dumps(req.payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        return json.dumps(req.payload, ensure_ascii=False, sort_keys=True,
+                          separators=(",", ":"), default=_wire_default)
 
     async def complete(self, req: LLMRequest) -> LLMResponse:  # pragma: no cover
         raise NotImplementedError("subclasses implement the wire call")

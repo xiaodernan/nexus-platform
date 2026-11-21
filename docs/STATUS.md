@@ -47498,3 +47498,59 @@ verify in lockstep.
 new chapters do not join either automatically (the atlas derives from the corpus at render time, the
 stamps are a fixed 50). Whether the newest chapters should earn stamps is a product decision for the
 stamp lane, not a side effect of a content unit.
+
+## 1422. D1519 — the live lane was switched on and nobody could hear it: a datetime in the context killed every turn (§四)
+
+**The measurement.** Live against the operator's own endpoint (`https://api.aizzz.xyz/v1`,
+`gpt-6.2-sol`, through the app's own adapter path — `live_llm_smoke.py`): `PASS`, 7.4 s,
+prompt 4,409 tokens, answer `NEXUS-LLM-LIVE-OK`. The provider works. Then the same key through the
+product's own `pipeline.understand`, with the context a caller actually writes:
+
+    understand("帶我去吃紧拉麵", context={"now": <datetime>})
+        before -> provider=rules, degraded=True, note=model_unavailable
+        after  -> provider=openai, degraded=False
+
+**The root cause is one type.** `pipeline.understand` puts `now` into the payload it hands the model,
+and TWO places serialise that payload — `HttpLLMAdapter._user_text` (`models/base.py`, the body the
+provider reads) and `llm_response_cache._user_text` (`api/llm_response_cache.py`, the replay key) —
+both calling `json.dumps` with no `default`. A datetime raises `TypeError`, the router's coalescer
+raises it first, `understand` catches every exception from the router and answers from its
+deterministic floor, and the symptom is silent and permanent: the model is never called at all, on
+every turn that names a moment, which is every turn the product's own callers write.
+
+**The fix is one shared writer.** `_wire_default` (`models/base.py`) turns a value the encoder cannot
+write into its own text — a datetime as its ISO form, everything else as `str()` — and both
+serialisers call it. Nothing JSON can already write takes that path, so the canonical byte-shape, and
+with it the prefix cache and the replay key, is unchanged for every payload that worked before; a leg
+pins that byte-for-byte.
+
+**The live answer is not merely available, it is better.** Same sentence, two lanes
+(`tmp/live_vs_rule.py`, live, 2026-11-22):
+
+    sentence                                        rules (floor)                    live (after)
+    我想找一閙靜的拉麵店，中環，晚上九點之後  discover_offering / retail / []   discover_merchant / ramen / [quiet]
+    附近有咩好推介                                  discover_merchant / None        discover_merchant / None
+    帶我去吃紧拉麵                                  discover_merchant / restaurant  discover_merchant / ramen
+
+The first row is the one that matters: the rules read the typo'd 鬧靜 as a retail offering and dropped
+the quiet preference, the district and the hour; the live lane read the request the user made. That is
+§四's "把大模型能力完整、深度地嵌入項目整體能力" arriving by accident, through a bug fix.
+
+**The gate** is `apps/ai/tests/test_a_payload_the_wire_can_write_reaches_the_model.py`, 7 legs: the
+writer itself; BOTH serialisers on a payload carrying a clock; the byte-identity leg for a payload JSON
+can already write; the lane leg (`understand` with a `now` context reaches the router, names the live
+provider, is not degraded, and the request it built serialises through both writers); and the control
+that a refused model answer still falls to the floor. Falsified by removing `default=_wire_default`
+from the two serialisers: **3 red, 4 green** — the lane leg reddens with them, so the gate cannot pass
+with the writers broken.
+
+**Adjacent**, run and green, never full: D982's instruction/JSON-mode gate, D983's timeout gate, D980's
+usage bound, the Redis shared cache, `understand_answer_is_the_intent`, `pipeline`, and the whole
+cache/inflight/router family — **93 passed, 3 skipped** (the Redis legs skip without a server).
+`ruff` clean, `mypy` clean on both changed modules.
+
+**Filed, not claimed.** (a) The live lane is now reachable but SLOW on this proxy: the smoke took 7.4 s
+and the intent call is in the same band, against the 45 s default deadline D983 wired — reachable, not
+comfortable, and the deadline-vs-latency question is D983's own. (b) `understand`'s blanket
+`except Exception` is what made this silent; narrowing it is a separate unit, because the floor's
+silence is also what keeps a provider outage from failing a user's turn.
