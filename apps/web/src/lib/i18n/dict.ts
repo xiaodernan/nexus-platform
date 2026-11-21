@@ -47,7 +47,8 @@ export interface Dict {
     unlock: string; wrong: string; totalEvents: string; dailyTitle: string; dailyHint: string;
     projectionTitle: string; projectionHint: string; sessionsTitle: string; sessionColumn: string;
     eventsColumn: string; hourlyTitle: string; hourlyHint: string; topEventsTitle: string; recommendationsTitle: string; recommendationsHint: string;
-    windowLabel: (hours: number) => string; needPassword: string; demoBadge: string;
+    /** D1522: a template, not a function — this copy crosses into a client island. */
+    windowLabel: string; needPassword: string; demoBadge: string;
   };
   locale: Locale;
   htmlLang: string;
@@ -1319,7 +1320,7 @@ const zhHK: Dict = {
     topEventsTitle: '事件類型分佈',
     recommendationsTitle: '下一步優化建議',
     recommendationsHint: '教學：由數據推導的下一動作 — 按建議落地即改善漏斗。',
-    windowLabel: (hours) => `觀測窗口：過去 ${hours} 小時`,
+    windowLabel: '觀測窗口：過去 {hours} 小時',
     needPassword: '需要管理員密碼',
     demoBadge: 'Demo 資料 · 同一天的模擬讀者，非真實事件',
   },
@@ -3557,7 +3558,7 @@ const en: Dict = {
     topEventsTitle: 'Event type distribution',
     recommendationsTitle: 'Next optimization moves',
     recommendationsHint: 'How-to: data-derived next actions - landing these improves the funnel.',
-    windowLabel: (hours) => `Window: last ${hours} hours`,
+    windowLabel: 'Window: last {hours} hours',
     needPassword: 'Admin password required',
     demoBadge: 'Demo data · simulated readers for the same day, not real events',
   },

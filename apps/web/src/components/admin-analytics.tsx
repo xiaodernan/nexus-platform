@@ -117,7 +117,7 @@ export function AdminAnalyticsClient({ copy }: { copy: AdminAnalyticsCopy }) {
       <h1 className="text-3xl font-semibold tracking-tight text-ink-strong">{copy.title}</h1>
       <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-muted">{copy.intro}</p>
       <p className="mt-1 text-xs uppercase tracking-[0.18em] text-ink-faint">
-        {copy.windowLabel(data?.window_hours ?? 720)}
+        {copy.windowLabel.replace('{hours}', String(data?.window_hours ?? 720))}
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">

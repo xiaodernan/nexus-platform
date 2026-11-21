@@ -38,22 +38,27 @@ const walk = (root: string): string[] => {
   return out;
 };
 
-const kebab = (name: string): string =>
-  name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase();
-
-const isClientComponent = (name: string): boolean => {
-  // the repo spells component FILES in kebab-case and the component itself in PascalCase.
-  const candidates = [join(COMPONENTS, `${kebab(name)}.tsx`),
-                       join(COMPONENTS, `${kebab(name)}`, 'index.tsx')];
-  for (const path of candidates) {
-    try {
-      if (statSync(path).isFile()) return readFileSync(path, 'utf8').includes("'use client'");
-    } catch {
-      /* not there */
+/**
+ * Every CLIENT component in the tree, keyed by the name it exports.
+ *
+ * Indexed by exported name rather than by filename: the repo spells files in kebab-case and keeps
+ * the console surfaces one directory deeper (`console/moderation-queue.tsx` exports
+ * `ConsoleModerationQueue`), and a filename guess is how a reader starts missing crossings.
+ */
+const clientComponents = (): Map<string, string> => {
+  const out = new Map<string, string>();
+  for (const path of walk(COMPONENTS)) {
+    const src = read(path);
+    if (!src.includes("'use client'")) continue;
+    for (const match of src.matchAll(/export function ([A-Z][A-Za-z0-9]*)/g)) {
+      if (match[1]) out.set(match[1], path.split('components')[1] ?? path);
     }
   }
-  return false;
+  return out;
 };
+
+const isClientComponent = (name: string, index: Map<string, string>): boolean =>
+  index.has(name);
 
 const read = (path: string): string => {
   try {
@@ -69,12 +74,13 @@ const at = (root: Record<string, unknown>, path: string): unknown =>
 /** Every `<Name … prop={dict.a.b} …>` a page hands to a client component. */
 const crossings = (): Array<{ page: string; component: string; prop: string; path: string }> => {
   const out: Array<{ page: string; component: string; prop: string; path: string }> = [];
+  const clients = clientComponents();
   for (const page of walk(APP)) {
     const src = read(page);
     const pattern = /<([A-Z][A-Za-z0-9]*)\b[^>]*?\b([a-zA-Z]+)=\{dict\.([A-Za-z0-9_.]+)\}/g;
     for (const match of src.matchAll(pattern)) {
       const [, component, prop, path] = match;
-      if (component && prop && path && isClientComponent(component)) {
+      if (component && prop && path && isClientComponent(component, clients)) {
         out.push({ page: page.split('app')[1] ?? page, component, prop, path });
       }
     }

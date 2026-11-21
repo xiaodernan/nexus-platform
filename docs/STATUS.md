@@ -47694,3 +47694,42 @@ clean on every touched file; both Simplified mirrors regenerate and verify in lo
 `prop={dict.path}`; a crossing written some other way (a helper that forwards a dict subtree, a
 `{...copy}` spread) is outside its reach, and that is its known blind spot rather than a claim of
 coverage.
+
+## 1426. D1523 — the third instance was the §九 admin page, and the reader learned to see subdirectories (§九)
+
+**The gap.** D1522's reader indexed client components by GUESSING their filename from the exported
+name (`ReadingThread` → `reading-thread.tsx`). The repo keeps its console surfaces one directory
+deeper — `components/console/moderation-queue.tsx` exports `ConsoleModerationQueue` — so the guess
+missed every one of them, and with them a third live instance of the same defect.
+
+**The instance.** `AdminAnalyticsClient` on `/admin/analytics` — the §九 behaviour-analytics surface,
+the one the owner asked for by name ("管理員密碼 123 就能進… 監控所有用戶的統計數據、做分析和趨勢預測")
+— was handed `dict.adminAnalytics`, whose `windowLabel` was `(hours) => string`. Measured in the
+browser: the page answered 加載失敗 with the same "Functions cannot be passed directly to Client
+Components" error, and the password gate the owner specified never rendered at all. A feature that
+was built, tested and landed, invisible behind a render-time refusal.
+
+**The reader was fixed first, because it was the thing that was wrong.** It now indexes every client
+component by the name it EXPORTS, walking the whole components tree rather than guessing filenames.
+That took the crossings it sees from 15 to 86, and the third instance was already sitting in them.
+
+**Both fixes.** `adminAnalytics.windowLabel` is `觀測窗口：過去 {hours} 小時` /
+`Window: last {hours} hours`, filled where it is used.
+
+**Verified in a real browser, unlocked** (dev server, mock plane, 2026-11-22): the password gate
+renders, `123` unlocks it, and the page answers with real numbers — 事件總數 212, 活躍工作階段 25,
+事件類型分佈 2, the 每日事件 histogram across 11-15…11-21, 未來七日趨勢（線性投影）, 每小時分佈 across
+00…23, 事件類型分佈 view 154 / click 58, the 活躍工作階段 stream, and 下一步優化建議 naming the demo
+7-day projection, the 07:00 peak hour and the empty funnel. Screenshot kept for the record: no overlap,
+no truncation, the histogram and the projection both legible.
+
+**Adjacent**, run and green, never full: the boundary reader (86 crossings, all serialisable in three
+locales), the reading-thread engine and wiring, the handbook coverage, the dict contract's locale
+parity, the world-corpus atlas, the stamp collection, the count claims and the corpus-count sanity, the
+hk-type and home-series-rail pages, the try-flow, the admin analytics, `chapter-en-arm` (182) and the
+afterward/chronicle pages — **325 passed**. `tsc --noEmit` 0; `eslint` clean on every touched file; both
+Simplified mirrors regenerate and verify in lockstep.
+
+**Filed, not claimed.** The reader still discovers crossings by scanning `app/**` for
+`prop={dict.path}` — a crossing written through a helper or a `{...copy}` spread is outside its reach,
+as D1522 recorded. What changed today is that the component index is complete; the page scan is not.
