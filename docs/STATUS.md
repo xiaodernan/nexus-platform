@@ -47257,3 +47257,12 @@ not hidden.
   2. Running `next start` and then REBUILDING leaves the live process referencing old CSS/chunk hashes → a genuine client-side exception. Restarting the process after every build is required; recorded here as an operational rule.
 - Rebuilt with `NEXT_PUBLIC_DATA_MODE=mock` (temporarily, `.env.local` restored + rebuilt live afterward — no config change committed) and verified with Playwright: the homepage rendered **fully** (7,928 chars of main text, 159 links, no template, zero console errors). The in-app browser's locale toggle also worked, confirming client JS executes.
 - `verify_dom_clipping.mjs` now also refuses (exit 2) on a broken Next.js page (`Application error` / `client-side exception`) — verified against a deliberately stale plane. `dom-verifier-honesty.test.ts` 5/5 with the new pin.
+
+
+## 1411. D1508 — chapter 173: the second brass tag; arc reaches 173
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-two-brass-tags-chronicle` — chapter 173 （牆鐘六點三十五分、其實六點三十三分——阿晴終於拆開濕信封，裡頭是另一枚同套銅牌；她把它扣在劉太太歸還的傘柄上，兩枚並列，像有人補上了那個一直沒出現的名字。茶葉罐下，遺失物冊下角仍是乾的；牆鐘她沒有去調——有些時間快一點也無妨）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call through the Clash proxy chose the beat (HTTP 200, 19,422 tokens): the two clocks, the second tag, the dry ledger corner. Written in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 173 / 14,431 B, index 173 lines / 13,540 B; pins, `routes_chapter.py` fence and story-recap window (162–173) advanced; `check_atlas_lockstep` PASS at 173/173/173. Chapter arm + seed-script + corpus-count + handbook-coverage gates 183/183; atlas/recap 18/18; `verify_all` NO OFFENDER.
+- Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.

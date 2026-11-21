@@ -2541,4 +2541,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/two minutes fast/i);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /for the umbrella|clock two minutes fast|unopened letter/i.test(b.text))).toBe(true);
   });
+  it('chapter 173 (Happy Valley a second brass tag — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-two-brass-tags-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上六點三十五分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-two-brass-tags-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上六点三十五分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-two-brass-tags-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|second brass tag/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/tea tin|tea caddy/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /second brass tag|supplied name|dry corner/i.test(b.text))).toBe(true);
+  });
 });
