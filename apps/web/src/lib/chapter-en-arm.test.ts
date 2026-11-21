@@ -2496,4 +2496,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/verdigris/i);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /holding the gate|faint green line|no need to open it/i.test(b.text))).toBe(true);
   });
+  it('chapter 170 (Happy Valley the first tram bell — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-first-tram-bell-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上六點十七分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-first-tram-bell-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上六点十七分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-first-tram-bell-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|first tram bell/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Wong Nai Chung Road/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(prose).toMatch(/tram bell/i);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /peeling it free|before the traffic|card on the ledge/i.test(b.text))).toBe(true);
+  });
 });

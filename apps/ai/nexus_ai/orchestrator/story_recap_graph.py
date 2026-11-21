@@ -1,4 +1,4 @@
-"""D1468 — the story-recap StateGraph: where the 169-chapter arc actually stands.
+"""D1468 — the story-recap StateGraph: where the 170-chapter arc actually stands.
 
 A reader who opens the world mid-series needs orientation, not spoilers. This graph reads the
 frozen arc atlas (chapter number + clock + scene, already shipped as the chapter-lane system

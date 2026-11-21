@@ -47147,3 +47147,12 @@ not hidden.
 - `docs/SHOWCASE.json` (the curated source the weekly sync reads) now carries `milestone_full_zh`, `headline_zh` and `features_zh` mirrors; the io repo's `sync-nexus-platform.yml` copies those three fields into the assembled `latest.json` so a future sync cannot drop them.
 - `index.html`'s `refreshNp()` now reads `document.documentElement.dataset.lang` and picks the authored arm (`milestone_full_zh` / `features_zh` in zh, English fields in en), with a language-correct `事实包` / `Fact pack` prefix; feature count comes from the chosen arm. `latest.json` seeded with the mirrors; identity-guard OK.
 - Integration note: the io repo had 3 incoming sync-bot commits, so the rebase conflicted in `latest.json`. Resolved by keeping the sync bot's fresh head/commits and re-applying the Chinese mirrors from the curated SHOWCASE.json — no bot data discarded. Both repos pushed; `pages.yml` + `sync-nexus-platform.yml` dispatched (204). An initial double dispatch raced (one sync cancelled, one failed on a concurrent commit) — resolved by one clean re-dispatch: both green. Live re-verified: D1483 x6, NaN 0, stale D1470 0, latest.json head c25f434 / 1,746 commits with 4 zh + 6 en feature mirrors. Full AI suite clean at 37,960 passed / 0 failed.
+
+
+## 1400. D1495 — chapter 170: the first tram bell; arc reaches 170
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-first-tram-bell-chronicle` — chapter 170 （早上六點十七分——阿晴掀濕地滑牌打掃，跑馬紙黏在潮濕水泥地上；她揭起抹乾放窗台讓早班的人看見，沒有看背面。第一聲電車鈴從黃泥涌道越過停車場的牆，比車流還早——從前守門的人大概也聽過同一聲。早班工友問「這張是？」，她答「有人會來認」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call (HTTP 200, 4,698 tokens: 4,614 prompt / 84 completion) chose the beat: 06:17, the card stuck to damp concrete and set on the ledge, the first tram bell before traffic. Written in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 170 / 14,065 B, index 170 lines / 13,180 B; pins, `routes_chapter.py` fence and story-recap window (159–170) advanced; `check_atlas_lockstep` PASS at 170/170/170. `chapter-en-arm.test.ts` — **175** assertions; atlas/recap 18/18; `verify_all` NO OFFENDER; `check_ui_script` 0 offenders / 2,891 literals.
+- Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters.
