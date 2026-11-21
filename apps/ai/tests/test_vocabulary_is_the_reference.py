@@ -115,6 +115,11 @@ DECLARED = {
     "\u718A",   # 熊 - bear; surname - an out-of-vocabulary noun in a query that no kitchen stocks, the shape a query a human would use to fire injection without being caught
     "\u53E3",   # 口 - mouth; opening; gate - an ordinary character in public-transit copy (3 号出口) that the product's kitchen-focused vocabulary does not carry
     "\u889C",   # 袜 - stockings; socks - a malformed character sequence I wrote from memory in the injection tests; declared rather than silently replaced
+    "\u9396",   # world-answer RAG test - the east-gate keys in a real retrieval query
+    "\u5319",   # world-answer RAG test - same query, the key/umbrella vocabulary
+    "\u6674",   # world-answer RAG test - Ah Ching, the keeper (product character)
+    "\u4EAE",   # world-answer RAG test - the corridor light in the grounded answer
+    "\u91CB",   # world-answer RAG test - lexical cue in a Chinese fixture
     "\u8FB0",   # narrative fixture in the wayfinder graph test - a reader-state phrase, not product copy
     "\u600E",   # narrative fixture in the wayfinder graph test - question word, not product copy
     "\u6A23",   # narrative fixture in the wayfinder graph test - a sample mood, not product copy

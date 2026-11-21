@@ -7,6 +7,7 @@ import { mockGuides } from '@/lib/mock';
 import { Container } from '@nexus/ui';
 import { StoryRecap } from '@/components/story-recap';
 import { WayfinderPanel } from '@/components/wayfinder-panel';
+import { WorldAnswerPanel } from '@/components/world-answer-panel';
 
 /**
  * `/world` — the atlas page. A single-scroll dossier of the entire HK-series corpus,
@@ -100,6 +101,7 @@ export default async function WorldPage() {
           }}
         />
         <WayfinderPanel locale={locale} copy={t.wayfinder} />
+        <WorldAnswerPanel locale={locale} copy={t.worldAnswer} />
         <nav aria-label={t.clockLabel} className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
           {t.layers.map((layer) => (
             <a
