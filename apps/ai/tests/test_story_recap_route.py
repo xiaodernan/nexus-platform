@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 import nexus_ai.api.app as A
 from nexus_ai.models.base import LLMResponse
 
-BODY = {"locale": "en", "start": 163, "end": 174}
+BODY = {"locale": "en", "start": 164, "end": 175}
 
 
 def _client() -> TestClient:
@@ -53,7 +53,7 @@ def test_mock_provider_is_inert():
 
 def test_live_canned_reply_passes_the_fence_and_measured_block():
     reply = {
-        "recap": "Chapters 163 to 174 stay at the east gate: Ah Lok keeps the old books, Ah Muk hangs the tags, Ah Wan works the floor, and a parcel arrives from Chan Bok past.",
+        "recap": "Chapters 164 to 175 stay at the east gate: Ah Lok keeps the old books, Ah Muk hangs the tags, Ah Wan works the floor, and a parcel arrives from Chan Bok past.",
         "watch": "The brush-ink sender is still unnamed.",
         "confidence": "medium",
     }

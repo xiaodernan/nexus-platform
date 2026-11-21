@@ -9,7 +9,7 @@ from nexus_ai.orchestrator import story_recap_graph as g
 def _good(locale: str) -> dict:
     if locale == "en":
         return {
-            "recap": "Chapters 163 to 174 stay at the east gate: Ah Lok keeps the old books, Ah Muk hangs the tags, Ah Wan works the floor, and a parcel arrives from Chan Bok's past.",
+            "recap": "Chapters 164 to 175 stay at the east gate: Ah Lok keeps the old books, Ah Muk hangs the tags, Ah Wan works the floor, and a parcel arrives from Chan Bok's past.",
             "watch": "The brush-ink sender is still unnamed.",
             "confidence": "medium",
         }
@@ -22,7 +22,7 @@ def _good(locale: str) -> dict:
     }
 
 
-async def _run(locale="en", start=163, end=174, reply=None):
+async def _run(locale="en", start=164, end=175, reply=None):
     calls = {"n": 0}
 
     async def llm(system, prompt, max_tokens):
@@ -57,7 +57,7 @@ def test_zh_reply_must_carry_cjk():
 def test_invented_chapter_number_refused():
     bad = _good("en")
     # both endpoints must be invented: leaving 174 valid would let the recap survive
-    bad["recap"] = bad["recap"].replace("163", "999").replace("174", "998")
+    bad["recap"] = bad["recap"].replace("164", "999").replace("174", "998")
     out, _ = asyncio.run(_run(reply=bad))
     # the fabricated-number recap is dropped field-by-field; a valid watch survives by
     # design, so the honest assertion is "no invented number reaches the reader".
@@ -77,6 +77,6 @@ def test_model_unavailable_degrades():
     async def llm(*a, **k):
         raise RuntimeError("down")
 
-    out = asyncio.run(g.run_recap(locale="en", start=163, end=174, llm_call=llm))
+    out = asyncio.run(g.run_recap(locale="en", start=164, end=175, llm_call=llm))
     assert out["degraded"] is True
     assert out["reason"] == "model_unavailable"

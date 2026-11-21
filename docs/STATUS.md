@@ -47285,3 +47285,12 @@ not hidden.
 - **This chapter exercised the new count discipline:** all count labels in BOTH authored arms advanced 173→174, including the stamp certificate and the `count-claims` / `stamp-collection` / handbook / hk-type / home-rail pins — no locale left behind.
 - A story-recap fence test assumed a single invented number forced whole-artifact degradation; with 174 now valid and a valid `watch` field, the honest assertion is field-by-field refusal (no invented number reaches the reader, recap empty). 18/18 atlas/recap tests green; web 86 files / **725 passed**; `verify_all` NO OFFENDER.
 - Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.
+
+
+## 1414. D1511 — chapter 175: the dried card under the strap; arc reaches 175
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-dried-card-strap-chronicle` — chapter 175 （牆鐘 6:12、其實 6:10——雨停後，阿晴把晾乾的跑馬紙和兩枚銅牌一同扣在傘帶下，傘尖朝裡擺回東門門邊；傘尖留有劉太太歸還前抹泥的痕。早班工友問「傘放回去了？」她答「雨停了」——剩下的留給還沒出現的人自己來認）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call through the Clash proxy (HTTP 200, 19,696 tokens) chose the beat. Written in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 175 / 14,667 B, index 175 lines / 13,777 B; pins, `routes_chapter.py` fence and story-recap window (164–175) advanced; `check_atlas_lockstep` PASS at 175/175/175. Count labels advanced in BOTH authored arms (the D1509 discipline held). Web 86 files / **726 passed**; atlas/recap 18/18; `verify_all` NO OFFENDER.
+- Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.

@@ -1,9 +1,9 @@
 # THE HONG KONG ARC · 香港系列 · THE SYNTHETIC WORLD
-# 00:00→23:00+ · 174 chapters · three arms (zh-HK Traditional / zh-CN opencc fold / full English prose)
+# 00:00→23:00+ · 175 chapters · three arms (zh-HK Traditional / zh-CN opencc fold / full English prose)
 # demo:true · every scene is narrative construction; merchants and people are fictional; the arc is flags:{demo:true}
 # Layers A–M CLOSED · Layer N CLOSED at ch.138 (the afternoon last count) · Layer O CLOSED at ch.144 (after the meet) · Layer P open (the east gate, D1450)
 # World constitution:
-#   · the arc is one long Hong Kong day told in one hundred and seventy-four rooms
+#   · the arc is one long Hong Kong day told in one hundred and seventy-five rooms
 #   · each chapter is a single shopfront, crossing or dawn queue — a place you can almost touch
 #   · characters reappear across layers (the cash register never lies; dragon-gate, Octopus, the harbour)
 #   · money is counted, lamps are lit, ledgers close before notices — no drama without a witness
@@ -184,3 +184,4 @@
 172 · 早上六點三十一分 · 跑馬地——賽馬會停車場東門——閘桿升起，門檻上多了一個濕信封
 173 · 早上六點三十五分 · 跑馬地——賽馬會停車場東門——信封裡是另一枚銅牌
 174 · 傍晚六點四十二分 · 跑馬地——賽馬會停車場東門——雨把跑馬紙泡得滑了
+175 · 傍晚六點十二分 · 跑馬地——賽馬會停車場東門——雨停後，紙和兩枚銅牌一同扣回傘帶下

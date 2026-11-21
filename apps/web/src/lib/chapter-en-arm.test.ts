@@ -2569,4 +2569,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /catching it|waiting out the rain|two minutes/i.test(b.text))).toBe(true);
   });
+  it('chapter 175 (Happy Valley dried card under the strap — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-dried-card-strap-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/傍晚六點十二分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-dried-card-strap-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/傍晚六点十二分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-dried-card-strap-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|dried card under the strap/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/ferrule/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /back under the strap|mark on the ferrule|beside the gate/i.test(b.text))).toBe(true);
+  });
 });
