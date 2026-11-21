@@ -22,6 +22,7 @@ from nexus_ai.tools.registry import (
     Registry,
     ToolSpec,
 )
+from nexus_ai.tools.search_web import build_search_web
 
 if TYPE_CHECKING:
     from nexus_ai.search.service import SearchBackend
@@ -395,4 +396,7 @@ def register_read_tools(
     build_search_offering(registry, backend, tenant_id, kind="product")
     build_search_offering(registry, backend, tenant_id, kind="service")
     build_search_reviews(registry, backend, tenant_id)
+    # D1488: the one SSRF-guarded egress tool. Registered by default because the contract
+    # names it a read tool; the allow-list + DNS-rebind guard make it safe to expose.
+    build_search_web(registry)
     return registry
