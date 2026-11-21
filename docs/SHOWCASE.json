@@ -1,25 +1,27 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1483",
-  "milestone_full": "Layer Q - the next keeper - is CLOSED. All 166 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose). Ah Ching takes the three keys, hangs them on her own nail, lights the corridor for a cleaner and finds a pencilled name that is not hers. Eight StateGraphs run in the service (world guide, Ah Wan NPC, analyst readout, EN-arm drafting bench, fenced arc auditor, story recap, Wayfinder, arc audit). Live model aizzz/gpt-6.2-sol through the operator Clash Verge; frozen prefix across every model-facing lane; deterministic fences on every model-authored artefact; frozen atlas regenerated in lockstep (166 chapters). verify_all NO OFFENDER; full AI suite green; web suite green.",
-  "headline": "Layer Q CLOSED · 166 chapters in three arms · eight StateGraphs · behaviour analytics + wayfinder · every model byte fenced · every gate green.",
+  "milestone": "D1502",
+  "milestone_full": "Layer R - the names we keep - is OPEN. All 171 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose). Ah Ching keeps the east-gate keys; a folded race card with a pencilled name waits under the wet-floor sign, Mrs Lau returns a borrowed umbrella, and a numbered brass tag ties the three together in the lost-property book. Ten StateGraphs/lanes run in the service (world guide, Ah Wan NPC, analyst readout, EN drafting bench, fenced arc auditor, story recap, Wayfinder, arc audit, cross-chapter World Answer, real web facts). The provider cache flicker (95.3% / 0%) was measured and removed with a bounded in-process replay arm: 1 provider call + 5 zero-token replays. A 7,937-token full-corpus RAG lane and a zero-token Wikipedia facts door are live. Full AI suite 37,984 green; web 707 green; verify_all NO OFFENDER.",
+  "headline": "Layer R open · 171 chapters in three arms · ten LLM lanes · cache flicker fixed · 7,937-token corpus RAG · real Wikipedia facts · every gate green.",
   "as_of": "2026-11-21",
-  "updated_at_commit": "d98677b",
+  "updated_at_commit": "1ac0125",
   "features": [
-    "D1483: chapter 166 CLOSES Layer Q - three keys on Ah Ching's own nail, the corridor light for a cleaner, a pencilled name that is not hers. Arc 166 chapters, three arms; arm test 170/170; atlas lockstep 166/166/166; verify_all NO OFFENDER.",
-    "D1480–D1482: chapters 164–166 land (empty square / corridor light / closure) with a live gpt-6.2-sol call choosing the physical beats; the parallel wave's five residual AI-suite failures closed at the root (canonical error envelopes + admin route off OpenAPI).",
-    "D1479: Wayfinder StateGraph (reader position + fixed mood -> one real chapter) and the password-123 behaviour-analytics page (real §58 events, per-day/session/hourly stats, seven-day least-squares projection, derived next steps).",
-    "D1451–D1468: eight real StateGraphs live - world guide, Ah Wan NPC, analyst readout, EN-arm drafting bench, fenced arc auditor, on-demand story recap, Wayfinder, arc audit. Model phrases; code owns facts, identity and structure.",
-    "D1457/D1468: all model-facing lanes ride a shared frozen prefix; live replay measured ~88% cached; frozen atlas regenerated in lockstep with the corpus on every chapter.",
-    "§十一 pressure re-verified on the production build (zero 5xx) · §三 Spring Cloud cloud modules green · identity hard-gates live (雅思6.5 / CET6 546 / 隐盾 / 赵欣曈) · profile README locked."
+    "D1501–D1502: chapters 167–171 land (Mrs Lau / the address / the brass latch / the first tram bell / the numbered brass tag). Arc 171 chapters, three arms; every chapter locked step with the frozen atlas (171/171/171).",
+    "D1502: real public facts door — POST /ai/v1/world/web-facts dispatches the SSRF-guarded Wikipedia tool. LIVE: 4 real rows in 1.16s, ZERO LLM tokens.",
+    "D1499: provider cache flicker measured (95.3% on 5 calls, 0% on one) then removed with a bounded process-local replay arm. LIVE via product router: 1 provider call, 5 zero-token replays.",
+    "D1497: full-corpus cross-chapter RAG (retrieve -> answer -> verify StateGraph over real chapter bodies). LIVE: 7,937 prompt tokens, grounded answer citing chapters 158+165.",
+    "D1496: parallel-session cache isolation (inflight key dimensions fixed) + Wayfinder StateGraph finally given a user door on /world.",
+    "D1491–D1492: guided play coach on /try; 368-request pressure run across 4 routes, zero failures."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page.",
-  "milestone_full_zh": "Layer Q（接棒的人）已收官。全部 166 章香港系列以三語臂呈現（繁體香港／opencc 簡體／完整英文）。阿晴從阿穆手中接過三條鎖匙，掛在自己的釘子上，為清潔工亮起走廊燈，並在濕地滑牌下找到一張別人寫的跑馬紙。八個 StateGraph 在服務中運行；凍結前綴覆蓋所有模型通道；每個模型輸出都有確定性圍欄；凍結地圖圖譜隨語料同步再生（166 章）。verify_all 全綠；全套 AI 測試通過。",
-  "headline_zh": "Layer Q 收官 · 166 章三語臂 · 八個 StateGraph · 行為分析與向導 · 每一字節都有圍欄 · 所有閘門全綠。",
+  "milestone_full_zh": "Layer R（記得名字的人）已開啟。全部 171 章香港系列以三語臂呈現（繁體香港／opencc 簡體／完整英文）。阿晴守著東門三條鎖匙；濕地滑牌下的跑馬紙寫著別人的名字，劉太太歸還一把借去的傘，編號銅牌把三者記進遺失物冊。服務中運行十個 StateGraph／通道：世界向導、阿灣 NPC、分析師讀數、英文臂起草、圍欄章節稽核、故事回顧、Wayfinder、章節稽核、全語料問答、真實聯網資料。實測並修掉快取抖動（95.3%／0%）：有界進程內重播——1 次供應商呼叫＋5 次零 token 重播。7,937-token 全語料 RAG 與零 token 維基百科資料門已上線。全套 AI 37,984 綠、web 707 綠、verify_all 全綠。",
+  "headline_zh": "Layer R 開啟 · 171 章三語臂 · 十個 LLM 通道 · 快取抖動已修 · 7,937-token 語料 RAG · 真實維基資料 · 所有閘門全綠。",
   "features_zh": [
-    "D1483：第 166 章收官 Layer Q——三條鎖匙掛上阿晴自己的釘子，走廊燈為清潔工亮起，牌子底下一張別人寫的跑馬紙。全系列 166 章三語臂；章節測試 170/170；地圖圖譜 166 鎖步。",
-    "D1480–D1482：第 164–166 章相繼落地（空白格／走廊燈／收官），一次 gpt-6.2-sol 即時呼叫選出收官節拍；平行工作流殘留的五個 AI 套件失敗從根因修復。",
-    "D1479：Wayfinder StateGraph（讀者位置＋固定心情→真實章節）與密碼 123 的行為分析頁（真實 events 資料、逐日／逐工作階段／每小時統計、七日最小平方法預測）。",
-    "D1451–D1468：八個真實 StateGraph 上線——世界向導、阿灣 NPC、分析師讀數、英文臂起草台、圍欄章節稽核、按需故事回顧、Wayfinder、章節稽核。模型措辭，程式掌握事實。"
+    "D1501–D1502：第 167–171 章相繼落地（劉太太／背面地址／銅扣／第一聲電車鈴／編號銅牌）。全系列 171 章三語臂，每章與凍結圖譜鎖步（171/171/171）。",
+    "D1502：真實資料門——POST /ai/v1/world/web-facts 調度 SSRF 防護的維基百科工具。實測：4 筆真實資料、1.16 秒、零 LLM token。",
+    "D1499：實測供應商快取抖動（5 次 95.3%、1 次 0%）並以有界進程內重播修掉。產品 router 實測：1 次供應商呼叫、5 次零 token 重播。",
+    "D1497：全語料跨章節 RAG（對真實章節內文運行的 retrieve→answer→verify StateGraph）。實測：7,937 prompt tokens，答案有據引用第158／165章。",
+    "D1496：並行會話快取隔離（修好 inflight 鍵維度）＋ Wayfinder StateGraph 終於在 /world 有了使用者入口。",
+    "D1491–D1492：/try 帶玩教練；4 條路由 368 請求壓力測試，零失敗。"
   ]
 }
