@@ -73,10 +73,11 @@ export default async function GuidesIndexPage() {
         </section>
       ) : null}
 
-      {/* D1517 — the reading thread: the next doors, read off what the reader already finished. */}
-      {IS_MOCK ? (
-        <ReadingThread guides={guides} copy={dict.growth.readingThread} />
-      ) : null}
+      {/* D1517/D1528 — the reading thread: the next doors, read off what the reader already
+          finished. NOT gated on IS_MOCK: the engine is pure over whatever `guideList` served, and
+          the read-set it reads (`nexus.hk-series.read`) is written by the /hong-kong hub on BOTH
+          planes, so a live-plane reader who has been reading gets the same thread. */}
+      <ReadingThread guides={guides} copy={dict.growth.readingThread} />
 
       {/* D1310 — the live world guide on the trailhead, before the list of 106 doors. */}
       <WorldGuideBeacon

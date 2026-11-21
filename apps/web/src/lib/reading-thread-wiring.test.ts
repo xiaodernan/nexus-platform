@@ -20,11 +20,16 @@ const HELPER = 'apps/web/src/lib/chapter-read.ts';
 const DICT = 'apps/web/src/lib/i18n/dict.ts';
 
 describe('D1517 the reading thread wiring', () => {
-  it('the guides index renders the island in mock mode, before the world guide', () => {
+  it('the guides index renders the island on BOTH planes, before the world guide', () => {
     const page = read(PAGE);
     expect(page).toContain("import { ReadingThread } from '@/components/reading-thread';");
     expect(page).toContain('<ReadingThread guides={guides} copy={dict.growth.readingThread} />');
+    // D1528: the island is NOT wrapped in IS_MOCK. The engine is pure over whatever guideList
+    // served and the read-set it reads is written by the /hong-kong hub on both planes, so a
+    // live-plane reader who has been reading gets the same thread.
     const thread = page.indexOf('<ReadingThread guides={guides}');
+    expect(page).not.toContain('{IS_MOCK ? (\n        <ReadingThread');
+    expect(page.slice(Math.max(0, thread - 120), thread)).not.toContain('IS_MOCK');
     const beacon = page.indexOf('<WorldGuideBeacon');
     expect(thread).toBeGreaterThan(-1);
     expect(beacon).toBeGreaterThan(thread);

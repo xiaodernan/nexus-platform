@@ -47871,3 +47871,36 @@ settings object. `ruff` and `mypy` clean.
 **Gate.** No product code changed, so no new gate was needed; the lane's own offline gates
 (`world_answer_graph`'s fence arms, `world-answer-ui`, the depth-whitelist proxy leg) are green in this
 session's adjacent runs. What this unit adds is the live evidence and the tool that reproduces it.
+
+## 1431. D1528 — the reading thread stopped pretending only one plane exists (§六)
+
+**The gap.** D1517 gated the reading thread on `IS_MOCK`, which is the product's DEFAULT but is not what
+this developer machine runs (`NEXT_PUBLIC_DATA_MODE=live` in `apps/web/.env.local`). So the feature the
+owner asked for — enough guidance that a reader never gets lost — was invisible on the very box it was
+built on, by the same convention that hides the featured HK series there. The gate was never argued for;
+it was inherited from the block above it.
+
+**It did not need to be.** The engine is pure over whatever `guideList(locale)` served, and the read-set
+it reads — `nexus.hk-series.read` — is written by the `/hong-kong` hub's arc timeline and progress strip
+on BOTH planes (they are dict-driven, not mock-driven). A live-plane reader who has been reading has the
+same read-state and deserves the same thread.
+
+**The change is one line plus its guard.** The island is no longer wrapped in `IS_MOCK ? (…) : null`;
+the wiring leg that pinned "renders the island in mock mode" is re-aimed to pin "renders the island on
+BOTH planes", asserting the JSX is not behind a mock guard and that nothing within 120 characters in
+front of it mentions `IS_MOCK` — a leg that would redden if the gate came back.
+
+**Verified in a real browser** (dev server, mock plane, 2026-11-22): `/guides` still renders the eyebrow
+續讀線 · 讀過咩就續咩, the progress 已讀 0 / 179 章 · 完成度 0% and the empty state, with no error and no
+overlap. The live plane itself needs the platform and AI services on `localhost:3002` to verify against,
+which this box does not have running; the gate pins the shape and the mock plane proves the render.
+
+**Adjacent**, run and green, never full: the boundary reader (167 crossings), the reading-thread engine
+and wiring, the handbook coverage, the dict contract's locale parity, the world-corpus atlas, the stamp
+collection, the count claims and the corpus-count sanity, the hk-type and home-series-rail pages, the
+try-flow, the admin analytics, the world-answer UI and the world-guide/chapter-ask live panels, and
+`chapter-en-arm` (182) — **428 passed**. `tsc --noEmit` 0; `eslint` clean on both touched files.
+
+**Filed, not claimed.** On the live plane the corpus is whatever the platform serves, and whether its
+bodies arrive whole enough for the affinity measure to mean anything is a live-plane question this unit
+does not answer — it answers only that the lane is no longer switched off there.
