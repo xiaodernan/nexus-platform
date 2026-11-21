@@ -47776,3 +47776,34 @@ gate, because a vitest run cannot boot Next. What is a gate is the boundary read
 sweep's job was to find what the reader could not yet see. And the reader still only sees
 `prop={dict.path}` and `prop={alias.path}` — a `{...copy}` spread or a helper that forwards a subtree is
 outside it, as recorded in D1522 and D1523.
+
+## 1428. D1525 — the twelve-item directive re-inventoried: what is done, what is owed (§一)
+
+**The ask.** §一 of the owner's directive is a working rhythm — "先檢查項目當前狀態 → 把需求列成完整計劃 →
+按計劃逐項執行" — and the plan in `docs/PLAN.md` had not been re-taken since the wave that built the
+admin analytics page and the pressure probe. Ten units landed in this session (D1515-D1524); the plan
+now says what they bought and what they left.
+
+**What is DONE, each line carrying its own evidence rather than a date.** §二 consolidation: `master`
+is the only branch and the second worktree is an ANCESTOR of it, so there is nothing to merge. §三: the
+cloud plane ships seven services, a Redis Bus-lite fleet, four StateGraphs and the chapter RAG. §四: the
+live lane is measured twice — the smoke answers through the app's own adapter, `pipeline.understand`
+reaches `provider=openai, degraded=false`, and the real intent shape caches at **94.5%** after one cold
+call, which is the owner's ~90% target measured rather than argued. §五: four pages that answered
+加載失敗 behind the boundary defect now answer, a 39-route browser sweep is clean, and five surfaces
+were looked at in a browser. §六: chapters 176 and 177 shipped in three arms and the reading thread
+landed. §七: the handbook is in-app, its tour grew to ten steps and its own chapter count was corrected
+172 -> 177. §八: the two chapters with no English arm were translated, and every new surface was
+verified in both locales in a browser. §九: `/admin/analytics` unlocks with `123` and answers real
+numbers. §十一: D371's pressure evidence stands.
+
+**What is OWED, in the order this session would take it.** (a) the reading thread is `IS_MOCK`-gated and
+the live plane would need the engine fed from platform rows; (b) the boundary reader's two remaining
+shapes; (c) re-measuring the prefix cache after D1520 appended to the byte-stable system prompt;
+(d) the proxy's 7-19 s against D983's 45 s deadline; (e) §十 lives in the owner's `xiaodernan.github.io`
+repository, not in this workspace.
+
+**The gate** is the plan itself plus the readers already in the tree: `check_ledger_sections` PASS
+(1307 sections, no duplicates), `check_console_i18n` PASS (0 offenders), `check_console_a11y` PASS, both
+Simplified mirrors in lockstep. This unit changes one document; the evidence it cites is the evidence
+the ten units before it measured.

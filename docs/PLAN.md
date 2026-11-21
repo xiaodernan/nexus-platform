@@ -4251,3 +4251,34 @@ by what is already verified, not by date.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first; any unit
   that touches the platform runs the FULL platform suite and attributes every red with a BASE pass before
   landing (D902).
+
+- **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
+  owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
+  evidence rather than a date.
+  **DONE.** §二 consolidation: `master` is the only branch and the second worktree
+  (`D:/nexus-cpverify2`) is an ANCESTOR of it, so there is nothing to merge. §三: the cloud plane ships
+  seven services (eureka, gateway, config-server, dispatcher, events, insight, admin-server) with a
+  Redis Bus-lite fleet (D1024-D1035), four StateGraphs (wayfinder, world answer, story recap, world
+  guide) and the chapter RAG. §四: the live lane is measured twice this session — the smoke answers
+  `NEXUS-LLM-LIVE-OK` through the app's own adapter, `pipeline.understand` reaches
+  `provider=openai, degraded=false`, and the real intent shape caches at **94.5%** after one cold call
+  (the owner's ~90% target). §五: four pages were answering 加載失敗 behind a server/client boundary
+  defect and now answer (D1521-D1524), a 39-route browser sweep is clean, and `/`, `/world`,
+  `/guides`, `/handbook`, `/insights` were looked at in a browser. §六: chapters 176 and 177 shipped in
+  three arms and the reading thread landed. §七: the handbook is in-app at `/handbook`, its tour grew to
+  ten steps and its own chapter count was corrected 172 -> 177. §八: the two chapters that had no
+  English arm were translated, and every new surface was verified in BOTH locales in a browser. §九:
+  `/admin/analytics` unlocks with `123` and answers 事件總數 212, the daily histogram, the seven-day
+  projection and three optimisation recommendations. §十一: D371's pressure evidence stands (15187
+  wrong-credential attempts all 429, a 2019 RPS auth burst, a 144-request search load, zero 5xx).
+  **OWED, in the order this session would take them.** (a) The reading thread is gated on `IS_MOCK`, so
+  a live-plane dev box never sees it; the live plane serves guides through `toGuide` and would need the
+  same engine fed from platform rows. (b) The boundary reader sees `prop={dict.path}` and
+  `prop={alias.path}`; a `{...copy}` spread or a helper forwarding a subtree is outside it. (c) D1520
+  appended to `INTENT_EXTRACT_SYSTEM`, which is the tail of D1050's byte-stable prefix — the next cache
+  measurement must confirm the hit rate recovered. (d) The proxy is slow (7-19 s per live call against
+  D983's 45 s deadline): reachable, not comfortable. (e) §十 lives in the owner's `xiaodernan.github.io`
+  repository, not in this workspace. **STANDING RULE.** Any new host coordinate runs
+  `scripts/check_cloud_plane_ports.mjs` first; any unit that touches the platform runs the FULL platform
+  suite and attributes every red with a BASE pass before landing (D902). And the owner's §十二 applies:
+  when (a)-(e) are closed, plan new content rather than stop.
