@@ -47040,3 +47040,12 @@ not hidden.
 - The AI suite's six self-consistency failures (D372) all closed: `run_arc_audit` + `_rows` declared with reasons in `test_no_dead_constants.py`; 3 wayfinder-test code points declared in `test_vocabulary_is_the_reference.py`; my story-recap zh fixture restricted to product vocabulary. 6/6 self-consistency tests + 13/13 wayfinder tests green.
 - Adding the wayfinder/behavior contract rows had shifted a `docs/API_CONTRACT.md:420` citation; relinked `platform-guides.ts:30` from the now-empty :423 to :420. `check_comment_citations` PASS (299/299).
 - `verify_all` NO OFFENDER · tsc exit 0 · full web suite 75 files / **679 passed**. Arc 164, showcase fact-pack still live-verified at D1470; no LLM token spent this unit.
+
+
+## 1389. D1482 — chapter 165 joins Layer Q; the parallel wave's last five AI-suite failures closed at the root
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-corridor-light-chronicle` — chapter 165 （晚上八點——阿晴把修好的傘靠在門邊，問第三條鎖匙何時用；阿穆「有人走夜路的時候」——走廊燈亮了，不是誰去按的，是值夜的人按的；阿晴第一次明白第三條鎖匙是用來照別人的）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- Frozen artifacts in lockstep: digest 165 chapters / 13,507 B, index 165 lines / 12,619 B; pins, the `routes_chapter.py` fence, and the story-recap window (154–165) advanced; `check_atlas_lockstep` PASS at 165/165/165. `chapter-en-arm.test.ts` — **169** assertions; 18 atlas/recap tests green.
+- The full AI suite (background re-run of the D372 measurement) carried **5** failures, all from the parallel wave's new `routes_behavior.py`: three `TypeError: JSONResponse.__init__() got an unexpected keyword argument 'status'` (the route used `status=` where Starlette requires `status_code=`), one D455 violation (three hand-built `{"error":{"code","message"}}` frames), and one D460 census failure (the password-gated admin read answered 403 to a client-style probe). Fixed at the root rather than declared away: the three frames now come from the contract's own `errors.error_response` / `errors.error_envelope` helpers, and the operator-only route follows `/ai/v1/admin/digest` with `include_in_schema=False` so it leaves the client-visible OpenAPI surface the census walks. `--last-failed` now all green; full suite re-running.
+- `verify_all` NO OFFENDER · tsc 0 · arm 169/169. No LLM token spent this unit; io fact-pack still live-verified at D1470 · Layer P CLOSED · 158 chapters (chapter 165 is not a layer closure, so no sync).

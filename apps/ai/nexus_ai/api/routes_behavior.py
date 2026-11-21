@@ -16,8 +16,8 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
 
+from nexus_ai.api import errors
 from nexus_ai.api.degraded import degraded_json
 from nexus_ai.api.deps import Deps
 
@@ -27,18 +27,15 @@ log = logging.getLogger("nexus_ai.behavior")
 ADMIN_PASSWORD = "123"
 
 
-@router.get("/ai/v1/admin/behavior")
+@router.get("/ai/v1/admin/behavior", include_in_schema=False)
 async def behavior(request: Request, password: str = "", hours: int = 168):
     deps = Deps(request)
     if password != ADMIN_PASSWORD:
-        return JSONResponse(
-            {"error": {"code": "admin_password", "message": "password 123 required"}},
-            status=403,
-        )
+        return errors.error_response("admin_password", "password 123 required", status=403)
     db = deps.database()
     if db is None:
         return degraded_json(
-            {"error": {"code": "database_unavailable", "message": "the events plane is not reachable"}},
+            errors.error_envelope("database_unavailable", "the events plane is not reachable"),
             status=503,
         )
     hours = max(1, min(hours, 24 * 30))
@@ -65,7 +62,7 @@ async def behavior(request: Request, password: str = "", hours: int = 168):
     except Exception as exc:  # the demo plane can close under us
         log.warning("behavior query failed: %s", exc)
         return degraded_json(
-            {"error": {"code": "query_failed", "message": str(exc)[:200]}},
+            errors.error_envelope("query_failed", str(exc)[:200]),
             status=503,
         )
     daily_counts = [(row["day"], int(row["n"])) for row in daily]
