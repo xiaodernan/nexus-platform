@@ -47375,3 +47375,43 @@ from the seeded CI plane; nothing in this unit touches that builder).
 **Filed, not claimed.** The two lanes still order a page differently — the fixture lane counts exact
 substring hits and the live lane keeps a rating-ordered candidate cut (D708). This unit makes the live
 score honest; it does not pretend the lanes are the same function.
+
+## 1419. D1516 — two chapters answered in Chinese when the reader asked for English (§八)
+
+**The census.** `mockGuides('en')` substitutes a chapter's `body_blocks_en` wholesale when the chapter
+ships one (D1286), and falls back to the Traditional HK text when it does not — D1286 called that
+"honest fallback by design" and pinned it with a leg. Measured 2026-11-22 over the whole shipped corpus
+(`apps/web/src/lib/mock/seed.ts`, 177 guides): **2 of 177 carried no English arm at all** —
+`rainy-day-hong-kong` and `sha-tin-date-plan`, both synthetic demo guides — so in `en` mode those two
+pages rendered 中文 title, 中文 description and 中文 body beside a fully English chrome. The owner's §八
+is explicit: 英文模式下全部统一英文, no mixing. The earlier decision and the directive disagree, and the
+directive wins.
+
+    slug                    zh-HK title                                  before (en)      after (en)
+    rainy-day-hong-kong     下雨天的香港：步行 10 分鐘內的六個選擇       same zh glyphs   full EN arm
+    sha-tin-date-plan       沙田約會兩小時方案（示例）                  same zh glyphs   full EN arm
+
+**The fix is content, not a branch.** Both guides now carry `title_en`, `description_en` and
+`body_blocks_en` in the same shape and the same voice as the 175 that already had them — the
+synthetic-guide disclaimer, the numbered section headings, the list items and the cards-block title all
+translated, no shell, no machine placeholder (`seed.ts`, the two entries beside `hk-food-chronicle`).
+The decorator needed no change: it already prefers the EN arm when one exists.
+
+**The census is now a gate, not a measurement.** `chapter-en-arm.test.ts` carries two new legs — every
+shipped chapter must carry a complete EN arm (title, description, at least one block), and the EN arm
+must carry **every** beat of the zh arm (`body_blocks_en.length === body_blocks.length`), which is what
+stops a half-translated chapter from passing again. The D1286 leg that pinned the opposite behaviour for
+`sha-tin-date-plan` is **re-aimed, not deleted**: it now asserts those two guides render no CJK in `en`
+mode and still render 沙田約會 / 下雨天 in `zh-HK`, with the re-aimment and its reason recorded in the
+leg's own comment.
+
+**Adjacent**, run and green, never full: `chapter-en-arm` (180 legs — one per chapter plus the arms),
+the world-corpus atlas, the stamp collection, the handbook coverage, the dict contract's locale parity
+and the afterward/chronicle pages — **208 passed**. `mypy`/`ruff` are untouched (no Python changed);
+`tsc` is not run here because this unit changes data only and the adjacent suites type-check it.
+
+**Filed, not claimed.** The LIVE plane is a different corpus: a guide is `collections WHERE kind =
+'guide'` (`CollectionsRepository`), served through `toGuide` (`platform-guides.ts`), whose body blocks
+are stored once and localized by title pair only. Whether that plane's own guides carry an English body
+is a platform-lane question with its own reader; this unit closes the shipped mock corpus, which is the
+plane the demo flag says these two guides live on.

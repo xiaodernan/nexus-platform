@@ -8,7 +8,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { mockGuide } from './mock';
+import { mockGuide, mockGuides } from './mock';
 
 describe('chapter 106 ships in three arms', () => {
   it('the zh-HK arm is the Traditional HK voice', () => {
@@ -39,10 +39,40 @@ describe('chapter 106 ships in three arms', () => {
     expect(guide?.body_blocks.some((b) => b.type === 'paragraph' && b.text.includes('深水埗'))).toBe(true);
   });
 
-  it('a chapter without an EN arm renders its Traditional HK text in en mode — honest fallback by design', () => {
-    const guide = mockGuide('sha-tin-date-plan', 'en');
-    expect(guide).not.toBeNull();
-    expect(guide?.title).toContain('沙田約會');
+  it('the two demo guides that shipped without an EN arm now carry one — re-aimed by D1516 (§1419)', () => {
+    // D1286 recorded the opposite on purpose: a chapter with no EN arm rendered its Traditional HK
+    // text in en mode, "honest fallback by design". The owner's §八 directive rules the other way —
+    // 英文模式下全部统一英文, no mixing — so the two demo guides (rainy-day-hong-kong,
+    // sha-tin-date-plan) were given full English arms and this leg is re-aimed, not deleted.
+    for (const slug of ['rainy-day-hong-kong', 'sha-tin-date-plan']) {
+      const guide = mockGuide(slug, 'en');
+      expect(guide, slug).not.toBeNull();
+      expect(guide?.title, slug).not.toMatch(/[\u4e00-\u9fff]/);
+      expect(guide?.description, slug).not.toMatch(/[\u4e00-\u9fff]/);
+      const prose = (guide?.body_blocks ?? [])
+        .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+        .join(' ');
+      expect(prose, slug).not.toMatch(/[\u4e00-\u9fff]/);
+      expect(prose.length, slug).toBeGreaterThan(40);
+    }
+    // the Traditional arm is untouched beside it
+    expect(mockGuide('sha-tin-date-plan', 'zh-HK')?.title).toContain('沙田約會');
+    expect(mockGuide('rainy-day-hong-kong', 'zh-HK')?.title).toContain('下雨天');
+  });
+
+  it('every shipped chapter carries a complete EN arm — the §八 census, not a sample', () => {
+    const zh = mockGuides('zh-HK');
+    expect(zh.length).toBeGreaterThan(100);
+    const bare = zh
+      .filter((guide) => !guide.title_en || !guide.description_en
+        || !Array.isArray(guide.body_blocks_en) || guide.body_blocks_en.length === 0)
+      .map((guide) => guide.slug);
+    expect(bare, 'chapters with no English arm at all').toEqual([]);
+    const partial = zh
+      .filter((guide) => Array.isArray(guide.body_blocks_en)
+        && guide.body_blocks_en.length !== guide.body_blocks.length)
+      .map((guide) => guide.slug);
+    expect(partial, 'chapters whose EN arm does not carry every beat').toEqual([]);
   });
 
   it('the arc opener (chapter 1) ships in three arms too', () => {
