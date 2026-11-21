@@ -47836,3 +47836,38 @@ fix. The number that answers §四 is the intent shape's, and it is measured twi
 `test_cache_reporting_is_not_a_miss.py` (a relay that reports nothing is not a miss) and D1050's own
 prefix-contract reader, both green in this session's adjacent runs. This entry is the measurement the
 previous unit owed, recorded so the next prompt edit knows what it is risking.
+
+## 1430. D1527 — the world-answer lane answers live, with fenced citations and a measured context (§四)
+
+**The ask.** §四 is the owner's "关键要求、迫切期望": the model's capability embedded deeply, not
+skin-deep. The deepest lane in the product is `/world`'s 世界問答 · 全語料 panel — it retrieves real chapter
+bodies, hands them to the model once with a task instruction and JSON mode, and then FENCES the answer.
+D1514 made its context budget reader-owned; nothing had measured the lane against the live provider.
+
+**Measured** (`apps/ai/live_world_answer_probe.py`, `api.aizzz.xyz/v1` / `gpt-6.2-sol`, 2026-11-22):
+
+    depth  body chars   prompt tokens   answer
+    deep   10,139       14,559          「章節只提到凌晨有人食麵、艇仔粥等夜間食物，未能概括香港人夜宵
+                                          通常食咩。【第107章】【第121章】」  confidence=low, degraded=False
+    quick   3,951        8,580          「這批章節沒有提供答案。」            confidence=high, degraded=False
+
+Both answers are honest and both are FENCED: the cited chapter numbers (107, 121) exist in the
+retrieved set, and the model's own uncertainty ("未能概括…") survives the fence instead of being smoothed
+into a confident invention. The deep read puts ten thousand characters of REAL chapter body in front of
+the model — the context utilisation §四 asks for, on the lane that was carrying 4 KB a week ago.
+
+**The cache on this lane is real but intermittent.** One deep call reported
+`cached_tokens=12632 / prompt_tokens=14325` (**88.2%**, `cache_reported=True`); the next reported
+`cached_tokens=0, cache_reported=False` — which per D1052 is the relay's SILENCE, not a miss, and the
+console already excludes such calls from the rate rather than dragging it down. The number that answers
+the owner's ~90% target remains the intent shape's 94.5% (D1526), measured twice.
+
+**The probe ships.** `apps/ai/live_world_answer_probe.py` follows the standing discipline of the other
+live tools: env-gated, never CI, never automated, no key committed, exits 3 with setup instructions when
+the environment is absent, and prints the answer, the citations, the fence verdict, the budget and the
+measurement. It rides `get_settings()` — the operator's real configuration — rather than a hand-rolled
+settings object. `ruff` and `mypy` clean.
+
+**Gate.** No product code changed, so no new gate was needed; the lane's own offline gates
+(`world_answer_graph`'s fence arms, `world-answer-ui`, the depth-whitelist proxy leg) are green in this
+session's adjacent runs. What this unit adds is the live evidence and the tool that reproduces it.
