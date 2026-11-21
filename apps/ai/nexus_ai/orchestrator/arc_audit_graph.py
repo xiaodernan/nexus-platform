@@ -25,6 +25,17 @@ from typing import Any, Awaitable, Callable, TypedDict
 from langgraph.graph import END, StateGraph
 
 SEED = Path(__file__).resolve().parents[3] / "web" / "src" / "lib" / "mock" / "seed.ts"
+
+#: D1490 — the audited input-context budget, as code rather than prose. The measured L→P
+#: window (42 chapters / 174,489 chars) produced 58,957 prompt tokens; the whole-arc range
+#: is 50K–90K. These constants make the budget inspectable by tests and CI, and the MAX
+#: below is a hard ceiling on what `assemble` may hand the model — an operator probe that
+#: grows past it is refused rather than silently spending unbounded tokens.
+TARGET_PROMPT_TOKENS_MIN = 50_000
+TARGET_PROMPT_TOKENS_MAX = 90_000
+CHARS_PER_TOKEN_APPROX = 3  # measured 174,489 chars -> 58,957 prompt tokens (~2.96)
+MAX_CORPUS_CHARS = TARGET_PROMPT_TOKENS_MAX * CHARS_PER_TOKEN_APPROX  # 270,000
+
 _URL_RE = re.compile(r"https?://|www\.", re.IGNORECASE)
 _DIGITS = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9}
 _MULS = {'十': 10, '百': 100, '千': 1000}
@@ -88,9 +99,14 @@ def _assemble_node(state: _AuditState) -> _AuditState:
     for i, (n, title, pos) in enumerate(found):
         end = starts[i + 1] if i + 1 < len(starts) else len(text)
         parts.append(f"=== Chapter {n} :: {title} ===\n{text[pos:end]}")
+    corpus = "\n\n".join(parts)
+    # Hard input budget: refuse an oversized assembly rather than silently hand the model
+    # an unbounded corpus. The ordinary 42-chapter probe (~174K chars) sits well inside it.
+    if len(corpus) > MAX_CORPUS_CHARS:
+        return {"degraded": True, "reason": "corpus_over_budget"}
     return {
         "chapters": [{"n": n, "title": title} for n, title, _ in found],
-        "corpus": "\n\n".join(parts),
+        "corpus": corpus,
     }
 
 
