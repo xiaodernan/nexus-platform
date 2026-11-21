@@ -131,7 +131,9 @@ async def _audit_node(state: _AuditState) -> _AuditState:
 def _verify_node(state: _AuditState) -> _AuditState:
     audit = state.get("audit") or {}
     window = {c["n"] for c in state.get("chapters", [])}
-    rows = audit.get("inconsistencies") if isinstance(audit.get("inconsistencies"), list) else []
+    # D1513: bind before narrowing — a repeated `audit.get(...)` call is a fresh value.
+    rows_raw = audit.get("inconsistencies")
+    rows: list[Any] = rows_raw if isinstance(rows_raw, list) else []
     clean: list[dict[str, Any]] = []
     for item in rows[:5]:
         if not isinstance(item, dict):

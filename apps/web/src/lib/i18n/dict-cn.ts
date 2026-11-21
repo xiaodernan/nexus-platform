@@ -24,6 +24,7 @@ export const zhCN: Dict = {
     recommendationsHint: '教学：由数据推导的下一动作 — 按建议落地即改善漏斗。',
     windowLabel: (hours) => `观测窗口：过去 ${hours} 小时`,
     needPassword: '需要管理员密码',
+    demoBadge: 'Demo 资料 · 同一天的模拟读者，非真实事件',
   },
   locale: 'zh-CN',
   htmlLang: 'zh-CN',

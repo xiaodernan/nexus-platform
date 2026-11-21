@@ -76,7 +76,7 @@ def _retrieve_node(state: _State) -> _State:
 def _infer_no(chunk: dict[str, Any]) -> int:
     """Chapter number from the title's bracket, e.g. （第一百七十章） — never from score."""
     m = re.search(r"第([一二三四五六七八九十百零0-9]{1,6})章", str(chunk.get("title", "")))
-    return _cn(m.group(1)) if m else 0
+    return (_cn(m.group(1)) or 0) if m else 0
 
 
 async def _answer_node(state: _State) -> _State:

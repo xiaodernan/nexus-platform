@@ -16,6 +16,7 @@ interface Behavior {
   top_events: Array<{ name: string; n: number }>;
   sessions: Array<{ session_id: string; n: number; first_at: string; last_at: string }>;
   recommendations: string[];
+  demo?: boolean;
 }
 
 const GATE_KEY = 'nexus.analytics.unlocked';
@@ -40,6 +41,13 @@ export function AdminAnalyticsClient({ copy }: { copy: AdminAnalyticsCopy }) {
         headers: { 'x-tenant': 'hong-kong' },
       });
       if (res.status === 403) {
+        setWrong(true);
+        return;
+      }
+      // An offline/unreachable read must never be stored as a valid Behavior — that is
+      // how a 501 error envelope used to render as a wall of honest-looking zeros (D1513).
+      if (!res.ok) {
+        setData(null);
         setWrong(true);
         return;
       }
@@ -75,6 +83,9 @@ export function AdminAnalyticsClient({ copy }: { copy: AdminAnalyticsCopy }) {
       <section className="mx-auto w-full max-w-2xl px-4 py-16">
         <h1 className="text-3xl font-semibold tracking-tight text-ink-strong">{copy.title}</h1>
         <p className="mt-3 max-w-prose text-sm leading-relaxed text-ink-muted">{copy.intro}</p>
+        {data?.demo ? (
+          <p className="mt-2 text-2xs font-semibold uppercase tracking-wide text-accent">{copy.demoBadge}</p>
+        ) : null}
         <form onSubmit={unlock} className="mt-8 flex flex-col gap-3 rounded-lg border border-line bg-surface p-5">
           <label className="text-sm font-medium text-ink-strong" htmlFor="analytics-password">
             {copy.passwordLabel}

@@ -29,7 +29,7 @@ ADMIN_PASSWORD = "123"
 
 @router.get("/ai/v1/admin/behavior", include_in_schema=False)
 async def behavior(request: Request, password: str = "", hours: int = 168):
-    deps = Deps(request)
+    deps: Deps = request.app.state.deps
     if password != ADMIN_PASSWORD:
         return errors.error_response("admin_password", "password 123 required", status=403)
     db = deps.database()

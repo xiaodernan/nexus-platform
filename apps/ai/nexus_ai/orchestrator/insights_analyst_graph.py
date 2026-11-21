@@ -166,9 +166,14 @@ class _AnalystState(TypedDict, total=False):
 
 
 def _measure_node(state: _AnalystState) -> _AnalystState:
-    stats = state.get("stats") or {}
-    week = stats.get("week") if isinstance(stats.get("week"), dict) else {}
-    points = week.get("points") if isinstance(week.get("points"), list) else []
+    # D1513: bind each `.get()` result to its own name before narrowing — mypy cannot
+    # carry an isinstance judgment across two independent `stats.get("week")` calls.
+    stats_raw = state.get("stats")
+    stats: dict[str, Any] = stats_raw if isinstance(stats_raw, dict) else {}
+    week_raw = stats.get("week")
+    week: dict[str, Any] = week_raw if isinstance(week_raw, dict) else {}
+    points_raw = week.get("points")
+    points: list[Any] = points_raw if isinstance(points_raw, list) else []
 
     def _num(v: Any, default: float = 0.0) -> float:
         try:
@@ -193,7 +198,8 @@ def _measure_node(state: _AnalystState) -> _AnalystState:
         if isinstance(p, dict) and int(_num(p.get("dropRate"))) == worst_drop and not worst_date:
             worst_date = str(p.get("date") or "")
             worst_day = worst_date
-    profiles = stats.get("profiles") if isinstance(stats.get("profiles"), list) else []
+    profiles_raw = stats.get("profiles")
+    profiles: list[Any] = profiles_raw if isinstance(profiles_raw, list) else []
     dominant = ""
     dominant_count = -1
     for p in profiles:
@@ -203,7 +209,8 @@ def _measure_node(state: _AnalystState) -> _AnalystState:
                 dominant_count = count
                 dominant = str(p.get("profile") or "")
 
-    ramp = stats.get("hourRamp") if isinstance(stats.get("hourRamp"), list) else []
+    ramp_raw = stats.get("hourRamp")
+    ramp: list[Any] = ramp_raw if isinstance(ramp_raw, list) else []
     try:
         peak_hour = int(max(range(len(ramp)), key=lambda i: _num(ramp[i]))) if ramp else 0
     except ValueError:
@@ -230,13 +237,16 @@ def _measure_node(state: _AnalystState) -> _AnalystState:
 def _forecast_fallback(locale: str, measured: dict[str, Any]) -> tuple[str, str]:
     loc = _locale_of(locale)
     template = _FORECAST_FALLBACK[loc]
-    verdict_label = {"flat": "", "rising": "", "falling": ""}
+    # D1513: labels are dicts keyed by verdict; bind one str after the lookup so the
+    # variable never changes type mid-function (mypy 2.4.1 rejects the reuse).
+    label_table: dict[str, str]
     if loc == "en":
-        verdict_label = {"flat": "flat", "rising": "rising", "falling": "cooling"}[measured["verdict"]]
+        label_table = {"flat": "flat", "rising": "rising", "falling": "cooling"}
     elif loc == "zh-CN":
-        verdict_label = {"flat": "平盘", "rising": "回暖", "falling": "下滑"}[measured["verdict"]]
+        label_table = {"flat": "平盘", "rising": "回暖", "falling": "下滑"}
     else:
-        verdict_label = {"flat": "平盤", "rising": "回暖", "falling": "下滑"}[measured["verdict"]]
+        label_table = {"flat": "平盤", "rising": "回暖", "falling": "下滑"}
+    verdict_label: str = label_table[str(measured["verdict"])]
     sentence = template.format(
         verdict=verdict_label,
         slope=measured["slope"],
@@ -325,7 +335,8 @@ async def _measures_node(state: _AnalystState) -> _AnalystState:
                 "measures_confidence": "low",
                 "measures_guard": "model_unavailable"}
 
-    raw = reply.get("measures") if isinstance(reply.get("measures"), list) else []
+    raw_value = reply.get("measures")
+    raw: list[Any] = raw_value if isinstance(raw_value, list) else []
     measures: list[dict[str, str]] = []
     for item in raw[:3]:
         if not isinstance(item, dict):

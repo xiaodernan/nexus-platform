@@ -108,7 +108,12 @@ const ARMS = [
     name: 'control: this tree as it stands',
     apply: () => {},
     expect: 0,
-    must: [/RESULT: PASS/, /20\/20 console page\(s\) render AdminChrome\/MerchantChrome/, /10 printed pair\(s\) recomputed/, /60 cell\(s\) recomputed/],
+    // D1513: the old pin hard-coded `20/20`, which reddened the day a 21st console page
+    // shipped even though every page still rendered its nav. The claim worth asserting is
+    // "the covered count equals the discovered count and is non-zero", not a specific total:
+    // a back-reference (\1) says numerator == denominator without freezing the census size,
+    // and [1-9]\d* refuses the vacuous 0/0 (a plane censusing nothing must not pass control).
+    must: [/RESULT: PASS/, /([1-9]\d*)\/\1 console page\(s\) render AdminChrome\/MerchantChrome/, /10 printed pair\(s\) recomputed/, /60 cell\(s\) recomputed/],
   },
   {
     name: 'a second <main> in a console page',

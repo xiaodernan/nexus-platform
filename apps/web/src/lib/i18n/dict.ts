@@ -47,7 +47,7 @@ export interface Dict {
     unlock: string; wrong: string; totalEvents: string; dailyTitle: string; dailyHint: string;
     projectionTitle: string; projectionHint: string; sessionsTitle: string; sessionColumn: string;
     eventsColumn: string; hourlyTitle: string; hourlyHint: string; topEventsTitle: string; recommendationsTitle: string; recommendationsHint: string;
-    windowLabel: (hours: number) => string; needPassword: string;
+    windowLabel: (hours: number) => string; needPassword: string; demoBadge: string;
   };
   locale: Locale;
   htmlLang: string;
@@ -1293,6 +1293,7 @@ const zhHK: Dict = {
     recommendationsHint: '教學：由數據推導的下一動作 — 按建議落地即改善漏斗。',
     windowLabel: (hours) => `觀測窗口：過去 ${hours} 小時`,
     needPassword: '需要管理員密碼',
+    demoBadge: 'Demo 資料 · 同一天的模擬讀者，非真實事件',
   },
   locale: 'zh-HK',
   htmlLang: 'zh-HK',
@@ -3507,6 +3508,7 @@ const en: Dict = {
     recommendationsHint: 'How-to: data-derived next actions - landing these improves the funnel.',
     windowLabel: (hours) => `Window: last ${hours} hours`,
     needPassword: 'Admin password required',
+    demoBadge: 'Demo data · simulated readers for the same day, not real events',
   },
   locale: 'en',
   htmlLang: 'en',

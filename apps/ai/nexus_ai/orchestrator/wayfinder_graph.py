@@ -103,7 +103,8 @@ def _locate_node(state: _WayState) -> _WayState:
     except (TypeError, ValueError):
         pos = 0
     pos = max(0, min(ARC_SIZE, pos))
-    mood = state.get("mood") if state.get("mood") in MOODS else MOOD_DEFAULT
+    raw_mood = state.get("mood")
+    mood = raw_mood if isinstance(raw_mood, str) and raw_mood in MOODS else MOOD_DEFAULT
     return {"chapter_no": pos, "mood": mood}
 
 
