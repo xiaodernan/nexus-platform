@@ -507,6 +507,19 @@ export interface Dict {
       pending: string;
     };
     /**
+    /**
+     * D1530: the chapter radar — the chapters closest to the one being read. A SERVER component's
+     * copy, so nothing here crosses a boundary; strings anyway, for the same reason.
+     */
+    chapterRadar: {
+      eyebrow: string;
+      title: string;
+      hint: string;
+      because: string;
+      shared: string;
+      empty: string;
+    };
+    /**
      * D1517/D1521: the reading thread — the next doors, read off what the reader already finished.
      * The two counters are TEMPLATES, not functions: the copy crosses the server/client boundary
      * into a client island, and a function in that payload is the error Next.js raises
@@ -2133,6 +2146,14 @@ const zhHK: Dict = {
       hint: '大模型會睇你而家身處何處、仲有幾多時間，指一條路畀你行。',
       cta: '撳我，畀我指路',
       pending: '大模型正在諗下一站…',
+    },
+    chapterRadar: {
+      eyebrow: '章節雷達 · 同一座城的鄰居',
+      title: '讀完這章，可以接著讀',
+      hint: '按各章共享的詞語推算，完全本機計算、零 token、零網絡。',
+      because: '同同你讀的這章',
+      shared: '共享詞語：',
+      empty: '這章似乎沒有鄰居——去 /world 的全庫搜尋吧。',
     },
     readingThread: {
       eyebrow: '續讀線 · 讀過啥就續啥',
@@ -4372,6 +4393,14 @@ const en: Dict = {
       hint: 'The model reads where you are and how much time you have, then points one honest step forward.',
       cta: 'Ask the guide',
       pending: 'The roads are aligning — choosing your next step…',
+    },
+    chapterRadar: {
+      eyebrow: 'CHAPTER RADAR · NEIGHBOURS IN THE SAME CITY',
+      title: 'Finished this chapter? Read these next',
+      hint: 'Inferred from the words each chapter shares. Computed on this machine — zero tokens, zero network.',
+      because: 'Neighbours of the chapter you just read',
+      shared: 'Shared words: ',
+      empty: 'This chapter seems to have no neighbours — try the whole-corpus search at /world.',
     },
     readingThread: {
       eyebrow: 'READING THREAD · FROM WHAT YOU FINISHED',

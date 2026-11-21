@@ -168,3 +168,62 @@ export function readingThread(
   }
   return out;
 }
+
+
+export interface RelatedChapter {
+  slug: string;
+  title: string;
+  score: number;
+  shared: string[];
+  href: string;
+}
+
+/**
+ * The chapters that stand CLOSEST to the one being read — the thread engine run in one direction.
+ *
+ * The reading thread answers "what next, from what I finished"; this answers "what else is about
+ * this", which is the other half of not getting lost in 177 chapters: a reader at the bottom of a
+ * chapter should be handed its neighbours rather than an index. Deterministic, no network, no
+ * identity — the same chapter always shows the same neighbours.
+ */
+export function relatedChapters(
+  guides: readonly Guide[],
+  slug: string,
+  options: { steps?: number } = {},
+): RelatedChapter[] {
+  const steps = Math.max(1, options.steps ?? 3);
+  const current = guides.find((guide) => guide.slug === slug);
+  if (!current) return [];
+
+  const tokens = threadTokens(guideText(current));
+  if (tokens.size === 0) return [];
+
+  const frequency = new Map<string, number>();
+  for (const guide of guides) {
+    for (const token of threadTokens(guideText(guide))) {
+      frequency.set(token, (frequency.get(token) ?? 0) + 1);
+    }
+  }
+
+  return guides
+    .filter((guide) => guide.slug !== slug)
+    .map((guide) => {
+      const other = threadTokens(guideText(guide));
+      const shared: string[] = [];
+      for (const token of tokens) if (other.has(token)) shared.push(token);
+      const score = shared.length / Math.sqrt(tokens.size * other.size || 1);
+      return {
+        slug: guide.slug,
+        title: guide.title,
+        score: Math.round(score * 1000) / 1000,
+        shared: shared
+          .sort((a, b) => (frequency.get(a) ?? 0) - (frequency.get(b) ?? 0)
+            || b.length - a.length || a.localeCompare(b))
+          .slice(0, 3),
+        href: `/guides/${guide.slug}`,
+      };
+    })
+    .filter((entry) => entry.score > 0 && entry.shared.length > 0)
+    .sort((a, b) => b.score - a.score || a.slug.localeCompare(b.slug))
+    .slice(0, steps);
+}

@@ -47933,3 +47933,45 @@ handbook coverage, the dict contract's locale parity, the world-corpus atlas, th
 count claims and the corpus-count sanity, the hk-type and home-series-rail pages, the try-flow, the admin
 analytics, the world-answer UI and the world-guide/chapter-ask live panels, and `chapter-en-arm` (182) —
 **428 passed**. `tsc --noEmit` 0; `eslint` clean on the touched file.
+
+## 1433. D1530 — the chapter radar: a reader at the bottom of a chapter is handed its neighbours (§六)
+
+**The gap.** §六 asks for a world that is not "看着很大、里面很空" — and the reading thread (D1517) only
+answers "what next, from what I finished". A reader who has read nothing and has just finished chapter 1
+still gets an index. The other half of the question — "what else is about this" — had no answer anywhere
+in the product.
+
+**The feature.** `relatedChapters` (`reading-thread.ts`) is the thread engine run in one direction:
+the same tokenisation, the same cosine-normalised overlap, the same distinctiveness ordering, aimed at
+the chapter being read instead of the read-set. `ChapterRadar`
+(`apps/web/src/components/chapter-radar.tsx`) renders the top three on the chapter page, each with the
+words the two chapters share. A SERVER component, deliberately: the radar is a pure function of
+(corpus, current chapter) with no read-state, no identity and no network, so there is nothing to
+hydrate and nothing to cross the server/client boundary — which is also why it cannot join the class of
+defect D1521-D1524 spent four units on.
+
+**Verified in a real browser** (dev server, mock plane, 2026-11-22) on `/guides/hk-food-chronicle`:
+章節雷達 · 同一座城的鄰居 / 讀完這章，可以接住讀 / 按各章共享的詞語推算，完全本機計算、零 token、零網絡，
+then three neighbours — 獅子山：17:58 的第一粒燈（第十三章）, 燒味：凌晨兩點的光與炭（第二章）,
+茶餐廳：歸於日常（第五章）— each carrying its shared words (港、關於、尖沙 / 燒鴨、凌晨、看真 /
+港、關於、燒飯). No error, no overlap, no mixed-script residue.
+
+**Wired on both planes.** The page feeds the radar the same corpus the index serves
+(`guideList(locale)`), and the wiring leg asserts the JSX is not behind an `IS_MOCK` guard — the lesson
+of D1528 applied before it could be filed. The chapter page carries no `IS_MOCK` import at all now.
+
+**Gates.** `chapter-radar.test.ts` (6 legs: the neighbours, never the chapter itself, determinism, the
+unknown slug, score-then-slug order, and the distinctiveness ordering on the real corpus) and
+`chapter-radar-wiring.test.ts` (5 legs: the page renders it after the live companion, both planes, it is
+a server component, the engine exports the one-directional affinity, and both arms carry the copy).
+Adjacent, run and green, never full: the radar's own gates, the reading-thread engine and wiring, the
+boundary reader (167 crossings), the handbook coverage, the dict contract's locale parity, the
+world-corpus atlas, the stamp collection, the count claims and the corpus-count sanity, the hk-type and
+home-series-rail pages, the try-flow, the admin analytics, the world-answer UI and the world-guide /
+chapter-ask live panels, and `chapter-en-arm` (182) — **440 passed**. `tsc --noEmit` 0; `eslint` clean on
+every touched file; both Simplified mirrors regenerate and verify in lockstep.
+
+**Filed, not claimed.** The radar measures LEXICAL overlap, so two chapters about the same street in
+different vocabulary will not be neighbours, and two chapters that merely share common characters
+(香港, 凌晨) will be. The corpus's own subject tags would sharpen it; that is a content-modelling unit,
+not this one.

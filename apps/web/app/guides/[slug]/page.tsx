@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { guideBySlug } from '@/lib/data';
+import { guideBySlug, guideList } from '@/lib/data';
 import { SITE_URL } from '@/lib/env';
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
@@ -10,6 +10,7 @@ import { GuideView } from '@/components/growth-view';
 import { JsonLd } from '@/components/json-ld';
 import { ChapterAskLive } from '@/components/chapter-ask-live';
 import { WorldGuideBeacon } from '@/components/world-guide-beacon';
+import { ChapterRadar } from '@/components/chapter-radar';
 
 /**
  * `/guides/{slug}` (§8, §28). An unreviewed AI guide is still readable, but it is kept out of the
@@ -44,6 +45,8 @@ export default async function GuidePage(props: Props) {
   const { slug } = await props.params;
   const guide = (await guideBySlug(decodeURIComponent(slug), locale)).data;
   if (!guide) notFound();
+  // D1530: the radar reads the SAME corpus the index serves, so it works on both planes.
+  const corpus = (await guideList(locale)).data.items;
 
   return (
     <>
@@ -55,6 +58,8 @@ export default async function GuidePage(props: Props) {
           locale={locale}
           labels={dict.growth.chapterAsk}
         />
+        {/* D1530 — the chapter radar: this chapter's neighbours, computed on this machine. */}
+        <ChapterRadar guides={corpus} slug={guide.slug} copy={dict.growth.chapterRadar} />
         {/* D1306 — the live world guide; one compass button, one next step. */}
         <WorldGuideBeacon
           chapterSlug={guide.slug}

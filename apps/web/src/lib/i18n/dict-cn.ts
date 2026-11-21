@@ -833,6 +833,14 @@ export const zhCN: Dict = {
       cta: '揿我，畀我指路',
       pending: '大模型正在谂下一站…',
     },
+    chapterRadar: {
+      eyebrow: '章节雷达 · 同一座城的邻居',
+      title: '读完这章，可以接著读',
+      hint: '按各章共享的词语推算，完全本机计算、零 token、零网络。',
+      because: '同同你读的这章',
+      shared: '共享词语：',
+      empty: '这章似乎没有邻居——去 /world 的全库搜寻吧。',
+    },
     readingThread: {
       eyebrow: '续读线 · 读过啥就续啥',
       title: '下一章读边本？',
