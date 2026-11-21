@@ -53,8 +53,8 @@ describe('world answer lane', () => {
     expect(p).toContain('body: JSON.stringify({ query, locale, depth })');
     expect(p).toContain('copy.quickHint');
     expect(p).toContain('copy.deepHint');
-    expect(p).toContain('copy.budgetLabel(');
-    expect(p).toContain('copy.measuredLabel(');
+    expect(p).toContain('copy.budgetLabel');
+    expect(p).toContain('copy.measuredLabel');
   });
 
   it('the proxy repeats the depth whitelist — a client cannot name a raw char budget', () => {
@@ -70,7 +70,7 @@ describe('world answer lane', () => {
       expect(arm).toContain('depthLabel:');
       expect(arm).toContain('quickHint:');
       expect(arm).toContain('deepHint:');
-      expect(arm).toContain('budgetLabel: (');
+      expect(arm).toContain('budgetLabel:');
     }
     expect(dict).toContain("deepLabel: '深讀'");
     expect(dict).toContain("deepLabel: 'Deep read'");

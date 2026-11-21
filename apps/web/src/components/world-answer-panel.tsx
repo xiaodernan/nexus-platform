@@ -29,8 +29,10 @@ export interface WorldAnswerCopy {
   deepLabel: string;
   quickHint: string;
   deepHint: string;
-  budgetLabel: (chars: number, chapters: number) => string;
-  measuredLabel: (cached: number, prompt: number) => string;
+  /** D1524: a template, not a function — this payload crosses into a client island. */
+  budgetLabel: string;
+  /** D1524: a template, not a function — this payload crosses into a client island. */
+  measuredLabel: string;
 }
 
 interface Result {
@@ -139,12 +141,16 @@ export function WorldAnswerPanel({ locale, copy }: { locale: string; copy: World
               ) : null}
               {result.budget && result.budget.body_chars > 0 ? (
                 <p className="mt-1 text-2xs text-ink-faint">
-                  {copy.budgetLabel(result.budget.body_chars, result.budget.limit)}
+                  {copy.budgetLabel
+                    .replace('{chapters}', String(result.budget.limit))
+                    .replace('{chars}', result.budget.body_chars.toLocaleString())}
                 </p>
               ) : null}
               {result.measured?.cache_reported && result.measured.prompt_tokens > 0 ? (
                 <p className="mt-1 text-2xs text-ink-faint">
-                  {copy.measuredLabel(result.measured.cached_tokens, result.measured.prompt_tokens)}
+                  {copy.measuredLabel
+                    .replace('{cached}', result.measured.cached_tokens.toLocaleString())
+                    .replace('{prompt}', result.measured.prompt_tokens.toLocaleString())}
                 </p>
               ) : null}
             </>

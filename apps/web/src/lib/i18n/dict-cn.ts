@@ -2194,8 +2194,8 @@ export const zhCN: Dict = {
       deepLabel: '深读',
       quickHint: '教学：只读 8 章的重点段落，最快、最悭。',
       deepHint: '教学：一次读最多 20 章、约三万字内文，适合追跨章节的线索；会用较多配额。',
-      budgetLabel: (chars, chapters) => `本次翻了 ${chapters} 章 · 约 ${chars.toLocaleString()} 字内文`,
-      measuredLabel: (cached, prompt) => `快取命中 ${cached.toLocaleString()} / ${prompt.toLocaleString()} token`,
+      budgetLabel: '本次翻了 {chapters} 章 · 约 {chars} 字内文',
+      measuredLabel: '快取命中 {cached} / {prompt} token',
     },
     wayfinder: {
       eyebrow: '向导 · 读者状态',

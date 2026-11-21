@@ -47733,3 +47733,46 @@ Simplified mirrors regenerate and verify in lockstep.
 **Filed, not claimed.** The reader still discovers crossings by scanning `app/**` for
 `prop={dict.path}` — a crossing written through a helper or a `{...copy}` spread is outside its reach,
 as D1522 recorded. What changed today is that the component index is complete; the page scan is not.
+
+## 1427. D1524 — the fourth instance was `/world`, and a 39-route sweep says the plane is whole (§四)
+
+**The gap.** D1523's reader saw the crossings a page writes as `prop={dict.path}`. `/world` writes its
+copy through a local alias — `const t = dict.world; … <WorldAnswerPanel copy={t.worldAnswer} />` — so
+the crossing was invisible to it, and with it the fourth live instance of the same defect.
+
+**The instance was the §四 flagship.** `/world` — 全景地圖, the 106 hour chips, the story recap, the
+wayfinder, the 全語料 world answer and the real-data panel — answered 加載失敗 with
+`{… budgetLabel: function budgetLabel, measuredLabel: function measuredLabel}`: TWO functions in the one
+payload, on the page that carries the deepest model integration in the product. 895 characters of body,
+no atlas, no answer box.
+
+**The reader learned the alias form.** It now resolves `const X = dict.Y` in the page and matches
+`prop={X.rest}` as well as `prop={dict.path}`. Crossings seen: 86 → **167**. Both functions are
+templates now — `快取命中 {cached} / {prompt} token`, `本次翻了 {chapters} 章 · 約 {chars} 字內文` and
+their English arms — filled where they are used. Falsified by putting one arrow function back under a
+crossed path: the `WorldAnswerPanel.copy` leg reddens by name.
+
+**Then the sweep, because one page at a time is not a measurement.** Every route in the app, loaded in a
+real browser against the dev server, checked for the boundary error and for a truncated body:
+
+    ROUTES 39 · OK 39 · BROKEN 0
+
+Before this unit the sweep found `/world`; after it, nothing. `/world` renders the atlas with the
+full-corpus count (全系列一百七十七章), the 106 hour chips, the recap, the wayfinder with its
+目前讀到第幾章 / 此刻的心情 controls, the 世界問答 · 全語料 panel with its 速讀 / 深讀 depth switch, and
+the 真實資料 · 聯網 panel. `/try` renders the five-step coach and `0 / 5 已完成`.
+`/admin/analytics` unlocks with `123` and answers 事件總數 212, 活躍工作階段 25, the daily histogram, the
+seven-day projection and the three optimisation recommendations.
+
+**Adjacent**, run and green, never full: the boundary reader (167 crossings), the reading-thread engine
+and wiring, the handbook coverage, the dict contract's locale parity, the world-corpus atlas, the stamp
+collection, the count claims and the corpus-count sanity, the hk-type and home-series-rail pages, the
+try-flow, the admin analytics, the world-answer UI and the world-guide/chapter-ask live panels, and
+`chapter-en-arm` (182) — **428 passed**. `tsc --noEmit` 0; `eslint` clean on every touched file; both
+Simplified mirrors regenerate and verify in lockstep.
+
+**Filed, not claimed.** The sweep is a measurement of THIS build against THIS dev server; it is not a
+gate, because a vitest run cannot boot Next. What is a gate is the boundary reader, which is why the
+sweep's job was to find what the reader could not yet see. And the reader still only sees
+`prop={dict.path}` and `prop={alias.path}` — a `{...copy}` spread or a helper that forwards a subtree is
+outside it, as recorded in D1522 and D1523.

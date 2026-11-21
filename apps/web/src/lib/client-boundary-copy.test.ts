@@ -71,18 +71,40 @@ const read = (path: string): string => {
 const at = (root: Record<string, unknown>, path: string): unknown =>
   path.split('.').reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], root);
 
-/** Every `<Name … prop={dict.a.b} …>` a page hands to a client component. */
+/**
+ * Every `<Name … prop={…a dictionary value…} …>` a page hands to a client component.
+ *
+ * Two spellings are discovered, because the product uses both:
+ *   `copy={dict.growth.readingThread}`            — the direct form
+ *   `const t = dict.world; … copy={t.worldAnswer}` — the local-alias form, which is how D1524's
+ *   fourth instance slipped past the first cut of this reader
+ */
 const crossings = (): Array<{ page: string; component: string; prop: string; path: string }> => {
   const out: Array<{ page: string; component: string; prop: string; path: string }> = [];
   const clients = clientComponents();
   for (const page of walk(APP)) {
     const src = read(page);
-    const pattern = /<([A-Z][A-Za-z0-9]*)\b[^>]*?\b([a-zA-Z]+)=\{dict\.([A-Za-z0-9_.]+)\}/g;
-    for (const match of src.matchAll(pattern)) {
+    const aliases = new Map<string, string>();
+    for (const match of src.matchAll(/const ([A-Za-z_][A-Za-z0-9_]*)\s*=\s*dict\.([A-Za-z0-9_.]+)/g)) {
+      if (match[1] && match[2]) aliases.set(match[1], match[2]);
+    }
+    // A: the direct spelling. `dict.` inside the pattern is what lets the lazy skip pass over
+    // the props in front of it and land on the one that carries the dictionary.
+    const direct = /<([A-Z][A-Za-z0-9]*)\b[^>]*?\b([a-zA-Z]+)=\{dict\.([A-Za-z0-9_.]+)\}/g;
+    for (const match of src.matchAll(direct)) {
       const [, component, prop, path] = match;
       if (component && prop && path && isClientComponent(component, clients)) {
         out.push({ page: page.split('app')[1] ?? page, component, prop, path });
       }
+    }
+    // B: the local-alias spelling - `const t = dict.world` then `copy={t.worldAnswer}`.
+    const aliased = /<([A-Z][A-Za-z0-9]*)\b[^>]*?\b([a-zA-Z]+)=\{([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z0-9_.]+)\}/g;
+    for (const match of src.matchAll(aliased)) {
+      const [, component, prop, root, rest] = match;
+      if (!component || !prop || !root || !rest) continue;
+      const base = aliases.get(root);
+      if (!base || !isClientComponent(component, clients)) continue;
+      out.push({ page: page.split('app')[1] ?? page, component, prop, path: `${base}.${rest}` });
     }
   }
   return out;
