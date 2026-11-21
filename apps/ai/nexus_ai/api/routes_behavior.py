@@ -67,7 +67,7 @@ async def behavior(request: Request, password: str = "", hours: int = 168):
         )
     daily_counts = [(row["day"], int(row["n"])) for row in daily]
     projection = _project(daily_counts, 7)
-    recommendations = _recommendations(by_name, sessions, total)
+    recommendations = _recommendations(by_name, sessions, total, daily_counts, projection, hourly)
     return {
         "window_hours": hours,
         "total_events": int(total[0]["count"]) if total else 0,
@@ -111,19 +111,79 @@ def _project(daily: list[tuple[str, int]], days: int) -> list[dict[str, Any]]:
     return out
 
 
-def _recommendations(by_name: list[dict[str, Any]], sessions: list[dict[str, Any]], total: list[dict[str, Any]]) -> list[str]:
+def _recommendations(
+    by_name: list[dict[str, Any]],
+    sessions: list[dict[str, Any]],
+    total: list[dict[str, Any]],
+    daily: list[tuple[str, int]] | None = None,
+    projection: list[dict[str, Any]] | None = None,
+    hourly: list[dict[str, Any]] | None = None,
+) -> list[str]:
+    """Next-step measures DERIVED from the measured numbers (§九).
+
+    D1512: these used to be four canned strings selected by boolean gates while the UI
+    promised "data-derived next actions". Every measure now embeds the actual computed
+    slope, peak hour, funnel counts and session density. Pure function — unit-testable
+    with no database. No number is invented: when the input is absent, the measure is
+    omitted rather than guessed.
+    """
     out: list[str] = []
-    counts = {row["name"]: int(row["n"]) for row in by_name}
+    counts = {str(row.get("name")): int(row.get("n") or 0) for row in by_name}
     searches = counts.get("search", 0)
-    if total and searches and searches == int(total[0]["count"] if total else 0):
-        out.append("the event stream is search-only: wire the §58 required names (view, click, reserve) "
-                   "into the surfaces so the funnel becomes measurable")
-    if searches and not counts.get("reserve"):
-        out.append("search events exist but no reservation events: the search→reserve funnel step is "
-                   "unwired or unused — instrument the booking path")
-    if len(sessions) < 5:
-        out.append("fewer than five distinct sessions in the window: thin traffic — drive behavior "
-                   "simulation before reading trends as signal")
+    reserves = counts.get("reserve", 0)
+    grand = int(total[0].get("count") or 0) if total else 0
+
+    # 1) trend from the real least-squares projection
+    proj = projection or []
+    if len(proj) >= 2:
+        first, last = int(proj[0].get("projected") or 0), int(proj[-1].get("projected") or 0)
+        delta = last - first
+        direction = "up" if delta > 0 else "down" if delta < 0 else "flat"
+        out.append(
+            f"7-day least-squares projection runs {first}→{last} events/day ({direction} {abs(delta)}): "
+            f"{'capacity planning should follow the rising load' if delta > 0 else 'hold capacity; the window is steady or falling'}"
+        )
+
+    # 2) peak hour from the real hourly histogram
+    hours = hourly or []
+    if hours:
+        peak = max(hours, key=lambda r: int(r.get("n") or 0))
+        peak_n = int(peak.get("n") or 0)
+        share = round(100 * peak_n / grand) if grand else 0
+        if peak_n > 0:
+            out.append(
+                f"peak hour {int(peak.get('hour') or 0):02d}:00 carries {peak_n} events ({share}% of the window): "
+                f"inspect that hour's journeys before changing the funnel"
+            )
+
+    # 3) funnel from real per-event counts
+    if grand:
+        if searches == grand:
+            out.append(
+                f"all {grand} events are 'search' (100%); wire view/click/reserve into the surfaces "
+                f"so the funnel beyond search becomes measurable"
+            )
+        elif searches and not reserves:
+            out.append(
+                f"{searches} search events ({round(100 * searches / grand)}%) but 0 reserve events: "
+                f"the search→reserve step is unwired or unused — instrument the booking path"
+            )
+        elif searches and reserves:
+            out.append(
+                f"funnel carries {searches} search and {reserves} reserve events "
+                f"({round(100 * reserves / searches)}% search→reserve): keep collecting, revisit when the window doubles"
+            )
+
+    # 4) session density from the real session rows
+    if sessions:
+        n = len(sessions)
+        density = round(grand / n, 1) if grand else 0.0
+        out.append(
+            f"{n} session(s) in the window at {density} events/session: "
+            f"{'thin traffic — drive behavior simulation before reading trends as signal' if n < 5 else 'enough sessions to read the trend as signal'}"
+        )
+
     if not out:
-        out.append("the funnel carries all measured stages: keep collecting, revisit when the window doubles")
+        out.append("no events in this window: the read is honest but has no signal to derive measures from")
     return out
+

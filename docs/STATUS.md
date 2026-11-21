@@ -47294,3 +47294,11 @@ not hidden.
 - One live `gpt-6.2-sol` call through the Clash proxy (HTTP 200, 19,696 tokens) chose the beat. Written in controlled vocabulary; no fact unfenced.
 - Frozen artifacts in lockstep: digest 175 / 14,667 B, index 175 lines / 13,777 B; pins, `routes_chapter.py` fence and story-recap window (164–175) advanced; `check_atlas_lockstep` PASS at 175/175/175. Count labels advanced in BOTH authored arms (the D1509 discipline held). Web 86 files / **726 passed**; atlas/recap 18/18; `verify_all` NO OFFENDER.
 - Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.
+
+
+## 1415. D1512 — admin analytics measures are now derived from the numbers (§九)
+
+- Audit found the §九 promise "data-derived next optimization measures" was not met: `_recommendations` returned four canned strings selected by boolean gates, with no measured values in them. Rewrote it as a PURE `stats → measures` function: each measure embeds the actual least-squares projection endpoints/delta, the peak hour and its share, the real search/reserve counts and conversion, and session density (`grand / n`). Absent data omits the measure rather than guessing; empty window says so honestly.
+- The server already computed `hourly` but the client never declared or rendered it. Added it to the `Behavior` interface and a 24-hour histogram panel; `dict.adminAnalytics.hourlyTitle/hourlyHint` in both authored arms + regenerated Simplified fold.
+- `test_behavior_analytics.py` (6 pins — OLS slope/clamp/<2-day, 403 password gate, numbers embedded in measures, honest empty window) — the behavior route had ZERO tests before. `admin-analytics-depth.test.ts` (2 pins) locks the hourly rendering. Self-consistency gates 6/6; ruff clean.
+- Full AI suite **37,990 passed / 0 failed**; web 87 files / **728 passed**; `verify_all` NO OFFENDER · tsc 0.

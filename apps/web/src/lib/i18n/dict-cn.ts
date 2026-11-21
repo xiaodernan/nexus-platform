@@ -17,6 +17,8 @@ export const zhCN: Dict = {
     sessionsTitle: '活跃工作阶段',
     sessionColumn: '工作阶段',
     eventsColumn: '事件数',
+    hourlyTitle: '每小时分布',
+    hourlyHint: '真实事件按小时聚合——找出尖峰时段，再看那一段的用户旅程。',
     topEventsTitle: '事件类型分布',
     recommendationsTitle: '下一步优化建议',
     recommendationsHint: '教学：由数据推导的下一动作 — 按建议落地即改善漏斗。',

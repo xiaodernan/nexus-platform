@@ -12,6 +12,7 @@ interface Behavior {
   total_events: number;
   daily: Array<[string, number]>;
   projection_next_7_days: Array<{ day_index: number; projected: number }>;
+  hourly: Array<{ hour: number; n: number }>;
   top_events: Array<{ name: string; n: number }>;
   sessions: Array<{ session_id: string; n: number; first_at: string; last_at: string }>;
   recommendations: string[];
@@ -152,6 +153,23 @@ export function AdminAnalyticsClient({ copy }: { copy: AdminAnalyticsCopy }) {
                 title={`+${p.day_index - (data?.daily.length ?? 0)}d: ${p.projected}`}
               />
               <span className="text-2xs text-ink-faint">+{p.day_index - (data?.daily.length ?? 0)}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-semibold text-ink-strong">{copy.hourlyTitle}</h2>
+        <p className="mt-1 text-xs text-ink-muted">{copy.hourlyHint}</p>
+        <div className="mt-4 flex items-end gap-0.5" aria-hidden="true">
+          {(data?.hourly ?? []).map((h) => (
+            <div key={h.hour} className="flex min-w-[1.1rem] flex-1 flex-col items-center gap-1">
+              <div
+                className="w-full rounded-t bg-accent-soft"
+                style={{ height: `${Math.round((h.n / Math.max(1, ...(data?.hourly ?? []).map((x) => x.n))) * 90) + 3}px` }}
+                title={`${String(h.hour).padStart(2, '0')}:00 — ${h.n}`}
+              />
+              <span className="text-2xs text-ink-faint">{String(h.hour).padStart(2, '0')}</span>
             </div>
           ))}
         </div>

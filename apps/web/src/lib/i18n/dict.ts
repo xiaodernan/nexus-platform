@@ -46,7 +46,7 @@ export interface Dict {
     title: string; intro: string; passwordLabel: string; passwordHint: string;
     unlock: string; wrong: string; totalEvents: string; dailyTitle: string; dailyHint: string;
     projectionTitle: string; projectionHint: string; sessionsTitle: string; sessionColumn: string;
-    eventsColumn: string; topEventsTitle: string; recommendationsTitle: string; recommendationsHint: string;
+    eventsColumn: string; hourlyTitle: string; hourlyHint: string; topEventsTitle: string; recommendationsTitle: string; recommendationsHint: string;
     windowLabel: (hours: number) => string; needPassword: string;
   };
   locale: Locale;
@@ -1286,6 +1286,8 @@ const zhHK: Dict = {
     sessionsTitle: '活躍工作階段',
     sessionColumn: '工作階段',
     eventsColumn: '事件數',
+    hourlyTitle: '每小時分佈',
+    hourlyHint: '真實事件按小時聚合——找出尖峰時段，再看那一段的用戶旅程。',
     topEventsTitle: '事件類型分佈',
     recommendationsTitle: '下一步優化建議',
     recommendationsHint: '教學：由數據推導的下一動作 — 按建議落地即改善漏斗。',
@@ -3498,6 +3500,8 @@ const en: Dict = {
     sessionsTitle: 'Active sessions',
     sessionColumn: 'Session',
     eventsColumn: 'Events',
+    hourlyTitle: 'Hourly distribution',
+    hourlyHint: 'Real events aggregated by hour — find the peak, then inspect that hour’s journeys.',
     topEventsTitle: 'Event type distribution',
     recommendationsTitle: 'Next optimization moves',
     recommendationsHint: 'How-to: data-derived next actions - landing these improves the funnel.',
