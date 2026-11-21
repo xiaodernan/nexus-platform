@@ -47175,3 +47175,11 @@ not hidden.
 - User door: `POST /api/nexus/ai/world-answer` BFF (bounded query) + `components/world-answer-panel.tsx` (click-only island), mounted on `/world` beside Wayfinder and StoryRecap. `dict.world.worldAnswer` in zh-HK + en + regenerated Simplified fold.
 - **Live probe through the Clash proxy (§〇/§四):** asking 「東門的三條鎖匙分别是做甚麼用的？」 returned HTTP 200, **7,937 prompt tokens** (a genuinely large product-path context, far above the ~1–2K of the other lanes) / 56 completion, and a grounded answer citing 第158章 / 第165章 — both verified inside the retrieved set.
 - Tests: `test_world_answer_graph.py` (7 pins — full-corpus parse, deterministic retrieval, short-circuit, grounded pass, invented-chapter refusal, URL refusal) + `world-answer-ui.test.ts` (4 pins) — 11/11. `verify_all` NO OFFENDER · contract drift clean · citations 299/299 · tsc 0 · web 81 files / **704 passed**.
+
+
+## 1403. D1498 — a runtime DOM clipping/overflow verifier (§五's last unguarded visual defect)
+
+**Audit gap:** the source-level visual gates measured contrast, reduced motion and console A11y but nothing detected three defects the owner named — clipped text, overlapping/rounded blocks and horizontal page overflow.
+- New `scripts/verify_dom_clipping.mjs` — a RUNTIME reader (named `verify_*`, so `verify_all.mjs` runs it only under `--include-runtime`): probes the plane first (exit 2 = UNCHECKED, never a silent pass), then walks `/`, `/world`, `/hong-kong`, `/try`, `/handbook` in Chromium and measures `scrollHeight > clientHeight` on overflow-hidden text nodes plus `scrollWidth > clientWidth` on the document. Exit 1 on any offender. Named in `docs/ATLAS.md` so the atlas census stays honest.
+- Measured on the live local plane: **5 routes, 0 offenders, 0px horizontal overflow**. This is evidence, not a claim about un-walked pages.
+- Full AI suite at this tree: **37,974 passed, 521 skipped, 0 failed (exit 0)**. `verify_all` NO OFFENDER · atlas census PASS (452 cited paths) · comment citations 301/301 · web 81 files / 704 passed · tsc 0 · production build green · atlas lockstep 170/170/170.

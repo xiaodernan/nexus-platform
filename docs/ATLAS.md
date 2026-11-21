@@ -501,6 +501,10 @@ child process and returns raw Buffers, with missing objects distinguished from a
 Runtime verifiers (need a live plane, **not** part of the default read-only sweep):
 `scripts/verify_contract_runtime.mjs`, `scripts/verify_served_reads.mjs`,
 `scripts/verify_payload_conformance.mjs`, `scripts/verify_consumer_slice.py`.
+`scripts/verify_dom_clipping.mjs` (D1498) is a runtime reader too: it walks five primary
+routes in Chromium and refuses to judge unless a live plane answers, so it runs under
+`verify_all.mjs --include-runtime` (UNCHECKED when no plane is listening) and measures the
+clipped-text / horizontal-overflow gaps the source-level visual gates cannot see.
 `scripts/verify_citation_engine_parity.mjs` (D888), `scripts/verify_line_cite_parity.mjs`
 (D891) and `scripts/verify_ledger_cite_parity.mjs` (D893) are different: they need no live plane,
 run both engines of their reader over a real ledger plane and diff stdout byte for byte — CI invokes
