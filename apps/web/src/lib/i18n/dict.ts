@@ -1243,6 +1243,11 @@ export interface Dict {
     title: string;
     intro: string;
     clockLabel: string;
+    /** D1502: real public reference facts through the SSRF-guarded web tool. */
+    webFacts: {
+      eyebrow: string; title: string; intro: string; note: string; placeholder: string;
+      cta: string; pending: string; degraded: string; empty: string;
+    };
     /** D1497: cross-chapter Q&A over the full corpus — real chapter-body RAG. */
     worldAnswer: {
       eyebrow: string; title: string; intro: string; placeholder: string;
@@ -3412,6 +3417,17 @@ const zhHK: Dict = {
     intro: '這一頁不是列表，是一張攤開的世界圖：全系列一百七十一章，按時辰排成七層——凌晨前行、天光市場、早上集、午後街、薄暮收心、夜市樓長街、夜貓子與通風口。同一座城的一整天，一次讀完；每一格都可點進去。',
     clockLabel: '時刻 — 章名 — 點即開',
     countNote: '一百零六個時辰格 — 全部是合成敘事示例，與真實商戶、真實人物全不相關。',
+    webFacts: {
+      eyebrow: '真實資料 · 聯網',
+      title: '問這座真實的城',
+      intro: '故事是合成的，但它所在的香港是真的。查一條公開資料，看看小說背後那座城——結果來自維基百科，與故事內容無關。',
+      note: '只查白名單公開來源；每一條都標為第三方、低信心，絕不當作產品事實。不耗費大模型 token。',
+      placeholder: '例如：跑馬地',
+      cta: '查資料',
+      pending: '正在查…',
+      degraded: '聯網查詢暫時不適用',
+      empty: '沒有找到資料',
+    },
     worldAnswer: {
       eyebrow: '世界問答 · 全語料',
       title: '問整座城一件事',
@@ -5615,6 +5631,17 @@ const en: Dict = {
     intro: 'Not a list — a map. All one hundred and seventy-one HK-series chapters, laid out in seven layers by the hour: night run, dawn market, morning market, afternoon street, dusk settling, night-market row, the stayers. Read the city from 00:00 to midnight in one go; every cell is a door you can walk through.',
     clockLabel: 'Time — chapter — tap to open',
     countNote: 'One hundred and seventy-one chambers of one fictional city — synthetic from the first step to wherever the series goes next; no real merchant, no real person.',
+    webFacts: {
+      eyebrow: 'REAL FACTS · ONLINE',
+      title: 'Ask the real city',
+      intro: 'The story is synthetic, but the Hong Kong it sits in is real. Look up one public fact about the city behind the fiction — results come from Wikipedia, not from the story.',
+      note: 'Only allow-listed public sources; every row is marked third-party / low-confidence and is never a product fact. No LLM tokens spent.',
+      placeholder: 'e.g. Happy Valley Racecourse',
+      cta: 'Look it up',
+      pending: 'Looking…',
+      degraded: 'The online lookup is unavailable',
+      empty: 'No facts found',
+    },
     worldAnswer: {
       eyebrow: 'WORLD ANSWER · FULL CORPUS',
       title: 'Ask the whole city one thing',

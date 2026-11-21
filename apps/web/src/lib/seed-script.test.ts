@@ -20,7 +20,7 @@ const read = (rel: string) => readFileSync(join(repoRoot, rel), 'utf8');
 const CANONICAL = read('apps/ai/nexus_ai/nlu/canonical.py');
 const simplified = new Set<string>(
   [...CANONICAL.matchAll(/"\\u([0-9a-fA-F]{4})":\s*"\\u[0-9a-fA-F]{4}"/g)]
-    .map((m) => String.fromCharCode(parseInt(m[1], 16))),
+    .map((m) => String.fromCharCode(parseInt(m[1]!, 16))),
 );
 
 // Exclusions with reasons — the same discipline as check_ui_script.mjs.
@@ -38,12 +38,13 @@ function zhProse(): Array<{ slug: string; text: string }> {
   const out: Array<{ slug: string; text: string }> = [];
   const starts = [...SEED.matchAll(/slug: '([^']+)', title: '([^']*)'/g)];
   for (let i = 0; i < starts.length; i += 1) {
-    const slug = starts[i][1];
+    const match = starts[i]!;
+    const slug = match[1]!;
     if (!slug.startsWith('hk-')) continue;
-    const from = starts[i].index ?? 0;
-    const to = i + 1 < starts.length ? (starts[i + 1].index ?? SEED.length) : SEED.length;
-    const block = SEED.slice(from, to).split('body_blocks_en:')[0];
-    const texts = [...block.matchAll(/text: '((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]);
+    const from = match.index ?? 0;
+    const to = i + 1 < starts.length ? (starts[i + 1]?.index ?? SEED.length) : SEED.length;
+    const block = SEED.slice(from, to).split('body_blocks_en:')[0]!;
+    const texts = [...block.matchAll(/text: '((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]!);
     out.push({ slug, text: texts.join('\n') });
   }
   return out;

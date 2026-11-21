@@ -47210,3 +47210,10 @@ not hidden.
 - One live `gpt-6.2-sol` call through the Clash proxy chose the beat (HTTP 200; the model reasoned atypically — 18,697 prompt / 898 completion with 819 reasoning tokens): 06:24, the lost-property entry, the numbered brass tag, the rain beads. Written in controlled vocabulary; no fact unfenced.
 - Frozen artifacts in lockstep: digest 171 / 14,195 B, index 171 lines / 13,306 B; pins, `routes_chapter.py` fence and story-recap window (160–171) advanced; `check_atlas_lockstep` PASS at 171/171/171. arm test **176** assertions; the new `seed-script.test.ts` passes on the fresh chapter (no Simplified characters); corpus-count-sanity asserts 171 in all three locales; atlas/recap 18/18; `verify_all` NO OFFENDER.
 - Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters.
+
+
+## 1407. D1502 — real public facts surfaced in the product (§九), zero LLM tokens
+
+- The `search_web` tool (D1488) existed but had no user door. New `POST /ai/v1/world/web-facts` dispatches it through the guarded registry (allow-listed Wikipedia hosts, DNS-rebind guard, 10s/200KB/4-result caps) and returns rows marked `source:third_party` / `confidence:low`; query bounded to 120 chars, no free-form URL input, mock mode inert. Contract row added; the shifted `API_CONTRACT.md:421` citation relinked to :422.
+- **Live probe through the route (Clash proxy):** `Happy Valley Racecourse` returned 4 real Wikipedia rows in 1.16s — no LLM tokens spent. New `POST /api/nexus/ai/web-facts` BFF and `components/web-facts-panel.tsx` (click-only, zh/en switch, third-party labels) mounted on `/world` beside World Answer and Wayfinder. `dict.world.webFacts` in both arms + regenerated Simplified fold.
+- Tests: `test_web_facts_route.py` (2) + `web-facts-ui.test.ts` (4) — 6/6; combined with search_web tool tests 11/11. `verify_all` NO OFFENDER · contract drift clean · citations 301/301 · `check_ui_script` 0 offenders / 2,924 literals · tsc 0 · web 82 files / **707 passed**.

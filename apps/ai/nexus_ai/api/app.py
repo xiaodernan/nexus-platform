@@ -40,6 +40,7 @@ from nexus_ai.api.routes_insights_analyst import router as insights_analyst_rout
 from nexus_ai.api.routes_story_recap import router as story_recap_router
 from nexus_ai.api.routes_wayfinder import router as wayfinder_router
 from nexus_ai.api.routes_world_answer import router as world_answer_router
+from nexus_ai.api.routes_web_facts import router as web_facts_router
 from nexus_ai.api.routes_chapter import router as chapter_router
 from nexus_ai.api.routes_world_guide import router as world_guide_router
 from nexus_ai.api.routes_npc_ahwan import router as npc_ahwan_router
@@ -160,7 +161,7 @@ def create_app(settings: Any | None = None) -> FastAPI:
               conversations_router, system_router, agent_router, actuator_router,
               handbook_router, insights_router, insights_analyst_router, story_recap_router, wayfinder_router,
               chapter_router, admin_router, world_guide_router, npc_ahwan_router, behavior_router,
-              world_answer_router):
+              world_answer_router, web_facts_router):
         app.include_router(r)
 
     @app.get("/")
