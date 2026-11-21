@@ -47192,6 +47192,7 @@ not hidden.
 - **Live verification through the product router:** 6 identical calls → call 0 provider (7,823 prompt tokens), calls 1–5 `cache_hit=True` with **0 tokens**, 1 local entry held. The provider's 1-in-6 flicker can no longer reach a reader.
 - `test_local_replay_cache.py` (6 pins: deterministic replay, byte-shape miss, bounded LRU, non-cacheable refusal, reset clearing, TTL expiry) + two existing cache tests updated to the D1499 semantics — 22/22 across local + Redis + self-consistency gates. `local_stats` declared in the dead-constant census as CI telemetry.
 - Honest boundary: process-local means one worker's replays are not shared across processes; that is what the optional Redis arm is for. No secret or provider promise changed.
+- Follow-up found by the full suite: a replayed fallback answer lost its `degraded` flag (`_resp_from` hardcoded False), so the route body and `X-Nexus-Degraded` header disagreed on a cache hit. `degraded` now survives the replay (stored in `_value_for`, restored in `_resp_from`); `create_app()` clears the local memo so a mock-plane app cannot inherit a live answer. Test `a_fallback_answer_stays_degraded_through_replay` pins it. All 7 local-replay pins + D451 header census green. Full AI suite at this tree: 37,981 passed, 521 skipped, 0 failed.
 
 
 ## 1405. D1500 — the chapter corpus gets a script gate; nine real 错别字 fixed

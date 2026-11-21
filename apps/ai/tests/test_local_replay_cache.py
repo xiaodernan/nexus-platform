@@ -84,3 +84,17 @@ def test_expired_entries_are_not_replayed(monkeypatch):
     monkeypatch.setattr(cache, "_ttl_s", lambda: -1)
     cache.llm_cache_set(_req(), ("fake",), _resp())
     assert cache.llm_cache_get(_req(), ("fake",)) is None
+
+
+def test_a_fallback_answer_stays_degraded_through_replay(monkeypatch):
+    """A cached fallback must not come back looking healthy — the route's body and the
+    X-Nexus-Degraded header would then disagree (the D451 census caught this in D1499)."""
+    monkeypatch.setattr(cache, "_client", lambda: None)
+    req, chain = _req(), ("fake",)
+    fallback = _resp()
+    fallback.degraded = True
+    cache.llm_cache_set(req, chain, fallback)
+    hit = cache.llm_cache_get(req, chain)
+    assert hit is not None
+    assert hit.degraded is True
+    assert hit.cache_hit is True

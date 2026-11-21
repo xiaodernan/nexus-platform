@@ -59,6 +59,12 @@ def _envelope(code: str, message: str, *, details: Any = None,
 
 
 def create_app(settings: Any | None = None) -> FastAPI:
+    # D1499: a new app with new settings must not inherit another app's memoised LLM
+    # responses — a mock-plane test could otherwise replay a live answer (or vice versa),
+    # and the degraded body/header would disagree. The import is local: config loads first.
+    from nexus_ai.api.llm_response_cache import reset_client as _reset_llm_cache
+    _reset_llm_cache()
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         deps: Deps = app.state.deps

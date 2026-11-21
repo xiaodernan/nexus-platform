@@ -203,6 +203,10 @@ def _value_for(resp: "LLMResponse") -> dict[str, Any]:
         "model": resp.model,
         "purpose": resp.purpose,
         "finish_reason": resp.finish_reason,
+        # D1499: the ORIGINAL call's degradation must survive the replay. Without this,
+        # a cached fallback answer comes back looking healthy and the route's body and
+        # X-Nexus-Degraded header disagree.
+        "degraded": bool(resp.degraded),
     }
 
 
@@ -222,7 +226,7 @@ def _resp_from(payload: dict[str, Any], req: "LLMRequest", stored_latency_ms: in
         completion_tokens=0,
         cost_usd=0.0,
         latency_ms=max(0, int(stored_latency_ms)),
-        degraded=False,
+        degraded=bool(payload.get("degraded")),
         cache_hit=True,
         finish_reason=str(payload.get("finish_reason") or "stop"),
         usage_flagged=False,
