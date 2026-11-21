@@ -10,6 +10,7 @@ import { formatDateTime } from '@/lib/format';
 import { GrowthCardLink, GrowthIndex } from '@/components/growth-view';
 import { EmptyState } from '@nexus/ui';
 import { WorldGuideBeacon } from '@/components/world-guide-beacon';
+import { ReadingThread } from '@/components/reading-thread';
 
 
 /** `/guides` (§8): the index of editorial/AI guides. Nothing is listed that the data plane omitted. */
@@ -70,6 +71,11 @@ export default async function GuidesIndexPage() {
             </ul>
           </div>
         </section>
+      ) : null}
+
+      {/* D1517 — the reading thread: the next doors, read off what the reader already finished. */}
+      {IS_MOCK ? (
+        <ReadingThread guides={guides} copy={dict.growth.readingThread} />
       ) : null}
 
       {/* D1310 — the live world guide on the trailhead, before the list of 106 doors. */}

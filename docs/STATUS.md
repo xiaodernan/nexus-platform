@@ -47415,3 +47415,47 @@ and the afterward/chronicle pages — **208 passed**. `mypy`/`ruff` are untouche
 are stored once and localized by title pair only. Whether that plane's own guides carry an English body
 is a platform-lane question with its own reader; this unit closes the shipped mock corpus, which is the
 plane the demo flag says these two guides live on.
+
+## 1420. D1517 — the reading thread: which door to open next, and why (§六)
+
+**The gap.** The HK corpus is 175 series chapters plus two demo guides, and `/guides` answers it with a
+list. A reader who has finished eleven chapters has no answer to "what now" — and an open world that
+cannot answer that is a world the reader leaves (§六: 同時給用戶足夠充分的引導，防止迷失、失去耐心).
+The stamp collection counts what was read; nothing pointed at what to read next.
+
+**The engine** is `apps/web/src/lib/reading-thread.ts`, pure and deterministic: CJK character bigrams
+plus Latin words, cosine-normalised overlap against the reader's finished set, and a greedy choice with
+a diversity rule — no two doors may be reached through the same finished chapter, so the three doors
+offered span the world the reader already walked instead of clustering in one corner of it. The words
+the two chapters share are ranked by corpus frequency (a word every chapter carries is not a reason) and
+the top three are printed beside the door. Tie-break is the slug, so the same read-set always opens the
+same path, on any machine, in any locale.
+
+    read-set        thread
+    nothing         empty — the island says "start anywhere" rather than ranking arbitrarily
+    everything      empty — the island says the book is read and points at /world
+    12 real slugs   3 doors, three distinct via-chapters, each with shared words (§六 census leg)
+
+**The surface** is `apps/web/src/components/reading-thread.tsx` on `/guides` in mock mode, before the
+world guide: progress (`已讀 n / m 章 · 完成度 p%`), then the three doors with the reason each was
+offered. It reads the SAME `nexus.hk-series.read` key the progress strip and the stamp collection write
+(`chapter-read.ts`), so a reader who has been reading never wakes up to an empty trail, and it renders
+nothing until that read-set is known — no flash of a ranking nobody earned.
+
+**The manual teaches it.** The handbook tour grew to ten steps in both arms, and the handbook's own count
+was corrected while this unit was in it: it said **172 chapters** while the shipped series is **175**
+(measured: 175 `hk-*` guides in the seed) — a manual that under-reports the world loses the reader's
+trust, which is §七's whole point. `handbook-coverage.test.ts` now pins 175 and forbids 172, and the
+coverage legs pin the new tour step in both arms.
+
+**Gates.** `reading-thread.test.ts` (12 legs: the tokenizer's boundary rule, the continuation, the two
+honest empty states, determinism, the diversity rule, a reason on every door, score order, and the
+shipped corpus), `reading-thread-wiring.test.ts` (5 legs: the island is on the index before the world
+guide, reads the shared key, renders nothing before the read-set is known, carries no network, and the
+copy exists in both arms). Adjacent, run and green, never full: `chapter-en-arm` (180), the handbook
+coverage, the world-corpus atlas, the stamp collection, the dict contract's locale parity and the
+afterward/chronicle pages — **230 passed**. `tsc --noEmit` 0; `eslint` clean on the new files; the
+Simplified mirror regenerated and verified in lockstep (`check_simplified_mirror` PASS).
+
+**Filed, not claimed.** The thread engine runs over the mock corpus the demo flag ships; the live plane
+serves guides through `toGuide` and would need the same engine fed from the platform's rows.

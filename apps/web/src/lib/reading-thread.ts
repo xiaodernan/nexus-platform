@@ -1,0 +1,170 @@
+/**
+ * The reading thread — which door to open next, and why (§六).
+ *
+ * The HK corpus is 175 series chapters plus two demo guides, and an index page is a list, not a
+ * path: a reader who has read
+ * eleven of them has no answer to "what now", and an open world that cannot answer that is a world
+ * the reader leaves. This module answers it from what the reader has already read, deterministically,
+ * with no network and no model call: the same read-set always produces the same thread, on any
+ * machine, in any locale, because the tie-break is the slug and nothing else.
+ *
+ * The measure is overlap over CHARACTER BIGRAMS and Latin words, cosine-normalised, so a long chapter
+ * and a short one are compared on the same scale (Jaccard would punish length, and the corpus mixes
+ * 400-character chapters with 3,000-character ones). The thread is then chosen greedily with a
+ * diversity rule — no two steps may be reached through the same read chapter — so the three doors a
+ * reader is offered span the world they have already walked instead of clustering in one corner of it.
+ *
+ * Everything here is pure: `guides` and `readSlugs` in, `ThreadStep[]` out. The island reads the
+ * read-set from `chapter-read.ts` (localStorage, `nexus.hk-series.read`) and hands it here.
+ */
+
+import type { Guide } from './types';
+
+export interface ThreadStep {
+  slug: string;
+  title: string;
+  /** 0..1 — the strongest overlap this chapter has with any chapter the reader finished. */
+  score: number;
+  /** The chapter the thread reaches this one THROUGH — the reader's own reading history. */
+  via: string | null;
+  /** The words the two chapters share, most distinctive first — the reason the door was offered. */
+  shared: string[];
+  href: string;
+}
+
+export interface ThreadProgress {
+  read: number;
+  total: number;
+  /** 0..100, rounded — the completion the island prints. */
+  percent: number;
+}
+
+const LATIN = /[a-z0-9]+/g;
+
+/** The chapter's own words: CJK character bigrams plus every Latin word, lowercased. */
+export function threadTokens(text: string): Set<string> {
+  const out = new Set<string>();
+  const lower = text.toLowerCase();
+  for (const match of lower.matchAll(LATIN)) out.add(match[0]);
+  const run: string[] = [];
+  const flush = () => {
+    for (let i = 0; i + 1 < run.length; i += 1) {
+      const left = run[i];
+      const right = run[i + 1];
+      if (left !== undefined && right !== undefined) out.add(left + right);
+    }
+    run.length = 0;
+  };
+  for (const ch of lower) {
+    const code = ch.codePointAt(0) ?? 0;
+    if (code >= 0x4e00 && code <= 0x9fff) run.push(ch);
+    else flush();
+  }
+  flush();
+  return out;
+}
+
+function guideText(guide: Guide): string {
+  const blocks = guide.body_blocks ?? [];
+  const parts: string[] = [guide.title, guide.description];
+  for (const block of blocks) {
+    if (block.type === 'paragraph' || block.type === 'heading') parts.push(block.text);
+    else if (block.type === 'list') parts.push(...block.items);
+    else parts.push(block.title);
+  }
+  return parts.join('\n');
+}
+
+/** How much of the reader's world this door continues: the best single-chapter overlap, 0..1. */
+function affinity(tokens: Set<string>, readTokens: Set<string>): { score: number; shared: string[] } {
+  if (tokens.size === 0 || readTokens.size === 0) return { score: 0, shared: [] };
+  const shared: string[] = [];
+  for (const token of tokens) if (readTokens.has(token)) shared.push(token);
+  if (shared.length === 0) return { score: 0, shared: [] };
+  const denom = Math.sqrt(tokens.size * readTokens.size);
+  return { score: shared.length / denom, shared };
+}
+
+export function threadProgress(guides: readonly Guide[], readSlugs: readonly string[]): ThreadProgress {
+  const read = new Set(readSlugs);
+  const total = guides.length;
+  const done = guides.filter((guide) => read.has(guide.slug)).length;
+  return { read: done, total, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
+}
+
+/**
+ * The next doors, best first, never two through the same read chapter.
+ *
+ * An empty read-set answers an empty thread on purpose: a reader who has read nothing has no world
+ * to continue, and the island shows the "start anywhere" state rather than an arbitrary ranking.
+ */
+export function readingThread(
+  guides: readonly Guide[],
+  readSlugs: readonly string[],
+  options: { steps?: number } = {},
+): ThreadStep[] {
+  const steps = Math.max(1, options.steps ?? 3);
+  const read = new Set(readSlugs);
+  const unread = guides.filter((guide) => !read.has(guide.slug));
+  if (unread.length === 0) return [];
+
+  const readGuides = guides.filter((guide) => read.has(guide.slug));
+  if (readGuides.length === 0) return [];
+
+  const tokenCache = new Map<string, Set<string>>();
+  const tokensOf = (guide: Guide): Set<string> => {
+    let hit = tokenCache.get(guide.slug);
+    if (!hit) {
+      hit = threadTokens(guideText(guide));
+      tokenCache.set(guide.slug, hit);
+    }
+    return hit;
+  };
+
+  // One pass over the read set per unread chapter: the best overlap and the chapter it comes from.
+  const best = new Map<string, { score: number; via: string; shared: string[] }>();
+  for (const guide of unread) {
+    const tokens = tokensOf(guide);
+    let top = { score: 0, via: '', shared: [] as string[] };
+    for (const source of readGuides) {
+      const { score, shared } = affinity(tokens, tokensOf(source));
+      if (score > top.score) top = { score, via: source.slug, shared };
+    }
+    if (top.score > 0) best.set(guide.slug, top);
+  }
+  if (best.size === 0) return [];
+
+  // Distinctive first: a shared word that few chapters carry is a reason; a word every chapter
+  // carries is noise. Frequency is counted over the corpus the reader was handed.
+  const frequency = new Map<string, number>();
+  for (const guide of guides) {
+    for (const token of tokensOf(guide)) frequency.set(token, (frequency.get(token) ?? 0) + 1);
+  }
+
+  const ranked = [...best.entries()]
+    .map(([slug, hit]) => ({ slug, ...hit }))
+    .sort((a, b) => (b.score - a.score) || a.slug.localeCompare(b.slug));
+
+  const out: ThreadStep[] = [];
+  const usedVia = new Set<string>();
+  for (const candidate of ranked) {
+    if (out.length >= steps) break;
+    if (usedVia.has(candidate.via)) continue;
+    usedVia.add(candidate.via);
+    const guide = unread.find((item) => item.slug === candidate.slug);
+    if (!guide) continue;
+    const shared = [...candidate.shared]
+      .sort((a, b) => (frequency.get(a) ?? 0) - (frequency.get(b) ?? 0)
+        || b.length - a.length || a.localeCompare(b))
+      .slice(0, 3);
+    out.push({
+      slug: guide.slug,
+      title: guide.title,
+      score: Math.round(candidate.score * 1000) / 1000,
+      via: candidate.via,
+      shared,
+      href: `/guides/${guide.slug}`,
+    });
+  }
+  return out;
+}

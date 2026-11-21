@@ -504,6 +504,22 @@ export interface Dict {
       cta: string;
       pending: string;
     };
+    /** D1517: the reading thread — the next doors, read off what the reader already finished. */
+    readingThread: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      progress: (read: number, total: number) => string;
+      percent: (percent: number) => string;
+      emptyTitle: string;
+      emptyBody: string;
+      doneTitle: string;
+      doneBody: string;
+      because: string;
+      shared: string;
+      via: (title: string) => string;
+      open: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -2106,6 +2122,21 @@ const zhHK: Dict = {
       cta: '撳我，畀我指路',
       pending: '大模型正在諗下一站…',
     },
+    readingThread: {
+      eyebrow: '續讀線 · 讀過啥就續啥',
+      title: '下一章讀邊本？',
+      intro: '你讀過的章節決定下一度門。完全本機計算，零 token、零網絡——同一個讀過清單，永遠指同一條路。',
+      progress: (read, total) => `已讀 ${read} / ${total} 章`,
+      percent: (percent) => `完成度 ${percent}%`,
+      emptyTitle: '世界仲未開始',
+      emptyBody: '讀過任何一章，呢度就會按你讀過的內容，指出下一步最值得開的三度門。',
+      doneTitle: '全本書讀完',
+      doneBody: '所有章節都讀過了——世界仲在加新章。去 /world 問反座城其他嚇。',
+      because: '因為你讀過',
+      shared: '共同關鍵詞：',
+      via: (title) => `《${title}》`,
+      open: '開門',
+    },
   },
   hkType: {
     eyebrow: '香港系列 · 互動篇章',
@@ -2955,13 +2986,13 @@ const zhHK: Dict = {
   handbook: {
     eyebrow: 'NEXUS · 簡明說明書',
     title: '玩盡 NEXUS，三分鐘讀完的完整說明書',
-    intro: '由首頁的 SearchBox 到一百七十二章香港系列、/world 的全語料問答與真實聯網資料，再到 /me 帳戶 hub——這本手冊逐頁告訴你：每個功能是什麼、怎麼用、注意什麼。',
+    intro: '由首頁的 SearchBox 到一百七十五章香港系列、/world 的全語料問答與真實聯網資料，再到 /me 帳戶 hub——這本手冊逐頁告訴你：每個功能是什麼、怎麼用、注意什麼。',
     cta: '立即試第一步',
     navTitle: '本手冊目錄',
     exampleLabel: '試試看：把下面這句打進 SearchBox',
     exampleQuery: '油麻地 魚蛋，要抵食又快',
     exampleCaption: 'NEXUS 收到這句話，會拆出「油麻地」（地區）、「魚蛋」（品類）以及「抵食又快」（預算、時間偏好），再返回附近的商戶；每張卡下面都寫明為什麼推薦你這一間。',
-    tourTitle: '三分鐘，九步上手',
+    tourTitle: '三分鐘，十步上手',
     tour: [
       { title: '一句話入門', text: '搜尋任何你想吃的、做的、遇見的——「油麻地 魚蛋 抵食」或「廟街 宵夜」。' },
       { title: '看 AI 的理由', text: '每張推薦卡都會寫明為何推薦；每個數字都能追到事實。' },
@@ -2969,7 +3000,8 @@ const zhHK: Dict = {
       { title: '香港系列照單全收', text: '/hong-kong 把這座城的一整天放在卡片上；讀過哪章，進度條會記住。' },
       { title: '問整座城 · /world', text: '在世界地圖按一下，就能問整本系列的章節內容，答案附出處；旁邊還能查真實維基百科資料，零 token。' },
       { title: '帶你玩 · /try', text: '首頁可開教學說明；/try 的五步教練可逐步打勾，進度只存在你的瀏覽器。' },
-      { title: '把整個世界攤開 — /world', text: '一百七十二章按時辰攤成七層，一頁覽盡一座城；同頁還有向導、全語料問答與真實維基資料。' },
+      { title: '把整個世界攤開 — /world', text: '一百七十五章按時辰攤成七層，一頁覽盡一座城；同頁還有向導、全語料問答與真實維基資料。' },
+      { title: '續讀線 · /guides', text: '讀過哪章，指南頁就會指出下一步最值得開的三度門，並寫明為什麼（共同關鍵詞）。完全本機計算，零 token、零網絡。' },
       { title: 'operator 的鏡子 — /insights', text: '營運側的鬼影台：誰來、誰留、過去七天的趨勢線——全是本地確定性重放，無追蹤、無 cookie。' },
       { title: '/me 收起你的最愛', text: '收藏店舖、偏好、預約和收件匣全在一頁；九成功能不登入也用得。' },
     ],
@@ -4329,6 +4361,21 @@ const en: Dict = {
       cta: 'Ask the guide',
       pending: 'The roads are aligning — choosing your next step…',
     },
+    readingThread: {
+      eyebrow: 'READING THREAD · FROM WHAT YOU FINISHED',
+      title: 'Which chapter next?',
+      intro: 'The chapters you have already finished decide the next doors. Computed on this machine — zero tokens, zero network — so the same read-set always opens the same path.',
+      progress: (read, total) => `${read} of ${total} chapters read`,
+      percent: (percent) => `${percent}% complete`,
+      emptyTitle: 'The world has not started yet',
+      emptyBody: 'Read any one chapter and this will name the three doors most worth opening next, from what you have already read.',
+      doneTitle: 'The whole book is read',
+      doneBody: 'Every chapter is behind you — and the world keeps adding new ones. Ask the city something else at /world.',
+      because: 'Because you read',
+      shared: 'Shared words: ',
+      via: (title) => `“${title}”`,
+      open: 'Open the door',
+    },
   },
   hkType: {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
@@ -5184,7 +5231,7 @@ const en: Dict = {
     exampleLabel: 'TRY THIS IN THE SEARCHBOX',
     exampleQuery: 'Yau Ma Tei fish balls, cheap and fast',
     exampleCaption: 'NEXUS parses the sentence into district (Yau Ma Tei), item (fish ball), budget and rush cues (cheap and fast); then returns matching merchants — every card tells you why that one made the cut.',
-    tourTitle: 'Nine steps, three minutes',
+    tourTitle: 'Ten steps, three minutes',
     tour: [
       { title: 'Ask once', text: 'Search for anything you would want nearby — "Yau Ma Tei fish balls, cheap" or "Temple Street late night".' },
       { title: 'Read the why', text: 'Each card prints its reason; every number traces back to a fact.' },
@@ -5192,7 +5239,8 @@ const en: Dict = {
       { title: 'Walk the series', text: 'One full day of Hong Kong in /hong-kong; the strip above the grid remembers every chapter you finished.' },
       { title: 'Ask the whole city — /world', text: 'One click on the atlas asks every chapter in the series and returns a cited answer; beside it, real Wikipedia facts cost zero tokens.' },
       { title: 'Guided play — /try', text: 'Toggle teaching hints on the home page; the five-step coach on /try tracks your progress in this browser only.' },
-      { title: 'Unfold the world — /world', text: 'One hundred and seventy-two chapters arranged by the hour into seven layers; the same page also hosts the wayfinder, whole-corpus Q&A and real Wikipedia facts.' },
+      { title: 'Unfold the world — /world', text: 'One hundred and seventy-five chapters arranged by the hour into seven layers; the same page also hosts the wayfinder, whole-corpus Q&A and real Wikipedia facts.' },
+      { title: 'Reading thread · /guides', text: 'Whatever chapter you have finished, the guides index names the three doors most worth opening next - and says why, with the words the two chapters share. Computed on this machine: zero tokens, zero network.' },
       { title: 'The operator’s mirror — /insights', text: 'Who came, who stayed, the seven-day trend line — a deterministic local replay, zero tracking, zero cookies.' },
       { title: 'Save what you love', text: 'Favourites, preferences, reservations and inbox in /me — nine-tenths of the product works without an account.' },
     ],
