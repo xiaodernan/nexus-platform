@@ -334,6 +334,18 @@ export const zhCN: Dict = {
       pending: '阿环紧握只拖把………',
       proven: '润饰自这个世界 · 合成口吻，非真人',
     },
+    guidedPlay: {
+      eyebrow: '带你玩 · 5 步',
+      title: '跟住做，就学会',
+      intro: '每去过一个地方，就剔一格。进度只存放在此浏览器 — 不需注册、不收集资料。五格全剔就解锁下一步。',
+      progress: (done, total) => `${done} / ${total} 已完成`,
+      mark: '标记完成',
+      marked: '已完成',
+      reset: '重头再来',
+      completeTitle: '五步都走过了 — 你已经会玩',
+      completeBody: '搜索、读推荐、收藏、今日仪式、人格测试都试过了。接下去没有达到条件的关卡，只有一座读不完的城。',
+      nextCta: '去香港系列',
+    },
     tryFlow: {
       eyebrow: '五步直通 · FIVE STEPS',
       title: '一分钟直通：从「今晚食甚么」到「阿婆嘅好意」',

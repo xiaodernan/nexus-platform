@@ -4,6 +4,7 @@ import { Container, Icon } from '@nexus/ui';
 
 import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
+import { GuidedPlayCoach } from '@/components/guided-play-coach';
 
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -38,6 +39,10 @@ export default async function TryFlowPage() {
 
       {/* Five steps, one scroll */}
       <Container size="shell" className="flex flex-col gap-10 py-10">
+        <GuidedPlayCoach
+          copy={dict.home.guidedPlay}
+          steps={flow.steps.map((step) => ({ title: step.title, href: step.href }))}
+        />
         <ol className="flex flex-col gap-6">
           {flow.steps.map((step, index) => (
             <li

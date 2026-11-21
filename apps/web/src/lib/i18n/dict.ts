@@ -253,6 +253,19 @@ export interface Dict {
       proven: string;
     };
     /** D1171: the /try quick-start demo route — the in-product walkthrough. */
+    /** §7: the interactive guided-play coach on /try — checkable steps, local progress. */
+    guidedPlay: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      progress: (done: number, total: number) => string;
+      mark: string;
+      marked: string;
+      reset: string;
+      completeTitle: string;
+      completeBody: string;
+      nextCta: string;
+    };
     tryFlow: {
       eyebrow: string;
       title: string;
@@ -1573,6 +1586,18 @@ const zhHK: Dict = {
       send: '問',
       pending: '阿環緊握隻拖把………',
       proven: '潤飾自這個世界 · 合成口吻，非真人',
+    },
+    guidedPlay: {
+      eyebrow: '帶你玩 · 5 步',
+      title: '跟住做，就學會',
+      intro: '每去過一個地方，就剔一格。進度只存放在此瀏覽器 — 不需註冊、不收集資料。五格全剔就解鎖下一步。',
+      progress: (done, total) => `${done} / ${total} 已完成`,
+      mark: '標記完成',
+      marked: '已完成',
+      reset: '重頭再來',
+      completeTitle: '五步都走過了 — 你已經會玩',
+      completeBody: '搜索、讀推薦、收藏、今日儀式、人格測試都試過了。接下去沒有達到條件的關卡，只有一座讀不完的城。',
+      nextCta: '去香港系列',
     },
     tryFlow: {
       eyebrow: '五步直通 · FIVE STEPS',
@@ -3734,6 +3759,18 @@ const en: Dict = {
       send: 'Ask',
       pending: 'Ah Wan is wringing the cloth…',
       proven: 'Phrasing from this world — synthetic, not a real person',
+    },
+    guidedPlay: {
+      eyebrow: 'GUIDED PLAY · 5 STEPS',
+      title: 'Follow along, learn by doing',
+      intro: 'Check off each place as you visit it. Progress lives only in this browser — no sign-in, no data collected. All five opens the next door.',
+      progress: (done, total) => `${done} / ${total} done`,
+      mark: 'Mark done',
+      marked: 'Done',
+      reset: 'Start over',
+      completeTitle: 'All five walked — you can play',
+      completeBody: 'Search, recommendation, saving, today’s ritual and the quiz are behind you. What follows is no gated level, only a city you cannot finish reading.',
+      nextCta: 'Go to the Hong Kong series',
     },
     tryFlow: {
       eyebrow: 'WALKTHROUGH · FIVE STEPS',

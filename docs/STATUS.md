@@ -47115,3 +47115,11 @@ not hidden.
 - `apps/ai/nexus_ai/orchestrator/arc_audit_graph.py` now declares `TARGET_PROMPT_TOKENS_MIN=50_000`, `TARGET_PROMPT_TOKENS_MAX=90_000`, `CHARS_PER_TOKEN_APPROX=3` (the measured 174,489 chars → 58,957 tokens ratio) and `MAX_CORPUS_CHARS=270_000`. `assemble` refuses any window whose assembled corpus exceeds the ceiling with `reason:'corpus_over_budget'` **before** the model is called — a real input budget and a spend guard, not prose.
 - `test_arc_context_budget.py` (4 pins): the constants exist in range; the measured L→P window fits; an oversized corpus is refused with zero model calls; an ordinary 6-chapter window still passes. `TARGET_PROMPT_TOKENS_MIN` declared in the dead-constant census with its CI-consumer reason. 18/18 across budget + arc-audit + self-consistency gates; ruff clean.
 - Full AI suite clean: 37,960 passed, 519 skipped, 0 failed (exit 0).
+
+
+## 1397. D1491 — guided play coach on /try (§七): the tutorial becomes a session, not a static list
+
+**Audit gap:** the existing onboarding was a static `tryFlow` list + one-line quiz hint + prose handbook — no step-by-step guided session that teaches the play mechanics by doing.
+- New `apps/web/src/components/guided-play-coach.tsx` — a local-first client island (`localStorage['nexus.guided-play.v1']`) that turns `/try`'s five real doors into a checkable guided session: each step has a mark-done button and a deep link, a `role="progressbar"` shows X/5, finishing shows a completion card handing the reader into `/hong-kong`, and a reset control starts over. No account, no network, no telemetry; placeholder-first paint avoids hydration drift.
+- Mounted above the detailed five steps in `app/try/page.tsx`, with `steps` derived from the same `flow.steps` (never a second hand-maintained list). Copy in `dict.home.guidedPlay` for zh-HK + en + regenerated Simplified fold; no inline CJK on the page.
+- `guided-play.test.ts` (3 pins): local-first state/ARIA, mount + derivation, both arms' completion copy. `verify_all` NO OFFENDER · `check_ui_script` 0 offenders / 2,891 literals · a11y PASS · tsc 0 · web 79 files / **694 passed**.
