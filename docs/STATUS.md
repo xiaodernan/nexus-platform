@@ -47224,3 +47224,12 @@ not hidden.
 - Cadence trigger (a heavy improvement: +5 chapters, +4 LLM lanes, cache-flicker fix, full-corpus RAG, real-facts door) — the io fact-pack was refreshed from the curated `docs/SHOWCASE.json` (both authored arms) with real GitHub REST measurements: head `1ac0125` at measure time, **1,758** commits (last-page length 58 + 17×100).
 - Mirrored tiles in `index.html` (zh + en) now read D1502 / Layer R open / 171 chapters; `latest.json` carries the curated D1502 facts plus real REST head/commits. Two sync-bot pushes raced the rebase; both `latest.json` conflicts were resolved by keeping the bot's fresh REST numbers and re-applying the curated D1502 facts (both arms) — no bot data discarded.
 - `pages.yml` + `sync-nexus-platform.yml` dispatched (204) and completed **success**. Live re-verified with a cache-buster: `D1502` ×6, `171` ×4, `Layer R` ×4, `NaN` **0**, stale `D1483` **0**; `latest.json` head `151d360` / 1,759 commits / 6 zh + 6 en feature mirrors. `identity-guard` OK (identity lock, no forbidden phrases, NaN=0, portrait contract intact).
+
+
+## 1409. D1504 — chapter 172: the damp envelope; arc reaches 172
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-damp-envelope-chronicle` — chapter 172 （早上六點三十一分——閘桿為送貨車升起，司機在門檻留下濕信封「給那把傘」；阿晴不拆，先壓在遺失物冊下讓銅牌和跑馬紙保持乾爽。牆鐘指著 6:33，其實才 6:31——舊鐘快兩分鐘。「不知道誰送的，但他知道傘在這裡。」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call through the Clash proxy chose the beat (HTTP 200, 18,731 tokens with only 43 reasoning under a tighter prompt): 06:31, the delivery van's damp envelope, the two-minutes-fast clock. Written in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 172 / 14,321 B, index 172 lines / 13,432 B; pins, `routes_chapter.py` fence and story-recap window (161–172) advanced; `check_atlas_lockstep` PASS at 172/172/172. arm test **178** assertions; seed-script gate clean on the fresh chapter; corpus-count-sanity 172 in all three locales; atlas/recap 18/18; `verify_all` NO OFFENDER.
+- Cadence: no layer closure, so the io fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.

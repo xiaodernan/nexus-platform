@@ -2526,4 +2526,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/unclaimed/i);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /numbered brass tag|rain beads|waiting for a claim/i.test(b.text))).toBe(true);
   });
+  it('chapter 172 (Happy Valley damp envelope — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-damp-envelope-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上六點三十一分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-damp-envelope-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上六点三十一分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-damp-envelope-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|damp envelope/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/delivery van/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(prose).toMatch(/two minutes fast/i);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /for the umbrella|clock two minutes fast|unopened letter/i.test(b.text))).toBe(true);
+  });
 });
