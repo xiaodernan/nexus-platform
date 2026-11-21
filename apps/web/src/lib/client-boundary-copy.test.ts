@@ -119,6 +119,29 @@ describe('the server/client boundary carries no function', () => {
     expect(found.map((c) => `${c.component}.${c.prop}`)).toContain('ReadingThread.copy');
   });
 
+  it('census the shapes this reader cannot see, so a new one cannot arrive silently', () => {
+    // The reader discovers `prop={dict.path}` and `prop={alias.path}`. Two other ways to hand a
+    // dictionary value across the boundary exist in JSX and are NOT discovered:
+    //   `{...dict.x}` / `{...alias.x}`  — a spread
+    //   a helper that forwards a subtree  — `copy={pick(dict.x)}`
+    // Measured 2026-11-22 across every file under app/: ZERO of either. This leg is the tripwire:
+    // the day someone writes one, it reddens and the reader grows a pattern rather than the plane
+    // quietly growing a fourth broken page.
+    const spreads: string[] = [];
+    const helpers: string[] = [];
+    for (const page of walk(APP)) {
+      const src = read(page);
+      for (const match of src.matchAll(/\{\.\.\.(dict\.[A-Za-z0-9_.]+|[A-Za-z_][A-Za-z0-9_]*)\}/g)) {
+        spreads.push(`${page} ${match[0]}`);
+      }
+      for (const match of src.matchAll(/\b([a-zA-Z]+)=\{[a-zA-Z_][A-Za-z0-9_]*\(dict\.[A-Za-z0-9_.]+\)\}/g)) {
+        helpers.push(`${page} ${match[0]}`);
+      }
+    }
+    expect(spreads, 'a spread carries a dictionary value across the boundary').toEqual([]);
+    expect(helpers, 'a helper forwards a dictionary value across the boundary').toEqual([]);
+  });
+
   it.each(found.map((c) => [`${c.component}.${c.prop} <- dict.${c.path}`, c]))(
     '%s is serialisable',
     (_label, crossing) => {

@@ -47904,3 +47904,32 @@ try-flow, the admin analytics, the world-answer UI and the world-guide/chapter-a
 **Filed, not claimed.** On the live plane the corpus is whatever the platform serves, and whether its
 bodies arrive whole enough for the affinity measure to mean anything is a live-plane question this unit
 does not answer — it answers only that the lane is no longer switched off there.
+
+## 1432. D1529 — the boundary reader's blind spot is now a tripwire, and it is empty (§五)
+
+**The gap.** D1522 and D1523 both filed the same limit: the reader discovers a crossing written
+`prop={dict.path}` (and since D1524 `prop={alias.path}`), and a crossing written some other way — a
+`{...dict.x}` spread, a helper that forwards a subtree — is outside its reach. A filed limit with no
+measurement is a hope; this unit measures it and turns it into a tripwire.
+
+**The census, over every file under `app/`** (2026-11-22): **zero** spreads of a dictionary value, and
+**zero** helper-forwarded dictionary values. The plane does not currently contain the shape the reader
+cannot see — which is a fact about today's code, not a promise about tomorrow's.
+
+**The tripwire.** `client-boundary-copy.test.ts` gains a leg that walks `app/` for both shapes and
+asserts both lists are empty, with the reason in the leg's own comment: the day someone writes one, it
+reddens and the reader grows a pattern, rather than the plane quietly growing a fourth broken page.
+Falsified by planting `<ReadingThread guides={guides} {...dict.growth.readingThread} />` in the guides
+index: the leg reddens by name, and the "discovers the crossings" leg reddens with it (the reader lost a
+crossing it knew about), so the planting cannot pass quietly either way.
+
+**The reader now carries 168 legs** — 167 crossings asserted serialisable in all three locales, the
+discovery leg, and the blind-spot census. The four instances this class produced (D1521 `/guides`,
+D1522 `/try`, D1523 `/admin/analytics`, D1524 `/world`) are all closed and the sweep that found the
+fourth is clean.
+
+**Adjacent**, run and green, never full: the boundary reader, the reading-thread engine and wiring, the
+handbook coverage, the dict contract's locale parity, the world-corpus atlas, the stamp collection, the
+count claims and the corpus-count sanity, the hk-type and home-series-rail pages, the try-flow, the admin
+analytics, the world-answer UI and the world-guide/chapter-ask live panels, and `chapter-en-arm` (182) —
+**428 passed**. `tsc --noEmit` 0; `eslint` clean on the touched file.
