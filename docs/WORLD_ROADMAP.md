@@ -38,7 +38,7 @@ The full arc is a continuous breath across the clock slots (in chronological ord
 ## The pins that never move (for every future chapter)
 
 - Every chapter is a `DEMO_GUIDES` entry: three heading cards, synthetic-fixture framing (`flags: { demo: true }`), HK Traditional script, bilingual, SearchBox pointer, 後記.
-- Every chapter carries rivets into `mock seed.ts`, `dict.ts` arc clock, `dict.ts` reading order, `dict.ts` hk-type link list, `chapter-icons.ts` glyph, e2e floors, `chapter-guides.test.ts` (LIV+ arm), ATLAS pins, STATUS/SHOWCASE led.
+- Every chapter carries rivets into `mock seed.ts`, `dict.ts` arc clock, `dict.ts` reading order, `dict.ts` hk-type link list, `dict.ts` count labels (`seriesLabel`, `chaptersTitle`, `world.intro`, the chronicle codex copy), `chapter-icons.ts` glyph, e2e floors, `chapter-guides.test.ts` (LIV+ arm), ATLAS pins, STATUS/SHOWCASE led. The `/world` full-corpus grid derives its own count and links from the seed, so it cannot drift; the static dict count labels must still be advanced by hand with each chapter.
 - The arc clock: 136 chips (68 ch × 2 locales); order: time of day continuous 00:00 → 23:00.
 - The reader board `/hong-kong`, the onboarding `/try`, the completion `/stamp` — three faces of the same series.
 

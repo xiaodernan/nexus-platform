@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { currentLocale } from '@/lib/i18n/server';
 import { getDict, type Dict } from '@/lib/i18n';
+import { mockGuides } from '@/lib/mock';
 import { Container } from '@nexus/ui';
 import { StoryRecap } from '@/components/story-recap';
 
@@ -10,8 +11,9 @@ import { StoryRecap } from '@/components/story-recap';
  * `/world` — the atlas page. A single-scroll dossier of the entire HK-series corpus,
  * partitioned by hour into the seven layers the day actually moves through. Nothing on
  * this page is invented outside the dictionary or the arc clock; nothing is duplicated by
- * hand — the 68 chips are read straight from `dict.home.hkHub.clock`, so the atlas can
- * never drift behind the series it describes. Bilingual in the same breath; SSR per
+ * hand — the 106 hour chips are read straight from `dict.home.hkHub.clock`, and the full
+ * corpus section reads every guide from the seed at render time, so the atlas can never
+ * drift behind the series it describes. Bilingual in the same breath; SSR per
  * request; no client island (this is a dossier, not a feed).
  */
 
@@ -49,6 +51,10 @@ export default async function WorldPage() {
   const dict = getDict(locale);
   const t = dict.world;
   const clock: Chip[] = dict.home.hkHub.clock;
+  // The whole HK-series corpus, straight from the seed in the reader's language — the
+  // count and every link are derived, so a new chapter appears here the moment it lands.
+  // The two non-series guides (rainy-day / date-plan) are not numbered chapters.
+  const corpus = mockGuides(locale).filter((guide) => guide.slug.startsWith('hk-'));
 
   const byLayer: Chip[][] = t.layers.map(() => []);
   for (const chip of clock) {
@@ -139,6 +145,26 @@ export default async function WorldPage() {
             );
           })}
         </div>
+
+        {/* D1487 — the full corpus, beyond the curated hour-clock anchors. */}
+        <section aria-labelledby="world-corpus" className="mt-10">
+          <h2 id="world-corpus" className="text-lg font-semibold text-ink-strong">{t.corpusTitle}</h2>
+          <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-muted">{t.corpusIntro}</p>
+          <p className="mt-2 font-mono text-2xs text-accent">{t.corpusCount(corpus.length)}</p>
+          <ol className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {corpus.map((guide, index) => (
+              <li key={guide.slug}>
+                <Link
+                  href={`/guides/${guide.slug}`}
+                  className="flex items-baseline gap-2 rounded-xl border border-line bg-surface px-3 py-2 text-2xs text-ink transition-colors hover:border-accent hover:text-accent"
+                >
+                  <span className="shrink-0 font-mono text-accent">{String(index + 1).padStart(3, '0')}</span>
+                  <span className="min-w-0 truncate">{guide.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         <footer className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6 text-2xs text-ink-faint">
           <span>{t.footerNote}</span>
