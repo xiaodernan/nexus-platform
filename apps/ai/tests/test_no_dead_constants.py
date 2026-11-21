@@ -58,6 +58,7 @@ DECLARED_EXPORTS = frozenset({
     "proper_nouns",        # nlu/lexicon.py - the demo data's naming convention
     "require_db",          # db/pool.py - the database requirement helper
     "reset_platform_client",  # adapters/platform.py - the platform door's resetter
+    "run_arc_audit",       # orchestrator/arc_audit_graph.py - the operator probe entry point (live_arc_audit_probe.py at repo root, outside this package-only census)
     "reset_provider_cache",  # models/factory.py - the provider pool's resetter
     "reset_settings_cache",  # config.py - the settings cache's resetter
     "reviews_for",         # search/sql.py - the review rows for a set of merchants

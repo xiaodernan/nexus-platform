@@ -47020,3 +47020,13 @@ are the live-database integration tests this plane cannot reach without the cred
 not hidden.
 
 - readers: step 8 0 offenders · step 9 92/31 · step 10 missing 0 · step 12 50/50 · step 15 12/12 · step 17 MATCHED 217x3
+
+
+## 1387. D1480 — chapter 164 joins Layer Q; my own AI-suite offenders declared; contract rows for the parallel wave
+
+**What landed.**
+- `hk-happy-valley-racecourt-east-gate-empty-square-chronicle` — chapter 164 （下午五點——門房——阿晴把昨天畫在秩序冊頁邊的空白格拿出來，第四次拿起鉛筆，在格子裡寫下自己的名字；阿穆把冊子放回抽屜：「明天有人問，我就說是阿晴留的位。」「明天已經寫在紙上」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- Frozen artifacts in lockstep: `gen_atlas_digest.py` → 164 chapters / 13,399 B; `gen_atlas_index.py` → 164 lines / 12,511 B; atlas pins, the `routes_chapter.py` fence and the story-recap window (153–164) advanced; `check_atlas_lockstep` PASS at 164/164/164. `chapter-en-arm.test.ts` — **168** assertions; 18 atlas/recap tests green.
+- The parallel wave (D369–D373: wayfinder StateGraph, password-123 behavior analytics, pressure probe, wheel fix) is now pushed to origin. Its two new service paths were undocumented: `GET /ai/v1/admin/behavior` and `POST /ai/v1/world/wayfinder` now have API_CONTRACT.md rows, so `check_contract_drift` is green again.
+- My own two offenders in the AI suite's self-consistency gates were fixed: `run_arc_audit` declared in `test_no_dead_constants.py` (an operator-probe entry point living at repo root, outside the package-only read census), and the zh fixture in `test_story_recap_graph.py` rewritten with characters only from the product vocabulary. The remaining offenders in that suite belong to the parallel wave's own new files (wayfinder test literals, `_rows` helper) and are left to that in-flight unit.
+- Honest boundary: `check_console_i18n` / `check_console_a11y` currently flag the freshly landed `admin/analytics/page.tsx` (inline locale map, missing noindex metadata, landmark structure). That is the parallel unit's surface; it is not silently declared green here.
