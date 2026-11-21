@@ -47807,3 +47807,32 @@ repository, not in this workspace.
 (1307 sections, no duplicates), `check_console_i18n` PASS (0 offenders), `check_console_a11y` PASS, both
 Simplified mirrors in lockstep. This unit changes one document; the evidence it cites is the evidence
 the ten units before it measured.
+
+## 1429. D1526 — the prefix cache survived the prompt change, measured again after the append (§四)
+
+**The question D1520 filed.** `INTENT_EXTRACT_SYSTEM` is the TAIL of D1050's byte-stable shared prefix,
+and D1520 appended a clause to it — which moves that prefix's bytes and therefore invalidates every
+provider-side cache entry built on the old shape. The owner's §四 asks for 缓存穩定命中約 90%, 中途不突然掉
+缓存; a unit that moves the prefix owes a re-measurement rather than a hope.
+
+**Measured, not argued** (`apps/ai/cache_probe.py`, `api.aizzz.xyz/v1` / `gpt-6.2-sol`, 2026-11-22,
+after the append landed):
+
+    arm                                        calls   hit
+    tiny-system (the app's real intent shape)   3      94.5%, 94.5%, cold
+    contract (frozen head, diverse queries)    12      8 of 12 at 100%
+
+The intent shape is 4,423 prompt tokens of which 4,179 are the shared head; after ONE cold call the
+next two identical calls report `cached_tokens=4179` — **94.5%**, the same number the 2026-11-16
+measurement recorded before the append. The append moved the bytes, the provider re-primed on the first
+call, and the hit rate is where it was.
+
+**What this unit does NOT claim.** The 94.5% is a three-call burst on one machine against one proxy;
+the contract arm's 4-of-12 misses are the diverse-query case where the prefix after the shared head
+differs, which is the shape the owner's dashboard calls the worst case and which no prefix design can
+fix. The number that answers §四 is the intent shape's, and it is measured twice now.
+
+**Gate.** No code changed; the reader that would catch a regression here is
+`test_cache_reporting_is_not_a_miss.py` (a relay that reports nothing is not a miss) and D1050's own
+prefix-contract reader, both green in this session's adjacent runs. This entry is the measurement the
+previous unit owed, recorded so the next prompt edit knows what it is risking.
