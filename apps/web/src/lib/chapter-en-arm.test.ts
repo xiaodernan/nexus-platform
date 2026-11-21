@@ -2511,4 +2511,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/tram bell/i);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /peeling it free|before the traffic|card on the ledge/i.test(b.text))).toBe(true);
   });
+  it('chapter 171 (Happy Valley numbered brass tag — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-lost-property-brass-tag-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上六點二十四分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-lost-property-brass-tag-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上六点二十四分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-lost-property-brass-tag-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|lost-property book/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/brass tag/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(prose).toMatch(/unclaimed/i);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /numbered brass tag|rain beads|waiting for a claim/i.test(b.text))).toBe(true);
+  });
 });

@@ -47201,3 +47201,12 @@ not hidden.
 - New `apps/web/src/lib/seed-script.test.ts` — reads the product's OWN `nlu/canonical.py` table as text (a broken table cannot satisfy its own assertion), extracts only the zh-HK half of every chapter, and charges every Simplified-only character, with three named/reasoned exclusions (台/面/嘅). It found **9 genuine offenders**: 准/干/亲/钱 in early chapters.
 - Fixed at the source in `seed.ts` (准→準, 非真實干系→非真實關係, 父亲/母亲→父親/母親, 多少钱→多少錢, and one rewording to avoid an ambiguous 准), regenerated the opencc Simplified fold, and re-ran lockstep — 170/170/170 unchanged (body edits don't move the atlas).
 - `seed-script.test.ts` 2/2; `verify_all` NO OFFENDER · web 82 files / **706 passed** · tsc 0 · atlas lockstep PASS. This closes the owner's §五 "首页和各处错别字" class for the corpus, not just the dictionary.
+
+
+## 1406. D1501 — chapter 171: the numbered brass tag; arc reaches 171
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-lost-property-brass-tag-chronicle` — chapter 171 （早上六點二十四分——阿晴把劉太太的傘拿到門房，在遺失物冊寫下「傘一把，無人認領」；用編了號的銅牌把對摺跑馬紙夾在傘柄上，鉛筆名字還在紙裡。雨珠順傘骨摺痕下滑，銅牌碰鐵圈輕響一聲——像遠處有人回「在」。號碼、傘、紙三樣在一起，等一個還沒出現的名字）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call through the Clash proxy chose the beat (HTTP 200; the model reasoned atypically — 18,697 prompt / 898 completion with 819 reasoning tokens): 06:24, the lost-property entry, the numbered brass tag, the rain beads. Written in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 171 / 14,195 B, index 171 lines / 13,306 B; pins, `routes_chapter.py` fence and story-recap window (160–171) advanced; `check_atlas_lockstep` PASS at 171/171/171. arm test **176** assertions; the new `seed-script.test.ts` passes on the fresh chapter (no Simplified characters); corpus-count-sanity asserts 171 in all three locales; atlas/recap 18/18; `verify_all` NO OFFENDER.
+- Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters.
