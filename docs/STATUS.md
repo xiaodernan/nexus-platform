@@ -47266,3 +47266,11 @@ not hidden.
 - One live `gpt-6.2-sol` call through the Clash proxy chose the beat (HTTP 200, 19,422 tokens): the two clocks, the second tag, the dry ledger corner. Written in controlled vocabulary; no fact unfenced.
 - Frozen artifacts in lockstep: digest 173 / 14,431 B, index 173 lines / 13,540 B; pins, `routes_chapter.py` fence and story-recap window (162–173) advanced; `check_atlas_lockstep` PASS at 173/173/173. Chapter arm + seed-script + corpus-count + handbook-coverage gates 183/183; atlas/recap 18/18; `verify_all` NO OFFENDER.
 - Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.
+
+
+## 1412. D1509 — every chapter-count claim now matches the arc in BOTH locales
+
+- Audit found a recurring drift: earlier chapter advances updated the ENGLISH count labels but left the Chinese arm at 106 / 87 — a reader switching locale saw a different corpus size. Fixed all authored zh-HK claims (home rail title 106→173, seriesLabel 106→173, stamp/passport 87→173 in four places, chronicle link + intro + page copy 106→173) and the EN stamp copy (87→173), regenerated the Simplified fold, and updated the two tests that pinned the stale Chinese strings.
+- `app/chronicle/page.tsx`'s comment was frozen at 105 chapters → now 173 across many layers.
+- New `count-claims.test.ts` (3 pins) charges BOTH arms: no stale phrase survives, current count present in each, chronicle comment honest. Added to the WORLD_ROADMAP rivet list, so a future chapter that forgets a count label fails a gate instead of quietly drifting.
+- `verify_all` NO OFFENDER · `check_ui_script` 0 offenders / 2,928 literals · citations 301/301 · tsc 0 · targeted count/handbook/hk-type gates 11/11.
