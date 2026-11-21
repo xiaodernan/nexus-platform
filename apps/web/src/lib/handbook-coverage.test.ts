@@ -11,10 +11,10 @@ const dict = readFileSync(join(repoRoot, 'apps/web/src/lib/i18n/dict.ts'), 'utf8
 
 describe('handbook coverage of current features', () => {
   it('states the real chapter count, not the old 87 or the stale 172', () => {
-    // D1517: the handbook said 172 while the shipped series is 175 (measured: 175 hk-* guides in
+    // D1517: the handbook said 172 while the shipped series is 177 (measured: 175 hk-* guides in
     // the seed). A manual that under-reports the world is a manual that loses the reader's trust.
-    expect(dict).toContain('一百七十五章按時辰攤成七層');
-    expect(dict).toContain('One hundred and seventy-five chapters arranged by the hour');
+    expect(dict).toContain('一百七十七章按時辰攤成七層');
+    expect(dict).toContain('One hundred and seventy-seven chapters arranged by the hour');
     expect(dict).not.toContain('一百七十二章');
     expect(dict).not.toContain('八十七章按時辰攤成七層');
     expect(dict).not.toContain('Eighty-seven chapters arranged by the hour');

@@ -47459,3 +47459,42 @@ Simplified mirror regenerated and verified in lockstep (`check_simplified_mirror
 
 **Filed, not claimed.** The thread engine runs over the mock corpus the demo flag ships; the live plane
 serves guides through `toGuide` and would need the same engine fed from the platform's rows.
+
+## 1421. D1518 — two more chapters, and every count that names the series moved with them (§六)
+
+**The gap.** The HK series is the world's fabric, and §六 asks for it to keep growing. It stopped at
+175. This unit adds two beats to the Layer R thread that D1479 opened at the Happy Valley east gate —
+the same voice, the same disclaimer, the same "not a real merchant" honesty — and then does the part a
+growing corpus always owes: every number that names the series has to move with it.
+
+    chapter  time / place                                  what happens
+    176      06:40, Racecourse car park east gate          the umbrella is gone; a man in a grey coat
+                                                          claims the FIRST brass tag; two remain
+    177      09:05, grandstand west rail                    a gust takes the drying race card under the
+                                                          rail; the cleaner weighs it down again
+
+Both chapters ship in three arms — the Traditional HK voice, a full English translation in the same
+register as the 175 that already had one, and the Simplified arm by the opencc fold
+(`scripts/gen-simplified-seed.py`, verified in lockstep by `check_simplified_seed`). No chapter in the
+corpus is left without an English arm or with a partial one: the census leg added in D1516 still holds
+(179 guides, 0 bare, 0 partial).
+
+**The ripple, measured rather than assumed.** `mockGuides` now answers 179 guides, 177 of them `hk-*`.
+The dictionary named the series 175 in sixteen places and 172 in the handbook; the chronicle page's own
+comment said 175; the atlas note named "Chapter 175 (the dried card under the strap, 18:12)" as the
+newest chapter. All of them now read 177 / Chapter 177 (the wind takes the card, 09:05), and the six
+tests that pinned the old count — `corpus-count-sanity`, `count-claims`, `hk-type`, `home-series-rail`,
+`stamp-collection`, `handbook-coverage` — were re-aimed to the new number rather than deleted, with the
+reason in the coverage leg's comment.
+
+**Gates.** `chapter-en-arm.test.ts` grew to 182 legs: one three-arm leg per new chapter (HK glyph, CN
+fold, EN arm with no CJK anywhere in its prose, and the chapter's own headings matched). Adjacent, run
+and green, never full: the reading-thread engine and its wiring, the handbook coverage, the world-corpus
+atlas, the stamp collection, the dict contract's locale parity, the count claims and the
+series-rail/hk-type pages — **241 passed**. `tsc --noEmit` 0; both Simplified mirrors regenerate and
+verify in lockstep.
+
+**Filed, not claimed.** The series' hour-by-hour atlas and the 50-stamp collection are curated lists;
+new chapters do not join either automatically (the atlas derives from the corpus at render time, the
+stamps are a fixed 50). Whether the newest chapters should earn stamps is a product decision for the
+stamp lane, not a side effect of a content unit.

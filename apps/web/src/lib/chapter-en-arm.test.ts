@@ -2613,4 +2613,32 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /back under the strap|mark on the ferrule|beside the gate/i.test(b.text))).toBe(true);
   });
+  it('chapter 176 (Happy Valley the first tag claimed — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-first-tag-claimed-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/清晨六點四十分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-first-tag-claimed-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/清晨六点四十分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-first-tag-claimed-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|first tag claimed/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/grey coat/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /space by the gate is empty|man in the grey coat|two that remain/i.test(b.text))).toBe(true);
+  });
+  it('chapter 177 (Happy Valley the wind takes the card — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-west-rail-wind-takes-the-card-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/上午九點零五分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-west-rail-wind-takes-the-card-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/上午九点零五分/);
+    const en = mockGuide('hk-happy-valley-racecourse-west-rail-wind-takes-the-card-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|grandstand west rail|wind takes the card/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/cleaner/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /one gust|the cleaner|card is still there/i.test(b.text))).toBe(true);
+  });
 });
