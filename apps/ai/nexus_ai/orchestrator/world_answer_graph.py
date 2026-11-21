@@ -25,15 +25,27 @@ _SYSTEM = """You are the archivist of a synthetic Hong Kong story world. You rec
 """
 
 
+#: D1514 — two reader-visible budgets. `quick` is the original D1497 cost; `deep` puts
+#: ~27k characters of real chapter body in front of the model for a cross-chapter question.
+#: The client names a depth, never a raw token/char count — the graph owns the budget.
+DEPTH_BUDGETS: dict[str, dict[str, int]] = {
+    "quick": {"limit": 8, "chunk_chars": 520},
+    "deep": {"limit": 20, "chunk_chars": 1350},
+}
+DEPTH_DEFAULT = "quick"
+
+
 class _State(TypedDict, total=False):
     query: str
     locale: str
+    depth: str
     chunks: list[dict[str, Any]]
     allowed: set[int]
     reply: dict[str, Any]
     clean: dict[str, Any]
     degraded: bool
     reason: str
+    budget: dict[str, int]
     llm_call: Callable[..., Awaitable[dict[str, Any] | None]] | None
 
 
@@ -67,10 +79,17 @@ def _chapter_numbers(text: str) -> set[int]:
 
 
 def _retrieve_node(state: _State) -> _State:
-    chunks = retrieve(state["query"])
+    raw_depth = state.get("depth")
+    depth = raw_depth if isinstance(raw_depth, str) and raw_depth in DEPTH_BUDGETS else DEPTH_DEFAULT
+    budget = DEPTH_BUDGETS[depth]
+    chunks = retrieve(state["query"], limit=budget["limit"], chunk_chars=budget["chunk_chars"])
     if not chunks:
         return {"degraded": True, "reason": "no_relevant_chapters"}
-    return {"chunks": chunks, "allowed": set(filter(None, (_infer_no(c) for c in chunks)))}
+    return {
+        "chunks": chunks,
+        "allowed": set(filter(None, (_infer_no(c) for c in chunks))),
+        "budget": {**budget, "body_chars": sum(len(str(c.get("excerpt") or "")) for c in chunks)},
+    }
 
 
 def _infer_no(chunk: dict[str, Any]) -> int:
@@ -130,12 +149,17 @@ _GRAPH = build_graph()
 
 
 async def run_world_answer(query: str, locale: str = "zh-HK",
-                           llm_call: Callable[..., Awaitable[dict[str, Any] | None]] | None = None) -> dict[str, Any]:
-    state: _State = {"query": query, "locale": locale, "llm_call": llm_call}
+                           llm_call: Callable[..., Awaitable[dict[str, Any] | None]] | None = None,
+                           depth: str = DEPTH_DEFAULT) -> dict[str, Any]:
+    # D1514: unknown depths fail closed to `quick` — a client cannot ask for an unbounded
+    # budget by inventing a name. The budget that was actually used is reported back.
+    if depth not in DEPTH_BUDGETS:
+        depth = DEPTH_DEFAULT
+    state: _State = {"query": query, "locale": locale, "depth": depth, "llm_call": llm_call}
     try:
         final = await _GRAPH.ainvoke(state)
     except Exception as exc:  # never surface a raw graph crash
         return {"degraded": True, "reason": f"graph_error:{type(exc).__name__}", "answer": "", "confidence": "low"}
     if final.get("degraded"):
         return {"degraded": True, "reason": final.get("reason", "refused"), "answer": "", "confidence": "low"}
-    return {"degraded": False, **final.get("clean", {})}
+    return {"degraded": False, "depth": depth, "budget": final.get("budget", {}), **final.get("clean", {})}

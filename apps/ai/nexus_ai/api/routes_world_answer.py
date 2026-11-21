@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from nexus_ai.api.deps import Deps
 from nexus_ai.models.base import LLMRequest
 from nexus_ai.models.prefix_contract import contract_for
-from nexus_ai.orchestrator.world_answer_graph import run_world_answer
+from nexus_ai.orchestrator.world_answer_graph import DEPTH_BUDGETS, DEPTH_DEFAULT, run_world_answer
 
 log = logging.getLogger("nexus_ai.api.routes_world_answer")
 
@@ -40,6 +40,11 @@ async def world_answer(request: Request, body: dict[str, Any]) -> JSONResponse:
     if not query or len(query) > 200:
         return _degraded("invalid_query")
     locale = str(body.get("locale") or "zh-HK")
+    # D1514: depth is a closed vocabulary owned by the server, never a raw budget from
+    # the client. Unknown values degrade to `quick` inside run_world_answer.
+    depth = str(body.get("depth") or DEPTH_DEFAULT)
+    if depth not in DEPTH_BUDGETS:
+        depth = DEPTH_DEFAULT
 
     measured: dict[str, Any] | None = None
 
@@ -71,12 +76,14 @@ async def world_answer(request: Request, body: dict[str, Any]) -> JSONResponse:
             parsed = None
         return parsed if isinstance(parsed, dict) else None
 
-    result = await run_world_answer(query=query, locale=locale, llm_call=_llm_call)
+    result = await run_world_answer(query=query, locale=locale, llm_call=_llm_call, depth=depth)
     degraded = bool(result.get("degraded"))
     resp: dict[str, Any] = {
         "answer": str(result.get("answer") or ""),
         "confidence": str(result.get("confidence") or "low"),
         "chapters": result.get("chapters") or [],
+        "depth": str(result.get("depth") or depth),
+        "budget": result.get("budget") or {},
         "degraded": degraded,
         **({"reason": str(result["reason"])} if result.get("reason") else {}),
         **({"measured": measured} if measured else {}),

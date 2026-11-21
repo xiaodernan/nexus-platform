@@ -29,12 +29,15 @@ export async function POST(request: Request): Promise<Response> {
   }
   const query = typeof body.query === 'string' ? body.query.trim().slice(0, 200) : '';
   const locale = normalizeLocale(typeof body.locale === 'string' ? body.locale : null);
+  // D1514: the proxy repeats the depth whitelist; the service repeats it again. Neither
+  // trusts the other, and a client cannot send a raw char budget through either hop.
+  const depth = body.depth === 'deep' ? 'deep' : 'quick';
   if (!query) return json({ ...EMPTY, reason: 'invalid_query' }, { status: 422 });
   if (IS_MOCK) return json({ ...EMPTY, reason: 'mock_provider' });
   try {
     const data = await nexusGet<Record<string, unknown>>('ai', '/ai/v1/world/answer', {
       method: 'POST',
-      body: { query, locale },
+      body: { query, locale, depth },
     });
     return json({ ...data });
   } catch {

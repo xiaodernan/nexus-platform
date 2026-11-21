@@ -1252,6 +1252,10 @@ export interface Dict {
     worldAnswer: {
       eyebrow: string; title: string; intro: string; placeholder: string;
       cta: string; pending: string; degraded: string; sourceLabel: string;
+      /** D1514: reader-owned context budget — quick keeps the original cost, deep reads more. */
+      depthLabel: string; quickLabel: string; deepLabel: string;
+      quickHint: string; deepHint: string; budgetLabel: (chars: number, chapters: number) => string;
+      measuredLabel: (cached: number, prompt: number) => string;
     };
     /** D1496: the reader-state wayfinder lane — one click, one real chapter. */
     wayfinder: {
@@ -3442,6 +3446,13 @@ const zhHK: Dict = {
       pending: '正在翻書…',
       degraded: '問答暫時不適用',
       sourceLabel: '出自',
+      depthLabel: '閱讀深度',
+      quickLabel: '速讀',
+      deepLabel: '深讀',
+      quickHint: '教學：只讀 8 章的重點段落，最快、最慳。',
+      deepHint: '教學：一次讀最多 20 章、約三萬字內文，適合追跨章節的線索；會用較多配額。',
+      budgetLabel: (chars, chapters) => `本次翻了 ${chapters} 章 · 約 ${chars.toLocaleString()} 字內文`,
+      measuredLabel: (cached, prompt) => `快取命中 ${cached.toLocaleString()} / ${prompt.toLocaleString()} token`,
     },
     wayfinder: {
       eyebrow: '向導 · 讀者狀態',
@@ -5661,6 +5672,13 @@ const en: Dict = {
       pending: 'Searching…',
       degraded: 'The answer lane is unavailable',
       sourceLabel: 'From',
+      depthLabel: 'Reading depth',
+      quickLabel: 'Quick read',
+      deepLabel: 'Deep read',
+      quickHint: 'How-to: reads the key passages of 8 chapters — fastest and cheapest.',
+      deepHint: 'How-to: reads up to 20 chapters, ~30k characters of body text — for clues spanning chapters. Uses more quota.',
+      budgetLabel: (chars, chapters) => `Read ${chapters} chapters · ~${chars.toLocaleString()} characters this time`,
+      measuredLabel: (cached, prompt) => `Cache hit ${cached.toLocaleString()} / ${prompt.toLocaleString()} tokens`,
     },
     wayfinder: {
       eyebrow: 'WAYFINDER · READER STATE',

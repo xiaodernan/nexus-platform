@@ -62,11 +62,22 @@ def _score(chapter: dict[str, Any], terms: set[str]) -> int:
     return sum(hay.count(t) for t in terms)
 
 
-def retrieve(query: str, *, limit: int = MAX_CHUNKS) -> list[dict[str, Any]]:
-    """Top-`limit` chapters by lexical overlap, each with the most relevant chunk."""
+def retrieve(query: str, *, limit: int = MAX_CHUNKS,
+             chunk_chars: int = CHUNK_CHARS) -> list[dict[str, Any]]:
+    """Top-`limit` chapters by lexical overlap, each with the most relevant chunk.
+
+    D1514: `chunk_chars` widens the per-chapter excerpt for the reader's explicit "deep
+    read" mode. Both knobs are bounded by the caller's whitelist (never by raw client
+    bytes), so a deep question can put ~30k characters of REAL chapter body in front of
+    the model while the default lane keeps its original 8×520 cost. Retrieval stays
+    deterministic for a given (query, limit, chunk_chars) triple — the byte-stable excerpt
+    is what makes the frozen head's prefix cache meaningful.
+    """
     terms = _terms(query)
     if not terms:
         return []
+    chunk_chars = max(160, min(chunk_chars, 4000))
+    limit = max(1, min(limit, 40))
     ranked = []
     for chapter in _chapters():
         s = _score(chapter, terms)
@@ -78,15 +89,15 @@ def retrieve(query: str, *, limit: int = MAX_CHUNKS) -> list[dict[str, Any]]:
         body = chapter["body"]
         # choose the window with the densest term hits
         best, best_hits = "", -1
-        for i in range(0, max(1, len(body) - CHUNK_CHARS + 1), CHUNK_CHARS // 2):
-            window = body[i:i + CHUNK_CHARS]
+        for i in range(0, max(1, len(body) - chunk_chars + 1), max(1, chunk_chars // 2)):
+            window = body[i:i + chunk_chars]
             hits = sum(window.lower().count(t) for t in terms)
             if hits > best_hits:
                 best, best_hits = window, hits
         out.append({
             "slug": chapter["slug"],
             "title": chapter["title"],
-            "excerpt": best or body[:CHUNK_CHARS],
+            "excerpt": best or body[:chunk_chars],
             "score": score,
         })
     return out

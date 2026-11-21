@@ -47312,3 +47312,20 @@ not hidden.
 **The in-flight §九 lane (stalled ~55 min, taken over per directive).** `behavior-events.ts` derives deterministic, clearly-labelled DEMO events from the SAME ghost readers `/insights` simulates (`simulateJourneys`) — the "impatient close / random tapper" simulation now feeds the admin analytics read instead of being a separate island. `admin/behavior/route.ts` serves that payload offline and proxies the real §58 events read live, falling back to labelled demo (never fake zeros) when the service is unreachable. `admin-analytics.tsx` rejects non-2xx instead of storing an error envelope as a valid Behavior, and shows a `demoBadge` in all three locales. 8 web tests green, tsc 0, i18n gate PASS (0 offenders).
 
 No new script files; docs/ATLAS.md references unchanged. No LLM token spent on these fixes.
+
+## 1417. D1514 — reader-owned context budget: the world-answer lane can now deep-read
+
+**The gap (owner's §四, "our input context is always too small").** D1497's world-answer RAG retrieved only `MAX_CHUNKS=8` × `CHUNK_CHARS=520` ≈ 4 KB of chapter body per answer — a few thousand tokens regardless of the question. The owner asked why Codex can carry 50k–90k of context while this lane carried so little. The answer was a hard-coded budget, not a model limitation.
+
+**The design.** A closed depth vocabulary owned by the server — `quick` (the original 8×520, unchanged cost) and `deep` (20 chapters × 1350 chars). The client names a depth, never a raw char/token count: `chapter_rag.retrieve` clamps `limit` to [1,40] and `chunk_chars` to [160,4000], `world_answer_graph.DEPTH_BUDGETS` is the only source of budget, and both the Next proxy and the FastAPI route repeat the whitelist. An invented depth fails closed to `quick`. The actual budget used (`limit`, `chunk_chars`, `body_chars`) is reported back to the reader, alongside the real `measured.cached_tokens / prompt_tokens` from D1052's honest accounting.
+
+**Live measurement — `api.aizzz.xyz/v1` / `gpt-6.2-sol` through Clash, non-streaming JSON, one frozen head (2026-11-21):**
+
+| depth | body chars | prompt (chars) | prompt_tokens | cached_tokens | hit rate |
+|---|---|---|---|---|---|
+| quick | 3,309 | 4,010 | 25,448 | 22,901 | **90.0%** |
+| deep  | 8,424 | 10,014 | 30,493 | 27,441 | **90.0%** |
+
+The deep read put ~3× the real chapter body in front of the model and raised the full prompt to ~30.5k tokens, with the cache hit rate holding at 90% — the frozen prefix (D1050/D1432) is doing exactly the codex-style job the owner described. Two later identical deep calls reported `prompt_tokens=0, cache_reported=false`: per D1052 that is the relay's silence, **not** a cache miss, and the console now correctly excludes such calls from the rate rather than dragging it down.
+
+**Fencing & gates.** Model still owns no fact: `world_answer_graph`'s verify node fences every cited chapter against the retrieved set and refuses URLs; the deeper prompt cannot smuggle an uncited claim. AI: `test_world_answer_deep_budget.py` (8 arms — closed vocabulary, hostile clamp, deep>quick, byte determinism, fail-closed, route passthrough + measured). Web: `world-answer-ui.test.ts` extended to 7 arms (panel depth switch + how-to copy, proxy whitelist repeat, three-locale teaching copy), `dict-contract.test.ts` 9/9 (new function leaves callable in all three locales), `check_console_i18n` PASS (0 offenders), tsc 0. `mypy nexus_ai` Success, 99 files. No change to `ci.yml` line count.

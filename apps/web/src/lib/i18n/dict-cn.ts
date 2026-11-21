@@ -2173,6 +2173,13 @@ export const zhCN: Dict = {
       pending: '正在翻书…',
       degraded: '问答暂时不适用',
       sourceLabel: '出自',
+      depthLabel: '阅读深度',
+      quickLabel: '速读',
+      deepLabel: '深读',
+      quickHint: '教学：只读 8 章的重点段落，最快、最省。',
+      deepHint: '教学：一次读最多 20 章、约三万字正文，适合追跨章节的线索；会用较多配额。',
+      budgetLabel: (chars, chapters) => `本次翻了 ${chapters} 章 · 约 ${chars.toLocaleString()} 字正文`,
+      measuredLabel: (cached, prompt) => `缓存命中 ${cached.toLocaleString()} / ${prompt.toLocaleString()} token`,
     },
     wayfinder: {
       eyebrow: '向导 · 读者状态',
