@@ -47071,3 +47071,12 @@ not hidden.
 - New `apps/web/src/components/teaching-mode.tsx` — a local-first client island (`localStorage['nexus.teaching.on']`, no network/telemetry) that toggles five dict-owned control→hint pairs on the home surface. Mounted beside `NewcomerTour` in `app/page.tsx`; copy in `dict.home.teaching` for zh-HK + en + regenerated Simplified fold. This closes §5's "主界面按键附帶教學說明" with a persistent, always-reachable affordance rather than a one-shot tour.
 - A simplified character in the zh-HK hint (`翻开`) was caught by `check_ui_script.mjs` and corrected to `翻開`; 0 offenders over 2,878 literals. `check_console_i18n` / `check_console_a11y` PASS; `verify_all` NO OFFENDER; tsc 0; web suite 76 files / **684 passed** (new `teaching-mode.test.ts` 3/3).
 - Full AI suite (clean re-run at chapter 166) — **37,946 passed, 518 skipped, 0 failed, exit 0**. The earlier single intermittent failure did not reproduce across the full rerun or `--last-failed`.
+
+
+## 1392. D1486 — chapter 167 OPENS Layer R (the names we keep)
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-wet-card-mrs-lau-chronicle` — chapter 167 （雨天晚上七點——阿晴第一個濕馬夜，高架橋雨水瀉到東門行人路；濕地滑牌下那張對摺跑馬紙被雨氣泡軟、鉛筆名字暈開。避雨的退休電車售票員劉太太請她按平紙張，對照背面舊地址——她認得那個名字，想把一把借去的傘還回去。雨水沿簷邊滴成一條線；劉太太把紙還她：「那你就替我留著，等他來。」）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- Layer R's opening beats were chosen with ONE live `gpt-6.2-sol` call through the Clash proxy — HTTP 200, 4,776 tokens (4,617 prompt / 159 completion). The model proposed the inciting incident, Mrs Lau (a person, not a twist), the flyover-rain/minibus-awning detail and the theme ("small acts of keeping and returning let people remain present in one another's lives"); the code wrote the bilingual corpus and kept every fact fenced. This is the §四 "实测跑通 / 拿不准的都可以问它" requirement exercised again at decision grade.
+- Frozen artifacts in lockstep: digest 167 chapters / 13,733 B, index 167 lines / 12,844 B; pins, the `routes_chapter.py` fence and the story-recap window (156–167) advanced; `check_atlas_lockstep` PASS at 167/167/167. `chapter-en-arm.test.ts` — **171** assertions; 18 atlas/recap tests green; `verify_all` NO OFFENDER.
+- Cadence: this is a layer OPENING, not a closure — the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters until the next heavy milestone.

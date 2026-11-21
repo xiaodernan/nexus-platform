@@ -1,6 +1,6 @@
 """D1436 — the atlas-grounded world guide.
 
-The HK arc corpus (166 chapters, three arms) is a real, measurable world; the model was
+The HK arc corpus (167 chapters, three arms) is a real, measurable world; the model was
 narrating with almost no exposure to it. The digest freezes the real corpus into the frozen
 prefix (in the §D1310 spirit: nothing about the world is left to the model's imagination),
 so the phrasing lands instead of drifting.
@@ -24,18 +24,18 @@ def test_atlas_digest_exists_and_is_bounded():
     assert 4000 < size < 16384, size
     for marker in [
         "THE HONG KONG ARC",
-        "166 chapters",
+        "167 chapters",
         "Layer P open",
         "demo:true",
         "Never name a place",
-        "166 ·",
+        "167 ·",
     ]:
         assert marker in text, marker
 
 
 def test_atlas_lists_the_real_corpus_front_to_back():
     text = _digest_path().read_text(encoding="utf-8")
-    for no in (1, 2, 21, 13, 46, 100, 108, 130, 138, 144, 147, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166):
+    for no in (1, 2, 21, 13, 46, 100, 108, 130, 138, 144, 147, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167):
         assert f"{no:3d} ·" in text, no
     assert "車仔麵" in text
     assert "十八點半" in text
