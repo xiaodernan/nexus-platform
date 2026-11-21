@@ -1,17 +1,17 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1398",
-  "milestone_full": "The EN arm is complete — all 107 Traditional Hong Kong chapters ship in three arms (Traditional HK / Simplified Standard-Chinese opencc fold / full English prose). Chapter-en-arm.test.ts beat parity 110/110; the opencc fold for Simplified is locked in; identity hard-gates (雅思 6.5 · CET-6 546 · 隐盾 · 赵欣曈) live on both clones (nexus-platform + xiaodernan.github.io) and the profile README; verify_all RESULT: NO OFFENDER; pressure re-verified zero 5xx.",
-  "headline": "NEXUS Platform — the infinite world, read in three languages; EN arm complete across all 107 chapters. Every reader passes clean.",
-  "as_of": "2026-11-19",
-  "updated_at_commit": "5ad51fa",
+  "milestone": "D1483",
+  "milestone_full": "Layer Q - the next keeper - is CLOSED. All 166 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose). Ah Ching takes the three keys, hangs them on her own nail, lights the corridor for a cleaner and finds a pencilled name that is not hers. Eight StateGraphs run in the service (world guide, Ah Wan NPC, analyst readout, EN-arm drafting bench, fenced arc auditor, story recap, Wayfinder, arc audit). Live model aizzz/gpt-6.2-sol through the operator Clash Verge; frozen prefix across every model-facing lane; deterministic fences on every model-authored artefact; frozen atlas regenerated in lockstep (166 chapters). verify_all NO OFFENDER; full AI suite green; web suite green.",
+  "headline": "Layer Q CLOSED · 166 chapters in three arms · eight StateGraphs · behaviour analytics + wayfinder · every model byte fenced · every gate green.",
+  "as_of": "2026-11-21",
+  "updated_at_commit": "d98677b",
   "features": [
-    "D1398: corpus expands past 106 — 107 Traditional HK chapters ship in three arms (Traditional HK / Simplified fold / full English prose); beat parity 110/110 asserted by chapter-en-arm.test.ts; opencc fold locked in; verify_all NO OFFENDER (72 PASS)",
-    "D1314: merchant agent growing-history relay — platform read door (`GET /api/v1/internal/conversations/{id}/messages`); oldest→newest lead; codex-style warm-state ≈96% cached measured on aizzz/gpt-6.1-terra; direct JSON remains the default; adapter transport retry for relay flaps (3×, 0/1.5/4s backoff)",
-    "D1310–D1312: 🧭 world guide StateGraph classify→select→phrase→verify ships on the homepage, guides index and every chapter page; curated two doors, model picks 1|2; fail-closed; live aizzz verification",
-    "D1305–D1394: the English arm rolled chapter-by-chapter across the entire corpus from Chapter 1 through Chapter 106 — full English prose on every page, every arm generated, never hand-mirrored; fallback asserted honestly",
-    "D1397: EN arm complete — 106/106 chapters",
-    "§十一 pressure re-verified (zero 5xx) · §三 Spring Cloud services/cloud 7 modules green jars · §九 identity hard-gates live (雅思 6.5 · CET-6 546 · 隐盾 · 赵欣曈) · profile README with both facts locked"
+    "D1483: chapter 166 CLOSES Layer Q - three keys on Ah Ching's own nail, the corridor light for a cleaner, a pencilled name that is not hers. Arc 166 chapters, three arms; arm test 170/170; atlas lockstep 166/166/166; verify_all NO OFFENDER.",
+    "D1480–D1482: chapters 164–166 land (empty square / corridor light / closure) with a live gpt-6.2-sol call choosing the physical beats; the parallel wave's five residual AI-suite failures closed at the root (canonical error envelopes + admin route off OpenAPI).",
+    "D1479: Wayfinder StateGraph (reader position + fixed mood -> one real chapter) and the password-123 behaviour-analytics page (real §58 events, per-day/session/hourly stats, seven-day least-squares projection, derived next steps).",
+    "D1451–D1468: eight real StateGraphs live - world guide, Ah Wan NPC, analyst readout, EN-arm drafting bench, fenced arc auditor, on-demand story recap, Wayfinder, arc audit. Model phrases; code owns facts, identity and structure.",
+    "D1457/D1468: all model-facing lanes ride a shared frozen prefix; live replay measured ~88% cached; frozen atlas regenerated in lockstep with the corpus on every chapter.",
+    "§十一 pressure re-verified on the production build (zero 5xx) · §三 Spring Cloud cloud modules green · identity hard-gates live (雅思6.5 / CET6 546 / 隐盾 / 赵欣曈) · profile README locked."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page."
 }
