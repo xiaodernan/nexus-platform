@@ -136,7 +136,7 @@ class TestGroundedLane:
             "citations": [{"id": "p1", "title": "Chapter 5 · dawn over the cha chaan teng"}],
             "confidence": "high",
         })))
-        body = _ask(client, canned, history=[
+        _ask(client, canned, history=[
             {"question": "What wakes first?", "answer": "The wok fires wake first [p1]."},
             {"question": "And who carries them?", "answer": "The owner's wife [p3]."},
         ])

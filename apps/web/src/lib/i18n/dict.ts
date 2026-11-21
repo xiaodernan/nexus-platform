@@ -41,6 +41,14 @@ export interface RailsCopy {
 }
 
 export interface Dict {
+  /** D1481: the password-123 behavior-analytics page — dict-owned copy, no inline CJK on console pages. */
+  adminAnalytics: {
+    title: string; intro: string; passwordLabel: string; passwordHint: string;
+    unlock: string; wrong: string; totalEvents: string; dailyTitle: string; dailyHint: string;
+    projectionTitle: string; projectionHint: string; sessionsTitle: string; sessionColumn: string;
+    eventsColumn: string; topEventsTitle: string; recommendationsTitle: string; recommendationsHint: string;
+    windowLabel: (hours: number) => string; needPassword: string;
+  };
   locale: Locale;
   htmlLang: string;
   brand: { name: string; tagline: string };
@@ -1222,6 +1230,27 @@ export interface Dict {
 }
 
 const zhHK: Dict = {
+  adminAnalytics: {
+    title: '行為分析台',
+    intro: '逐用戶事件流、統計與趨勢預測 — 數據來自 §58 events 表的真實行，不造假。',
+    passwordLabel: '管理員密碼',
+    passwordHint: '輸入管理員密碼以解鎖行為分析（教學：此頁觀察全部用戶的真實行為流）。',
+    unlock: '解鎖',
+    wrong: '密碼不對，再試一次。',
+    totalEvents: '事件總數',
+    dailyTitle: '每日事件',
+    dailyHint: '教學：柱越高代表當日行為越多；對照 projection 看趨勢方向。',
+    projectionTitle: '未來七日趨勢（線性投影）',
+    projectionHint: '教學：虛線是按觀測窗口的線性外推 — 是參考，不是保證。',
+    sessionsTitle: '活躍工作階段',
+    sessionColumn: '工作階段',
+    eventsColumn: '事件數',
+    topEventsTitle: '事件類型分佈',
+    recommendationsTitle: '下一步優化建議',
+    recommendationsHint: '教學：由數據推導的下一動作 — 按建議落地即改善漏斗。',
+    windowLabel: (hours) => `觀測窗口：過去 ${hours} 小時`,
+    needPassword: '需要管理員密碼',
+  },
   locale: 'zh-HK',
   htmlLang: 'zh-HK',
   brand: { name: 'NEXUS', tagline: '用一句話，找到今天想去的地方' },
@@ -3345,6 +3374,27 @@ const zhHK: Dict = {
 };
 
 const en: Dict = {
+  adminAnalytics: {
+    title: 'Behavior analytics',
+    intro: 'Per-user event streams, stats and a trend projection - real rows from the §58 events table, never fabricated.',
+    passwordLabel: 'Admin password',
+    passwordHint: 'Enter the admin password to unlock behavior analytics (how-to: this page watches every user\'s real event stream).',
+    unlock: 'Unlock',
+    wrong: 'Wrong password, try again.',
+    totalEvents: 'Total events',
+    dailyTitle: 'Events per day',
+    dailyHint: 'How-to: taller bars mean more activity that day; read projection for the trend direction.',
+    projectionTitle: 'Next 7 days (linear projection)',
+    projectionHint: 'How-to: the dotted values are a least-squares extrapolation of the observed window - a reference, not a promise.',
+    sessionsTitle: 'Active sessions',
+    sessionColumn: 'Session',
+    eventsColumn: 'Events',
+    topEventsTitle: 'Event type distribution',
+    recommendationsTitle: 'Next optimization moves',
+    recommendationsHint: 'How-to: data-derived next actions - landing these improves the funnel.',
+    windowLabel: (hours) => `Window: last ${hours} hours`,
+    needPassword: 'Admin password required',
+  },
   locale: 'en',
   htmlLang: 'en',
   brand: { name: 'NEXUS', tagline: 'Say what you want. Find where to go.' },

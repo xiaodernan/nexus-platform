@@ -2,6 +2,27 @@
 import type { Dict } from './dict';
 
 export const zhCN: Dict = {
+  adminAnalytics: {
+    title: '行为分析台',
+    intro: '逐用户事件流、统计与趋势预测 — 数据来自 §58 events 表的真实行，不造假。',
+    passwordLabel: '管理员密码',
+    passwordHint: '输入管理员密码以解锁行为分析（教学：此页观察全部用户的真实行为流）。',
+    unlock: '解锁',
+    wrong: '密码不对，再试一次。',
+    totalEvents: '事件总数',
+    dailyTitle: '每日事件',
+    dailyHint: '教学：柱越高代表当日行为越多；对照 projection 看趋势方向。',
+    projectionTitle: '未来七日趋势（线性投影）',
+    projectionHint: '教学：虚线是按观测窗口的线性外推 — 是参考，不是保证。',
+    sessionsTitle: '活跃工作阶段',
+    sessionColumn: '工作阶段',
+    eventsColumn: '事件数',
+    topEventsTitle: '事件类型分布',
+    recommendationsTitle: '下一步优化建议',
+    recommendationsHint: '教学：由数据推导的下一动作 — 按建议落地即改善漏斗。',
+    windowLabel: (hours) => `观测窗口：过去 ${hours} 小时`,
+    needPassword: '需要管理员密码',
+  },
   locale: 'zh-CN',
   htmlLang: 'zh-CN',
   brand: { name: 'NEXUS', tagline: '用一句话，找到今天想去的地方' },

@@ -74,7 +74,8 @@ describe('wheelReversePreference persistence', () => {
   };
   it('round-trips the flag', () => {
     const s = makeStorage();
-    expect(readWheelReversePreference(s)).toBe(false);
+    // D369: no stored value inherits the product default (reversed = true).
+    expect(readWheelReversePreference(s)).toBe(true);
     writeWheelReversePreference(s, true);
     expect(s.getItem(WHEEL_REVERSE_KEY)).toBe('1');
     expect(readWheelReversePreference(s)).toBe(true);
@@ -90,7 +91,7 @@ describe('wheelReversePreference persistence', () => {
         throw new Error('denied');
       },
     };
-    expect(readWheelReversePreference(bad)).toBe(false);
+    expect(readWheelReversePreference(bad)).toBe(true); // D369 default survives a storage throw
     expect(() => writeWheelReversePreference(bad, true)).not.toThrow();
   });
 });
