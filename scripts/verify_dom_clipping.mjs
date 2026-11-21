@@ -41,23 +41,50 @@ async function main() {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const offenders = [];
   for (const path of ROUTES) {
-    await page.goto(base + path, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(150);
+    await page.goto(base + path, { waitUntil: 'networkidle', timeout: 30000 });
+    // Fonts and CSS-driven layout settle after load; measuring at domcontentloaded
+    // caught 112 false clipped-card reports on /hong-kong that vanish once painted.
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(350);
     const r = await page.evaluate(() => {
       const clipped = [];
       document.querySelectorAll('h1,h2,h3,p,li,button,a,label,span').forEach((el) => {
         if (!el.textContent || !el.textContent.trim()) return;
+        // sr-only / nexus-sr-only are CLIPPED ON PURPOSE — they are the accessible name
+        // of an icon button, not reader copy. Charging them is a false positive (D1506).
+        const cls = String(el.className || '');
+        if (/\b(sr-only|nexus-sr-only)\b/.test(cls)) return;
         const cs = getComputedStyle(el);
-        if ((cs.overflow === 'hidden' || cs.overflowY === 'hidden')
-            && el.clientHeight > 0 && el.scrollHeight > el.clientHeight + 3) {
-          clipped.push((el.tagName + '.' + String(el.className || '')).slice(0, 90));
-        }
+        if (cs.overflow !== 'hidden' && cs.overflowY !== 'hidden') return;
+        if (!(el.clientHeight > 0)) return;
+        // Raw scrollHeight also counts absolutely-positioned DECORATIONS (giant ghost
+        // numerals deliberately clipped by these cards). Measure real text children
+        // against the content box instead — that is the "文字被裁掉" defect we judge.
+        const box = el.getBoundingClientRect();
+        const padB = parseFloat(cs.paddingBottom) || 0;
+        const kids = [...el.querySelectorAll('*')].filter((k) => {
+          if (!k.textContent || !k.textContent.trim()) return false;
+          if (k.children.length > 0) return false; // leaf text nodes only
+          return getComputedStyle(k).position !== 'absolute';
+        });
+        const over = kids.some((k) => k.getBoundingClientRect().bottom > box.bottom - padB + 2);
+        if (over) clipped.push((el.tagName + '.' + cls).slice(0, 90));
       });
+      // Honesty gate: a streaming Suspense skeleton is not a rendered page. Measuring it
+      // would produce a clean bill of health for a page that never showed its content.
+      const mainText = document.querySelector('main')?.innerText || '';
+      const skeleton = /加载中|Loading/.test(mainText)
+        || !!document.querySelector('main template[id^="B:"]');
       return {
         hOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         clipped,
+        skeleton,
       };
     });
+    if (r.skeleton) {
+      console.error(`verify_dom_clipping.mjs: ${path} is an unresolved streaming skeleton — refusing to judge`);
+      process.exit(2);
+    }
     if (r.hOverflow > 1) offenders.push(`${path}: horizontal overflow ${r.hOverflow}px`);
     if (r.clipped.length) offenders.push(`${path}: ${r.clipped.length} clipped node(s) — ${r.clipped.slice(0, 3).join(' ; ')}`);
   }

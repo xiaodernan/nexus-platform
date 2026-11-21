@@ -47239,3 +47239,12 @@ not hidden.
 
 - The in-product `/handbook` was stale: "nine guide chapters" / "Eighty-seven chapters" and a 7-step tour that predated the new LLM lanes. Updated both authored arms (zh-HK + en, Simplified fold regenerated): real count **172 chapters**, a **nine-step** tour adding "Ask the whole city — /world" (whole-corpus cited Q&A + zero-token Wikipedia facts) and "Guided play — /try" (teaching hints + checkable coach), and intros naming the new surfaces.
 - `handbook-coverage.test.ts` (3 pins): real chapter count, new lanes in both arms, nine-step tour. Handbook gate 4/4; `verify_all` NO OFFENDER · `check_ui_script` 0 offenders / 2,928 literals · citations 301/301 · tsc 0. Full AI suite at this tree: **37,984 passed, 0 failed**.
+
+
+## 1409a. D1506 — browser inspection found the DOM verifier was judging skeletons and decorations
+
+- Opened the local plane in the in-app browser (real Chromium, not just HTTP): after clearing a stale `next start` build (the running process was serving old CSS/chunk hashes → a genuine client-side exception), the homepage rendered with **zero console errors**, one `<main>`, and the expected chrome (nav, locale/wheel/theme buttons, teaching hints).
+- **Two honesty defects in `verify_dom_clipping.mjs`**, found by looking at the real DOM:
+  1. With `NEXT_PUBLIC_DATA_MODE=live` and no services on :8090/:8010, pages stream an unresolved Suspense skeleton (`加载中…`) — the verifier had been measuring that skeleton and calling it clean. It now refuses to judge (exit 2) when a skeleton template/status is present.
+  2. It charged `sr-only` text (clipped by design) and the cards' `overflow-hidden` decorative ghost numerals (112 false positives on `/hong-kong`). It now excludes sr-only and measures only non-absolute leaf TEXT nodes against the content box. An unnecessary card-height edit made from the false positive was reverted.
+- Verified after the fix: 5 routes, 0 offenders. `dom-verifier-honesty.test.ts` (4 pins) locks the refusal / exclusions / text-child measurement / settled-layout wait. `verify_all` NO OFFENDER · tsc 0.
