@@ -47139,3 +47139,11 @@ not hidden.
 - One live `gpt-6.2-sol` call through the Clash proxy chose the beat — HTTP 200, 4,688 tokens (4,596 prompt / 92 completion): the exact clock (6:42 p.m.), the physical event (strap caught under the bolt, card slipped, neither turned it over) and the trustworthy detail (verdigris on the thumb). Written into the corpus in controlled vocabulary; no fact unfenced.
 - Frozen artifacts in lockstep: digest 169 / 13,951 B, index 169 lines / 13,063 B; pins, `routes_chapter.py` fence and story-recap window (158–169) advanced; `check_atlas_lockstep` PASS at 169/169/169. `chapter-en-arm.test.ts` — **174** assertions; `verify_all` NO OFFENDER; `check_ui_script` 0 offenders / 2,891 literals; atlas/recap 18/18.
 - Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters.
+
+
+## 1399a. D1494 — io fact-pack strip is language-aware (§八): no more English milestone copy in zh mode
+
+**Audit/observation:** the live page's `refreshNp()` overwrote both mirrored tiles' `np-generated` / `np-features-list` with `milestone_full` / `features` — English-only strings — so a reader in Chinese mode saw English milestone prose. A direct §八 violation on the showcase surface.
+- `docs/SHOWCASE.json` (the curated source the weekly sync reads) now carries `milestone_full_zh`, `headline_zh` and `features_zh` mirrors; the io repo's `sync-nexus-platform.yml` copies those three fields into the assembled `latest.json` so a future sync cannot drop them.
+- `index.html`'s `refreshNp()` now reads `document.documentElement.dataset.lang` and picks the authored arm (`milestone_full_zh` / `features_zh` in zh, English fields in en), with a language-correct `事实包` / `Fact pack` prefix; feature count comes from the chosen arm. `latest.json` seeded with the mirrors; identity-guard OK.
+- Integration note: the io repo had 3 incoming sync-bot commits, so the rebase conflicted in `latest.json`. Resolved by keeping the sync bot's fresh head/commits and re-applying the Chinese mirrors from the curated SHOWCASE.json — no bot data discarded. Both repos pushed; `pages.yml` + `sync-nexus-platform.yml` dispatched (204). Full AI suite clean at 37,960 passed / 0 failed.
