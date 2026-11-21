@@ -47329,3 +47329,49 @@ No new script files; docs/ATLAS.md references unchanged. No LLM token spent on t
 The deep read put ~3× the real chapter body in front of the model and raised the full prompt to ~30.5k tokens, with the cache hit rate holding at 90% — the frozen prefix (D1050/D1432) is doing exactly the codex-style job the owner described. Two later identical deep calls reported `prompt_tokens=0, cache_reported=false`: per D1052 that is the relay's silence, **not** a cache miss, and the console now correctly excludes such calls from the rate rather than dragging it down.
 
 **Fencing & gates.** Model still owns no fact: `world_answer_graph`'s verify node fences every cited chapter against the retrieved set and refuses URLs; the deeper prompt cannot smuggle an uncited claim. AI: `test_world_answer_deep_budget.py` (8 arms — closed vocabulary, hostile clamp, deep>quick, byte determinism, fail-closed, route passthrough + measured). Web: `world-answer-ui.test.ts` extended to 7 arms (panel depth switch + how-to copy, proxy whitelist repeat, three-locale teaching copy), `dict-contract.test.ts` 9/9 (new function leaves callable in all three locales), `check_console_i18n` PASS (0 offenders), tsc 0. `mypy nexus_ai` Success, 99 files. No change to `ci.yml` line count.
+
+## 1418. D1515 — a shared character is not a word, and the keyword lane said it was
+
+**The gap.** D705 ruled that a score which cannot say what it MEANS may not claim a match, and capped the
+vector cosine by the keyword score on a non-semantic space. One witness of the same shape was still voting
+alone: `kw_score` is a `GREATEST` of `ts_rank`, trigram `similarity` on the name, and `word_similarity`
+over name+description+tags. pg_trgm's trigrams are CHARACTER triples, so a two-character query shares one
+with a two-character name whose other character differs — and that fraction sits above the `%` operator's
+own 0.3 threshold, so the flag agreed with the score.
+
+**Measured** on the published plane (470 merchants, 5,538 offerings, 11:00 HKT Thursday,
+`tmp/d709_page.py`, `tmp/d709_measure.py`): 「海景」 — a word no row writes (0 of 470, 0 of 5,538) —
+answered 海薈, a hot-pot house, at `kw_score` 0.3333 and **led** the live page. 「泰式餐廳」 read 4 of 泰國's
+rows the same way (§684). Both are one character away from the word and nothing else.
+
+**The rule.** The corpus either mentions the word or it does not, and that is exactly what the containment
+leg counts (D407, D583): `strpos` over the query's Chinese words in name/description/tags, as a fraction
+of the query's words. So on a CJK query the similarity arms are capped by that fraction — they may refine
+a mention, never create one — and `text_matched` reads only the witnesses that can say what they mean: the
+tsvector's own tokens and the containment count. A Latin query keeps the uncapped arms, because `%` needs
+three-character trigrams and is the arm that reads an English word at all.
+
+    request       before                          after
+    海景          kw 0.3333 on 海薈, flagged      kw 0 on every row of both lanes, flagged on none
+    素食          kw > 0 on its mentioning rows   unchanged — a real mention still witnesses
+
+**The change** is in `apps/ai/nexus_ai/search/sql.py` in both lanes: the merchant lane at `:466` (the arms)
+and `:482` (the cap), the offering lane at `:820` / `:830`. It reached HEAD folded into D981+D982's
+consolidation without a gate of its own; this unit is the gate and the ledger it was owed, and the code is
+unchanged.
+
+**The gate** is `apps/ai/tests/test_a_shared_character_may_not_claim_a_match.py`, 7 legs: the SQL shape
+(the cap is present for a CJK query and the `%` verdict is not, on both lanes; a Latin query keeps the
+arms that read it; the cap is the containment fraction, not a constant), and the live plane (a word no row
+writes scores nothing on either lane and flags nothing; a real mention still witnesses; the census).
+Falsified by uncapping the two legs in `sql.py`: **4 red, 3 green** — the Latin control, the real mention
+and the census stay green, so the gate cannot pass by accident.
+
+**Adjacent**, run and green, never full: the CJK tag-containment gates on both lanes, D705's score gate
+and the candidate reader — **76 passed, 2 red that are red at HEAD too** (`test_rag_containment.py`: the
+chunk retrieval query times out on this machine's reachable Postgres, which carries a different corpus
+from the seeded CI plane; nothing in this unit touches that builder).
+
+**Filed, not claimed.** The two lanes still order a page differently — the fixture lane counts exact
+substring hits and the live lane keeps a rating-ordered candidate cut (D708). This unit makes the live
+score honest; it does not pretend the lanes are the same function.
