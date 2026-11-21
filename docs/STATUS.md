@@ -47156,3 +47156,12 @@ not hidden.
 - One live `gpt-6.2-sol` call (HTTP 200, 4,698 tokens: 4,614 prompt / 84 completion) chose the beat: 06:17, the card stuck to damp concrete and set on the ledge, the first tram bell before traffic. Written in controlled vocabulary; no fact unfenced.
 - Frozen artifacts in lockstep: digest 170 / 14,065 B, index 170 lines / 13,180 B; pins, `routes_chapter.py` fence and story-recap window (159–170) advanced; `check_atlas_lockstep` PASS at 170/170/170. `chapter-en-arm.test.ts` — **175** assertions; atlas/recap 18/18; `verify_all` NO OFFENDER; `check_ui_script` 0 offenders / 2,891 literals.
 - Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters.
+
+
+## 1401. D1496 — parallel-session cache isolation fixed at the root; Wayfinder finally gets a user door
+
+**A direct user requirement (§四): "并行会话同时打 API 导致缓存互相干扰、命中混乱".**
+- The replay cache key already carried `{task_class, system, user, max_tokens, json_hint, subject_id, chain}` with conversation history inside `system`/`user`, so sequential sessions were isolated. But the **inflight coalescer** (`models/inflight.py`) keyed only on `{task_class, system, user, json_hint, chain}` — omitting `max_tokens` and `subject_id`. Two parallel calls with identical text but different completion caps (or different subjects) could share one future: the short-capped caller inherited a longer answer and vice versa. That is the concrete interference.
+- `chain_key` now uses the **same seven dimensions** as the replay key, so coalescing merges only byte-identical work. New `test_inflight_session_isolation.py` (5 pins): separate keys for differing caps/subjects, same bytes still share, and parallel calls with different caps/subjects never coalesce. Combined with the existing 4 coalescer tests — 9/9; self-consistency gates 15/15; ruff clean.
+- **Wayfinder UI (audit gap: backend-only StateGraph).** Added `POST /api/nexus/ai/wayfinder` BFF (validates position bounds and the fixed 5-mood vocabulary before proxying — no free text into the model), `components/wayfinder-panel.tsx` (click-only island, one call, fenced result), mounted on `/world` beside StoryRecap. `dict.world.wayfinder` in zh-HK + en + regenerated Simplified fold. `wayfinder-ui.test.ts` (4 pins). The previously orphaned route+graph is now user-reachable.
+- `verify_all` NO OFFENDER · tsc 0 · i18n/a11y PASS · `check_ui_script` 0 offenders / 2,907 literals · citations 299/299 · web 80 files / **700 passed**.

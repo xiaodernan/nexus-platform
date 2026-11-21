@@ -1243,6 +1243,12 @@ export interface Dict {
     title: string;
     intro: string;
     clockLabel: string;
+    /** D1496: the reader-state wayfinder lane — one click, one real chapter. */
+    wayfinder: {
+      eyebrow: string; title: string; intro: string; positionLabel: string; moodLabel: string;
+      moods: Record<string, string>; cta: string; pending: string; chapterLabel: string;
+      whyLabel: string; degraded: string; hubCta: string;
+    };
     countNote: string;
     /** D1487: the full corpus listing — count is passed at render time so it can never drift. */
     corpusTitle: string;
@@ -3401,6 +3407,23 @@ const zhHK: Dict = {
     intro: '這一頁不是列表，是一張攤開的世界圖：全系列一百七十章，按時辰排成七層——凌晨前行、天光市場、早上集、午後街、薄暮收心、夜市樓長街、夜貓子與通風口。同一座城的一整天，一次讀完；每一格都可點進去。',
     clockLabel: '時刻 — 章名 — 點即開',
     countNote: '一百零六個時辰格 — 全部是合成敘事示例，與真實商戶、真實人物全不相關。',
+    wayfinder: {
+      eyebrow: '向導 · 讀者狀態',
+      title: '下一步讀哪一章',
+      intro: '講明你讀到哪裡、此刻想怎麼讀，向導就從真實章節裡挑一章給你。只動一次，模型措辭、程式把關。',
+      positionLabel: '目前讀到第幾章',
+      moodLabel: '此刻的心情',
+      moods: {
+        continue: '接著讀', revisit: '回頭再看', late_night: '夜深了',
+        warm_food: '想看熱食', keep_the_promise: '想看守約的人',
+      },
+      cta: '問向導',
+      pending: '正在找…',
+      chapterLabel: '第',
+      whyLabel: '為什麼',
+      degraded: '向導暫時不適用',
+      hubCta: '去香港系列',
+    },
     corpusTitle: '全系列 · 每一章都是一扇門',
     corpusIntro: '上面是時辰鐘點排出的錨位；這裡把全系列每一章都列出來 — 同一座城，一章一章讀下去，永遠讀不完。',
     corpusCount: (n) => `全系列 ${n} 章 · 三語完整 · 每一章都是合成敘事`,
@@ -5577,6 +5600,23 @@ const en: Dict = {
     intro: 'Not a list — a map. All one hundred and seventy HK-series chapters, laid out in seven layers by the hour: night run, dawn market, morning market, afternoon street, dusk settling, night-market row, the stayers. Read the city from 00:00 to midnight in one go; every cell is a door you can walk through.',
     clockLabel: 'Time — chapter — tap to open',
     countNote: 'One hundred and seventy chambers of one fictional city — synthetic from the first step to wherever the series goes next; no real merchant, no real person.',
+    wayfinder: {
+      eyebrow: 'WAYFINDER · READER STATE',
+      title: 'Which chapter next?',
+      intro: 'Say where you are and how you feel; the guide picks ONE real chapter from the series. One click — the model phrases, the code fences.',
+      positionLabel: 'Chapter you are at',
+      moodLabel: 'How you feel',
+      moods: {
+        continue: 'Keep going', revisit: 'Revisit', late_night: 'Late night',
+        warm_food: 'Something warm', keep_the_promise: 'Keeping a promise',
+      },
+      cta: 'Ask the guide',
+      pending: 'Looking…',
+      chapterLabel: 'Chapter',
+      whyLabel: 'Why',
+      degraded: 'The guide is unavailable',
+      hubCta: 'Go to the Hong Kong series',
+    },
     corpusTitle: 'The full corpus · every chapter a door',
     corpusIntro: 'Above are the hour-by-hour anchors; here is every chapter in the series — one city, read chapter by chapter, with no end in sight.',
     corpusCount: (n) => `${n} chapters in the full corpus · all three arms · every one synthetic narrative`,

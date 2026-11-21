@@ -6,6 +6,7 @@ import { getDict, type Dict } from '@/lib/i18n';
 import { mockGuides } from '@/lib/mock';
 import { Container } from '@nexus/ui';
 import { StoryRecap } from '@/components/story-recap';
+import { WayfinderPanel } from '@/components/wayfinder-panel';
 
 /**
  * `/world` — the atlas page. A single-scroll dossier of the entire HK-series corpus,
@@ -98,6 +99,7 @@ export default async function WorldPage() {
             watchLabel: t.recapWatchLabel,
           }}
         />
+        <WayfinderPanel locale={locale} copy={t.wayfinder} />
         <nav aria-label={t.clockLabel} className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
           {t.layers.map((layer) => (
             <a

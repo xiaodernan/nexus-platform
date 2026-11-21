@@ -6,8 +6,9 @@ N identical calls launched in the same window each hit the provider anyway. Unde
 a hot intent — a shared demo tenant, a homepage opening six components deriving the same
 search embedding — is this the dominant cost shape of a burst.
 
-**The fix.** One pending cell per (chain, task_class, system, user_text, json_hint).
-The first caller runs the chain; every other caller in the window awaits the same future.
+**The fix.** One pending cell per (chain, task_class, system, user_text, max_tokens,
+json_hint, subject_id). The first caller runs the chain; every other caller in the
+window awaits the same future.
 The winner pays one provider call; every waiter is answered like a replay — zero tokens,
 cache_hit=True — with the same `fallback_from` semantics. The winner's RoutedCall is metered
 as usual; waiters bill zero tokens.
@@ -52,11 +53,24 @@ def enabled() -> bool:
 
 
 def chain_key(req: LLMRequest, chain: tuple[str, ...]) -> str:
+    """The inflight cell key — kept byte-identical to the replay cache's key dimensions.
+
+    D1496: the replay cache keys on `{task_class, system, user, max_tokens, json_hint,
+    subject_id, chain}` but this coalescer used to omit `max_tokens` and `subject_id`.
+    Two parallel calls with the same prompt but different completion caps (or from
+    different subjects) could share one future, so the short-capped caller inherited a
+    longer answer and vice versa — cache interference between parallel sessions. Both
+    dimensions are now part of the cell key, so coalescing only merges byte-identical work.
+    The conversation history already lives inside `system`/`user`, so sessions whose
+    histories differ never collide.
+    """
     parts = {
         "task_class": req.task_class,
         "system": req.system,
         "user": _user_text(req),
+        "max_tokens": req.max_tokens,
         "json_hint": req.json_hint,
+        "subject_id": req.subject_id,
         "chain": list(chain),
     }
     blob = json.dumps(parts, sort_keys=True, ensure_ascii=False, default=str, separators=(",", ":"))
