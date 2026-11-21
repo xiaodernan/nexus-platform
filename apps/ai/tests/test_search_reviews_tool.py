@@ -93,7 +93,7 @@ def test_search_reviews_rejects_unknown_arguments():
                                       arguments={"merchant_id": "m-001", "bogus": "x"}))
 
 
-def test_register_read_tools_now_registers_seven():
+def test_register_read_tools_now_registers_eight():
     from nexus_ai.api.demo_data import demo_backend
     from nexus_ai.tools.names import CANONICAL_TOOL_NAMES
 
@@ -102,7 +102,7 @@ def test_register_read_tools_now_registers_seven():
     live = {name for name in CANONICAL_TOOL_NAMES if registry.spec(name) is not None}
     assert live == {"get_business_hours", "get_price", "get_user_preferences",
                     "search_merchants", "search_services", "search_products",
-                    "search_reviews"}
+                    "search_reviews", "search_web"}
     assert registry.spec("search_reviews").cache_ttl_s == 300
 
 

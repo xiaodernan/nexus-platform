@@ -2466,4 +2466,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/umbrella/i);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /running name|the back|borrowing and returning/.test(b.text))).toBe(true);
   });
+  it('chapter 168 (Happy Valley the address says the east gate — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-address-on-the-back-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/隔天傍晚六點/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-address-on-the-back-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/隔天傍晚六点/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-address-on-the-back-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|address/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mrs Lau/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(prose).toMatch(/umbrella/i);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /read it once more|the borrower|left where it was/i.test(b.text))).toBe(true);
+  });
 });
