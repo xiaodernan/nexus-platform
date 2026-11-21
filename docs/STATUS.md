@@ -47233,3 +47233,9 @@ not hidden.
 - One live `gpt-6.2-sol` call through the Clash proxy chose the beat (HTTP 200, 18,731 tokens with only 43 reasoning under a tighter prompt): 06:31, the delivery van's damp envelope, the two-minutes-fast clock. Written in controlled vocabulary; no fact unfenced.
 - Frozen artifacts in lockstep: digest 172 / 14,321 B, index 172 lines / 13,432 B; pins, `routes_chapter.py` fence and story-recap window (161–172) advanced; `check_atlas_lockstep` PASS at 172/172/172. arm test **178** assertions; seed-script gate clean on the fresh chapter; corpus-count-sanity 172 in all three locales; atlas/recap 18/18; `verify_all` NO OFFENDER.
 - Cadence: no layer closure, so the io fact-pack stays at the live-verified D1502 / Layer R open / 171 chapters.
+
+
+## 1410. D1505 — the embedded handbook taught the features the product actually has (§七)
+
+- The in-product `/handbook` was stale: "nine guide chapters" / "Eighty-seven chapters" and a 7-step tour that predated the new LLM lanes. Updated both authored arms (zh-HK + en, Simplified fold regenerated): real count **172 chapters**, a **nine-step** tour adding "Ask the whole city — /world" (whole-corpus cited Q&A + zero-token Wikipedia facts) and "Guided play — /try" (teaching hints + checkable coach), and intros naming the new surfaces.
+- `handbook-coverage.test.ts` (3 pins): real chapter count, new lanes in both arms, nine-step tour. Handbook gate 4/4; `verify_all` NO OFFENDER · `check_ui_script` 0 offenders / 2,928 literals · citations 301/301 · tsc 0. Full AI suite at this tree: **37,984 passed, 0 failed**.
