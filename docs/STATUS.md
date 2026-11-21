@@ -47192,3 +47192,11 @@ not hidden.
 - **Live verification through the product router:** 6 identical calls → call 0 provider (7,823 prompt tokens), calls 1–5 `cache_hit=True` with **0 tokens**, 1 local entry held. The provider's 1-in-6 flicker can no longer reach a reader.
 - `test_local_replay_cache.py` (6 pins: deterministic replay, byte-shape miss, bounded LRU, non-cacheable refusal, reset clearing, TTL expiry) + two existing cache tests updated to the D1499 semantics — 22/22 across local + Redis + self-consistency gates. `local_stats` declared in the dead-constant census as CI telemetry.
 - Honest boundary: process-local means one worker's replays are not shared across processes; that is what the optional Redis arm is for. No secret or provider promise changed.
+
+
+## 1405. D1500 — the chapter corpus gets a script gate; nine real 错别字 fixed
+
+**Audit gap:** `check_ui_script.mjs` deliberately excludes `seed.ts`, so the 170 zh-HK chapter bodies — exactly what a Traditional reader is answered in — had no guard against Simplified characters typed by hand.
+- New `apps/web/src/lib/seed-script.test.ts` — reads the product's OWN `nlu/canonical.py` table as text (a broken table cannot satisfy its own assertion), extracts only the zh-HK half of every chapter, and charges every Simplified-only character, with three named/reasoned exclusions (台/面/嘅). It found **9 genuine offenders**: 准/干/亲/钱 in early chapters.
+- Fixed at the source in `seed.ts` (准→準, 非真實干系→非真實關係, 父亲/母亲→父親/母親, 多少钱→多少錢, and one rewording to avoid an ambiguous 准), regenerated the opencc Simplified fold, and re-ran lockstep — 170/170/170 unchanged (body edits don't move the atlas).
+- `seed-script.test.ts` 2/2; `verify_all` NO OFFENDER · web 82 files / **706 passed** · tsc 0 · atlas lockstep PASS. This closes the owner's §五 "首页和各处错别字" class for the corpus, not just the dictionary.
