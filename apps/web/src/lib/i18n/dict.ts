@@ -258,7 +258,8 @@ export interface Dict {
       eyebrow: string;
       title: string;
       intro: string;
-      progress: (done: number, total: number) => string;
+      /** D1522: a template, not a function — this copy crosses into a client island. */
+      progress: string;
       mark: string;
       marked: string;
       reset: string;
@@ -1637,7 +1638,7 @@ const zhHK: Dict = {
       eyebrow: '帶你玩 · 5 步',
       title: '跟住做，就學會',
       intro: '每去過一個地方，就剔一格。進度只存放在此瀏覽器 — 不需註冊、不收集資料。五格全剔就解鎖下一步。',
-      progress: (done, total) => `${done} / ${total} 已完成`,
+      progress: '{done} / {total} 已完成',
       mark: '標記完成',
       marked: '已完成',
       reset: '重頭再來',
@@ -3876,7 +3877,7 @@ const en: Dict = {
       eyebrow: 'GUIDED PLAY · 5 STEPS',
       title: 'Follow along, learn by doing',
       intro: 'Check off each place as you visit it. Progress lives only in this browser — no sign-in, no data collected. All five opens the next door.',
-      progress: (done, total) => `${done} / ${total} done`,
+      progress: '{done} / {total} done',
       mark: 'Mark done',
       marked: 'Done',
       reset: 'Start over',

@@ -341,7 +341,7 @@ export const zhCN: Dict = {
       eyebrow: '带你玩 · 5 步',
       title: '跟住做，就学会',
       intro: '每去过一个地方，就剔一格。进度只存放在此浏览器 — 不需注册、不收集资料。五格全剔就解锁下一步。',
-      progress: (done, total) => `${done} / ${total} 已完成`,
+      progress: '{done} / {total} 已完成',
       mark: '标记完成',
       marked: '已完成',
       reset: '重头再来',

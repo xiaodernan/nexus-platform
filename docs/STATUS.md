@@ -47649,3 +47649,48 @@ this developer machine runs (`NEXT_PUBLIC_DATA_MODE=live` in `apps/web/.env.loca
 invisible on a live-plane dev box by the same convention that hides the featured HK series and the demo
 banner there. Whether the reading thread should also exist for platform-served guides is the live-plane
 question D1517 already filed.
+
+## 1425. D1522 — the same boundary killed a second page, and the reader that finds the class (§七)
+
+**The gap.** D1521 fixed the reading thread's copy and added a leg that pins ITS shape. That leg is
+about one component. The bug was about a CLASS: a Server Component handing a dictionary value that
+carries a function into a Client Component. Nothing looked for the class, so the next instance was
+still shipping.
+
+**The reader found it the same day.** `apps/web/src/lib/client-boundary-copy.test.ts` discovers every
+crossing the way the product makes them — a page hands `dict.<path>` to a component — resolves the
+component's file (PascalCase name → kebab-case filename), and walks the REAL dictionary object for
+function values under that path in all three locales. It found **15 crossings** and **one of them was
+already broken**: `GuidedPlayCoach` on `/try`, handed `dict.home.guidedPlay`, whose `progress` was
+`(done, total) => string`.
+
+**The page it broke was the §七 teaching surface.** `/try` — 帶你玩 · 5 步, the five-step guided coach
+that checks a reader off as they visit each place — was answering a permanently stuck 加載中… in the
+browser: 401 characters of body, no coach, no progress, no error message. The same failure D1521 found
+on `/guides`, on a different route, with a different component, for the same reason.
+
+**Both copies are templates now.** `guidedPlay.progress` is `{done} / {total} 已完成` /
+`{done} / {total} done`, filled on the client by the same one-line `fill()` the reading thread uses.
+The localisation stays in the dictionary; nothing that crosses the boundary is a function.
+
+**Verified in a real browser** (dev server, mock plane, 2026-11-22): `/try` renders 帶你玩 · 5 步,
+跟住做，就學會, the five checkable steps and `0 / 5 已完成`, with the progressbar carrying the same
+template as its accessible name. Screenshot kept for the record; no overlap, no truncation, no
+mixed-script residue.
+
+**The gate is the class, not the instance.** `client-boundary-copy.test.ts` (16 legs) discovers the
+crossings and asserts each one is serialisable in all three locales, plus one leg that refuses to pass
+by finding nothing (`found.length > 3` and the `ReadingThread.copy` crossing is named) — a reader that
+silently discovers zero crossings is a reader that has stopped working, which is how the class survived
+this long. Falsified by putting one arrow function back under a crossed path: the leg reddens.
+
+**Adjacent**, run and green, never full: the boundary reader, the reading-thread engine and wiring, the
+handbook coverage, the dict contract's locale parity, the world-corpus atlas, the stamp collection, the
+count claims and the corpus-count sanity, the hk-type and home-series-rail pages, the try-flow,
+`chapter-en-arm` (182) and the afterward/chronicle pages — **255 passed**. `tsc --noEmit` 0; `eslint`
+clean on every touched file; both Simplified mirrors regenerate and verify in lockstep.
+
+**Filed, not claimed.** The reader discovers crossings by scanning `app/**` for
+`prop={dict.path}`; a crossing written some other way (a helper that forwards a dict subtree, a
+`{...copy}` spread) is outside its reach, and that is its known blind spot rather than a claim of
+coverage.

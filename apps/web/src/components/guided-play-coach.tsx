@@ -19,7 +19,8 @@ export interface GuidedPlayCopy {
   eyebrow: string;
   title: string;
   intro: string;
-  progress: (done: number, total: number) => string;
+  /** D1522: a template, not a function — this payload crosses into a client island. */
+  progress: string;
   mark: string;
   marked: string;
   reset: string;
@@ -34,6 +35,9 @@ export interface GuidedPlayStep {
 }
 
 const STORAGE_KEY = 'nexus.guided-play.v1';
+
+const fill = (template: string, values: Record<string, string | number>): string =>
+  template.replace(/\{(done|total)\}/g, (_m, key: string) => String(values[key] ?? ""));
 
 export function GuidedPlayCoach({ copy, steps }: { copy: GuidedPlayCopy; steps: GuidedPlayStep[] }) {
   const [ready, setReady] = useState(false);
@@ -79,7 +83,7 @@ export function GuidedPlayCoach({ copy, steps }: { copy: GuidedPlayCopy; steps: 
           <span className="text-2xs font-semibold uppercase tracking-[0.2em] text-accent">{copy.eyebrow}</span>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-ink-strong">{copy.title}</h2>
         </div>
-        <span className="font-mono text-2xs text-accent">{copy.progress(done.length, total)}</span>
+        <span className="font-mono text-2xs text-accent">{fill(copy.progress, { done: done.length, total })}</span>
       </div>
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">{copy.intro}</p>
 
@@ -89,7 +93,7 @@ export function GuidedPlayCoach({ copy, steps }: { copy: GuidedPlayCopy; steps: 
         aria-valuenow={done.length}
         aria-valuemin={0}
         aria-valuemax={total}
-        aria-label={copy.progress(done.length, total)}
+        aria-label={fill(copy.progress, { done: done.length, total })}
       >
         <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${pct}%` }} />
       </div>
