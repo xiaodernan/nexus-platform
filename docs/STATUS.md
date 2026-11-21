@@ -47130,3 +47130,12 @@ not hidden.
 - Started the freshly built NEXUS plane (`next start` on 127.0.0.1:3002) as a detached process and flooded four routes with `scripts/stress_search.mjs`: `/` 120/0/0 @32-way (17.9 req/s, p99 2,056 ms), `/world` 60/0/0 @24-way (10.4 req/s, p99 2,798 ms, 20.8 MB served), `/hong-kong` 60/0/0 @24-way (18.2 req/s, p99 1,519 ms), `/try` **128/0/0 @64-way** (32.3 req/s, p99 2,404 ms). All four `ALL GREEN` — zero transport errors, zero timeouts, zero 5xx across 368 real HTTP requests.
 - The 64-way burst deliberately targets the newly landed guided-play page; the 24-way atlas flood targets the derived full-corpus grid. Both held. Evidence with the full table recorded in `docs/evidence/pressure-2026-11-21.md`.
 - Honest boundary: the AI (:8010) and platform (:8090) service legs of `pressure_probe.py` were not running on this plane, so the stuffing/auth-burst legs were not re-measured here; the service-plane capacity remains the earlier live-verified run. Web-plane capacity is measured, not claimed.
+
+
+## 1399. D1493 — chapter 169: the brass latch leaves a faint green mark
+
+**What landed.**
+- `hk-happy-valley-racecourse-east-gate-brass-latch-green-mark-chronicle` — chapter 169 （傍晚六點四十二分——劉太太的傘帶卡在門閂下，阿晴拉開門閂；跑馬紙從袋子滑出，劉太太扶著門，阿晴彎腰撿起——兩個人都沒有翻開，背面寫甚麼她們已經知道。銅鏽在拇指留下一道淡綠，她低頭看了一會，像在認一個從前守門的人也認過的印記）. zh-HK + EN + opencc fold; `flags:{demo:true}`.
+- One live `gpt-6.2-sol` call through the Clash proxy chose the beat — HTTP 200, 4,688 tokens (4,596 prompt / 92 completion): the exact clock (6:42 p.m.), the physical event (strap caught under the bolt, card slipped, neither turned it over) and the trustworthy detail (verdigris on the thumb). Written into the corpus in controlled vocabulary; no fact unfenced.
+- Frozen artifacts in lockstep: digest 169 / 13,951 B, index 169 lines / 13,063 B; pins, `routes_chapter.py` fence and story-recap window (158–169) advanced; `check_atlas_lockstep` PASS at 169/169/169. `chapter-en-arm.test.ts` — **174** assertions; `verify_all` NO OFFENDER; `check_ui_script` 0 offenders / 2,891 literals; atlas/recap 18/18.
+- Cadence: no layer closure, so the showcase fact-pack stays at the live-verified D1483 / Layer Q CLOSED / 166 chapters.

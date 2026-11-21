@@ -2481,4 +2481,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).toMatch(/umbrella/i);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /read it once more|the borrower|left where it was/i.test(b.text))).toBe(true);
   });
+  it('chapter 169 (Happy Valley the brass latch green mark — Layer R continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-happy-valley-racecourse-east-gate-brass-latch-green-mark-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/傍晚六點四十二分/);
+    const cn = mockGuide('hk-happy-valley-racecourse-east-gate-brass-latch-green-mark-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/傍晚六点四十二分/);
+    const en = mockGuide('hk-happy-valley-racecourse-east-gate-brass-latch-green-mark-chronicle', 'en');
+    expect(en?.title).toMatch(/Happy Valley|east gate|faint green/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Mrs Lau/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(prose).toMatch(/verdigris/i);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /holding the gate|faint green line|no need to open it/i.test(b.text))).toBe(true);
+  });
 });

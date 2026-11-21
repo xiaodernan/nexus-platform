@@ -420,7 +420,7 @@ export const zhCN: Dict = {
       eyebrow: '香港系列 · 完整篇章',
       title: '香港的一桌宴',
       intro: '从凌晨四点半的鱼市与果栏，到庙街的车仔面、冰室的菠萝包、最后一碗糖水——本系列为香港人的早餐、午饭、宵夜与甜品写下了一页页，每一章都是这座城市的一个缩影。',
-      chaptersTitle: '一百六十八章反复走完一个香港',
+      chaptersTitle: '一百六十九章反复走完一个香港',
       clockTitle: '香港一日的读法：照时间读',
       clockHint: '由 00:15 谢老人的深夜糖水到 00:00 纸包饮品贩卖机——照顺序读这座城的一整天。桌面：垂直滚轮在此横列上=横向滑动（到两端自动还给页面）',
       continueReading: {
@@ -2032,7 +2032,7 @@ export const zhCN: Dict = {
   afterward: {
     eyebrow: 'HK 系列 · 后记',
     title: '收工之后——那一盏灯还在',
-    intro: '第二十四版的全书摊开之后，城市熄灯了大半。锚位还在——这一章站在《船长炳》的尾巴上，写从零点到天亮之间的五个瞬间。每一个瞬间都是同一天的另一边；同样是 HK，同样是 168 章，只是它们不被写在钟点表里。',
+    intro: '第二十四版的全书摊开之后，城市熄灯了大半。锚位还在——这一章站在《船长炳》的尾巴上，写从零点到天亮之间的五个瞬间。每一个瞬间都是同一天的另一边；同样是 HK，同样是 169 章，只是它们不被写在钟点表里。',
     actTitle: '五个瞬间',
     flashes: [
       { at: '00:00', kicker: '纸包饮品贩卖机', body: '尖沙嘴一台纸包饮品贩卖机仍然亮著，卖了一夜的饮料罐靠在酒吧列灯旁。船长炳收起掌舵，收船回码头——全市只有它在听静默价格。' },
@@ -2050,7 +2050,7 @@ export const zhCN: Dict = {
     ctaChronicle: '看故事弧开合 › /chronicle',
     ctaStory: '回到系列目录 › /hong-kong',
   },
-  /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 168 chapters in the full series. */
+  /** D1268: the /chronicle route — the HK-series framing codex: one city, one day, 169 chapters in the full series. */
   chronicle: {
     eyebrow: '香港系列 · 全书',
     title: '一座城的一天，一百零六章的完整马拉松',
@@ -2145,7 +2145,7 @@ export const zhCN: Dict = {
   world: {
     eyebrow: '全景地图 · 读一座城的一整天',
     title: '把这座城的一整天摊在桌上',
-    intro: '这一页不是列表，是一张摊开的世界图：全系列一百六十八章，按时辰排成七层——凌晨前行、天光市场、早上集、午后街、薄暮收心、夜市楼长街、夜猫子与通风口。同一座城的一整天，一次读完；每一格都可点进去。',
+    intro: '这一页不是列表，是一张摊开的世界图：全系列一百六十九章，按时辰排成七层——凌晨前行、天光市场、早上集、午后街、薄暮收心、夜市楼长街、夜猫子与通风口。同一座城的一整天，一次读完；每一格都可点进去。',
     clockLabel: '时刻 — 章名 — 点即开',
     countNote: '一百零六个时辰格 — 全部是合成叙事示例，与真实商户、真实人物全不相关。',
     corpusTitle: '全系列 · 每一章都是一扇门',
