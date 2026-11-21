@@ -47123,3 +47123,10 @@ not hidden.
 - New `apps/web/src/components/guided-play-coach.tsx` — a local-first client island (`localStorage['nexus.guided-play.v1']`) that turns `/try`'s five real doors into a checkable guided session: each step has a mark-done button and a deep link, a `role="progressbar"` shows X/5, finishing shows a completion card handing the reader into `/hong-kong`, and a reset control starts over. No account, no network, no telemetry; placeholder-first paint avoids hydration drift.
 - Mounted above the detailed five steps in `app/try/page.tsx`, with `steps` derived from the same `flow.steps` (never a second hand-maintained list). Copy in `dict.home.guidedPlay` for zh-HK + en + regenerated Simplified fold; no inline CJK on the page.
 - `guided-play.test.ts` (3 pins): local-first state/ARIA, mount + derivation, both arms' completion copy. `verify_all` NO OFFENDER · `check_ui_script` 0 offenders / 2,891 literals · a11y PASS · tsc 0 · web 79 files / **694 passed**.
+
+
+## 1398. D1492 — §十一 pressure re-run on the production build: 368 requests, zero failures
+
+- Started the freshly built NEXUS plane (`next start` on 127.0.0.1:3002) as a detached process and flooded four routes with `scripts/stress_search.mjs`: `/` 120/0/0 @32-way (17.9 req/s, p99 2,056 ms), `/world` 60/0/0 @24-way (10.4 req/s, p99 2,798 ms, 20.8 MB served), `/hong-kong` 60/0/0 @24-way (18.2 req/s, p99 1,519 ms), `/try` **128/0/0 @64-way** (32.3 req/s, p99 2,404 ms). All four `ALL GREEN` — zero transport errors, zero timeouts, zero 5xx across 368 real HTTP requests.
+- The 64-way burst deliberately targets the newly landed guided-play page; the 24-way atlas flood targets the derived full-corpus grid. Both held. Evidence with the full table recorded in `docs/evidence/pressure-2026-11-21.md`.
+- Honest boundary: the AI (:8010) and platform (:8090) service legs of `pressure_probe.py` were not running on this plane, so the stuffing/auth-burst legs were not re-measured here; the service-plane capacity remains the earlier live-verified run. Web-plane capacity is measured, not claimed.
