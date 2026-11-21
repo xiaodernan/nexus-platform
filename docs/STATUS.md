@@ -47975,3 +47975,29 @@ every touched file; both Simplified mirrors regenerate and verify in lockstep.
 different vocabulary will not be neighbours, and two chapters that merely share common characters
 (香港, 凌晨) will be. The corpus's own subject tags would sharpen it; that is a content-modelling unit,
 not this one.
+
+## 1434. D1531 — the handbook teaches both ways to keep reading (§七)
+
+**The gap.** D1517 landed the reading thread and D1530 the chapter radar, and the handbook's §七 says the
+manual must teach "how to fully experience and use every complete feature of the project". Neither new
+way of reading was in it — a reader who opened /handbook would learn about the series, the quiz, the
+world answer and the wheel, and never learn that the product can hand them the next door.
+
+**The change.** The handbook's HK-series section gains one paragraph in each arm, naming BOTH surfaces
+and what each answers: the chapter radar at the foot of every chapter (the three chapters sharing the
+most words with the one just finished), and the reading thread on /guides (the three doors most worth
+opening next from what has already been read) — with the property that makes them trustworthy: computed
+on the reader's machine, zero tokens, zero network, and the same read-set always opens the same path.
+
+**The parity contract caught the first attempt.** `dict-contract.test.ts` asserts zh-HK and en hold
+exactly the same leaf paths, and the first edit added the paragraph to one arm only — the leg reddened
+with `handbook.sections.2.paragraphs.3` missing from en, which is the contract doing its job rather than
+a nuisance: a handbook that teaches a feature in one language and not the other is the §八 failure in the
+one place a new reader looks first.
+
+**Adjacent**, run and green, never full: the radar's own gates, the reading-thread engine and wiring, the
+boundary reader (167 crossings), the handbook coverage, the dict contract's locale parity (both arms now
+at the same leaf paths), the world-corpus atlas, the stamp collection, the count claims and the
+corpus-count sanity, the hk-type and home-series-rail pages, the try-flow, the admin analytics, the
+world-answer UI and the world-guide/chapter-ask live panels, and `chapter-en-arm` (182) — **440 passed**.
+`tsc --noEmit` 0; both Simplified mirrors regenerate and verify in lockstep.
