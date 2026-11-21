@@ -1250,8 +1250,18 @@ def _hhmm_clock(value: Any) -> clock_time | None:
 
     Unreadable answers None rather than a guess: an unknown clock leaves the filter off, which is
     the same thing the old `// 100` did with a bad value (and never reached the SQL).
+    
+    D1520: a COLON is accepted too (`21:00`, `9:30`). The extractor spells the quality `2100`,
+    but the live lane writes the clock the way a person does, and a reader that refuses the
+    natural spelling drops the user's constraint on the floor: measured live, 「晚上九點之後」
+    came back `open_late_after:21:00`, the prefix matched, and `min_closing_hour` was still
+    never bound because this function answered None. Two spellings, one clock; nothing else
+    is widened.
     """
     text = str(value or "").strip()
+    if text.count(":") > 1:
+        return None
+    text = text.replace(":", "")
     if not (3 <= len(text) <= 4 and text.isdigit()):
         return None
     hours, minutes = int(text[:-2]), int(text[-2:])

@@ -47554,3 +47554,51 @@ and the intent call is in the same band, against the 45 s default deadline D983 
 comfortable, and the deadline-vs-latency question is D983's own. (b) `understand`'s blanket
 `except Exception` is what made this silent; narrowing it is a separate unit, because the floor's
 silence is also what keeps a provider outage from failing a user's turn.
+
+## 1423. D1520 — the live lane named an hour the reader refused, so the constraint died on the floor (§四)
+
+**The gap, one day after D1519 made the live lane reachable.** With the provider actually answering,
+the next sentence through the whole product path showed what the live lane was still losing:
+
+    understand("我想找一鬧靜的拉麵店，中環，晚上九點之後")  ->  plan filters
+        before   category=ramen, district=中環                    (no min_closing_hour)
+        after    category=ramen, district=中環, min_closing_hour=21:00
+
+Two halves of one defect, both in the vocabulary between the model and the plan:
+
+1. **The prompt described `time.quality` as free text** — `<e.g. "open_late">` — while the search plan
+   reads exactly two prefixes from it and nothing else (`open_late_after:` and `before:`,
+   `service.py`). A model told a field is free text will use free text, and every other spelling binds
+   no filter at all. The prompt now names the two prefixes in the extractor's own 24-hour form
+   (`open_late_after:2100`, `before:0800`), says the colon spelling is read too, names the two shapes a
+   location takes (`district` with the place as written, `nearby` with a null value), and states that a
+   bare hour of the day belongs in `quality` and never in an invented `starts_at`/`ends_at`.
+2. **`_hhmm_clock` accepted only the extractor's own `2100`.** Measured live, the model answered
+   `open_late_after:21:00` — the prefix matched, the reader answered `None`, and `min_closing_hour`
+   was still never bound. The reader now takes both spellings of one clock and still refuses anything
+   it cannot read (`24:00`, `2500`, `21:60`, `1:2:3`, non-digits) — the "unreadable answers None rather
+   than a guess" rule is unchanged and pinned.
+
+**The live measurement** (2026-11-22, `api.aizzz.xyz/v1` / `gpt-6.2-sol`, through `pipeline.understand`
+and `plan_from_intent`): `provider=openai, degraded=False`, `category=ramen`, `district=中環`,
+`min_closing_hour=21:00`, `preferences=[atmosphere:安靜]`. The rule floor on the same sentence answers
+`discover_offering / retail` with no location and no hour — the live lane is not a decoration over the
+rules, it is the better reader, and now the hours it reads reach the SQL.
+
+**The gate** is `apps/ai/tests/test_the_quality_vocabulary_the_plan_reads_reaches_the_model.py`, 9
+legs: the reader takes both spellings of each clock and still refuses the unreadable; a plan built from
+a validated intent binds `min_closing_hour` for `open_late_after:2100` AND `open_late_after:21:00`, and
+`max_opening_hour` for both spellings of `before:`; a quality the reader does not know binds nothing
+(the free-text shape, honestly filtering nothing); and three legs pin the vocabulary on the wire — both
+prefixes, both location shapes, and the "a bare hour is not a datetime" clause. Falsified by restoring
+the old digit-only reader: **3 red, 6 green**.
+
+**Adjacent**, run and green, never full: D1519's payload gate, D982's instruction gate, and the four
+time-reading gates (lunch service, a stated time, the small hours, the afternoon-tea boundary) — **64
+passed**. `ruff` and `mypy` clean on both changed modules.
+
+**Filed, not claimed.** The proxy is slow (7–19 s per live call against the 45 s deadline D983 wired):
+reachable, not comfortable. And `INTENT_EXTRACT_SYSTEM` is the tail of a byte-stable shared prefix
+(D1050) — this unit appended to it, which moves that prefix's bytes and therefore invalidates the
+provider-side cache for one generation; the next measurement should confirm the hit rate recovers,
+and that is D1050's own question, not something this unit claims.

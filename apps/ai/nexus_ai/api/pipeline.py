@@ -91,6 +91,18 @@ _INTENT_SCHEMA_BODY = (
     "a budget figure — e.g. \"預算500港幣的拉麵\", is discover_merchant. Answer "
     "discover_offering only when the query singles out a named menu item (e.g. \"有沒有叉燒\"). "
     "Never invent: a field the query did not state is null and is named in `unknowns`. "
+    "\n"
+    "Two fields the query usually DOES state, and dropping them changes the answer: "
+    "`location` — a district or area the user names (中環, 銅鑼灣, 沙田, 尖沙咀, 旺角, 觀塘, "
+    "深水埗, 油麻地, 將軍澳 …) is {\"type\": \"district\", \"value\": <that place exactly as "
+    "written>}, and 附近 / 近我 / 周遭 is {\"type\": \"nearby\", \"value\": null}; "
+    "`time` — the `quality` string is not free text: the search plan reads two prefixes and "
+    "nothing else, so a phrase naming an hour the shop must STILL be open after (晚上九點之後, "
+    "深夜, 開到凌晨) is \"open_late_after:2100\" in 24-hour form (\"21:00\" is read too), "
+    "and a phrase naming an hour it must be open BEFORE (朝早, 早上八點前) is \"before:0800\" (\"08:00\" is read too). "
+    "A bare 而家 / now is {\"type\": \"open_now\"}. `starts_at` / `ends_at` are ISO 8601 only "
+    "when the query states a DATE; a bare hour of the day belongs in `quality`, never in a "
+    "datetime you invent. "
     "Answer with JSON only."
 )
 
