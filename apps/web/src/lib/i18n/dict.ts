@@ -234,6 +234,14 @@ export interface Dict {
       dismiss: string;
       steps: Array<{ href: string; label: string }>;
     };
+    /** §5/§7: persistent per-control teaching hints on the home surface (localStorage, dict-owned). */
+    teaching: {
+      eyebrow: string;
+      show: string;
+      hide: string;
+      intro: string;
+      items: Array<{ control: string; hint: string }>;
+    };
     /** D1317: the Ah Wan NPC — one night-shift voice in one tower. */
     npcAhWan: {
       eyebrow: string;
@@ -1538,6 +1546,19 @@ const zhHK: Dict = {
         { href: '/hong-kong', label: '讀香港系列' },
         { href: '/hk-type', label: '自測係邊個' },
         { href: '/handbook', label: '翻閱說明書' },
+      ],
+    },
+    teaching: {
+      eyebrow: '操作教學',
+      show: '顯示教學說明',
+      hide: '收起教學說明',
+      intro: '逐一解說主畫面的每個操作。按一下展開，再按一下收起；你的選擇會記在此瀏覽器，下次打開仍在。',
+      items: [
+        { control: '搜尋框', hint: '直接打一句你想找的東西，例如「跑馬地 東門」。結果只來自平台已有的內容，找不到會如實說找不到。' },
+        { control: '香港系列', hint: '按日期翻開其中一章；同一天翻到同一章。章節有繁體、簡體、英文三個完整版本。' },
+        { control: '自測係邊個', hint: '幾道題測出你像故事裡的哪一類人，純屬演示，不收集資料。' },
+        { control: '簡明說明書', hint: '完整玩法手冊：搜尋、 StateGraph 向導、香港系列、管理員頁與壓力測試都在裡面。' },
+        { control: '方向與主題', hint: '頁首可切換中英與深淺色；滾輪方向不對時，用滾輪開關改回跟隨你的手指。' },
       ],
     },
     npcAhWan: {
@@ -3683,6 +3704,19 @@ const en: Dict = {
         { href: '/hong-kong', label: 'Read the series' },
         { href: '/hk-type', label: 'Ask which you are' },
         { href: '/handbook', label: 'Open the handbook' },
+      ],
+    },
+    teaching: {
+      eyebrow: 'HOW TO USE',
+      show: 'Show teaching hints',
+      hide: 'Hide teaching hints',
+      intro: 'One line on every primary control. Tap to expand, tap again to collapse; your choice is remembered in this browser.',
+      items: [
+        { control: 'Search box', hint: 'Type what you are after, e.g. “Happy Valley east gate”. Results come only from content the platform already carries; a miss is reported honestly.' },
+        { control: 'Hong Kong series', hint: 'Open the chapter chosen by today’s date — the same day picks the same chapter. Each ships in Traditional, Simplified and full English.' },
+        { control: 'Which am I', hint: 'A few questions tell you which kind of person in the story you resemble. A demo only — nothing is collected.' },
+        { control: 'Handbook', hint: 'The full manual: search, the StateGraph guide, the Hong Kong series, the admin view and the pressure probe are all inside.' },
+        { control: 'Direction & theme', hint: 'Switch language and light/dark from the header; if the wheel feels inverted, use the wheel toggle to follow your fingers again.' },
       ],
     },
     npcAhWan: {

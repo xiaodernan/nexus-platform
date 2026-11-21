@@ -13,6 +13,7 @@ import { CardRail } from '@/components/cards';
 import { SearchBox } from '@/components/search-box';
 import { HkDailyAlmanac } from '@/components/hk-daily-almanac';
 import { NewcomerTour } from '@/components/newcomer-tour';
+import { TeachingMode } from '@/components/teaching-mode';
 import { hkDateKey } from '@/lib/almanac';
 import { HkTodaySlotCard } from '@/components/hk-today-slot';
 import { pickTodaySlot } from '@/lib/today-slot';
@@ -133,6 +134,7 @@ export default async function HomePage(props: {
       </section>
 
       <NewcomerTour copy={dict.home.newcomer} />
+      <TeachingMode copy={dict.home.teaching} />
       {todaySlot ? (
         <Container size="shell" className="pt-4">
           <HkTodaySlotCard slot={todaySlot} copy={dict.home.todaySlot} />
