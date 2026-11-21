@@ -74,11 +74,13 @@ def _req(**kwargs) -> LLMRequest:
                       payload=payload, temperature=temperature, **kwargs)
 
 
-def test_disabled_by_default(monkeypatch):
+def test_redis_disabled_by_default_local_replay_on(monkeypatch):
+    """D1499: Redis stays opt-in; the bounded process-local replay arm is now the default."""
     monkeypatch.delenv("NEXUS_LLM_RESPONSE_CACHE", raising=False)
     assert cache._client() is None
     assert cache.llm_cache_get(_req(), ("fake",)) is None
-    assert cache.llm_cache_set(_req(), ("fake",), _resp()) is False
+    assert cache.llm_cache_set(_req(), ("fake",), _resp()) is True
+    assert cache.llm_cache_get(_req(), ("fake",)) is not None
 
 
 def _resp() -> LLMResponse:
@@ -136,7 +138,8 @@ def test_redis_failure_degrades_to_miss(monkeypatch):
     monkeypatch.setattr(cache, "_CLIENT", client)
     monkeypatch.setattr(cache, "_CLIENT_TRIED", True)
     assert cache.llm_cache_get(_req(), ("fake",)) is None
-    assert cache.llm_cache_set(_req(), ("fake",), _resp()) is False
+    # D1499: a failed Redis write now falls back to the local replay arm, not to nothing.
+    assert cache.llm_cache_set(_req(), ("fake",), _resp()) is True
 
 
 @pytest.mark.asyncio

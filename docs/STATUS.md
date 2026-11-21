@@ -47183,3 +47183,12 @@ not hidden.
 - New `scripts/verify_dom_clipping.mjs` — a RUNTIME reader (named `verify_*`, so `verify_all.mjs` runs it only under `--include-runtime`): probes the plane first (exit 2 = UNCHECKED, never a silent pass), then walks `/`, `/world`, `/hong-kong`, `/try`, `/handbook` in Chromium and measures `scrollHeight > clientHeight` on overflow-hidden text nodes plus `scrollWidth > clientWidth` on the document. Exit 1 on any offender. Named in `docs/ATLAS.md` so the atlas census stays honest.
 - Measured on the live local plane: **5 routes, 0 offenders, 0px horizontal overflow**. This is evidence, not a claim about un-walked pages.
 - Full AI suite at this tree: **37,974 passed, 521 skipped, 0 failed (exit 0)**. `verify_all` NO OFFENDER · atlas census PASS (452 cited paths) · comment citations 301/301 · web 81 files / 704 passed · tsc 0 · production build green · atlas lockstep 170/170/170.
+
+
+## 1404. D1499 — the reported cache flicker measured, then removed with a bounded local replay arm
+
+**The owner's repeated concern, measured rather than argued.** A 6-call identical-prompt probe through the Clash proxy with the frozen prefix reported 95.3% cached on 5 calls and **0% on one** — exactly the "中途突然掉缓存" symptom. Redis is not reachable on this plane (6380 closed; 6379 requires auth), so the opt-in Redis replay arm could not be the fix.
+- `api/llm_response_cache.py` now ships a **bounded process-local replay arm on by default** (Redis stays the opt-in cross-process arm): same 7-dimension key and same stored body as Redis, a 256-entry LRU, TTL from `NEXUS_LLM_RESPONSE_CACHE_TTL_S`, thread-safe, non-cacheable requests (`reason`, temperature≠0, no chain) never enter it. The Redis-failure path now falls back to local instead of silently dropping to nothing.
+- **Live verification through the product router:** 6 identical calls → call 0 provider (7,823 prompt tokens), calls 1–5 `cache_hit=True` with **0 tokens**, 1 local entry held. The provider's 1-in-6 flicker can no longer reach a reader.
+- `test_local_replay_cache.py` (6 pins: deterministic replay, byte-shape miss, bounded LRU, non-cacheable refusal, reset clearing, TTL expiry) + two existing cache tests updated to the D1499 semantics — 22/22 across local + Redis + self-consistency gates. `local_stats` declared in the dead-constant census as CI telemetry.
+- Honest boundary: process-local means one worker's replays are not shared across processes; that is what the optional Redis arm is for. No secret or provider promise changed.

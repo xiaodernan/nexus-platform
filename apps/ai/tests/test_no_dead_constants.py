@@ -60,6 +60,7 @@ DECLARED_EXPORTS = frozenset({
     "reset_platform_client",  # adapters/platform.py - the platform door's resetter
     "run_arc_audit",       # orchestrator/arc_audit_graph.py - the operator probe entry point (live_arc_audit_probe.py at repo root, outside this package-only census)
     "TARGET_PROMPT_TOKENS_MIN",  # orchestrator/arc_audit_graph.py - the documented 50K floor, read by budget/CI tests, not a runtime gate
+    "local_stats",         # api/llm_response_cache.py - honest telemetry for the in-process replay arm, read by cache tests/CI
     "_rows",               # api/routes_behavior.py - the behavior read's SQL helper, exercised through the route tests
     "reset_provider_cache",  # models/factory.py - the provider pool's resetter
     "reset_settings_cache",  # config.py - the settings cache's resetter

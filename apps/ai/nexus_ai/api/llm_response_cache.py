@@ -19,8 +19,12 @@ fold — are served the stored answer.
   operator switching provider never replays another provider's answer.
 
 **Design lines.**
-- *Opt-in.* `NEXUS_LLM_RESPONSE_CACHE=redis` must be set; the client is created lazily and
-  only then. Default off.
+- *Redis arm opt-in.* `NEXUS_LLM_RESPONSE_CACHE=redis` creates the cross-process client
+  lazily. Without it (the default) the bounded PROCESS-LOCAL replay arm (D1499) answers:
+  a byte-identical temperature-0 request is replayed with zero tokens. This is not a new
+  provider promise — it is a local memo of a response the provider already returned.
+  Measured on the operator proxy: 95.3% prefix hits on 5 of 6 identical calls, 0% on one;
+  the local arm removes that flicker (call 0 provider, calls 1–5 zero-token replay).
 - *Offline-tolerant.* Any Redis failure degrades to "cache absent" with one log line; the
   model call still happens. The response never depends on Redis being up.
 - *Key.* `nexus:llm:response:<sha256>` over `{task_class, system, user_text, max_tokens,
@@ -44,6 +48,9 @@ import json
 import logging
 import os
 import re
+import threading
+import time
+from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma: no cover - import-time hints only
@@ -104,6 +111,43 @@ def _fold_ws(value):  # noqa: ANN001 - recursive helper over JSON-ish structures
     if isinstance(value, (list, tuple)):
         return [_fold_ws(v) for v in value]
     return value
+
+
+#: D1499 — bounded PROCESS-LOCAL replay cache, on by default. Redis stays the opt-in
+#: cross-process arm. Measured on this proxy: 95.3% prefix hits on 5 of 6 identical calls,
+#: 0% on one — the "中途突然掉缓存" the owner reported. A byte-identical temperature-0
+#: response replayed in-process removes the flicker entirely.
+_LOCAL_MAX = 256
+_LOCAL: "OrderedDict[str, tuple[float, str]]" = OrderedDict()
+_LOCAL_LOCK = threading.Lock()
+
+
+def _local_get(key: str) -> str | None:
+    now = time.monotonic()
+    with _LOCAL_LOCK:
+        hit = _LOCAL.get(key)
+        if hit is None:
+            return None
+        stored_at, blob = hit
+        if now - stored_at > _ttl_s():
+            _LOCAL.pop(key, None)
+            return None
+        _LOCAL.move_to_end(key)
+        return blob
+
+
+def _local_set(key: str, blob: str) -> None:
+    with _LOCAL_LOCK:
+        _LOCAL[key] = (time.monotonic(), blob)
+        _LOCAL.move_to_end(key)
+        while len(_LOCAL) > _LOCAL_MAX:
+            _LOCAL.popitem(last=False)
+
+
+def local_stats() -> dict[str, int]:
+    """Honest telemetry: entries currently held and the ceiling."""
+    with _LOCAL_LOCK:
+        return {"entries": len(_LOCAL), "max": _LOCAL_MAX}
 
 
 def _user_text(req: "LLMRequest") -> str:
@@ -187,22 +231,28 @@ def _resp_from(payload: dict[str, Any], req: "LLMRequest", stored_latency_ms: in
 
 
 def llm_cache_get(req: "LLMRequest", chain: tuple[str, ...]) -> Optional["LLMResponse"]:
-    """The replayed response if every input byte matches a stored one, else None."""
+    """The replayed response if every input byte matches a stored one, else None.
+
+    Redis (opt-in) is checked first; with no Redis client the bounded process-local store
+    answers. Both paths use the SAME key and the SAME stored body, so a hit on either arm
+    is byte-identical to the provider answer it replaced.
+    """
     if not _cacheable(req, chain):
         return None
+    key = _key(req, chain)
     client = _client()
     if client is None:
-        return None
-    key = _key(req, chain)
-    try:
-        raw = client.get(key)
-    except Exception as exc:
-        log.warning("nexus_ai.llm_response_cache get failed (%s); treating as a miss", exc)
-        return None
+        raw = _local_get(key)
+    else:
+        try:
+            raw = client.get(key)
+        except Exception as exc:
+            log.warning("nexus_ai.llm_response_cache get failed (%s); treating as a miss", exc)
+            return None
     if not raw:
         return None
     try:
-        payload = json.loads(raw)
+        payload = json.loads(raw.decode("utf-8") if isinstance(raw, bytes) else raw)
     except Exception:
         return None
     if not isinstance(payload, dict):
@@ -214,16 +264,19 @@ def llm_cache_set(req: "LLMRequest", chain: tuple[str, ...], resp: "LLMResponse"
     """Store a response for this exact byte-shape. Returns True on write."""
     if not _cacheable(req, chain):
         return False
+    blob = json.dumps(_value_for(resp), ensure_ascii=False, default=str)
+    key = _key(req, chain)
     client = _client()
     if client is None:
-        return False
+        _local_set(key, blob)
+        return True
     try:
-        client.set(_key(req, chain), json.dumps(_value_for(resp), ensure_ascii=False, default=str),
-                   ex=_ttl_s())
+        client.set(key, blob, ex=_ttl_s())
         return True
     except Exception as exc:
-        log.warning("nexus_ai.llm_response_cache set failed (%s); continuing", exc)
-        return False
+        log.warning("nexus_ai.llm_response_cache set failed (%s); falling back to local", exc)
+        _local_set(key, blob)
+        return True
 
 
 def reset_client() -> None:
@@ -238,3 +291,5 @@ def reset_client() -> None:
     """
     global _CLIENT, _CLIENT_TRIED
     _CLIENT, _CLIENT_TRIED = None, False
+    with _LOCAL_LOCK:  # D1499: a config change invalidates local replays too
+        _LOCAL.clear()
