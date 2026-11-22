@@ -4272,7 +4272,9 @@ by what is already verified, not by date.
   infrastructure, and the proxy env breaks that promise; plus the product question of whether the AI's
   internal hop to the platform should obey an ambient proxy at all, which is the likeliest cause of the
   OWED (d) 7-19 s per live call) and the standing attribution duty it creates for every future AI suite
-  run. Next in the filter lane: **D1547 — `_static_tokens(low)` recomputed once per row**
+  run. D1548 split on measurement into two units, and landed the product half first: see the D1548 bullet
+  below for the internal hop, and the D1549 queue item for the conftest half.
+  Next in the filter lane: **D1547 — `_static_tokens(low)` recomputed once per row**
   (`tmp/d1547_measure.txt`), same class, already measured.
 - **Landed — D1547 (§1450): the request's token list is built once per pass in `_filter_static`**, which
   completes the hoist pass D1546 started in the same lane. The door spies the module function with a
@@ -4284,6 +4286,28 @@ by what is already verified, not by date.
   a 「安靜」 query - the text-as-WHERE veto this lane LOST in D658, where text only scores. The leg
   reddened a correct fix, and the fault was the author's. A door must name the observable the product
   publishes today, not the one the prose remembers.
+
+- **Landed — D1548 (§1451): the AI's internal hop to the platform no longer inherits the ambient proxy.**
+  One keyword (`trust_env=False` on `HttpPlatformClient`'s pooled client), measured first rather than
+  assumed: four environments on the shipped bytes (`tmp/d1548_probe.txt`) show the platform URL mounted on
+  an `AsyncHTTPProxy` pool whenever `HTTP(S)_PROXY` is set and `NO_PROXY` names only localhost — which is
+  the ordinary compose-plane case, since the platform is addressed by SERVICE NAME. That is the
+  explanation OWED (d) was waiting for: the 7-19 s per live call was not the LLM, it was every internal
+  relay (`get_merchant`, `create_cart`, the per-turn `_persist_turn`) paying a proxied round trip. The
+  bracketed-`[::1]` constructor crash dies with it. Boundary kept honest two ways: arm A2 sweeps the flag
+  onto the LLM adapter and the door's R4 leg reddens, because that hop genuinely leaves the host and
+  already has an explicit `proxy=` setting; and an operator who wants a proxy on the *internal* hop injects
+  a client through the `client=` seam D969 publishes. Whole suite: **38041 passed, 522 skipped, 0 failed**
+  (`tmp/d1548_full_suite.txt`).
+  **Next: D1549** — the remaining 4 reds under this host's env are all in
+  `tests/test_request_timeout_reaches_the_adapters.py` because they build live LLM adapters, whose clients
+  should honour the environment. The product is right there; the TEST lane is wrong to let the host decide
+  a verdict. `tests/conftest.py::offline_env` is where the four `*_PROXY` variables get pinned, and the
+  door for it must be a subprocess leg that re-runs the real files under a hostile env we set, so it
+  reddens on a clean CI machine too rather than only on this one.
+  **A third lesson for the lane, from §1450's arm A3**: a fix that touches a constructor has to keep the
+  neighbouring promise in the same call — dropping `timeout=` beside `trust_env=` was caught by a D969
+  test, not by this unit's own legs.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
