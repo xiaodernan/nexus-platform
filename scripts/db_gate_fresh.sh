@@ -480,7 +480,7 @@ trap - EXIT
 trap cleanup EXIT
 
 # --------------------------------------------------------------------------- 14. the console, and the readers nobody ran
-step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_duplicate_keys.mjs + check_ui_script.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's list members, the script the zh-HK copy is written in, and whether every reader in scripts/ is reachable from a gate that can fail"
+step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slot_keys.mjs + check_duplicate_keys.mjs + check_ui_script.mjs + check_corpus_script.mjs + check_reader_reachability.mjs + check_citation_supports_sentence.mjs — the console's two promises, the client plane's list members, the script the zh-HK copy AND the 178-chapter corpus are written in, and whether every reader in scripts/ is reachable from a gate that can fail"
 # D195. Three things were true at once on the shipped bytes, and each one is the same shape this lane has now
 # closed four times (D98, D150-D152, D191, D192) — a rule that cannot fire on the plane the gate reads is not a
 # rule the gate has, and a reader nothing runs is not a gate either.
@@ -548,6 +548,19 @@ step "14/18  scripts/check_console_i18n.mjs + check_console_a11y.mjs + check_slo
 # carrier and the same planted 台 does not, which is what shows the exclusion list doing work.
 ( cd "$ROOT" && node scripts/check_ui_script.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_ui_script.mjs ) 2>&1 | sed -e 's/^/    /'
+# D1535. `scripts/check_corpus_script.mjs` asks the same script question of the population the UI census
+# never reads: the 178-chapter arc itself. It is the largest piece of Hong Kong Chinese this product
+# ships and it is written chapter by chapter, so it is the one that drifts. Measured on its first run:
+# 93 literals carried a Simplified character — 供应, 首尔, 鸳鸯, 草拟, 写字樓, and a U+4A0F where 發
+# belonged — 56 of which were then repaired by hand. It shares the UI census's EXCLUSIONS on purpose
+# (one script law, one place to argue with it) and refuses a plane it cannot read to its end, because a
+# scanner that read nothing would otherwise report the cleanest possible corpus.
+( cd "$ROOT" && node scripts/check_corpus_script.mjs ) 2>&1 | sed -e 's/^/    /'
+( cd "$ROOT" && node scripts/falsify_corpus_script.mjs ) 2>&1 | sed -e 's/^/    /'
+# The inventory both censuses charge against is GENERATED, so it cannot be allowed to drift from the
+# opencc table it claims to be. `--check` re-derives it and compares byte-for-byte; an upgraded opencc
+# therefore shows up here as a diff to review rather than as a quietly different alphabet.
+( cd "$ROOT" && python scripts/gen_simp_only_chars.py --check ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/falsify_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 ( cd "$ROOT" && node scripts/check_reader_reachability.mjs ) 2>&1 | sed -e 's/^/    /'
 # The sentence-support census is a reporting invocation BY DESIGN: it exits 0 whatever it finds, because

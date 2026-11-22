@@ -48144,3 +48144,69 @@ lockstep at 178 chapters (digest 178 / index 178 / fence derived)`. `console-nav
 `apps/ai/tests/test_the_guide_fallback_never_raises.py`, `apps/ai/live_world_guide_probe.py`,
 `apps/web/src/components/console/console-nav.tsx`, `apps/web/src/lib/console-nav-routes.test.ts`,
 `scripts/check_atlas_lockstep.mjs`, `scripts/falsify_atlas_fence.mjs`.
+
+## 1438. D1535 — the script census knew 239 of 3,873 characters, and the 178-chapter corpus was never read by anyone
+
+**The measurement that started it.** While repairing a `两空開始读下去` in `dict.ts`, the census that
+caught it charged only `两`. Not `读`, not `纲` — three Simplified characters on one line, one flag.
+The reader derives its knowledge from `nexus_ai/nlu/canonical.py` (239 pairs) and `lexicon.py` (144),
+both built to fold search queries, and the real Traditional/Simplified character inventory is ~3,900.
+Six percent of an alphabet, applied with the confidence of a complete one.
+
+**The inventory, and how it was derived without typing a single CJK byte.** `scripts/gen_simp_only_chars.py`
+reads opencc's own `dictionary/TSCharacters.txt` and emits `scripts/data/simp-only-chars.txt`. The naive
+rule — "appears on the right but never on the left" — was tried first and charged 2,540 false positives
+including 真 教 向 出 表 系 了 回, because rare variants (眞) fold DOWN to the standard modern form (真)
+that both scripts use. The rule that holds is opencc's own `s2t` pass: a character is Simplified-only
+when folding it changes it AND it is not a source form in that table. 3,873 characters, byte-identical
+to opencc on every regeneration, verified by `--check` in the gate. `check_ui_script.mjs` now REFUSES
+(exit 2) when the file is absent rather than silently falling back to the queried pairs — a quiet
+downgrade to 6% coverage is the failure, not a lesser version of it.
+
+**The population nobody was reading.** `check_ui_script` polices four UI blocks: 2,962 literals. The
+178-chapter arc is 10,848 literals of hand-written prose — the single largest body of Hong Kong Chinese
+in the product — and no gate had ever looked at its script. `scripts/check_corpus_script.mjs` is that
+gate, sharing the UI census's `EXCLUSIONS` on purpose: one script law, one place to argue with it, and
+a character cannot be legitimate in a chapter and illegitimate in a heading. It treats `//` and `/* */`
+as prose, refuses a file it cannot read to its end, and refuses a scan that found implausibly few
+literals, because a scanner that read nothing reports the cleanest corpus imaginable.
+
+**What it found on its first run: 93 dirty literals.** 供应 ×4, 手冲, 储物柜, 指导, 档期, 茶试飲, 青弯,
+首尔, 腌料 ×3, 缓跑 ×2, 鸳鸯 ×2, 黑胶聆听, 酸种面包 ×2, 紧, 组织, 自报, 确認, 距离 ×2, 编辑, 草拟,
+写進, 结果, 解释, 页结構, 可达, 赊, 揾, 伙計, 灰黄色, 挂 ×2, 盏, 几, 写字樓, 从, 记, 讲, 转, 妈 ×2,
+励, 账, 柜, 个, 吓, 阿杰 ×8, 厨房, 马厩 ×2, 红枣 — and `床單䨏臭`, where U+4A0F is not a character this
+corpus uses anywhere and 發 was meant. 56 literals were repaired; the 37 left hold only seven characters
+(托 厘 群 床 伙 后 余) that are real Traditional forms a fold would "correct" into a different word.
+
+**The measurement caught four more that the census cannot see.** A word-level allowlist was attempted
+and rejected — the measured bigram set for 台 alone is 92 entries, and a 92-entry list nobody reads is
+worse than a 22-character list they can. But MEASURING the bigrams surfaced four genuine errors the
+character-level rule must miss: 聽見里面 (裡面), 都托管着 (託管), 你阿媽托我 (託我), 新居民涌進來 (湧進).
+All four repaired by hand, and `falsify_corpus_script.mjs` pins the limit as a KNOWN one — an arm that
+asserts 最后 is NOT caught — so the hole is recorded rather than assumed absent.
+
+**Two more broken gates, found by running the treble.** `guided-play.test.ts` pinned
+`progress: (done, total) =>`, a function-valued shape the copy had long since become a `{done}/{total}`
+template — red for however long, in the same file the census reads. Re-aimed at the property that
+matters. And `check_ratelimit_gateway_redis.mjs` compared `ci.yml`'s LINE COUNT to 548: a 12-line insert
+for an unrelated reader made the whole tree say FAIL while nothing about the wiring had changed — the
+same defect D1534 found in the atlas fence, a reader deriving its expectation from something that is not
+the property it claims to measure. It now asserts the two smoke invocations are present by name, and its
+own self-test proves that assertion reddens when CI drops either one.
+
+**Gates.** `check_ui_script` — **0 simplified / 2,962 literals, 15 excluded by name**. `check_corpus_script`
+— **0 simplified / 10,848 literals, 22 excluded**. `falsify_ui_script` — **32 arms, 32 held** (two new:
+the inventory reaches a character neither product table maps; a Traditional character nothing maps — 灝
+— is still left alone, which is the arm proving this is not a dragnet; plus the refusal when the
+inventory is absent). `falsify_corpus_script` — **10 arms, 10 held**. `falsify_atlas_fence` — 8/8.
+`check_simplified_mirror` and `check_simplified_seed` now actually RUN (opencc installed on both
+interpreters) instead of refusing: both PASS. `verify_all` → **NO OFFENDER (PASS 73 · FAIL 0)**;
+`tsc --noEmit` 0; web **974/974 in 97 files**; `chapter-en-arm` 183/183.
+
+**Readers.** `scripts/gen_simp_only_chars.py`, `scripts/data/simp-only-chars.txt`,
+`scripts/check_corpus_script.mjs`, `scripts/falsify_corpus_script.mjs`, `scripts/check_ui_script.mjs`,
+`scripts/falsify_ui_script.mjs`, `scripts/check_ratelimit_gateway_redis.mjs`, `scripts/db_gate_fresh.sh`,
+`apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/mock/seed-cn.ts`, `apps/web/src/lib/i18n/dict.ts`,
+`apps/web/src/lib/i18n/dict-cn.ts`, `apps/ai/nexus_ai/models/atlas_digest.txt`,
+`apps/ai/nexus_ai/models/atlas_index.txt`, `apps/web/src/lib/chapter-en-arm.test.ts`,
+`apps/web/src/lib/guided-play.test.ts`, `docs/ATLAS.md`, this ledger entry.

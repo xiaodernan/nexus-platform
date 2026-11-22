@@ -102,7 +102,75 @@ export const EXCLUSIONS = {
   台: { to: '臺', why: 'the product writes 平台 throughout these carriers and 平臺 nowhere in apps/' },
   面: { to: '麵', why: '面 is Traditional for face/surface (頁面); 麵 is the noodle word' },
   嘅: { to: '的', why: 'a Cantonese particle, not a script variant; the seed carries it as HK text' },
+  // D1534 — the ambiguity class the 3,873-character opencc inventory surfaces. Every one of these is
+  // a REAL Traditional character that opencc's s2t folds because a different word uses the other form.
+  // Each was read in its sentence before being excluded; the counts below are what the census saw.
+  斗: { to: '鬥', why: 'the rice measure 米斗 and 北斗 — 鬥 is the verb "to fight", never the measure' },
+  涌: { to: '湧', why: '東涌 / 鰂魚涌 are real Hong Kong place names; 湧 is the mainland spelling' },
+  吃: { to: '喫', why: '吃 is standard Traditional; 喫 is the archaic form the fold would substitute' },
+  秘: { to: '祕', why: '秘密 is written 秘 in Hong Kong; 祕 is the variant, not the standard' },
+  里: { to: '裏', why: '公里 (kilometre) and 里程碑 (milestone) — 裏 is "inside", a different word' },
+  恒: { to: '恆', why: '恒生指數 / 恒生銀行 are proper names spelled 恒 by the bank itself' },
+  游: { to: '遊', why: '上游 / 下游 (upstream / downstream) — 遊 is "to travel", a different word' },
+  峰: { to: '峯', why: '尖峰 (spike) — 峰 is the standard form; 峯 is the variant' },
+  晒: { to: '曬', why: 'Cantonese 睇晒 ("read them all") — 曬 is "to sun-dry", a different word' },
+  咸: { to: '鹹', why: '大澳咸魚 — Hong Kong writes 咸魚; 鹹 is the "salty" spelling used elsewhere' },
+  郁: { to: '鬱', why: 'Cantonese 郁 ("to move") — 鬱 is "gloomy", a different word entirely' },
+  灶: { to: '竈', why: '灶 is the standard form for a stove; 竈 is the variant the fold prefers' },
+  // D1535 — the same ambiguity class, reached only once the chapter corpus itself became a carrier. 93
+  // literals in the 178-chapter seed carried a Simplified character; 56 were repaired in place, and the
+  // 37 left hold only these seven, each read in its sentence and each a real Traditional character.
+  床: { to: '牀', why: '床 is the standard form (床單, 加床, 磨床); 牀 is the variant opencc folds to' },
+  托: { to: '託', why: '托 means to hold up (托住燒鵝, 托盤, 托運) — 託 is "to entrust", a different word' },
+  群: { to: '羣', why: '群 is standard (一群, 家族群, 阿群); 羣 is the variant the fold prefers' },
+  伙: { to: '夥', why: '伙計 / 搭伙 — Hong Kong writes 伙 for a workmate; 夥 is the "many" reading' },
+  后: { to: '後', why: '皇后 (queen) — 后 is the queen word; 後 is "after". The corpus repairs 後 everywhere else' },
+  余: { to: '餘', why: 'a surname (余Sir) — 餘 is "surplus". The corpus writes 餘 for the quantity' },
+  厘: { to: '釐', why: '厘米 (centimetre) — 厘 is the modern unit spelling; 釐 is the classical one' },
 };
+
+/** Every exclusion must be a character the inventory really charges, or the entry is dead weight that
+ *  makes the list look longer than the knowledge behind it. `--self-check` walks this. */
+export function auditExclusions(inventory) {
+  const set = new Set(inventory);
+  const dead = Object.keys(EXCLUSIONS).filter((c) => !set.has(c));
+  return { dead, live: Object.keys(EXCLUSIONS).length - dead.length };
+}
+
+/**
+ * D1534 — supplement the queried tables with the real Simplified-only inventory.
+ *
+ * `readPairTable` reads the two tables the PRODUCT keeps, and both were built to fold search
+ * queries: 239 + 144 pairs. Measured on 2026-11-22, that is 6% of the ~4,000 characters that exist
+ * only in Simplified — the census passed over the literal 两空開始读下去 in dict.ts, charging 两
+ * (it happened to be in the 239) and staying silent on 读 and 纲. Teaching the reader more is not a
+ * strengthening of the rule; it is the rule finally being applied to the alphabet it claims.
+ *
+ * `scripts/data/simp-only-chars.txt` is generated from opencc's own Traditional->Simplified table by
+ * `scripts/gen_simp_only_chars.py`, so no CJK byte here was typed by a human or a model. The file is
+ * a hard requirement: if it is missing the reader REFUSES (exit 2) rather than falling back to the
+ * thin table, because a quiet downgrade to 6% coverage is exactly the failure it was written to end.
+ */
+export function readSimpOnlyChars(repo) {
+  const p = join(repo, 'scripts/data/simp-only-chars.txt');
+  if (!existsSync(p)) {
+    return { chars: [], problem: `no simp-only-chars.txt at ${p} (run: python scripts/gen_simp_only_chars.py)` };
+  }
+  const lines = readFileSync(p, 'utf8').split('\n');
+  const chars = [];
+  for (const line of lines) {
+    const s = line.trim();
+    if (!s || s.startsWith('#')) continue;
+    // one character per line: anything longer is a hand edit, and a hand edit is what this file
+    // exists to not be.
+    if ([...s].length !== 1) return { chars: [], problem: `simp-only-chars.txt holds a non-character line: ${JSON.stringify(s)}` };
+    chars.push(s);
+  }
+  if (chars.length < 1000) {
+    return { chars: [], problem: `simp-only-chars.txt holds only ${chars.length} characters — too few to be the real inventory` };
+  }
+  return { chars, problem: null };
+}
 
 /** A `zh…` key that names a locale the product writes Simplified ON PURPOSE is not zh-HK copy. The
  *  `Locale` union has exactly one zh member today, so this is the boundary for the day a zh-CN map
@@ -451,6 +519,14 @@ function main() {
   const reportOnly = parsed.flag['--report'];
 
   const { table, detail, problems } = readPairTable(repo);
+  // D1534: the real inventory joins before the census is armed, and its absence is a REFUSAL,
+  // not a silent fallback to the 383 queried pairs.
+  const inv = readSimpOnlyChars(repo);
+  if (inv.problem) problems.push(inv.problem);
+  else {
+    for (const ch of inv.chars) if (!table.has(ch)) table.set(ch, '');
+    detail.inventory = inv.chars.length;
+  }
   const { files, problems: cp } = carrierFiles(repo);
   problems.push(...cp);
   if (problems.length || table.size === 0 || files.length === 0) {
@@ -462,7 +538,10 @@ function main() {
 
   const r = scanCarriers(repo, table, files);
   console.log(`zh-HK UI script census — ${repo}`);
-  console.log(`pair table: ${table.size} simplified character(s) known (canonical.py ${detail.canonical}, lexicon.py ${detail.lexicon})`);
+  console.log(
+    `pair table: ${table.size} simplified character(s) known (canonical.py ${detail.canonical}, lexicon.py ${detail.lexicon}, ` +
+      `opencc inventory ${detail.inventory ?? 0})`,
+  );
   for (const b of r.blocksJudged) {
     const shape = b.locale ? `  LOCALE-MAP (keys ${b.locales.join(', ') || '—'}; only the zh… half is charged)` : '';
     console.log(`block ${b.name} — ${b.rel}:${b.from}-${b.to}${b.referenced ? '' : '  UNREFERENCED (nothing in this file reads the block, so its copy may not be what the site renders — disclosed, not charged)'}${shape}`);

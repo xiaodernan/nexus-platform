@@ -30,14 +30,21 @@
  *                     all (refusal). Admission is also by extension: the identical dirty block in a
  *                     `*.test.ts` is not a carrier, and in a carrier it is.
  *
- *   THE DERIVATION    the reader charges what the product's tables know. A character neither canonical.py
- *                     nor lexicon.py maps is not charged; the same literal reddens once the pair is added
- *                     to the AI lexicon, with no edit to this reader. That is the property the whole design
- *                     buys -- AI gates D435/D446/D447 keep those tables honest, so their honesty is this
- *                     census's reach.
+ *   THE DERIVATION    the reader charges what it knows. Until D1534 that was canonical.py (239) plus
+ *                     lexicon.py (144) — the tables the NLU keeps to fold search queries — and this
+ *                     docblock called that "the property the whole design buys". It was 6% of the
+ *                     alphabet: measured on 2026-11-22 the census read straight past the dict literal
+ *                     两空開始读下去, charging 两 (one of the 239) and staying silent on 读. The reader
+ *                     now also carries the 3,873-character inventory opencc's own T->S table yields
+ *                     (`scripts/data/simp-only-chars.txt`, generated, never typed), so the arms below
+ *                     changed shape: a character NEITHER table maps is now charged (that is the reach,
+ *                     and the arm is named for it), while a Traditional character nothing maps — 灝 —
+ *                     is still left alone, which is the arm proving this is not a dragnet.
  *
- *   THE REFUSALS      tables absent, tables cut away, carriers absent, an unknown flag, `--repo` twice --
- *                     all exit 2. "Did not run" and "found nothing" are different answers.
+ *   THE REFUSALS      tables absent, inventory absent, tables cut away, carriers absent, an unknown
+ *                     flag, `--repo` twice — all exit 2. "Did not run" and "found nothing" are
+ *                     different answers, and a reader that silently falls back to the thin table when
+ *                     the inventory is missing would be answering the first while printing the second.
  *
  *   THE KNOBS         --report reddens nothing but prints the offender; --verbose prints the derived fix
  *                     beside it. Both are measured on a planted red, because a knob only proved on a green
@@ -63,11 +70,16 @@ const ROOT = resolve(HERE, '..');
 const CHECKER = join(HERE, 'check_ui_script.mjs');
 const FIX = join(tmpdir(), 'nexus-ui-script-falsify');
 const TABLES = ['apps/ai/nexus_ai/nlu/canonical.py', 'apps/ai/nexus_ai/nlu/lexicon.py'];
+// D1534 — the reader now also arms itself from `scripts/data/simp-only-chars.txt`, the 3,873-character
+// inventory opencc's own table yields. The fixture copies it like any other table, because an arm whose
+// reader REFUSES for a missing file proves nothing about the census (it proves the refusal, which has its
+// own arm below).
+const INVENTORY = 'scripts/data';
 // The whole `apps/web/src/lib` tree, not just its `i18n/` subdirectory: the census admits two shapes, and
 // the one that missed the starter prompts lives one directory above the dictionaries. Copying the parent
 // copies `i18n/` with it, so a fixture plane holds exactly the carriers the reader reads.
 const LIB = 'apps/web/src/lib';
-const ROOTS = [...TABLES, LIB];
+const ROOTS = [...TABLES, INVENTORY, LIB];
 
 const DICT = `${LIB}/i18n/dict.ts`;
 const TRUST = `${LIB}/i18n/trust-labels.ts`;
@@ -170,6 +182,12 @@ const plantTemplate = (d) => insertAfter(d, DICT, BRAND, '  plantedTemplate: `�
 const plantUnknown = (d) => insertAfter(d, DICT, BRAND, "  plantedUnknown: '前后',");
 const teachUnknown = (d) => insertAfter(d, 'apps/ai/nexus_ai/nlu/lexicon.py',
   '_TRAD_SIMP_PAIRS: tuple[tuple[str, str], ...] = (', '    ("後", "后"),');
+// D1534 — the pair above used to be the whole story: `后` was charged only once lexicon.py was taught it,
+// and the arm that asserted otherwise held because the reader knew 239 characters out of ~3,900. It now
+// knows the inventory, so the same literal reddens with no teaching at all, and the arm that says so is
+// the record of what changed. The green half needs a character no table and no fold charges: 灝 is a
+// Traditional character opencc's s2t leaves untouched, and it is in neither canonical.py nor lexicon.py.
+const plantInnocent = (d) => insertAfter(d, DICT, BRAND, "  plantedInnocent: '灝氣',");
 
 // Whole new top-level blocks in server.ts, which ships none: the population's admission rule under test.
 const plantUnreferencedClean = (d) => append(d, SERVER,
@@ -261,7 +279,7 @@ const ARMS = [
     apply: () => {},
     expect: 0,
     must: [/RESULT: PASS/, new RegExp(`0 simplified character\\(s\\) over ${baseLiterals} literal\\(s\\) of ${baseBlocks} zh block\\(s\\)`),
-      /pair table: \d+ simplified character\(s\) known \(canonical\.py \d+, lexicon\.py \d+\)/,
+      /pair table: \d+ simplified character\(s\) known \(canonical\.py \d+, lexicon\.py \d+, opencc inventory \d+\)/,
       /block zhLabels — apps\/web\/src\/lib\/i18n\/trust-labels\.ts:\d+-\d+/],
     // zhLabels is reached by the trustLabels() picker, not by a Record<Locale> map. An earlier draft of the
     // reader required the map and so accused shipped, rendered copy of being dead.
@@ -395,14 +413,20 @@ const ARMS = [
     must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/server\.ts:\d+ \[对\]/, /block zhPlantedTest/],
   },
   {
-    name: 'the derivation: a character the product tables do not map is not charged',
+    name: 'the inventory: a character NEITHER product table maps is still charged (the D1534 reach)',
     apply: plantUnknown,
+    expect: 1,
+    must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/dict\.ts:\d+ \[后\]/],
+  },
+  {
+    name: 'the inventory is not a dragnet: a Traditional character nothing maps is left alone',
+    apply: plantInnocent,
     expect: 0,
     must: [/RESULT: PASS/, literalsPlus(1)],
     absent: [/WRONG-SCRIPT/],
   },
   {
-    name: 'the derivation: the same literal reddens once lexicon.py is taught the pair',
+    name: 'the derivation: teaching lexicon.py the pair keeps the red and names the same character',
     apply: (d) => { plantUnknown(d); teachUnknown(d); },
     expect: 1,
     must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/dict\.ts:\d+ \[后\]/],
@@ -426,6 +450,16 @@ const ARMS = [
     expect: 2,
     roots: [LIB],
     must: [/RESULT: NOT CHECKED/, /no canonical\.py at/, /no lexicon\.py at/],
+  },
+  {
+    // D1534: without the inventory the reader would be back to 383 queried pairs, i.e. 6% of the
+    // alphabet. It must REFUSE rather than quietly downgrade — a silent fallback to the thin table
+    // is the exact failure this whole unit exists to end.
+    name: 'REFUSAL: the opencc inventory is missing — no silent downgrade to the 383 queried pairs',
+    apply: () => {},
+    expect: 2,
+    roots: [...TABLES, LIB],
+    must: [/RESULT: NOT CHECKED/, /no simp-only-chars\.txt at/, /gen_simp_only_chars\.py/],
   },
   {
     // Both carrier directories are absent here, and the reader names each one by the shape it carries: a

@@ -434,6 +434,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/check_tinted_contrast.mjs` | D956: closes the tinted-ground blind spot the a11y reader declares — reads the 4 opaque `bg-*-soft` + `text-*` pairings from Badge.tsx's cva tone table (contract: a missing tone reddens), resolves both tokens in the light and dark blocks of tokens.css and recomputes the same WCAG ratio, requiring all 4 tones x 2 themes >= 4.5:1 (tightest: light positive-on-soft 4.75:1); source text only, no browser; `--self-test` plants corruptions with a no-op snapshot guard |
 | `scripts/check_console_i18n.mjs` | the console's zh-HK/en copy census |
 | `scripts/check_ui_script.mjs` | the zh-HK UI script census |
+| `scripts/check_corpus_script.mjs` | D1535: the zh-HK CHAPTER corpus script census — the 178-chapter arc in `apps/web/src/lib/mock/seed.ts` is judged against the same 3,873-character opencc inventory `scripts/check_ui_script.mjs` uses (shared `EXCLUSIONS`, one script law), with comments treated as prose; measured 93 dirty literals on its first run, 56 repaired in place; refuses a plane it cannot read to its end rather than reporting it clean |
 | `scripts/check_duplicate_keys.mjs` | React list keys that two members could share |
 | `scripts/check_slot_keys.mjs` | multi-child slots in the client plane |
 | `scripts/check_jsonb_reads.mjs` | jsonb key reads against the gate's declared list |

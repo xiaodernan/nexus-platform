@@ -1869,7 +1869,10 @@ describe('chapter 106 ships in three arms', () => {
 
   it('chapter 125 (Chai Wan fish market) ships in three arms too', () => {
     const hk = mockGuide('hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle', 'zh-HK');
-    expect(hk?.title).toMatch(/小西灣.*阿杰/);
+    // D1535: the character's name was written 阿杰 — 杰 is the Simplified form of 傑, so the Traditional
+    // arm carried a Simplified glyph for eight mentions. The CN arm below still reads 阿杰, because that
+    // IS the Simplified fold; only the HK arm moved.
+    expect(hk?.title).toMatch(/小西灣.*阿傑/);
     const cn = mockGuide('hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle', 'zh-CN');
     expect(cn?.title).toMatch(/小西湾.*阿杰/);
     const en = mockGuide('hk-chai-wan-siu-sai-wan-morning-fish-market-chronicle', 'en');

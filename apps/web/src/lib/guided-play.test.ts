@@ -43,6 +43,12 @@ describe('guided play coach', () => {
     expect(dict).toContain("eyebrow: 'GUIDED PLAY · 5 STEPS'");
     expect(dict).toContain("completeTitle: '五步都走過了");
     expect(dict).toContain("completeTitle: 'All five walked");
-    expect(dict).toContain('progress: (done, total) =>');
+    // D1535: this pinned `progress: (done, total) =>`, which was the shape of an earlier function-valued
+    // copy. The copy is now a `{done}/{total}` template — the same sentence, resolved in one place
+    // instead of two — so the pin had been red for however long, and nothing noticed because the file it
+    // reads is the same file the UI census reads and nobody ran the two together. It now asserts the
+    // property that matters: both authored arms carry a progress sentence with both placeholders.
+    expect(dict).toMatch(/progress: '\{done\} \/ \{total\}[^']*'/g);
+    expect(dict.match(/progress: '\{done\} \/ \{total\}/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 });

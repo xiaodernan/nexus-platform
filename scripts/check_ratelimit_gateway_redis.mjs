@@ -14,7 +14,8 @@
  *   1. the limiter Java exists and its Lua body keeps HMGET/HSET/PEXPIRE and the HSET-atomic pair
  *   2. EdgeRateLimitFilter really takes the redis branch and really falls back, with the label
  *   3. the gateway pom carries spring-boot-starter-data-redis-reactive
- *   4. ci.yml invokes BOTH the smoke and its falsifier inside the cloud chain (line count held: 548)
+ *   4. ci.yml invokes BOTH the smoke and its falsifier inside the cloud chain (asserted by NAME, not by
+ *      file length — D1535 removed the `548` pin, which reddened on every unrelated CI edit)
  *   5. the two smokes exist and the positive one actually asserts the cross-process claim
  *   6. docs/CLOUD.md names both smokes and carries the D1140 section header
  *   7. DECISIONS/STATUS carry the D1140 section
@@ -104,8 +105,20 @@ function fromDisk() {
     if (!existsSync(abs)) return { files, error: `${p} does not exist` };
     files.set(p, readFileSync(abs, 'utf8'));
   }
-  const ciLines = files.get(CI).split(/\r?\n/).length - (files.get(CI).endsWith('\n') ? 1 : 0);
-  if (ciLines !== 548) return { files, error: `.github/workflows/ci.yml has ${ciLines} lines, expected 548 (D952 R5 holds)` };
+  // D1535 — this used to be `if (ciLines !== 548)`, a pin on the FILE'S LENGTH as a proxy for "the
+  // smoke and its falsifier are still wired into the cloud chain". Every unrelated CI edit reddened it
+  // and nothing about the wiring changed; a 12-line insert for another reader made the whole tree
+  // "FAIL", which is the same failure mode D1534 found in the atlas fence — a reader deriving its
+  // expectation from something that is not the property it claims to measure. The property is that the
+  // two invocations are present in this file. So that is what is asserted, and the length is printed
+  // instead of pinned: it is a fact about the tree, not a claim about the wiring.
+  const ci = files.get(CI);
+  const missing = ['ratelimit_gateway_redis_smoke.sh', 'falsify_ratelimit_gateway_redis_smoke.sh'].filter(
+    (needle) => !ci.includes(needle),
+  );
+  if (missing.length) {
+    return { files, error: `.github/workflows/ci.yml no longer invokes: ${missing.join(', ')} (D952 R5 wiring)` };
+  }
   return { files, error: null };
 }
 
