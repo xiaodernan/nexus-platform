@@ -134,18 +134,21 @@ services:
       # container ignored the URL below and fell back to a loopback Postgres that does not exist in
       # this network, serving the labelled demo catalogue behind a deployment that said "live" (D1550).
       NEXUS_DATABASE_URL: postgresql://nexus_ai:${NEXUS_DB_AI_PASSWORD:-nexus_dev_ai_only}@postgres:5432/${NEXUS_DB_NAME:-nexus}
-      NEXUS_DB_SCHEMA_SCRIPTS: /migrations
       NEXUS_REDIS_URL: redis://redis:6379/0
       NEXUS_LLM_PROVIDER: ${NEXUS_LLM_PROVIDER:-mock}   # D4: mock keeps the whole product offline
       NEXUS_LLM_BASE_URL: ${NEXUS_LLM_BASE_URL:-}
       NEXUS_LLM_API_KEY: ${NEXUS_LLM_API_KEY:-}
-      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
       NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
       NEXUS_PLATFORM_BASE_URL: http://platform:8080
       NEXUS_PLATFORM_MODE: ${NEXUS_PLATFORM_MODE:-http}
       # Same shared secret as the platform's door — "configured for both sides or it behaves 501".
       NEXUS_AI_INTERNAL_TOKEN: ${NEXUS_AI_INTERNAL_TOKEN:-dev_nexus_internal_token_for_local_compose_0123456789abcdef}
-      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
+      # One operator knob (.env's NEXUS_CORS_ORIGINS) for every tier, but the AI has to RECEIVE the
+      # name it resolves: apps/ai/nexus_ai/config.py:125 reads NEXUS_AI_CORS_ORIGINS and
+      # apps/ai/nexus_ai/api/app.py:111 installs CORSMiddleware only when the list is non-empty. Under
+      # the platform's spelling the block said http://localhost:3000 and the container answered no
+      # browser origin at all - same-origin calls still worked, so nothing failed loudly (D1551).
+      NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
       TZ: Asia/Hong_Kong
     ports:
       - "127.0.0.1:${NEXUS_AI_HOST_PORT:-8000}:8000"
