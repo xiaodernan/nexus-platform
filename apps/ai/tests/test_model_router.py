@@ -10,6 +10,7 @@ so no network is touched. DB-free, async.
 
 from __future__ import annotations
 
+import asyncio
 import pytest
 
 from nexus_ai.models.base import (
@@ -163,3 +164,24 @@ def test_primary_and_provider_name():
     r = ModelRouter([a, b])
     assert r.primary is a
     assert r.provider_name() == "anthropic"
+
+
+def test_ladder_fallthrough_is_logged_not_silent(caplog):
+    # D1543: a live provider that fails (exhausted key HTTP 403, empty model name HTTP 400)
+    # used to fall through to the mock ladder with NO log line — the operator could not tell
+    # why every response said provider=mock. The fallthrough now warns, naming the adapter.
+    import logging
+
+    bad = _Fake("openai", error=LLMError("openai HTTP 403: insufficient_user_quota", provider="openai"))
+    good = _Fake("mock", resp=LLMResponse(
+        text="ok", provider="mock", model="mock-heuristic-1",
+        prompt_tokens=1, completion_tokens=1, latency_ms=1, task_class="summary"))
+    r = ModelRouter([bad, good])
+    req = LLMRequest(task_class="summary", payload={}, system="s", prompt="p",
+                     max_tokens=8, temperature=0.0, json_hint="json_object")
+    with caplog.at_level(logging.WARNING, logger="nexus_ai.models.router"):
+        out = asyncio.run(r.run(req))
+    assert out.response.provider == "mock"
+    warnings = [rec for rec in caplog.records if "openai failed" in rec.getMessage()]
+    assert warnings, "the ladder fallthrough must leave a warning naming the failed adapter"
+    assert "insufficient_user_quota" in warnings[0].getMessage()

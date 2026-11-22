@@ -8,6 +8,7 @@ marking the call degraded so `X-Nexus-Degraded` gets set.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -19,6 +20,8 @@ from nexus_ai.models.base import (
     LLMRequest,
     LLMResponse,
 )
+
+_log = logging.getLogger("nexus_ai.models.router")
 
 
 @dataclass
@@ -160,9 +163,18 @@ class ModelRouter:
                 try:
                     resp = await adapter.complete(req)
                 except LLMError as exc:
+                    # D1543: the ladder is by design (§105), but a SILENT fallthrough is how an
+                    # exhausted key (HTTP 403) or an empty model name (HTTP 400) rides the mock
+                    # ladder for a day unnoticed — the response says provider=mock and nothing
+                    # anywhere says why. One warn line per fallthrough names the adapter and the
+                    # reason; the caller still sees measured.provider=mock in the payload.
+                    _log.warning("llm ladder: %s failed for task %s (%s); falling through",
+                                 adapter.name, req.task_class, exc)
                     last_err = exc
                     continue
                 except Exception as exc:  # adapter bug must not kill the request (§105)
+                    _log.warning("llm ladder: %s crashed for task %s (%s); falling through",
+                                 adapter.name, req.task_class, exc)
                     last_err = LLMError(f"{adapter.name} crashed: {exc}", provider=adapter.name,
                                         retryable=True)
                     continue

@@ -48449,3 +48449,23 @@ literals** (+56 from the new chapter, still zero). check_simplified_mirror PASS.
 `apps/web/src/lib/reading-thread-starters-wiring.test.ts`,
 `apps/ai/nexus_ai/models/atlas_digest.txt`, `apps/ai/nexus_ai/models/atlas_index.txt`,
 this ledger entry.
+
+## 1446. D1543 — the ladder fell through in silence, so an exhausted key rode the mock lane for a day without a trace
+
+**The gap.** D1540's chase found the live call landing on `provider: mock` with nothing anywhere
+saying why: the §105 ladder in `ModelRouter.run` caught the LLMError and `continue`d — no log, no
+row, no trace. An exhausted key (HTTP 403 insufficient_user_quota) or an empty model name (HTTP 400
+未指定模型名称) rides the mock lane invisibly; the response payload's `measured.provider` is the only
+hint, and nothing points at it.
+
+**The fix, one line of honesty.** Each fallthrough now warns, naming the adapter, the task class and
+the reason — `llm ladder: openai failed for task summary (openai HTTP 403: ...); falling through` —
+bounded by the pool size (the ladder is short by construction). The ladder's BEHAVIOUR is untouched:
+§105 still guarantees the request never dies at the model layer, and `fallback_from` still carries
+the structural fact. What changed is that the WHY is now written down where operators look.
+
+**Gates.** `test_model_router.py` 12/12, including the new leg: a failing openai fake + a mock fake,
+asserting the warning fires and names `insufficient_user_quota`. mypy clean; ruff clean.
+
+**Readers.** `apps/ai/nexus_ai/models/router.py`, `apps/ai/tests/test_model_router.py`,
+this ledger entry.
