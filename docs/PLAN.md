@@ -4318,7 +4318,8 @@ by what is already verified, not by date.
   certifies nothing, so `test_d1549_*` POISONS `os.environ` itself at module scope and compares two
   subprocess runs of the real lane file; arm A4 (leave out the inert `ALL_PROXY`) is the only mutation
   that reddens the names leg alone.
-  **Next: D1550 — the compose plane's names do not reach the code they configure.** Measured
+  **Landed the same session as D1550 (§1453) — the AI container's own CMD and that block's database
+  name; the remaining unread keys, `ai:` and `web:` alike, are re-queued as D1551.** Measured
   (`tmp/d1550_env_contract.txt`, `tmp/d1550_measure.txt`): of the 5 keys `infra/docker-compose.yml` puts
   in the `web:` environment block, **0 have a reader in `apps/web`** — it sets `PLATFORM_INTERNAL_URL` /
   `AI_INTERNAL_URL` while `apps/web/src/lib/env.ts:36,39` reads `PLATFORM_API_BASE_URL` /
@@ -4329,6 +4330,37 @@ by what is already verified, not by date.
   `NEXUS_AI_HOST=0.0.0.0`, `NEXUS_AI_PORT=8000`, `EXPOSE 8000`. In the compose plane the AI tier is
   therefore unreachable from every peer and silently falls back to the labelled demo catalogue for its
   data. Same family as D847's registry address, and exactly the mandate's §五 failure mode.
+
+- **Landed — D1550 (§1453): the AI container binds what its image declares, on the port the
+  deployment publishes.** `apps/ai/start_ai.py` is both the host launcher and the image's `CMD`
+  (`apps/ai/Dockerfile:27`), and it obeyed neither. Measured by running that real file with `uvicorn`
+  stubbed (`tmp/d1550_entrypoint_measure.txt`): a container built from this image bound
+  **`127.0.0.1:8010`** although the image declares `NEXUS_AI_HOST=0.0.0.0` / `NEXUS_AI_PORT=8000` and
+  compose publishes container port 8000 — `setdefault('NEXUS_AI_HOST_PORT', '8010')` made the process
+  invent the HOST side of a mapping it cannot see, and `nexus_ai/discovery.py:94` then registered that
+  invention to Eureka. The block's `NEXUS_DB_URL` was decoration for the same reason:
+  `nexus_ai/config.py:101` resolves `NEXUS_DATABASE_URL` / `DATABASE_URL` / `NEXUS_AI_DB_URL`, so the
+  "live" tier read a loopback Postgres that does not exist in that network namespace and answered from
+  the labelled demo catalogue, which looks healthy. Three files agreed with each other and none with
+  the deployment — the same family as D847's registry address, and the mandate's §五 failure mode in
+  its purest form (a config that cannot fail loudly). The fix reuses names the code already owns — the
+  interface `config.py:122` resolves and the port chain `discovery.py:94` registers — deletes the
+  invented default, renames one compose key, and corrects the comment that told the next reader the
+  old mechanism was true. The door parses `apps/ai/Dockerfile` and `infra/docker-compose.yml` instead
+  of duplicating their literals, so the deployment can no longer slide out from under the test while
+  the test stays green. Red first **4 failed, 1 passed** (R3, the host lane's `NEXUS_AI_HOST_PORT`,
+  green by design and kept green); arms A1-A5 each redden a distinct leg, A3 the two that share the
+  deleted line, A5 being the only arm that can catch this fix overreaching onto a working plane.
+  Whole suite **38050 passed, 522 skipped, 0 failed** (`tmp/d1550_full_suite.txt`); the six node gates
+  that read `infra/docker-compose.yml` all still exit 0, including `check_cloud_discovery` R6, which
+  is why `discovery.py` kept reading `NEXUS_AI_HOST_PORT` rather than being "simplified".
+  **Next: D1551 — finish the name-vs-reader contract on both planes** (re-census says **3 of the `ai:`
+  block's 14 keys still have no reader**, `NEXUS_CORS_ORIGINS` among them while `config.py:125`
+  resolves `NEXUS_AI_CORS_ORIGINS` — so the compose plane silently serves the built-in CORS default —
+  plus the `web:` block's 5 unread keys and `docs/DEPLOYMENT.md:262` repeating them), with **D1552**
+  (`.github/workflows/ci.yml:272,280` hand the AI's jobs the same unread `NEXUS_DB_URL`) and
+  **D1553** (the proxy census §1452 promised: `NODE_USE_ENV_PROXY` in the web tier, the JVM's separate
+  rule in `services/*`) queued behind it.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own

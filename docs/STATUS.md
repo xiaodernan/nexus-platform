@@ -48584,6 +48584,111 @@ Row B is the user-visible half, and the most likely cause of PLAN OWED (d) - "pr
 
 **What this changes for every future AI gate.** §1449 introduced the rule *run AI gates as `env -u NO_PROXY python -m pytest ...`* because a suite verdict that depends on ambient network config is not a verdict. This unit retires that incantation - the gate above is the first full-suite run in the lane that needed no shell neutralisation at all. The rule's other half stands: any unit touching the platform runs the full suite and attributes every red with a BASE pass (D902).
 
-**Not claimed.** No shipped byte changed: this is test infrastructure, and the product still honours an ambient proxy on the hops that leave the host. The other planes are not hermetic - the web tier's `NODE_USE_ENV_PROXY` and the Java clients are outside this fixture, and the census that follows (D1550) starts there. And the sandbox proxy that made this visible is still running on this machine; the lane simply stopped reading it.
+**Not claimed.** No shipped byte changed: this is test infrastructure, and the product still honours an ambient proxy on the hops that leave the host. The other planes are not hermetic - the web tier's `NODE_USE_ENV_PROXY` and the Java clients are outside this fixture, and the census that follows starts there. **(Amended by D1550, §1453: the measurement that
+followed found a harder defect on the deployment plane first - the AI container's own CMD bound an
+interface and port the image does not declare - so D1550 is that, and this proxy census is re-queued
+as D1553.)** And the sandbox proxy that made this visible is still running on this machine; the lane simply stopped reading it.
 
 - readers: `apps/ai/tests/conftest.py`, `apps/ai/tests/test_d1549_unit_lane_pins_the_proxy_env.py`, `apps/ai/tests/test_request_timeout_reaches_the_adapters.py`, `tmp/d1549_measure.txt`, `tmp/d1549_measure_after.txt`, `tmp/d1549_door_red.txt`, `tmp/d1549_door_green.txt`, `tmp/d1549_arms.txt`, `tmp/d1549_full_suite.txt`.
+
+## 1453. D1550 · the AI container binds what the image declares, on the port the deployment publishes
+
+§1452 closed the last unit-plane defect and pointed the next census at "the deployment plane". The
+measurement (`tmp/d1550_entrypoint_measure.py` → `tmp/d1550_entrypoint_measure.txt`) ran the real
+`apps/ai/start_ai.py` — which is also the container's CMD (`apps/ai/Dockerfile:27`) — with `uvicorn`
+stubbed on `PYTHONPATH` so nothing serves, twice: once with the environment a container of this image
+actually gets (the Dockerfile's `ENV` plus the compose `ai:` block, and nothing else), once with the
+environment the cloud smokes export.
+
+| leg | what the deployment declares | what the process did |
+| --- | --- | --- |
+| A: inside the container | image `ENV NEXUS_AI_HOST=0.0.0.0`, `NEXUS_AI_PORT=8000`, `EXPOSE 8000`; compose publishes `127.0.0.1:${NEXUS_AI_HOST_PORT:-8000}:8000`, so the container side is **8000** | bound **`127.0.0.1:8010`** |
+| A′: the same container's database | compose sets `NEXUS_DB_URL: postgresql://nexus_ai:…@postgres:5432/nexus` | `NEXUS_AI_DB_URL` resolved to **`127.0.0.1:5433`**, `NEXUS_DATABASE_URL` `<unset>` |
+| B: the host lane (`NEXUS_AI_HOST_PORT=8010`) | the smoke scripts' own knob | bound `127.0.0.1:8010` — correct, and it must stay correct |
+
+Arm A is not a cosmetic drift: a container's loopback is reachable from that container alone, so the
+published port has nothing behind it and a peer hop to `http://ai:8000` is refused. The 8010 is worse
+than wrong, because it is *self-consistent*: `start_ai.py` carried
+`os.environ.setdefault('NEXUS_AI_HOST_PORT', '8010')`, so the process invented the HOST side of the
+mapping inside the container, and `discovery.py:94` — which reads that variable first — dutifully
+registered a port nothing published. Three files agreed with each other and none agreed with the
+deployment. A ↦ 127.0.0.1 is also why A′ matters: with no Postgres at loopback:5433 in that network
+namespace, the "live" tier fell back to the labelled demo catalogue, which answers and therefore looks
+healthy.
+
+The fix is the smallest thing that removes the disagreement, and it reuses names the repo already
+owns rather than inventing new ones:
+
+* `apps/ai/start_ai.py:32-35` now binds `NEXUS_AI_HOST` (default `127.0.0.1`) and the port chain
+  `NEXUS_AI_HOST_PORT or NEXUS_AI_PORT or 8010` — the interface `nexus_ai/config.py:122` already
+  resolves and the port chain `nexus_ai/discovery.py:94` already registers, so socket, registration
+  and image cannot drift apart. The `setdefault('NEXUS_AI_HOST_PORT', …)` line is **gone**: the host
+  side of a published mapping is not this process's to invent.
+* `infra/docker-compose.yml:131` renames the ai block's `NEXUS_DB_URL` to **`NEXUS_DATABASE_URL`**,
+  which is the name `apps/ai/nexus_ai/config.py:101` actually resolves. `NEXUS_DB_URL` is the
+  platform's JDBC name (`services/platform/src/main/resources/application.yml:29`); the AI read it
+  nowhere, so the URL it carried was decoration. The credential is valid in that network:
+  `./postgres/init/00_roles.sql` creates `nexus_ai` from the same `NEXUS_DB_AI_PASSWORD` default the
+  URL uses.
+* `apps/ai/nexus_ai/discovery.py:93` — the comment that told the next reader "start_ai.py binds
+  NEXUS_AI_HOST_PORT (default 8010)" now names the shared chain. A comment describing the mechanism
+  wrongly is how a deleted default comes back.
+
+`tests/test_d1550_container_entry_honours_the_image_contract.py` is the door, and the reason it is
+shaped the way it is: the expectations are **parsed** out of `apps/ai/Dockerfile` and
+`infra/docker-compose.yml` (`_dockerfile_env`, `_compose_environment`, `_published_container_port`)
+instead of typed into the test, so moving the deployment moves the door with it. Legs, against
+shipped bytes first (`tmp/d1550_door_red.txt` → **4 failed, 1 passed**, the red-first assertion texts
+verbatim in that record):
+
+* **R1** the bound interface equals the `NEXUS_AI_HOST` the image declares — red: *"the image declares
+  0.0.0.0 but the CMD binds 127.0.0.1"*.
+* **R2** the bound port equals the container side of the compose mapping — red: *"compose publishes
+  container port 8000 but the CMD listens on 8010"*.
+* **R3** (the boundary leg, green before and after by design) `NEXUS_AI_HOST_PORT=8010` alone still
+  yields `127.0.0.1:8010`, because `scripts/cloud_lb_smoke.sh:224` and `cloud_ai_admin_smoke.sh:82`
+  launch this same file on the host.
+* **R4** the DB key the deployment names is the one the app resolves, and the resolved URL contains
+  `postgres:5432` — red: *"the deployment names the AI's database NEXUS_DB_URL, which apps/ai reads
+  nowhere"*.
+* **R5** the entrypoint leaves no host-side variable behind for discovery to register — red: *"nothing
+  in the deployment set NEXUS_AI_HOST_PORT for this process, yet it reports 8010"*.
+
+Arms (`tmp/d1550_arms.py` → `tmp/d1550_arms.txt`), one variable each, shipped bytes restored and
+byte-compared after every arm:
+
+| arm | single change | legs it reddens |
+| --- | --- | --- |
+| A1 | `host='127.0.0.1'` literal returns | R1 |
+| A2 | `NEXUS_AI_PORT` leaves the port chain, `8010` hardcoded | R2 |
+| A3 | `setdefault('NEXUS_AI_HOST_PORT', '8010')` returns | R2 **+ R5** (two legs, two signatures — the same line is both the wrong port and the lie discovery repeats) |
+| A4 | compose key reverts to `NEXUS_DB_URL` | R4 |
+| A5 | `NEXUS_AI_HOST_PORT` leaves the chain (container default wins everywhere) | R3 — the only arm that can catch the fix overreaching onto the working plane |
+
+**Verdict.** `38050 passed, 522 skipped` in `1231.42s`, exit 0 (`tmp/d1550_full_suite.txt`) — 38045 at
+D1549 plus this unit's five legs, no other count moved. The six node gates that parse
+`infra/docker-compose.yml` (`check_cloud_insight`, `check_cloud_plane`, `check_cloud_plane_ports`,
+`check_d952`, `check_plane_coordinates`, `check_cloud_discovery`) all exited 0 on the renamed file,
+including `check_cloud_discovery` R6, which requires `discovery.py` to read `NEXUS_AI_HOST_PORT` —
+this unit deliberately did not remove that read.
+
+**What this does not reach.** No `docker build` or `docker compose up` ran: the door proves what
+decision the entrypoint makes from an environment, which is the half that was wrong, not that the
+daemon starts. The database half is proven only to URL resolution — no connection to `postgres:5432`
+was opened, so the role/permission plane (`API_CONTRACT` §0) is still only what its own gates say. Nor is
+the `ai:` block clean: re-censusing its 14 keys against the AI's own source
+(`tmp/d1550_ai_key_census.txt`) leaves **3 with no reader** — `NEXUS_DB_SCHEMA_SCRIPTS` (no spelling of it
+exists in `apps/ai`), `NEXUS_JWT_SECRET` (its only readers are `services/platform/…/JwtService.java:39` and
+CI, so the AI container is handed a secret it cannot use and an operator rotating it there changes
+nothing), and `NEXUS_CORS_ORIGINS`, whose sibling `NEXUS_AI_CORS_ORIGINS` is what
+`apps/ai/nexus_ai/config.py:125` actually resolves — so in the compose plane the AI's CORS allow-list is
+the built-in default and the deployment's value is discarded. Renaming `NEXUS_DB_URL` was one of four
+disagreements in that block; the rest, plus the `web:` block's five unread keys, are **D1551**. And
+`.github/workflows/ci.yml:272,280` hand the AI's test and eval jobs `NEXUS_DB_URL` too, which the AI
+still does not read: those jobs therefore run against `NEXUS_TEST_DATABASE_URL` and the config
+fallbacks, not the URL the job advertises — that plane is **D1552**, and it needs its own BASE pass
+before any name changes there, because teaching CI's AI job to see a live Postgres can flip
+integration legs that currently skip.
+
+Evidence: `tmp/d1550_entrypoint_measure.txt`, `tmp/d1550_ai_key_census.txt`, `tmp/d1550_door_red.txt`,
+`tmp/d1550_door_green.txt`, `tmp/d1550_arms.txt`, `tmp/d1550_full_suite.txt`.
