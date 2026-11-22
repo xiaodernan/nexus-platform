@@ -128,7 +128,12 @@ services:
     environment:
       NEXUS_AI_PORT: "8000"
       # API_CONTRACT §0: SELECT on commerce reads, RW only on RAG/eval/agent tables. No LLM -> DB path (D3/§52).
-      NEXUS_DB_URL: postgresql://nexus_ai:${NEXUS_DB_AI_PASSWORD:-nexus_dev_ai_only}@postgres:5432/${NEXUS_DB_NAME:-nexus}
+      # The spelling is the AI's own: apps/ai/nexus_ai/config.py:101 resolves NEXUS_DATABASE_URL /
+      # DATABASE_URL / NEXUS_AI_DB_URL. This key used to be NEXUS_DB_URL — the PLATFORM's jdbc name
+      # (services/platform/src/main/resources/application.yml:29), read nowhere in apps/ai — so the
+      # container ignored the URL below and fell back to a loopback Postgres that does not exist in
+      # this network, serving the labelled demo catalogue behind a deployment that said "live" (D1550).
+      NEXUS_DATABASE_URL: postgresql://nexus_ai:${NEXUS_DB_AI_PASSWORD:-nexus_dev_ai_only}@postgres:5432/${NEXUS_DB_NAME:-nexus}
       NEXUS_DB_SCHEMA_SCRIPTS: /migrations
       NEXUS_REDIS_URL: redis://redis:6379/0
       NEXUS_LLM_PROVIDER: ${NEXUS_LLM_PROVIDER:-mock}   # D4: mock keeps the whole product offline

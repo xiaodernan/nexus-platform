@@ -90,7 +90,8 @@ async def maybe_register_eureka() -> Registration | None:
 
     server = os.environ.get("NEXUS_EUREKA_URI", "http://127.0.0.1:24761/eureka/")
     host = os.environ.get("NEXUS_EUREKA_HOST", "127.0.0.1")
-    # start_ai.py binds NEXUS_AI_HOST_PORT (default 8010); register THAT port, not a drift copy.
+    # The same chain start_ai.py binds with (D1550): NEXUS_AI_HOST_PORT on the host lane, the image's
+    # NEXUS_AI_PORT inside a container. Register what the socket actually took, not a drift copy.
     port = int(os.environ.get("NEXUS_AI_HOST_PORT", os.environ.get("NEXUS_AI_PORT", "8010")))
     name = os.environ.get("NEXUS_AI_APP_NAME", "NEXUS-AI")
     try:
