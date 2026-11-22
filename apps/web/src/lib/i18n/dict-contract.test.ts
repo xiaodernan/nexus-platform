@@ -12,8 +12,11 @@
  *      `NaN`, `[object Object]`);
  *   3. every function leaf is callable in all locales and returns copy, not markup;
  *   4. cross-locale script discipline — the Traditional arm holds no Simplified glyph,
- *      the Simplified arm holds no Traditional-only glyph, and the English arm holds
- *      no Han characters at all;
+ *      the Simplified arm holds no Traditional-only glyph, and the English arm holds no
+ *      Han characters EXCEPT the measured allowlist below: the Cantonese phrase pool the
+ *      home page teaches with, and the Chinese titles/places the English copy cites by
+ *      name (19 leaves, censused D1539). A NEW Han character anywhere else in the en
+ *      arm reddens this test — untranslated copy is a bug, cited copy is content;
  *   5. the /merchant/settings surface in particular: every button label, confirm title,
  *      confirm text and table column header the page points at exists and is non-empty
  *      in ALL locales. Renaming any of these keys in the dict without updating the list
@@ -98,6 +101,30 @@ describe('dict locale parity', () => {
     for (const [path, value] of cn) {
       if (typeof value !== 'string') continue;
       expect(traditionalOnly.test(value), `zh-CN ${path} carries Traditional-only glyphs: ${value}`).toBe(false);
+    }
+
+    // D1539: the en arm's Han characters are a MEASURED allowlist, not a free-for-all. The census
+    // found exactly 19 Han-carrying leaves, and every one is a citation the English copy makes on
+    // purpose — the 12-phrase Cantonese pool the home page teaches with, the demo personas, the
+    // glosses (常餐), the guide titles the reader is pointed at, and one place name (尖沙咀). This
+    // is the boundary the docblock claims: a leaf that STARTS carrying Han without being on this
+    // list is untranslated copy that leaked, and the test names it.
+    const han = /[\u4e00-\u9fff\u3400-\u4dbf]/;
+    const enHanAllowlist = new Set([
+      'cmdConsole.realTraceNote',
+      'home.tryFlow.steps.4.example',
+      ...Array.from({ length: 12 }, (_, i) => `home.hkHub.cantonese.pool.${i}.phrase`),
+      'hkType.questions.1.text',
+      'hkType.results.yum_cha.guideTitle',
+      'hkType.results.siu_mei.guideTitle',
+      'hkType.results.cha_chaan_teng.guideTitle',
+      'handbook.sections.10.bullets.1',
+    ]);
+    for (const [path, value] of en) {
+      if (typeof value !== 'string' || !han.test(value)) continue;
+      expect(enHanAllowlist.has(path),
+        `en ${path} carries Han characters but is not on the measured allowlist (untranslated copy?): ${value}`,
+      ).toBe(true);
     }
   });
 });

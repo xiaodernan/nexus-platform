@@ -48324,3 +48324,33 @@ auth-scoped civilian starved (the documented per-IP trade-off), AI civilian star
 
 **Readers.** `apps/ai/nexus_ai/trust/facts.py`, `apps/ai/nexus_ai/search/ranking.py`,
 `scripts/pressure_probe.py` (D1537's leg 5, first honest numbers), this ledger entry.
+
+## 1442. D1539 — the default window moved under a fixture that named its chapters, and the en arm's promise was kept with a measured allowlist
+
+**The ai job red, second one this week.** D1538's CI failed at `test_story_recap_graph.py:40`:
+`assert out['recap']` found `''`. The shared fixture's en recap says "Chapters 164 to 175 stay at
+the east gate" — true when it was written, and OUTSIDE the default window now: the default window
+is the last twelve chapters, the corpus is 178, so the default window is 167–178. The fence does
+exactly what it exists to do — a reply naming chapters outside its window is refused — so the
+default-window leg has been red since the corpus grew past 175, and every CI run since D1533 was
+either cancelled by a newer push or failed on a different job first, so the red survived four
+pushes. The direct call worked; the fixture was the lie. The leg now replies window-agnostically
+(no absolute chapter numbers) with a comment recording WHY: a canned reply carrying absolute
+numbers reddens forever after the next chapter lands, and the fence's number discipline is
+already covered by the invented-number leg.
+
+**The en arm's unkept promise, kept.** `dict-contract.test.ts`'s docblock claimed "the English arm
+holds no Han characters at all" and asserted nothing — a promise with no reader. The census found
+EXACTLY 19 Han-carrying en leaves, every one a deliberate citation: the 12-phrase Cantonese pool
+the home page teaches with (慢慢來，唔使急 …), the demo personas (茶餐廳 老闆), the gloss (常餐), the
+guide titles the reader is pointed at, and one place name (尖沙咀). The docblock now says what is
+true — cited copy is content, untranslated copy is a bug — and the test ENFORCES it: an en leaf
+carrying Han outside the measured allowlist reddens, naming the path. Proven both ways live: a
+planted 創立於 probe on `handbook.sections.10.bullets.0` reddened with the path in the message;
+reverted, 9/9 green.
+
+**Gates.** `test_story_recap_graph.py` 6/6; `dict-contract` 9/9 with the new arm, probe-verified
+in both directions.
+
+**Readers.** `apps/ai/tests/test_story_recap_graph.py`, `apps/web/src/lib/i18n/dict-contract.test.ts`,
+this ledger entry.

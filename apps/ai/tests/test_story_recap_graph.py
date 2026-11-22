@@ -34,7 +34,16 @@ async def _run(locale="en", start=164, end=175, reply=None):
 
 
 def test_default_window_is_the_last_twelve_chapters():
-    out, calls = asyncio.run(_run(start=0, end=0))
+    # D1539: the shared fixture names "Chapters 164 to 175" — true when it was written, outside
+    # the default window now that the corpus has grown to 178 (the default window is the LAST
+    # twelve chapters and it MOVES with the corpus). The fence refuses a reply that names chapters
+    # outside its window, so a canned reply carrying absolute numbers reddens here forever after
+    # the next chapter lands. This leg replies window-agnostically instead: the fence's window
+    # discipline is covered by the invented-number leg below, and this leg only proves the default
+    # window resolves and answers with one LLM call.
+    reply = {"recap": "The east gate keeps its keys, its books and its tags.",
+             "watch": "The brush-ink sender is still unnamed.", "confidence": "medium"}
+    out, calls = asyncio.run(_run(start=0, end=0, reply=reply))
     assert calls == 1
     assert out["degraded"] is False
     assert out["recap"]
