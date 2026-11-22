@@ -1,27 +1,25 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1502",
-  "milestone_full": "Layer R - the names we keep - is OPEN. All 171 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose). Ah Ching keeps the east-gate keys; a folded race card with a pencilled name waits under the wet-floor sign, Mrs Lau returns a borrowed umbrella, and a numbered brass tag ties the three together in the lost-property book. Ten StateGraphs/lanes run in the service (world guide, Ah Wan NPC, analyst readout, EN drafting bench, fenced arc auditor, story recap, Wayfinder, arc audit, cross-chapter World Answer, real web facts). The provider cache flicker (95.3% / 0%) was measured and removed with a bounded in-process replay arm: 1 provider call + 5 zero-token replays. A 7,937-token full-corpus RAG lane and a zero-token Wikipedia facts door are live. Full AI suite 37,984 green; web 707 green; verify_all NO OFFENDER.",
-  "headline": "Layer R open · 171 chapters in three arms · ten LLM lanes · cache flicker fixed · 7,937-token corpus RAG · real Wikipedia facts · every gate green.",
-  "as_of": "2026-11-21",
-  "updated_at_commit": "1ac0125",
+  "milestone": "D1536",
+  "milestone_full": "Layer S is OPEN: 178 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose), locked step with a derived atlas (178/178/178, the fence reads its own number off the index). World Answer now has a deep-read mode: quick 8x520 vs deep 20x1350 chunks, LIVE 30,493 prompt tokens at 90.0% provider cache on the deep lane (25,448 / 90.0% quick) via api.aizzz.xyz. The script law went whole-repo: a 3,873-character opencc-derived inventory now polices every zh-HK literal - UI census 2,962 literals and the 178-chapter corpus 10,848 literals, both measured 0 simplified; the 93 dirty corpus literals found on first contact were repaired. 76 readers reachable, verify_all PASS 73 / FAIL 0, web vitest 974/974 in 97 files, AI vocabulary census 0 unknown characters. 1,795 commits.",
+  "headline": "Layer S open · 178 chapters · deep-read 30k tokens @90% cache · whole-repo script law (3,873-char inventory, 13,810 literals clean) · 76 readers green.",
+  "as_of": "2026-11-22",
+  "updated_at_commit": "b7b6f35",
   "features": [
-    "D1501–D1502: chapters 167–171 land (Mrs Lau / the address / the brass latch / the first tram bell / the numbered brass tag). Arc 171 chapters, three arms; every chapter locked step with the frozen atlas (171/171/171).",
-    "D1502: real public facts door — POST /ai/v1/world/web-facts dispatches the SSRF-guarded Wikipedia tool. LIVE: 4 real rows in 1.16s, ZERO LLM tokens.",
-    "D1499: provider cache flicker measured (95.3% on 5 calls, 0% on one) then removed with a bounded process-local replay arm. LIVE via product router: 1 provider call, 5 zero-token replays.",
-    "D1497: full-corpus cross-chapter RAG (retrieve -> answer -> verify StateGraph over real chapter bodies). LIVE: 7,937 prompt tokens, grounded answer citing chapters 158+165.",
-    "D1496: parallel-session cache isolation (inflight key dimensions fixed) + Wayfinder StateGraph finally given a user door on /world.",
-    "D1491–D1492: guided play coach on /try; 368-request pressure run across 4 routes, zero failures."
+    "D1536: AI test fixtures brought under the vocabulary census - 0 unknown characters across every tests/*.py data string (was: 3 unknown code points shipped in a D1514 fixture, 2 more from parallel lanes).",
+    "D1535: whole-repo script law - gen_simp_only_chars.py derives 3,873 Simplified-only characters from opencc's own tables (s2t rule, byte-reproducible, --check in gate); new check_corpus_script.mjs reads all 10,848 chapter literals (first run: 93 dirty, 56 repaired + 4 more found by measuring bigrams); check_ui_script refuses to silently fall back to its old 239-pair table.",
+    "D1534: the atlas fence stopped lying - routes_chapter derives 'THE N-CHAPTER HONG KONG ARC' from the index instead of writing a literal (it said 175 while the corpus held 178); the lockstep reader now treats a literal digit there as the offender; guide fallback can never IndexError on zero candidates.",
+    "D1514: World Answer deep-read mode - depth whitelist quick(8x520)/deep(20x1350) with server-side budgets returned to the client; LIVE measured 30,493 prompt tokens / 90.0% cache hit on deep.",
+    "D1513: admin behaviour lane live - /admin/analytics monitors real user behaviour events (rage-clicks, abandonment) with a tri-lingual demo badge; every nav href verified to answer a real page (22 legs)."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page.",
-  "milestone_full_zh": "Layer R（記得名字的人）已開啟。全部 171 章香港系列以三語臂呈現（繁體香港／opencc 簡體／完整英文）。阿晴守著東門三條鎖匙；濕地滑牌下的跑馬紙寫著別人的名字，劉太太歸還一把借去的傘，編號銅牌把三者記進遺失物冊。服務中運行十個 StateGraph／通道：世界向導、阿灣 NPC、分析師讀數、英文臂起草、圍欄章節稽核、故事回顧、Wayfinder、章節稽核、全語料問答、真實聯網資料。實測並修掉快取抖動（95.3%／0%）：有界進程內重播——1 次供應商呼叫＋5 次零 token 重播。7,937-token 全語料 RAG 與零 token 維基百科資料門已上線。全套 AI 37,984 綠、web 707 綠、verify_all 全綠。",
-  "headline_zh": "Layer R 開啟 · 171 章三語臂 · 十個 LLM 通道 · 快取抖動已修 · 7,937-token 語料 RAG · 真實維基資料 · 所有閘門全綠。",
+  "milestone_full_zh": "Layer S（第二層）已開啟：178 章香港系列以三語臂呈現（繁體香港／opencc 簡體／完整英文），與圖譜鎖步（178/178/178，圍欄數字由索引自行推導）。跨章問答新增深讀模式：速讀 8×520 對深讀 20×1350，實測深讀通道 30,493 prompt tokens、供應商快取命中 90.0%（速讀 25,448／90.0%），經 api.aizzz.xyz 實打。字形法令覆蓋全倉：3,873 字 opencc 派生清單巡查所有 zh-HK 字面量——UI 普查 2,962 條、178 章語料 10,848 條，實測皆為零簡體；首跑發現的 93 條髒字面量已全部修復。76 個讀器全部可達，verify_all PASS 73／FAIL 0，web vitest 974/974（97 檔），AI 詞彙普查零未知字符。累計 1,795 次提交。",
+  "headline_zh": "Layer S 開啟 · 178 章 · 深讀 30k token、快取 90% · 全倉字形法令（3,873 字清單、13,810 字面量零簡體）· 76 個讀器全綠。",
   "features_zh": [
-    "D1501–D1502：第 167–171 章相繼落地（劉太太／背面地址／銅扣／第一聲電車鈴／編號銅牌）。全系列 171 章三語臂，每章與凍結圖譜鎖步（171/171/171）。",
-    "D1502：真實資料門——POST /ai/v1/world/web-facts 調度 SSRF 防護的維基百科工具。實測：4 筆真實資料、1.16 秒、零 LLM token。",
-    "D1499：實測供應商快取抖動（5 次 95.3%、1 次 0%）並以有界進程內重播修掉。產品 router 實測：1 次供應商呼叫、5 次零 token 重播。",
-    "D1497：全語料跨章節 RAG（對真實章節內文運行的 retrieve→answer→verify StateGraph）。實測：7,937 prompt tokens，答案有據引用第158／165章。",
-    "D1496：並行會話快取隔離（修好 inflight 鍵維度）＋ Wayfinder StateGraph 終於在 /world 有了使用者入口。",
-    "D1491–D1492：/try 帶玩教練；4 條路由 368 請求壓力測試，零失敗。"
+    "D1536：AI 測試治具納入詞彙普查——全部 tests/*.py 資料字串零未知字符（此前 D1514 治具攜帶 3 個未知碼位、並行通道另帶 2 個）。",
+    "D1535：全倉字形法令——gen_simp_only_chars.py 由 opencc 自身資料派生 3,873 個僅簡字符（s2t 判據、字節級可復現、--check 進閘門）；新 check_corpus_script.mjs 巡查全部 10,848 條章節字面量（首跑 93 條髒、修復 56 條＋用雙字測量再抓 4 條）；check_ui_script 不再靜默退回舊 239 對表。",
+    "D1534：圖譜圍欄停止說謊——routes_chapter 的「THE N-CHAPTER HONG KONG ARC」由索引推導而非寫死（原文寫 175 而語料已是 178）；鎖步讀器把此處的字面數字視為違規；向導後備在零候選時永不 IndexError。",
+    "D1514：跨章問答深讀模式——depth 白名單 quick(8×520)／deep(20×1350)，服務端預算回傳客戶端；實測深讀 30,493 prompt tokens、快取命中 90.0%。",
+    "D1513：管理員行為通道上線——/admin/analytics 監控真實用戶行為事件（連環亂點、中途離開），三語 demo 徽章；每個導航 href 都有真實頁面應答（22 條檢查）。"
   ]
 }
