@@ -48479,3 +48479,17 @@ this ledger entry.
 **What this does not prove.** The model was `NEXUS_LLM_PROVIDER=mock`: the plumbing is live, the prose is not. No real model call was made in this run, so it supports no cache, latency or answer-quality claim. The web transcript is still in-memory only; a reload re-opens nothing.
 
 - readers: `scripts/verify_consumer_slice.py:1-30`, `tests/e2e/specs/consumer/vertical-slice.spec.ts:1-20`, `apps/web/scripts/collect-evidence.mjs:1-20`, `apps/ai/nexus_ai/adapters/platform.py:381-396`, `apps/ai/nexus_ai/api/routes_stream.py:160-180`, `services/platform/src/main/java/com/nexus/conversation/ConversationService.java:218-247`.
+
+## 1448. D1545 · the platform suite's last red was a test collision: the auth buckets are JVM-wide, and two classes shared them
+
+**What the suite said.** `mvn -B -o -f services/platform/pom.xml test` -> 367 tests, 1 failure, 0 errors. The red was `ForwardedHeaderTrustTest.frameworkHandsTheLoginGateToTheCaller` at its first assertion: expected 401, got 429. In isolation the class passed 3/3, which is the shape of shared state rather than a broken gate.
+
+**Why.** `RateLimitFilter.java:67` charges `/api/v1/auth/**` to `nexus:rl:auth-ip:<Req.clientIp>`, a bucket keyed only by IP and living for the JVM (`RateLimiter.java:36-46`). This class declares `nexus.ratelimit.auth-requests=1`. Under `server.forward-headers-strategy=framework` the trusted forwarded value is the key, and `RateLimitEnforcementTest` / `DeclaredProxyTest` had already spent `203.0.113.11` and `.12` before this class ran — so the "first" attempt was really a second one.
+
+**Two isolations.** (1) The evasion test now draws a per-run `198.18.x.*` block (`ForwardedHeaderTrustTest.java:51-102`), so no sibling can own its buckets; the assertions read the third value back from `audit_logs.ip` instead of a literal. (2) The non-IP audit test moved to `UntrustedForwardedAddressTest.java:1-59` with `nexus.ratelimit.enabled=false`: an untrusted value is not a key, it falls to the shared socket peer, and the test's claim is the `inet` cast failing and the audit write being swallowed — not the queue in front of it. Moving it also stopped the parent from spending 127.0.0.1's bucket for everyone.
+
+**Evidence.** Both classes alone: 3 passed. Full suite after: **367 tests, 0 failures, 0 errors**. The two reds PLAN.md still lists are stale at this HEAD: `PermissionVocabularyTest` already carries `@Qualifier("requestMappingHandlerMapping")`, and `paginationIsCapped` passes in the full suite (13 ConversationApiTest tests green in isolation, 367/367 in the suite).
+
+**Not claimed.** No production code changed; the limiter's key or budget is untouched. The fix makes the tests measure the gate instead of the order the suite happens to run in.
+
+- readers: `services/platform/src/test/java/com/nexus/platform/ForwardedHeaderTrustTest.java:51-102`, `services/platform/src/test/java/com/nexus/platform/UntrustedForwardedAddressTest.java:1-59`, `services/platform/src/main/java/com/nexus/platform/RateLimitFilter.java:67`, `services/platform/src/main/java/com/nexus/platform/RateLimiter.java:36-46`.
