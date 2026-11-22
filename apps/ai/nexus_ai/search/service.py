@@ -329,6 +329,11 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
     _filter_tags = {str(t) for t in filters["tags"]} if filters.get("tags") else set()
     _filter_attrs = list((filters.get("attributes") or {}).items())
     low = (text or "").lower()
+    # D1547: `_static_tokens` is pure in `low`, which the line above already fixes for the whole
+    # pass, yet it was called inside the row loop - N tokenisations of one string (whitespace
+    # tokens plus CJK bigrams). Same class as D1546. The verdicts are unchanged; the token list is
+    # now built once per request instead of once per row.
+    _query_tokens: list[str] = _static_tokens(low) if low else []
     out: list[dict[str, Any]] = []
     for r in rows:
         hay = " ".join(str(r.get(k) or "") for k in
@@ -372,10 +377,9 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         score = 0.0
         matched = False
         if low:
-            tokens = _static_tokens(low)
-            hits = sum(1 for t in tokens if t in hay)
+            hits = sum(1 for t in _query_tokens if t in hay)
             name_hit = any(t in str(r.get("display_name") or "").lower()
-                           or t in str(r.get("name") or "").lower() for t in tokens)
+                           or t in str(r.get("name") or "").lower() for t in _query_tokens)
             matched = bool(hits or name_hit)
             score = min(1.0, 0.25 * hits + (0.4 if name_hit else 0.0))
         if bucket and not in_bucket:
