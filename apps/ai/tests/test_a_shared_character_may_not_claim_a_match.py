@@ -108,7 +108,7 @@ def planes():
                     "o_kw": [float(r.get("kw_score") or 0) for r in offerings],
                 }
             census = {}
-            for word in ("海景", "海薙"):
+            for word in ("海景", "海鮮"):
                 census[word] = {
                     "merchants": int(await db.fetchval(
                         "select count(*) from merchants where status = 'published' and ("

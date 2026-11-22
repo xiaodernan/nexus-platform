@@ -7,7 +7,7 @@
 so a datetime raised `TypeError`. The pipeline catches every exception from the router and answers
 from its deterministic floor, so the symptom was silent and permanent:
 
-    understand("带我去吃紧拉麵", context={"now": ...})
+    understand("带我去吃緊拉麵", context={"now": ...})
         before -> provider=rules, degraded=True, note=model_unavailable  (the model was never called)
         after  -> provider=openai, degraded=False                          (measured live, see the ledger)
 
@@ -59,7 +59,7 @@ def _deps() -> Deps:
 
 
 def _answer():
-    return {"raw_query": "带我去吃紧拉麵", "intent": "discover_merchant",
+    return {"raw_query": "带我去吃緊拉麵", "intent": "discover_merchant",
             "category": "ramen", "language": "zh-HK",
             "confidence": {"intent": 0.9}, "unknowns": [],
             "mentioned_entities": [], "excluded_ids": []}
@@ -108,7 +108,7 @@ def test_a_turn_that_names_a_moment_reaches_the_model():
     stub = _Stub(_answer())
     deps._router = stub
     out = asyncio.run(pipeline.understand(
-        "帶我去吃紧拉麵", deps=deps,
+        "帶我去吃緊拉麵", deps=deps,
         context={"now": datetime(2026, 11, 5, 3, 0, tzinfo=timezone.utc)}))
     assert stub.last_request is not None, (
         "the router was never reached - the turn died before the provider was called")
@@ -126,7 +126,7 @@ def test_the_floor_still_answers_when_the_model_refuses():
     stub = _Stub({"raw_query": "x", "intent": "not_a_kind_at_all"})
     deps._router = stub
     out = asyncio.run(pipeline.understand(
-        "带我去吃紧拉麵", deps=deps,
+        "带我去吃緊拉麵", deps=deps,
         context={"now": datetime(2026, 11, 5, 3, 0, tzinfo=timezone.utc)}))
     assert out.provider == "rules", out.provider
     assert out.degraded is True

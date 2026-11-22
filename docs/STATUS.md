@@ -48210,3 +48210,33 @@ interpreters) instead of refusing: both PASS. `verify_all` → **NO OFFENDER (PA
 `apps/web/src/lib/i18n/dict-cn.ts`, `apps/ai/nexus_ai/models/atlas_digest.txt`,
 `apps/ai/nexus_ai/models/atlas_index.txt`, `apps/web/src/lib/chapter-en-arm.test.ts`,
 `apps/web/src/lib/guided-play.test.ts`, `docs/ATLAS.md`, this ledger entry.
+
+## 1439. D1536 — the ai job had been red for a day, and the reason was three characters I shipped in a fixture
+
+**The red.** Run 44919700331 (D1514, `f4ff8f2`) failed its `ai` job at
+`test_vocabulary_is_the_reference.py:211`: `test_world_answer_deep_budget.py` used 抽 U+62BD,
+屉 U+5C5C, 虎 U+864E — three characters the product's closed vocabulary does not carry, hand-written
+into canned fixture strings ("老虎", "抽屜") that were chosen as arbitrary filler and never checked
+against the one table the gate exists to enforce. A fixture word is not decoration: D409/D446's rule is
+that a hand-written code point is not a reference, and a test asserting a word the platform has never
+heard of is asserting nothing.
+
+**Two more had slipped in behind it.** The gate scans every `tests/*.py` data string, so the HEAD re-run
+also surfaced 紧 U+7D27 in `test_a_payload_the_wire_can_write_reaches_the_model.py` (simplified form of
+a character whose Traditional 緊 the vocabulary DOES carry — the copy is Hong Kong Chinese, so the
+simplified code point was wrong twice: unknown AND wrong-script) and 薙 U+8599 in
+`test_a_shared_character_may_not_claim_a_match.py` — `海薙` is not a word at all, a corrupted contrast
+term next to `海景`; the intended contrast (sea view vs seafood) is `海鮮`, which the vocabulary carries.
+
+**The fix used the gate's own machinery as the oracle.** Replacement candidates were validated by
+importing `_unknown_characters` and running it against each proposed string BEFORE editing: 馬房 (for
+老虎), 月台 (for 抽屜), 緊 (for 紧, ×4), 海鮮 (for 海薙). All four clean; the two live-DB tests still skip
+without `NEXUS_TEST_DATABASE_URL`; `test_world_answer_deep_budget` 8/8; the gate 3/3.
+
+**Gates.** `test_vocabulary_is_the_reference.py` — 3 passed (the arms that judge it). 19 passed +
+3 skipped across the three touched files. Vocabulary census: 0 unknown characters across every
+`tests/*.py` data string.
+
+**Readers.** `apps/ai/tests/test_world_answer_deep_budget.py`,
+`apps/ai/tests/test_a_payload_the_wire_can_write_reaches_the_model.py`,
+`apps/ai/tests/test_a_shared_character_may_not_claim_a_match.py`, this ledger entry.

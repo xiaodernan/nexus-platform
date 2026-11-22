@@ -25,7 +25,7 @@ from nexus_ai.retrieval import chapter_rag
 def _canned_llm(calls: list[str]) -> Callable[..., Awaitable[dict[str, Any] | None]]:
     async def llm(system: str, prompt: str, _max: int) -> dict[str, Any] | None:
         calls.append(prompt)
-        return {"answer": "阿晴問起那匹馬，老虎仍舊寫在這裡。", "confidence": "high"}
+        return {"answer": "阿晴問起那匹馬，馬房仍舊寫在這裡。", "confidence": "high"}
     return llm
 
 
@@ -59,7 +59,7 @@ def test_deep_sends_strictly_more_body_than_quick() -> None:
 
 def test_retrieval_is_byte_deterministic_per_budget() -> None:
     # Prefix caching only pays if the same question + budget yields the same bytes.
-    query = "阿穆 抽屜 寫在這裡"
+    query = "阿穆 月台 寫在這裡"
     kwargs = dict(limit=DEPTH_BUDGETS["deep"]["limit"],
                   chunk_chars=DEPTH_BUDGETS["deep"]["chunk_chars"])
     assert chapter_rag.retrieve(query, **kwargs) == chapter_rag.retrieve(query, **kwargs)
