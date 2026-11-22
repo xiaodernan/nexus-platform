@@ -4,7 +4,7 @@
   "milestone_full": "Layer S continues: 178 Hong Kong chapters in three arms, atlas lockstep 178/178/178 with a derived fence. World Answer gained a full-read tier (40 chunks x 4,000 chars - the retrieval contract's own clamps - toward the 50k-token context goal). The stack was siege-tested at PRODUCTION rate limits: a 2,702-request credential-stuffing flood met the auth bucket - ALL 429 at p50=25 ms, zero 5xx, the unscoped read plane stayed 244/244 OK at p50=8 ms THROUGHOUT the flood. Two real optimizations landed: FactBundle's lazy attribute index (~120 linear scans per search removed) and ranking weights cached by mtime (YAML re-parse per request gone): per-request Python CPU ~107 ms -> ~30 ms. The en dictionary's Han characters are a measured 19-leaf allowlist (Cantonese teaching pool + cited names), enforced by contract test. verify_all NO OFFENDER (PASS 73), 76 readers reachable, web vitest 974/974.",
   "headline": "178 chapters · full-read tier (up to 160k chars of real body) · siege-tested: 2,702-request stuffing flood ALL 429 at p50=25ms, zero 5xx, read plane 244/244 · 76 readers green.",
   "as_of": "2026-11-22",
-  "updated_at_commit": "see git log (D1541)",
+  "updated_at_commit": "248406b",
   "features": [
     "D1541: siege re-measured at production limits - 10 grants then the 429 wall; stuffing 2,702 ALL 429; read plane 244/244 throughout.",
     "D1540: World Answer full-read tier (40x4000, the retrieval contract's own clamps) toward the 50k-token context goal; three-tier whitelist end-to-end.",
