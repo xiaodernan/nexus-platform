@@ -136,7 +136,17 @@ class HttpPlatformClient:
         if self._client is None:
             import httpx
 
-            self._client = httpx.AsyncClient(timeout=self.timeout_s)
+            # D1548: trust_env=False, and only here. With the default the ENVIRONMENT decides a
+            # relay that never leaves the host or the docker network: httpx 0.28.1 parses every
+            # NO_PROXY entry as a URL and knows only the bare IPv6 form, so a bracketed "[::1]"
+            # (what this host exports) kills the CONSTRUCTOR with InvalidURL before any request
+            # exists; and with HTTP_PROXY set and NO_PROXY naming only localhost, a platform
+            # addressed by service name is mounted on an AsyncHTTPProxy pool, so every internal
+            # relay pays a proxied round trip. An operator who really does need a proxy for this
+            # hop injects a client - the `client=` seam above is the instrument, not the env.
+            # The LLM lane keeps the default on purpose: that hop genuinely leaves the host and it
+            # already carries an explicit proxy= setting.
+            self._client = httpx.AsyncClient(timeout=self.timeout_s, trust_env=False)
         return self._client
 
     async def aclose(self) -> None:
