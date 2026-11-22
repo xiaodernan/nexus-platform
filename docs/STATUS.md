@@ -48277,3 +48277,50 @@ bucket defect; production defaults stay 10/300s in application.yaml.
 22 excluded by name. check_corpus_script — PASS 10,848 literals. falsify_corpus_script — 10/10.
 
 **Readers.** `scripts/falsify_ui_script.mjs`, `scripts/pressure_probe.py`, this ledger entry.
+
+## 1441. D1538 — the capacity statement was measured against a stranger's server, and the real hotspots paid a lazy index and a stale parse
+
+**The measurement that was fiction.** The first siege run recorded p50=5,897 ms on `/ai/v1/search`
+under 12 workers. The clean re-run measured p50=3,070 ms — better, still terrible, and BOTH were
+against the wrong server: port 8010 had been held since a previous session by an orphan uvicorn
+(PID 42756, `app.main:app` from this repo's tree, bound first — Windows let my instance bind the same
+port and the traffic went to the survivor of the first bind). The probe's AI legs, the spike leg and
+the "5.9s" headline were capacity statements about a process nobody had restarted, running whatever
+code and DB it booted with. Killed the orphan, rebound cleanly, re-measured: sequential
+took_ms 225–800 ms, in-process ~170 ms. A port is part of the measurement; a survivor on it is not
+your system.
+
+**The real hotspots, profiled in-process with the lifespan actually run** (the first profile ran
+WITHOUT the app lifespan, so the pool was never built, `deps.database()` returned None, the backend
+silently degraded to the static demo catalogue, and the profile "proved" search costs 23 ms — a
+measurement of nothing):
+
+1. `FactBundle.by_attribute` linear-scanned the whole fact list on every call, ~120 calls per search
+   (600 across five profiled runs) — a repeated O(n) pass over the same bundle. Now indexed once,
+   lazily (`attribute -> [Fact]`); `add()` invalidates the index so a mutated bundle never serves a
+   stale one. `values`/`get`/`pick_all` ride the same index.
+2. `load_ranking_weights` read + `yaml.safe_load`ed the weights file on EVERY search — profiled at
+   17 ms per request (10% of the whole request) for bytes that change once per deployment. Now
+   cached per `(path, mtime_ns)`: a rewritten file re-parses, a deleted file still raises the
+   contract's `RankingConfigError` (the stat failure falls through to the uncached loader — the
+   cache never turns a missing file into a bare `FileNotFoundError`, which is exactly what
+   `test_missing_file_is_rejected` caught on the first attempt).
+
+**The measured result.** The two hotspots vanish from the profile's top: per-request Python CPU
+drops from ~107 ms (by_attribute 39 + yaml 17 + card-building dominated by fact scans) to ~30 ms
+(`facts_from_rows` construction is now the floor). 595 tests in the facts/ranking/search selection
+pass (one first-attempt failure: the FileNotFoundError contract, above).
+
+**The honest capacity statement (clean instance, dev limits, 12 workers × 8 s per leg):**
+read load 4.5 RPS p50=3.07 s (12-way concurrency on one asyncio worker ≈ latency × workers);
+auth burst 121 RPS with the dev-profile 100-request grant then a 429 wall; **stuffing 3,061 sent,
+ALL 429, p50=13 ms, zero 401/5xx — the brute-force bucket trips before the password check**;
+spike of 200 cold requests: 197 timeouts at 15 s (single worker × 300–800 ms serializes to >15 s —
+in production the edge token bucket sheds this before it reaches the app, which is why the edge
+exists); siege: attack 2,653 ALL 429, platform reads **286/286 OK at p50=4 ms throughout the flood**,
+auth-scoped civilian starved (the documented per-IP trade-off), AI civilian starved by its own latency.
+
+**Gates.** mypy 2 files clean; ruff clean; facts/ranking/search selection 595 passed / 74 skipped.
+
+**Readers.** `apps/ai/nexus_ai/trust/facts.py`, `apps/ai/nexus_ai/search/ranking.py`,
+`scripts/pressure_probe.py` (D1537's leg 5, first honest numbers), this ledger entry.

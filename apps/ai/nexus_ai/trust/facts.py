@@ -102,14 +102,32 @@ def facts_from_rows(rows: Iterable[dict[str, Any]], *, now: datetime | None = No
 
 @dataclass
 class FactBundle:
-    """Facts for one request: the grounding set the verifier and renderer share."""
+    """Facts for one request: the grounding set the verifier and renderer share.
+
+    D1538: `by_attribute` used to linear-scan the whole list on EVERY call, and the search path
+    calls it ~120 times per request (600 across five profiled runs) — a repeated O(n) pass over
+    the same bundle is exactly the shape the directive's 算法 clause asks to remove. The bundle
+    is now indexed once, lazily: the first attribute lookup builds `attribute -> [Fact]`, and
+    every later lookup walks only that attribute's bucket instead of all facts. `add` invalidates
+    the index, so a bundle mutated between lookups can never serve a stale one — the cache lives
+    no longer than the mutation boundary it guards.
+    """
     facts: list[Fact] = field(default_factory=list)
+    _index: dict[str, list[Fact]] | None = field(default=None, repr=False, compare=False)
+
+    def _by_attribute_index(self) -> dict[str, list[Fact]]:
+        if self._index is None:
+            index: dict[str, list[Fact]] = {}
+            for f in self.facts:
+                index.setdefault(f.attribute, []).append(f)
+            self._index = index
+        return self._index
 
     def by_subject(self, subject_id: Any) -> list[Fact]:
         return [f for f in self.facts if str(f.subject_id) == str(subject_id)]
 
     def by_attribute(self, attribute: str, subject_id: Any = None) -> list[Fact]:
-        rows = [f for f in self.facts if f.attribute == attribute]
+        rows = self._by_attribute_index().get(attribute, [])
         if subject_id is not None:
             rows = [f for f in rows if str(f.subject_id) == str(subject_id)]
         return rows
@@ -135,6 +153,7 @@ class FactBundle:
 
     def add(self, fact: Fact) -> Fact:
         self.facts.append(fact)
+        self._index = None  # D1538: a mutated bundle must not serve a stale index
         return fact
 
     def synth(self, *, subject_type: str, subject_id: Any, attribute: str, value: Any,

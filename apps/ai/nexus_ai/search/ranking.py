@@ -93,6 +93,30 @@ class RankingWeights:
 
 
 def load_ranking_weights(path: Path | str) -> RankingWeights:
+    # D1538: this used to read + yaml.safe_load the file on EVERY search — profiled at 17 ms of
+    # each request's ~170 ms (10%), for bytes that change once per deployment. The parse is now
+    # cached per (path, mtime_ns): a rewritten file has a new mtime and re-parses, a deleted file
+    # still raises, and the §67 forbidden-organic-keys guard runs on the freshly parsed bytes only.
+    key = str(path)
+    try:
+        mtime = Path(key).stat().st_mtime_ns
+    except OSError:
+        # An unreadable/absent path must fall through to the loader that raises the contract's
+        # RankingConfigError — the cache never turns a missing file into a bare FileNotFoundError.
+        _WEIGHTS_CACHE.pop(key, None)
+        return _load_ranking_weights_uncached(path)
+    cached = _WEIGHTS_CACHE.get(key)
+    if cached is not None and cached[0] == mtime:
+        return cached[1]
+    weights = _load_ranking_weights_uncached(path)
+    _WEIGHTS_CACHE[key] = (mtime, weights)
+    return weights
+
+
+_WEIGHTS_CACHE: dict[str, tuple[int, RankingWeights]] = {}
+
+
+def _load_ranking_weights_uncached(path: Path | str) -> RankingWeights:
     p = Path(path)
     if not p.exists():
         raise RankingConfigError(f"ranking weights not found at {p} (AGENT_CONTRACT §6)")
