@@ -4251,6 +4251,29 @@ by what is already verified, not by date.
 - **Standing rule:** any new host coordinate runs `scripts/check_cloud_plane_ports.mjs` first; any unit
   that touches the platform runs the FULL platform suite and attributes every red with a BASE pass before
   landing (D902).
+- **Landed — D1546 (§1449): request-invariant filters hoisted out of `_filter_static`'s row loop**
+  (`exclude`/`tags`/`attributes`), finishing D913's hoist pattern for that lane. The door counts
+  request-object consumption — the request object IS the instrument, so no counter is added to shipped
+  code (O(1) per pass, not O(rows)) — and three arms prove each leg independently. Verdict-preserving by
+  construction: the `filters.get("tags")` guard still wraps the intersection, an absent `exclude` yields
+  the empty set, an empty `_filter_attrs` makes the containment `any(...)` false.
+  Whole suite on shipped bytes: **38033 passed, 522 skipped, 0 failed** (`tmp/d1546_full_suite_clean.txt`).
+- **NEW MEASUREMENT HAZARD, found attributing D1546's suite reds (BASE-proven at HEAD).** This host
+  exports `NO_PROXY=localhost,.localhost,127.0.0.1,127.0.0.0/8,[::1],::1`, and httpx 0.28.1
+  `get_environment_proxies` (`apps/ai/.venv/Lib/site-packages/httpx/_utils.py:65-74`) recognises only the
+  *bare* IPv6 form, so the bracketed literal becomes the mount key `all://*[::1]` and parses as port
+  `:1]`. Consequence: **any test that constructs a `httpx.AsyncClient` dies before it can assert anything**
+  — five of them were red at HEAD for this reason alone. Isolated arms (`tmp/d1548_measure.txt`):
+  `NO_PROXY='[::1]'` reddens the build, `NO_PROXY='::1'` does not, and `ALL_PROXY=''` / `HTTP(S)_PROXY`
+  are innocent. **Run AI gates as `env -u NO_PROXY python -m pytest ...`** — the neutralisation is
+  targeted, it changes no shipped byte, and a suite verdict that depends on ambient network config is not
+  a verdict. Two queued units come out of this: **D1548** (make the lane hermetic — `tests/conftest.py`'s
+  autouse `offline_env` already promises that "the real environment" cannot make a test depend on
+  infrastructure, and the proxy env breaks that promise; plus the product question of whether the AI's
+  internal hop to the platform should obey an ambient proxy at all, which is the likeliest cause of the
+  OWED (d) 7-19 s per live call) and the standing attribution duty it creates for every future AI suite
+  run. Next in the filter lane: **D1547 — `_static_tokens(low)` recomputed once per row**
+  (`tmp/d1547_measure.txt`), same class, already measured.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
