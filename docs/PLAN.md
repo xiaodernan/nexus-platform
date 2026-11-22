@@ -4274,6 +4274,16 @@ by what is already verified, not by date.
   OWED (d) 7-19 s per live call) and the standing attribution duty it creates for every future AI suite
   run. Next in the filter lane: **D1547 — `_static_tokens(low)` recomputed once per row**
   (`tmp/d1547_measure.txt`), same class, already measured.
+- **Landed — D1547 (§1450): the request's token list is built once per pass in `_filter_static`**, which
+  completes the hoist pass D1546 started in the same lane. The door spies the module function with a
+  TRANSPARENT wrapper (records the argument, calls through, returns the real value), so shipped code
+  carries no counter and no verdict leg can be propped up by the spy; three arms give three distinct
+  signatures, and A2 shows the count legs and the value legs measure different things. Whole suite:
+  **38037 passed, 522 skipped, 0 failed**.
+  **The lane lesson, for every door written here after**: R1 first asserted that only some rows survive
+  a 「安靜」 query - the text-as-WHERE veto this lane LOST in D658, where text only scores. The leg
+  reddened a correct fix, and the fault was the author's. A door must name the observable the product
+  publishes today, not the one the prose remembers.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own

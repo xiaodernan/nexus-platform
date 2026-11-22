@@ -48513,3 +48513,23 @@ this ledger entry.
 **Not claimed.** No wall-clock number is asserted - the row count is bounded, so the work saved is microseconds - and the claim is complexity plus the D913 precedent: request-invariant work belongs outside the row loop. Nothing about the live SQL lane changes; `_filter_static` is the offline mirror. No claim is made that the proxy reds are fixed: they are attributed, and the fix is a separate unit.
 
 - readers: `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_d1546_request_invariants_are_hoisted.py`, `tmp/d1546_measure.txt`, `tmp/d1546_full_suite.txt`, `tmp/d1546_full_suite_clean.txt`, `tmp/d1546_base_env_probe.txt`, `tmp/d1548_measure.txt`.
+
+## 1450. D1547 · the static filter lane tokenises the request once per pass, not once per row
+
+**Goal.** One line further along the same lane as §1449. `_filter_static` fixes `low = (text or "").lower()` above its `for r in rows` loop and then called the pure `_static_tokens(low)` INSIDE it - whitespace tokens plus CJK bigrams (`search/tokens.py::cjk_bigrams`), rebuilt once per row from one string that cannot change.
+
+**Measured.** `tmp/d1547_measure.py`: rows=1 -> 1 call, rows=50 -> 50 calls, rows=200 -> 200 calls. The function has exactly one call site in the module (`grep` of `nexus_ai/search/service.py`), so the count is the whole claim and nothing else can move it.
+
+**The fix.** `_query_tokens = _static_tokens(low) if low else []` above the loop; the two row-loop reads (`hits` and `name_hit`) take the hoisted list. The `if low` guard is not decoration - it is what keeps a text-less request from tokenising at all, and arm A3 below is the proof.
+
+**Door.** `apps/ai/tests/test_d1547_query_tokens_built_once_per_pass.py` spies the module-level function with a TRANSPARENT wrapper: it records the argument, calls through and returns the real value, so the shipped code carries no counter and no verdict can be propped up by the spy. R1 counts the calls and names their argument; R2 compares kept rows, `kw_score` and `text_matched` against the same request run unspied - the leg whose job is to catch a spy that lies; R3 holds the count at 1 when the rows go to 200; R4 shows an empty text never tokenises. Red first: 3 failed / 1 passed with counts 8, 8, 200 (`tmp/d1547_door_red.txt`). Green after: 8 passed alongside D1546's door.
+
+**R1 was written wrong before it was written right, and the ledger keeps that.** Its first version asserted that only the even rows survive a 「安靜」 query - the text-as-WHERE semantics this lane lost in D658, where every row the hard filters keep is an answer and the text only scores it. That leg reddened after a correct fix, and the red was the author's, not the product's. The corrected leg asserts the two observables the lane actually publishes (`kw_score`, `text_matched`). Worth recording because the failure mode generalises: a door that asserts a veto the product removed reports its own authoring error as a product failure, and the only defence is naming the observable that exists today.
+
+**Arms.** A1 restores the per-row call: 3 failed / 1 passed, the same signature as the door red (`tmp/d1547_arm_a1.txt`). A2 corrupts only the hoisted VALUE, to `_static_tokens("")`: 1 failed / 3 passed, and the single red is R1's verdict leg - the counting legs stay green because the count genuinely did not change (`tmp/d1547_arm_a2.txt`). A3 drops the `if low` guard: 1 failed / 3 passed, and the red is R4 alone (`tmp/d1547_arm_a3.txt`). Three mutations, three distinct signatures, so no leg is decorative and the value legs and the count legs are shown to measure different things.
+
+**Verdict.** `tmp/d1547_full_suite.txt`, run with the ambient proxy neutralised as §1449 now requires: **38037 passed, 522 skipped, 0 failed** in 444.03s, exit 0 - D1546's shipped 38033 plus exactly these four legs. The lane's own selection agrees (`tmp/d1547_door_green.txt`: 1448 passed, 56 skipped), and the measurement re-taken on the fixed bytes reports one call at rows=50 and one at rows=200 (`tmp/d1547_measure_after.txt`).
+
+**Not claimed.** No wall-clock figure. The work saved is one tokenisation of a short string per row - microseconds at this row count - and the claim stays what D913, D1546 and the mandate make it: request-invariant construction belongs outside the row loop, and a counting door is how that is shown without a stopwatch.
+
+- readers: `apps/ai/nexus_ai/search/service.py`, `apps/ai/tests/test_d1547_query_tokens_built_once_per_pass.py`, `apps/ai/nexus_ai/search/tokens.py`, `tmp/d1547_measure.txt`, `tmp/d1547_measure_after.txt`, `tmp/d1547_door_red.txt`, `tmp/d1547_arm_a1.txt`, `tmp/d1547_arm_a2.txt`, `tmp/d1547_arm_a3.txt`, `tmp/d1547_full_suite.txt`.
