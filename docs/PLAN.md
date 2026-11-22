@@ -4299,15 +4299,36 @@ by what is already verified, not by date.
   already has an explicit `proxy=` setting; and an operator who wants a proxy on the *internal* hop injects
   a client through the `client=` seam D969 publishes. Whole suite: **38041 passed, 522 skipped, 0 failed**
   (`tmp/d1548_full_suite.txt`).
-  **Next: D1549** — the remaining 4 reds under this host's env are all in
+  **Landed the same session as D1549 (§1452)** — the remaining 4 reds under this host's env were all in
   `tests/test_request_timeout_reaches_the_adapters.py` because they build live LLM adapters, whose clients
-  should honour the environment. The product is right there; the TEST lane is wrong to let the host decide
-  a verdict. `tests/conftest.py::offline_env` is where the four `*_PROXY` variables get pinned, and the
-  door for it must be a subprocess leg that re-runs the real files under a hostile env we set, so it
-  reddens on a clean CI machine too rather than only on this one.
+  should honour the environment. The product was right there; the TEST lane was wrong to let the host decide
+  a verdict. `tests/conftest.py::offline_env` now deletes the four `*_PROXY` names, and the door is the
+  subprocess leg planned here: it re-runs the real lane file under a hostile env that the TEST supplies, so
+  it reddens on a clean CI machine too rather than only on this one.
   **A third lesson for the lane, from §1450's arm A3**: a fix that touches a constructor has to keep the
   neighbouring promise in the same call — dropping `timeout=` beside `trust_env=` was caught by a D969
   test, not by this unit's own legs.
+
+- **Landed — D1549 (§1452): the AI unit lane is hermetic, and the `env -u NO_PROXY` incantation is retired.**
+  Four lines in `tests/conftest.py`'s autouse fixture, no shipped byte touched. Whole suite run with the
+  host's proxy environment present and untouched: **38045 passed, 522 skipped, 0 failed** — the first
+  full-suite gate in this lane that needed no shell neutralisation, which is the only way §1449's rule
+  ("a suite verdict that depends on ambient network config is not a verdict") stops being a procedure and
+  becomes a property. Door note worth reusing: a leg that reddens only on the machine that has the bug
+  certifies nothing, so `test_d1549_*` POISONS `os.environ` itself at module scope and compares two
+  subprocess runs of the real lane file; arm A4 (leave out the inert `ALL_PROXY`) is the only mutation
+  that reddens the names leg alone.
+  **Next: D1550 — the compose plane's names do not reach the code they configure.** Measured
+  (`tmp/d1550_env_contract.txt`, `tmp/d1550_measure.txt`): of the 5 keys `infra/docker-compose.yml` puts
+  in the `web:` environment block, **0 have a reader in `apps/web`** — it sets `PLATFORM_INTERNAL_URL` /
+  `AI_INTERNAL_URL` while `apps/web/src/lib/env.ts:36,39` reads `PLATFORM_API_BASE_URL` /
+  `AI_API_BASE_URL`, whose fallbacks are loopback origins no other container answers. The `ai:` block has
+  4 unread keys including `NEXUS_DB_URL`, while the config lane reads `NEXUS_DATABASE_URL`; and the
+  image's own CMD, `apps/ai/start_ai.py`, binds `host='127.0.0.1'` and a port from `NEXUS_AI_HOST_PORT`
+  that compose never puts in the container — although `apps/ai/Dockerfile` declares
+  `NEXUS_AI_HOST=0.0.0.0`, `NEXUS_AI_PORT=8000`, `EXPOSE 8000`. In the compose plane the AI tier is
+  therefore unreachable from every peer and silently falls back to the labelled demo catalogue for its
+  data. Same family as D847's registry address, and exactly the mandate's §五 failure mode.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
