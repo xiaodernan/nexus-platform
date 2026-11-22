@@ -48731,8 +48731,8 @@ The fix is one renamed line and two deletions, and it keeps the operator's singl
 * `infra/docker-compose.yml:151` — `NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}`.
   The value still comes from the one key every tier reads, on line 42 of the repo's untracked `.env`
   (`NEXUS_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000`, counted into
-  `tmp/d1551_env_lines.txt:5-11`), but it arrives under the name
-  `config.py:125` resolves. Measured after the change (`tmp/d1551_census_after.txt:14,27`): the block is
+  `tmp/d1551_env_lines.txt`), but it arrives under the name
+  `config.py:125` resolves. Measured after the change (`tmp/d1551_census_after.txt`): the block is
   **12 keys, 0 unread**.
 * deleted `NEXUS_JWT_SECRET` and `NEXUS_DB_SCHEMA_SCRIPTS` from the `ai:` block. A key nothing reads is
   not documentation — it is a promise to the next operator.
