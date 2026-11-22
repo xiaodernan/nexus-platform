@@ -48240,3 +48240,40 @@ without `NEXUS_TEST_DATABASE_URL`; `test_world_answer_deep_budget` 8/8; the gate
 **Readers.** `apps/ai/tests/test_world_answer_deep_budget.py`,
 `apps/ai/tests/test_a_payload_the_wire_can_write_reaches_the_model.py`,
 `apps/ai/tests/test_a_shared_character_may_not_claim_a_match.py`, this ledger entry.
+
+## 1440. D1537 — the exclusion table and the falsifier disagreed about 后, and only CI noticed
+
+**The red.** Run 44996029985 (contract-drift) failed its falsify_ui_script step: the arm "the
+inventory: a character NEITHER product table maps is still charged" planted 后 into a dict literal and
+expected red, but the census PASSED. Locally the same script said 32/32 held — because the last local
+run predated the edit that broke it.
+
+**The cause.** D1535 moved 后 into the shared EXCLUSIONS (皇后大道東 writes 后 legitimately: it is the
+queen word, 後 is "after"), and the corpus census's known-hole arm asserts 最后 is NOT caught. The
+falsify_ui_script arm still planted 后 and still expected it charged. One character, two contradictory
+contracts, and the shared EXCLUSIONS silently won: the exclusion and the falsifier disagreed about the
+same code point, and nothing cross-checked them because the falsifier is run by CI, not by verify_all.
+
+**The fix, measured not guessed.** The replacement had to be in the opencc inventory, in NEITHER
+product table (the arm's whole point), and in no exclusion. 读 satisfies all three — computed by
+loading the census's own table and testing candidates, not by memory (两/门/问/开/说/话/书 are all in
+the product tables; 言/文/字 are in no table at all). plantUnknown now plants 读, teachUnknown teaches
+("讀", "读"), both must-regexes name [读], and the comment records why 后 stopped working — so the next
+exclusion edit cannot orphan an arm silently without the history being one grep away.
+
+**The pressure probe grew a fifth leg.** §十一 asked for 高可用 evidence, and legs 1-4 measured only
+the attacker. Leg 5 (siege) runs FOUR populations simultaneously against the live plane: the stuffing
+flood, an auth-scoped civilian (the demo door), an unscoped platform-read civilian (/api/v1/health),
+and an AI-read civilian (/ai/v1/search) — one clock, one stop line, availability measured only while
+the attack is live. First live run (platform 8090 on Redis, AI 8010, dev limits): attack 697 sent ALL
+429 with zero 5xx; platform reads 225/225 OK at p50=7ms THROUGHOUT the flood; the auth-scoped civilian
+starved (41×429) — the honest, documented per-IP trade-off, now measured instead of assumed away; the
+AI search civilian timed out at 15s because that endpoint's own p50 is 5.9s under no attack at all —
+the capacity bottleneck is the search path's latency, not the defense. Leg 2's 100×200 before the 429
+wall is the dev profile's documented NEXUS_RL_AUTH=100 (D47's overridable generous dev values), not a
+bucket defect; production defaults stay 10/300s in application.yaml.
+
+**Gates.** falsify_ui_script — 32 arms · 32 held · 0 missed. check_ui_script — PASS 2,962 literals,
+22 excluded by name. check_corpus_script — PASS 10,848 literals. falsify_corpus_script — 10/10.
+
+**Readers.** `scripts/falsify_ui_script.mjs`, `scripts/pressure_probe.py`, this ledger entry.

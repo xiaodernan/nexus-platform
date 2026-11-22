@@ -179,9 +179,13 @@ const plantBlockComment = (d) => insertAfter(d, DICT, BRAND,
 // The same text as copy rather than comment, and in the third quote state the scanner tracks.
 const plantTemplate = (d) => insertAfter(d, DICT, BRAND, '  plantedTemplate: `对比`,');
 // A character neither product table maps: charged only once the tables learn it.
-const plantUnknown = (d) => insertAfter(d, DICT, BRAND, "  plantedUnknown: '前后',");
+// D1535's shared EXCLUSIONS took 后 out of the charged set (皇后大道東 writes 后 legitimately, so the
+// corpus census must not charge it), which made the old arm -- plant 后, expect red -- MISSED on CI:
+// the exclusion and the arm disagreed about the same character. 读 is the replacement, measured with
+// the census's own table: in the opencc inventory, in NEITHER product table, in no exclusion.
+const plantUnknown = (d) => insertAfter(d, DICT, BRAND, "  plantedUnknown: '读',");
 const teachUnknown = (d) => insertAfter(d, 'apps/ai/nexus_ai/nlu/lexicon.py',
-  '_TRAD_SIMP_PAIRS: tuple[tuple[str, str], ...] = (', '    ("後", "后"),');
+  '_TRAD_SIMP_PAIRS: tuple[tuple[str, str], ...] = (', '    ("讀", "读"),');
 // D1534 — the pair above used to be the whole story: `后` was charged only once lexicon.py was taught it,
 // and the arm that asserted otherwise held because the reader knew 239 characters out of ~3,900. It now
 // knows the inventory, so the same literal reddens with no teaching at all, and the arm that says so is
@@ -416,7 +420,7 @@ const ARMS = [
     name: 'the inventory: a character NEITHER product table maps is still charged (the D1534 reach)',
     apply: plantUnknown,
     expect: 1,
-    must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/dict\.ts:\d+ \[后\]/],
+    must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/dict\.ts:\d+ \[读\]/],
   },
   {
     name: 'the inventory is not a dragnet: a Traditional character nothing maps is left alone',
@@ -429,7 +433,7 @@ const ARMS = [
     name: 'the derivation: teaching lexicon.py the pair keeps the red and names the same character',
     apply: (d) => { plantUnknown(d); teachUnknown(d); },
     expect: 1,
-    must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/dict\.ts:\d+ \[后\]/],
+    must: [oneOffender, /WRONG-SCRIPT apps\/web\/src\/lib\/i18n\/dict\.ts:\d+ \[读\]/],
   },
   {
     name: 'REFUSAL: a zh block whose closing }; is not in column 0',
