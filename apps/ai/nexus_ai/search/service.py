@@ -321,6 +321,13 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         _avoid_index = {}
         for o in offerings:
             _avoid_index.setdefault(str(o.get("merchant_id") or ""), []).append(o)
+    # D1546: `exclude`, `tags` and `attributes` are read from the REQUEST and never change across
+    # rows, yet each was re-materialised inside the loop below (once per row). Build them once per
+    # pass - the same hoist D913 applied to the avoid index. Verdicts are unchanged; the request
+    # objects are now consumed once per request instead of once per row.
+    _exclude_ids = {str(x) for x in filters["exclude"]} if filters.get("exclude") else set()
+    _filter_tags = {str(t) for t in filters["tags"]} if filters.get("tags") else set()
+    _filter_attrs = list((filters.get("attributes") or {}).items())
     low = (text or "").lower()
     out: list[dict[str, Any]] = []
     for r in rows:
@@ -414,10 +421,10 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
             continue
         if filters.get("tags"):
             mine = {str(t) for t in (r.get("tags") or [])}
-            if not mine & {str(t) for t in filters["tags"]}:
+            if not mine & _filter_tags:
                 continue
         own_id = str(r.get("subject_id") or r.get("id") or "")
-        if filters.get("exclude") and own_id in {str(x) for x in filters["exclude"]}:
+        if own_id in _exclude_ids:
             continue
         if filters.get("merchant_id"):
             own_merchant = str(r.get("merchant_id") or own_id)
@@ -425,7 +432,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
                 continue
         attrs = r.get("attributes") or {}
         if any(not isinstance(attrs, dict) or attrs.get(k) != v
-               for k, v in (filters.get("attributes") or {}).items()):
+               for k, v in _filter_attrs):
             continue
         # D655: `kind` is the OFFERING plane's own hard filter - `o.kind` on that SELECT (`sql.py:448`)
         # and nothing on the merchant SELECT, so a merchant row survives it (470 of 470, measured). The
