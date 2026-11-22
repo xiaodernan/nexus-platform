@@ -34,7 +34,7 @@ describe('D1532 the starter doors', () => {
     expect(dict).toContain('starterTitle:');
     expect(dict).toContain('starterBecause:');
     // D1532: a sentence, not a number. The degree saturates on the shipped corpus (every chapter
-    // already connects to all 178 others), so a count would be true and meaningless.
+    // already connects to all 179 others), so a count would be true and meaningless.
     expect(dict).toContain("starterBecause: '全書相連度最高的起點之一");
     expect(dict).toContain("starterBecause: 'One of the best-connected starting points");
   });

@@ -21,11 +21,14 @@ const STALE = [
   '一百零六章反覆走一遍香港', '拓至第一百零六章', '一百零六章的完整馬拉松',
   '這一百零六章不是目錄',
   'Eighty-seven chapters', 'eighty-seven chapters',
+  // D1542: the 178-era claims join the stale list as the corpus grows to 179.
+  '一百七十八章反覆走完一個 HK', '一百七十八章香港系列指南', '一百七十八章香港系列', '一百七十八章讀竟',
+  'One hundred and seventy-eight chapters',
 ];
 const CURRENT = [
-  '一百七十八章反覆走完一個 HK', '一百七十八章香港系列指南',
-  '一百七十八章香港系列', '一百七十八章讀竟',
-  'One hundred and seventy-eight chapters',
+  '一百七十九章反覆走完一個 HK', '一百七十九章香港系列指南',
+  '一百七十九章香港系列', '一百七十九章讀竟',
+  'One hundred and seventy-nine chapters',
 ];
 
 describe('chapter-count claims across locales', () => {
@@ -41,6 +44,6 @@ describe('chapter-count claims across locales', () => {
   it('the chronicle page comment is not frozen at 105', () => {
     const page = read('apps/web/app/chronicle/page.tsx');
     expect(page).not.toContain('one city, one day, 105 chapters');
-    expect(page).toContain('178 chapters');
+    expect(page).toContain('179 chapters');
   });
 });

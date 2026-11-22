@@ -48412,3 +48412,40 @@ unaffected by an ongoing stuffing siege; the search path's own latency remains t
 bottleneck for burst traffic, by design deferred to the edge.
 
 **Readers.** `scripts/pressure_probe.py` (the same five legs, production limits), this ledger entry.
+
+## 1445. D1542 — chapter 179: the nameless ticket grows a name, and every count that names the series moved with it
+
+**§六 keeps the world growing.** Layer S continues at Shui Chuen O: eleven oh three, long past the
+time the nameless ticket carried; the wind has taken it to the grate by the gate; Ah Man picks it up,
+finds nobody to send it to, and does the one thing thirteen delivered tickets never asked — he turns
+it over and writes his own name on the back. The first ticket kept rather than sent. Shipped in all
+three arms (Traditional HK / opencc fold / full English prose), same register as the 178 before it.
+
+**The vocabulary invariant held by measurement.** The draft's 166 Han characters were diffed against
+the rest of the corpus before anything ran: two strangers (溝 渠 — the drain wording) were repaired
+against corpus-attested spellings (街邊的鐵閘 / 鐵閘腳下), re-diffed: zero strangers. The corpus's own
+vocabulary remains the only set this pipeline has been shown to carry.
+
+**The count ripple, all of it measured.** The series now says 179 in: dict.ts (6 digit mentions +
+16 spelled 一百七十九 + 13 spelled seventy-nine), dict-cn.ts (2 + 16), chronicle/page.tsx, and the
+seven tests that pin the count — corpus-count-sanity (179), count-claims (CURRENT re-aimed AND the
+178-era claims moved into STALE, so the old count can never silently come back), handbook-coverage,
+stamp-collection, home-series-rail, hk-type, reading-thread-starters-wiring. chapter-en-arm grew to
+184 legs (one three-arm leg for 179). Every stale-count miss reddened once, was re-aimed at the
+property that matters (the CURRENT count matches the corpus), and went green.
+
+**Gates.** atlas lockstep — **PASS at 179 chapters (digest 179 / index 179 / fence derived)**, the
+D1534-derived fence needing no edit. chapter-en-arm 184/184. count-claims + handbook-coverage +
+stamp-collection + home-series-rail + hk-type + corpus-count-sanity 14/14. i18n + reading-thread +
+world-corpus-atlas 13/13. atlas tests 11/11. check_corpus_script — **0 simplified over 10,904
+literals** (+56 from the new chapter, still zero). check_simplified_mirror PASS. tsc 0.
+
+**Readers.** `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/mock/seed-cn.ts`,
+`apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`,
+`apps/web/app/chronicle/page.tsx`, `apps/web/src/lib/chapter-en-arm.test.ts`,
+`apps/web/src/lib/count-claims.test.ts`, `apps/web/src/lib/corpus-count-sanity.test.ts`,
+`apps/web/src/lib/handbook-coverage.test.ts`, `apps/web/src/lib/stamp-collection.test.ts`,
+`apps/web/src/lib/home-series-rail.test.ts`, `apps/web/src/lib/hk-type.test.ts`,
+`apps/web/src/lib/reading-thread-starters-wiring.test.ts`,
+`apps/ai/nexus_ai/models/atlas_digest.txt`, `apps/ai/nexus_ai/models/atlas_index.txt`,
+this ledger entry.

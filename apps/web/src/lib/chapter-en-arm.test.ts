@@ -2658,4 +2658,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[一-鿿]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /first bus has not arrived|weight of the tickets|the bus comes/i.test(b.text))).toBe(true);
   });
+  it('chapter 179 (Sha Tin Shui Chuen O the ticket that carried only a time — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-sha-tin-shui-chuen-o-nameless-ticket-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/上午十一點零三分/);
+    const cn = mockGuide('hk-sha-tin-shui-chuen-o-nameless-ticket-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/上午十一点零三分/);
+    const en = mockGuide('hk-sha-tin-shui-chuen-o-nameless-ticket-chronicle', 'en');
+    expect(en?.title).toMatch(/Sha Tin|Shui Chuen O|ticket/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/ticket/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /the ticket the wind took|the time has passed|the first ticket kept/i.test(b.text))).toBe(true);
+  });
 });
