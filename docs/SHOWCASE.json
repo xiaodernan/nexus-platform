@@ -1,10 +1,10 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1541",
-  "milestone_full": "Layer S continues: 178 Hong Kong chapters in three arms, atlas lockstep 178/178/178 with a derived fence. World Answer gained a full-read tier (40 chunks x 4,000 chars - the retrieval contract's own clamps - toward the 50k-token context goal). The stack was siege-tested at PRODUCTION rate limits: a 2,702-request credential-stuffing flood met the auth bucket - ALL 429 at p50=25 ms, zero 5xx, the unscoped read plane stayed 244/244 OK at p50=8 ms THROUGHOUT the flood. Two real optimizations landed: FactBundle's lazy attribute index (~120 linear scans per search removed) and ranking weights cached by mtime (YAML re-parse per request gone): per-request Python CPU ~107 ms -> ~30 ms. The en dictionary's Han characters are a measured 19-leaf allowlist (Cantonese teaching pool + cited names), enforced by contract test. verify_all NO OFFENDER (PASS 73), 76 readers reachable, web vitest 974/974.",
-  "headline": "178 chapters · full-read tier (up to 160k chars of real body) · siege-tested: 2,702-request stuffing flood ALL 429 at p50=25ms, zero 5xx, read plane 244/244 · 76 readers green.",
+  "milestone": "D1542",
+  "milestone_full": "Layer S continues: 179 Hong Kong chapters in three arms, atlas lockstep 178/178/178 with a derived fence. World Answer gained a full-read tier (40 chunks x 4,000 chars - the retrieval contract's own clamps - toward the 50k-token context goal). The stack was siege-tested at PRODUCTION rate limits: a 2,702-request credential-stuffing flood met the auth bucket - ALL 429 at p50=25 ms, zero 5xx, the unscoped read plane stayed 244/244 OK at p50=8 ms THROUGHOUT the flood. Two real optimizations landed: FactBundle's lazy attribute index (~120 linear scans per search removed) and ranking weights cached by mtime (YAML re-parse per request gone): per-request Python CPU ~107 ms -> ~30 ms. The en dictionary's Han characters are a measured 19-leaf allowlist (Cantonese teaching pool + cited names), enforced by contract test. verify_all NO OFFENDER (PASS 73), 76 readers reachable, web vitest 974/974.",
+  "headline": "179 chapters · full-read tier (up to 160k chars of real body) · siege-tested: 2,702-request stuffing flood ALL 429 at p50=25ms, zero 5xx, read plane 244/244 · 76 readers green.",
   "as_of": "2026-11-22",
-  "updated_at_commit": "248406b",
+  "updated_at_commit": "97afa85",
   "features": [
     "D1541: siege re-measured at production limits - 10 grants then the 429 wall; stuffing 2,702 ALL 429; read plane 244/244 throughout.",
     "D1540: World Answer full-read tier (40x4000, the retrieval contract's own clamps) toward the 50k-token context goal; three-tier whitelist end-to-end.",
@@ -13,8 +13,8 @@
     "D1537: pressure probe grew a siege leg (four populations, one clock) after the capacity statement was found measured against an orphan server on port 8010."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page.",
-  "milestone_full_zh": "Layer S 持續：178 章香港系列三語臂，圖譜鎖步 178/178/178、圍欄數字由索引推導。跨章問答新增全讀檔（40 章 × 4,000 字——檢索契約自身上限，向 5 萬 token 上下文目標推進）。以生產級限流實測攻城：2,702 發撞庫全部撞上 429 牆（p50=25ms、零 5xx），無範圍限制的讀面在攻擊全程 244/244 全綠（p50=8ms）。兩項真實優化落地：FactBundle 惰性屬性索引（移除每輪搜尋約 120 次全量線性掃描）、排序權重 mtime 緩存（每請求 YAML 重析消失）：每請求 Python CPU 約 107ms → 約 30ms。en 字典漢字為有測量的 19 條白名單（粵語教學池＋引用專名），契約測試強制。verify_all 全綠（PASS 73）、76 個讀器可達、web vitest 974/974。",
-  "headline_zh": "178 章 · 全讀檔（最多 16 萬字真實內文）· 攻城實測：2,702 發撞庫全數 429、p50=25ms、零 5xx、讀面 244/244 全綠 · 76 個讀器在線。",
+  "milestone_full_zh": "Layer S 持續：179 章香港系列三語臂，圖譜鎖步 178/178/178、圍欄數字由索引推導。跨章問答新增全讀檔（40 章 × 4,000 字——檢索契約自身上限，向 5 萬 token 上下文目標推進）。以生產級限流實測攻城：2,702 發撞庫全部撞上 429 牆（p50=25ms、零 5xx），無範圍限制的讀面在攻擊全程 244/244 全綠（p50=8ms）。兩項真實優化落地：FactBundle 惰性屬性索引（移除每輪搜尋約 120 次全量線性掃描）、排序權重 mtime 緩存（每請求 YAML 重析消失）：每請求 Python CPU 約 107ms → 約 30ms。en 字典漢字為有測量的 19 條白名單（粵語教學池＋引用專名），契約測試強制。verify_all 全綠（PASS 73）、76 個讀器可達、web vitest 974/974。",
+  "headline_zh": "179 章 · 全讀檔（最多 16 萬字真實內文）· 攻城實測：2,702 發撞庫全數 429、p50=25ms、零 5xx、讀面 244/244 全綠 · 76 個讀器在線。",
   "features_zh": [
     "D1541：生產級限流重測攻城——10 次配額後即 429 牆；撞庫 2,702 發全數 429；讀面全程 244/244。",
     "D1540：跨章問答全讀檔（40×4000，檢索契約自身上限），向 5 萬 token 上下文目標推進；三端白名單全鏈路。",
