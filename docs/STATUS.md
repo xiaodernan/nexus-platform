@@ -48387,3 +48387,28 @@ the three dicts honest; `tsc --noEmit` 0. 16 web tests + 8 AI tests green. The p
 `apps/ai/tests/test_world_answer_deep_budget.py`, `apps/web/app/api/nexus/ai/world-answer/route.ts`,
 `apps/web/src/components/world-answer-panel.tsx`, `apps/web/src/lib/world-answer-ui.test.ts`,
 `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, this ledger entry.
+
+## 1444. D1541 — the siege re-measured at production limits: ten grants, then the wall, and the read plane never blinked
+
+**The production-shape run.** D1537/D1538's numbers were taken at the dev profile's generous
+NEXUS_RL_AUTH=100 (D47's overridable dev values). The platform was relaunched with the documented
+production defaults (auth 10/300 s, ai 20/60 s, write 60/60 s) and the five legs re-run:
+
+- leg 2 (auth burst): **10 × 200, then 429 for the remaining 1,691** — the bucket admits exactly its
+  documented grant and nothing more, p50=39 ms.
+- leg 3 (stuffing): **2,018 sent, ALL 429, zero 401, zero 5xx** — the wall trips before the password
+  check runs, which is the correct shape for credential stuffing: guessing never reaches bcrypt.
+- leg 5 (siege): attack 2,702 ALL 429 at p50=25 ms; platform read civilian **244/244 OK at p50=8 ms
+  THROUGHOUT the flood**; the AI read civilian completed (200, 14 s — the search path's own latency);
+  auth-scoped civilian starved (80 × 429, the documented per-IP trade-off). **VERDICT: defense
+  fired — the stuffing flood met the auth bucket with zero 5xx.**
+- leg 4 (spike): 32/200 cold requests completed; the rest timed out at the client's 15 s — the single
+  asyncio worker serializes ~300–800 ms searches, and 200 simultaneous readers is exactly the burst
+  the edge token bucket exists to shed before it reaches the app.
+
+**Capacity statement (production limits, single dev worker, this box):** the auth wall holds its
+grant exactly and sheds 190–250 RPS of stuffing at p50 25–39 ms; the unscoped read plane is
+unaffected by an ongoing stuffing siege; the search path's own latency remains the capacity
+bottleneck for burst traffic, by design deferred to the edge.
+
+**Readers.** `scripts/pressure_probe.py` (the same five legs, production limits), this ledger entry.

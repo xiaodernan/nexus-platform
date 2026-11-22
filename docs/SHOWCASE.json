@@ -1,25 +1,25 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1536",
-  "milestone_full": "Layer S is OPEN: 178 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose), locked step with a derived atlas (178/178/178, the fence reads its own number off the index). World Answer now has a deep-read mode: quick 8x520 vs deep 20x1350 chunks, LIVE 30,493 prompt tokens at 90.0% provider cache on the deep lane (25,448 / 90.0% quick) via api.aizzz.xyz. The script law went whole-repo: a 3,873-character opencc-derived inventory now polices every zh-HK literal - UI census 2,962 literals and the 178-chapter corpus 10,848 literals, both measured 0 simplified; the 93 dirty corpus literals found on first contact were repaired. 76 readers reachable, verify_all PASS 73 / FAIL 0, web vitest 974/974 in 97 files, AI vocabulary census 0 unknown characters. 1,795 commits.",
-  "headline": "Layer S open · 178 chapters · deep-read 30k tokens @90% cache · whole-repo script law (3,873-char inventory, 13,810 literals clean) · 76 readers green.",
+  "milestone": "D1541",
+  "milestone_full": "Layer S continues: 178 Hong Kong chapters in three arms, atlas lockstep 178/178/178 with a derived fence. World Answer gained a full-read tier (40 chunks x 4,000 chars - the retrieval contract's own clamps - toward the 50k-token context goal). The stack was siege-tested at PRODUCTION rate limits: a 2,702-request credential-stuffing flood met the auth bucket - ALL 429 at p50=25 ms, zero 5xx, the unscoped read plane stayed 244/244 OK at p50=8 ms THROUGHOUT the flood. Two real optimizations landed: FactBundle's lazy attribute index (~120 linear scans per search removed) and ranking weights cached by mtime (YAML re-parse per request gone): per-request Python CPU ~107 ms -> ~30 ms. The en dictionary's Han characters are a measured 19-leaf allowlist (Cantonese teaching pool + cited names), enforced by contract test. verify_all NO OFFENDER (PASS 73), 76 readers reachable, web vitest 974/974.",
+  "headline": "178 chapters · full-read tier (up to 160k chars of real body) · siege-tested: 2,702-request stuffing flood ALL 429 at p50=25ms, zero 5xx, read plane 244/244 · 76 readers green.",
   "as_of": "2026-11-22",
-  "updated_at_commit": "b7b6f35",
+  "updated_at_commit": "see git log (D1541)",
   "features": [
-    "D1536: AI test fixtures brought under the vocabulary census - 0 unknown characters across every tests/*.py data string (was: 3 unknown code points shipped in a D1514 fixture, 2 more from parallel lanes).",
-    "D1535: whole-repo script law - gen_simp_only_chars.py derives 3,873 Simplified-only characters from opencc's own tables (s2t rule, byte-reproducible, --check in gate); new check_corpus_script.mjs reads all 10,848 chapter literals (first run: 93 dirty, 56 repaired + 4 more found by measuring bigrams); check_ui_script refuses to silently fall back to its old 239-pair table.",
-    "D1534: the atlas fence stopped lying - routes_chapter derives 'THE N-CHAPTER HONG KONG ARC' from the index instead of writing a literal (it said 175 while the corpus held 178); the lockstep reader now treats a literal digit there as the offender; guide fallback can never IndexError on zero candidates.",
-    "D1514: World Answer deep-read mode - depth whitelist quick(8x520)/deep(20x1350) with server-side budgets returned to the client; LIVE measured 30,493 prompt tokens / 90.0% cache hit on deep.",
-    "D1513: admin behaviour lane live - /admin/analytics monitors real user behaviour events (rage-clicks, abandonment) with a tri-lingual demo badge; every nav href verified to answer a real page (22 legs)."
+    "D1541: siege re-measured at production limits - 10 grants then the 429 wall; stuffing 2,702 ALL 429; read plane 244/244 throughout.",
+    "D1540: World Answer full-read tier (40x4000, the retrieval contract's own clamps) toward the 50k-token context goal; three-tier whitelist end-to-end.",
+    "D1538: FactBundle lazy attribute index + ranking-weights mtime cache - per-request Python CPU ~107ms -> ~30ms, measured by in-process profile with the lifespan actually run.",
+    "D1539: story-recap default-window fixture made window-agnostic; the en arm's no-Han promise enforced with a measured 19-leaf allowlist.",
+    "D1537: pressure probe grew a siege leg (four populations, one clock) after the capacity statement was found measured against an orphan server on port 8010."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page.",
-  "milestone_full_zh": "Layer S（第二層）已開啟：178 章香港系列以三語臂呈現（繁體香港／opencc 簡體／完整英文），與圖譜鎖步（178/178/178，圍欄數字由索引自行推導）。跨章問答新增深讀模式：速讀 8×520 對深讀 20×1350，實測深讀通道 30,493 prompt tokens、供應商快取命中 90.0%（速讀 25,448／90.0%），經 api.aizzz.xyz 實打。字形法令覆蓋全倉：3,873 字 opencc 派生清單巡查所有 zh-HK 字面量——UI 普查 2,962 條、178 章語料 10,848 條，實測皆為零簡體；首跑發現的 93 條髒字面量已全部修復。76 個讀器全部可達，verify_all PASS 73／FAIL 0，web vitest 974/974（97 檔），AI 詞彙普查零未知字符。累計 1,795 次提交。",
-  "headline_zh": "Layer S 開啟 · 178 章 · 深讀 30k token、快取 90% · 全倉字形法令（3,873 字清單、13,810 字面量零簡體）· 76 個讀器全綠。",
+  "milestone_full_zh": "Layer S 持續：178 章香港系列三語臂，圖譜鎖步 178/178/178、圍欄數字由索引推導。跨章問答新增全讀檔（40 章 × 4,000 字——檢索契約自身上限，向 5 萬 token 上下文目標推進）。以生產級限流實測攻城：2,702 發撞庫全部撞上 429 牆（p50=25ms、零 5xx），無範圍限制的讀面在攻擊全程 244/244 全綠（p50=8ms）。兩項真實優化落地：FactBundle 惰性屬性索引（移除每輪搜尋約 120 次全量線性掃描）、排序權重 mtime 緩存（每請求 YAML 重析消失）：每請求 Python CPU 約 107ms → 約 30ms。en 字典漢字為有測量的 19 條白名單（粵語教學池＋引用專名），契約測試強制。verify_all 全綠（PASS 73）、76 個讀器可達、web vitest 974/974。",
+  "headline_zh": "178 章 · 全讀檔（最多 16 萬字真實內文）· 攻城實測：2,702 發撞庫全數 429、p50=25ms、零 5xx、讀面 244/244 全綠 · 76 個讀器在線。",
   "features_zh": [
-    "D1536：AI 測試治具納入詞彙普查——全部 tests/*.py 資料字串零未知字符（此前 D1514 治具攜帶 3 個未知碼位、並行通道另帶 2 個）。",
-    "D1535：全倉字形法令——gen_simp_only_chars.py 由 opencc 自身資料派生 3,873 個僅簡字符（s2t 判據、字節級可復現、--check 進閘門）；新 check_corpus_script.mjs 巡查全部 10,848 條章節字面量（首跑 93 條髒、修復 56 條＋用雙字測量再抓 4 條）；check_ui_script 不再靜默退回舊 239 對表。",
-    "D1534：圖譜圍欄停止說謊——routes_chapter 的「THE N-CHAPTER HONG KONG ARC」由索引推導而非寫死（原文寫 175 而語料已是 178）；鎖步讀器把此處的字面數字視為違規；向導後備在零候選時永不 IndexError。",
-    "D1514：跨章問答深讀模式——depth 白名單 quick(8×520)／deep(20×1350)，服務端預算回傳客戶端；實測深讀 30,493 prompt tokens、快取命中 90.0%。",
-    "D1513：管理員行為通道上線——/admin/analytics 監控真實用戶行為事件（連環亂點、中途離開），三語 demo 徽章；每個導航 href 都有真實頁面應答（22 條檢查）。"
+    "D1541：生產級限流重測攻城——10 次配額後即 429 牆；撞庫 2,702 發全數 429；讀面全程 244/244。",
+    "D1540：跨章問答全讀檔（40×4000，檢索契約自身上限），向 5 萬 token 上下文目標推進；三端白名單全鏈路。",
+    "D1538：FactBundle 惰性屬性索引＋排序權重 mtime 緩存——每請求 Python CPU 約 107ms → 約 30ms（帶 lifespan 的進程內剖析實測）。",
+    "D1539：story-recap 預設窗口治具改為窗口無關；en 臂漢字以有測量的 19 條白名單強制。",
+    "D1537：壓測探针新增攻城腿（四群體同時鐘）——此前容量聲明被發現打在 8010 埠的孤兒服務上。"
   ]
 }
