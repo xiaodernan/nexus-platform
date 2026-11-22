@@ -4354,13 +4354,56 @@ by what is already verified, not by date.
   Whole suite **38050 passed, 522 skipped, 0 failed** (`tmp/d1550_full_suite.txt`); the six node gates
   that read `infra/docker-compose.yml` all still exit 0, including `check_cloud_discovery` R6, which
   is why `discovery.py` kept reading `NEXUS_AI_HOST_PORT` rather than being "simplified".
-  **Next: D1551 — finish the name-vs-reader contract on both planes** (re-census says **3 of the `ai:`
-  block's 14 keys still have no reader**, `NEXUS_CORS_ORIGINS` among them while `config.py:125`
-  resolves `NEXUS_AI_CORS_ORIGINS` — so the compose plane silently serves the built-in CORS default —
-  plus the `web:` block's 5 unread keys and `docs/DEPLOYMENT.md:262` repeating them), with **D1552**
-  (`.github/workflows/ci.yml:272,280` hand the AI's jobs the same unread `NEXUS_DB_URL`) and
-  **D1553** (the proxy census §1452 promised: `NODE_USE_ENV_PROXY` in the web tier, the JVM's separate
-  rule in `services/*`) queued behind it.
+  **Next: D1551 — landed the same session as §1454: the `ai:` block now names only keys the AI
+  resolves** (its 14 keys with 3 unread became 12 with none). The `web:` half moves to **D1554**, not
+  because it is harder but because it is unverifiable where it stands: all 5 of its keys are unread and
+  `apps/web/Dockerfile` does not exist, so the block configures a tier that cannot be built — the
+  decision there is image-or-host, and the compose header plus `docs/DEPLOYMENT.md` still claim the
+  wrong answer. **D1552** (`.github/workflows/ci.yml:272,280` hand the AI's jobs the same unread
+  `NEXUS_DB_URL` — measured this session, and the fix is a DELETE, not a rename, because
+  `apps/ai/tests/conftest.py:31` removes `NEXUS_DATABASE_URL` on the unit lane on purpose) and
+  **D1553** (the proxy census §1452 promised, whose web-tier premise this session FALSIFIED by probe:
+  `NODE_USE_ENV_PROXY` is set in no code file, and a loopback hop goes direct without it and through a
+  dead proxy with it — so what is left is a pin, not a fix) stay queued behind it.
+
+- **Landed — D1551 (§1454): the compose `ai:` block configures the AI only under names the AI
+  resolves.** D1550 renamed one key and left a census; the census is the finding. Parsed with the
+  D1550 door's own readers (`tmp/d1551_census.txt`), the `ai:` block held **14 keys of which 3 had no
+  reader in `apps/ai` at all** — `NEXUS_CORS_ORIGINS` (while `apps/ai/nexus_ai/config.py:125` resolves
+  `NEXUS_AI_CORS_ORIGINS`, so `cors_origins` stayed the empty tuple and `api/app.py:111` installs
+  `CORSMiddleware` only `if deps.settings.cors_origins:` — the deployment named an origin and the
+  service answered no browser origin whatsoever), `NEXUS_JWT_SECRET` (`git grep -l jwt apps/ai` is
+  empty; a secret in a block that cannot use it invites an operator to rotate the wrong one), and
+  `NEXUS_DB_SCHEMA_SCRIPTS` (no spelling of it exists in the service). Fixed with one renamed line
+  that keeps the operator's single knob — `infra/docker-compose.yml:151`
+  `NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}`, still fed by the untracked root
+  `.env`'s `NEXUS_CORS_ORIGINS` — plus
+  two deletions. Post-fix, re-counted by the same reader: **12 keys, 0 unread**
+  (`tmp/d1551_census_after.txt`). The door is
+  `apps/ai/tests/test_d1551_ai_block_names_reach_the_ai.py`, red first **2 failed, 2 passed**; R1 the
+  name, R2 the whole block re-censused on every run so the next copy-paste from the platform block
+  reddens here, R3 the consequence watched through the real ASGI app (an empty configured list answers
+  a preflight with **no** `access-control-allow-origin`; the deployment's own value brings the header
+  back), R4 the boundary that keeps `NEXUS_AI_INTERNAL_TOKEN` in the block so a sweep that is correct
+  about JWT cannot delete the secret this tier's door verifies. Arms A1-A5, one variable each: A1 the
+  platform spelling returning reddens R1 **and** R2, A5 — the only arm on the product side, `app.py`
+  installing CORS unconditionally with `allow_origins=["*"]` — reddens R3, and is the arm that catches
+  the tempting wrong fix. The three parsers D1550's door carried moved to
+  `apps/ai/tests/deploy_plane.py` (imported by both doors now), with `unread_ai_keys()` searching the
+  roots a container can actually be configured through and deliberately **not** `apps/ai/tests/`, so a
+  test that mentions a name cannot certify that the service reads it. Whole suite **38054 passed, 522 skipped, 0 failed** (`tmp/d1551_full_suite.txt`, 1570.33 s on a box that runs 38 containers from other projects, so the counts are the verdict and the clock is not), both deployment doors together **9 passed** (`tmp/d1551_door_green.txt`), and the six node gates that read `infra/docker-compose.yml` all exit 0 on the edited file (`tmp/d1551_node_gates.txt`).
+  **Next: D1554 — the deployment plane's remaining truths**, which the same census already measured:
+  the `web:` block's 5 keys (all unread) against a tier that has **no image at all**
+  (`apps/web/Dockerfile` and `services/platform/Dockerfile` absent while `apps/ai/Dockerfile` exists,
+  and `infra/docker-compose.yml:12` still telling the reader all three are missing), `NEXT_PUBLIC_DATA_MODE`
+  defaulting to `mock` in the deployed plane (`live` only via `.github/workflows/ci.yml:345`, inlined at
+  build), `docs/DEPLOYMENT.md:262` and the untracked root `.env` (lines 40-41) repeating the dead names, the `ai:` service's
+  `/migrations` mount that nothing in `apps/ai` names, the host plane having no source for
+  `NEXUS_AI_CORS_ORIGINS` at all, and the general name-vs-reader gate — which needs per-service roots
+  (`services/cloud/*/src/main/resources/application.yaml`) plus a framework-convention allow-list
+  (`SPRING_*`, `SERVER_PORT`, `POSTGRES_*`) because the naive whole-file count (55 keys, 33 unread)
+  over-reports. **D1552** (CI's AI jobs still hand the service `NEXUS_DB_URL`, and needs its own BASE
+  pass first) and **D1553** (the proxy census §1452 promised) stay queued behind it.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own

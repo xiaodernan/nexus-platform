@@ -48678,12 +48678,17 @@ daemon starts. The database half is proven only to URL resolution — no connect
 was opened, so the role/permission plane (`API_CONTRACT` §0) is still only what its own gates say. Nor is
 the `ai:` block clean: re-censusing its 14 keys against the AI's own source
 (`tmp/d1550_ai_key_census.txt`) leaves **3 with no reader** — `NEXUS_DB_SCHEMA_SCRIPTS` (no spelling of it
-exists in `apps/ai`), `NEXUS_JWT_SECRET` (its only readers are `services/platform/…/JwtService.java:39` and
+exists in `apps/ai`), `NEXUS_JWT_SECRET` (its only readers are
+`services/platform/src/main/java/com/nexus/platform/JwtService.java:39` and
 CI, so the AI container is handed a secret it cannot use and an operator rotating it there changes
 nothing), and `NEXUS_CORS_ORIGINS`, whose sibling `NEXUS_AI_CORS_ORIGINS` is what
 `apps/ai/nexus_ai/config.py:125` actually resolves — so in the compose plane the AI's CORS allow-list is
 the built-in default and the deployment's value is discarded. Renaming `NEXUS_DB_URL` was one of four
-disagreements in that block; the rest, plus the `web:` block's five unread keys, are **D1551**. And
+disagreements in that block; the rest, plus the `web:` block's five unread keys, are **D1551**. **(Amended
+by D1551, §1454: the `ai:` half landed there — 14 keys with 3 unread became 12 with none. The `web:` block
+moves to D1554 rather than being renamed here, because the tier those five keys configure has no image at
+all (`apps/web/Dockerfile` does not exist), so a rename there would be unverifiable in the very plane it
+claims to describe.)** And
 `.github/workflows/ci.yml:272,280` hand the AI's test and eval jobs `NEXUS_DB_URL` too, which the AI
 still does not read: those jobs therefore run against `NEXUS_TEST_DATABASE_URL` and the config
 fallbacks, not the URL the job advertises — that plane is **D1552**, and it needs its own BASE pass
@@ -48692,3 +48697,153 @@ integration legs that currently skip.
 
 Evidence: `tmp/d1550_entrypoint_measure.txt`, `tmp/d1550_ai_key_census.txt`, `tmp/d1550_door_red.txt`,
 `tmp/d1550_door_green.txt`, `tmp/d1550_arms.txt`, `tmp/d1550_full_suite.txt`.
+
+## 1454. D1551 · every name the deployment uses to configure the AI is a name the AI can hear
+
+§1453 renamed one key in the compose `ai:` block and handed the rest of the block to a census, because
+the rename was not the finding — the *pattern* was: a block of environment names copied from the
+platform's own block, some of which the AI cannot hear at all. The census
+(`tmp/d1551_census.py` → `tmp/d1551_census.txt`) read every `environment:` mapping in
+`infra/docker-compose.yml` with the D1550 door's own parser and asked, per key, whether the service it
+belongs to names it:
+
+| block | keys | with no reader | what the unread ones are |
+| --- | --- | --- | --- |
+| `ai:` | 14 | **3** | `NEXUS_CORS_ORIGINS`, `NEXUS_JWT_SECRET`, `NEXUS_DB_SCHEMA_SCRIPTS` |
+| `web:` | 5 | **5** | `AI_INTERNAL_URL`, `NEXT_PUBLIC_AI_URL`, `NEXT_PUBLIC_PLATFORM_URL`, `NEXUS_DEFAULT_TENANT`, `PLATFORM_INTERNAL_URL` |
+| whole file | 55 | 33 | — |
+
+The 33 is not 33 defects. Counted that way the census over-reports: the cloud services keep their
+readers in `services/cloud/*/src/main/resources/application.yaml` (which the naive root set did not
+search), and a Spring container legitimately receives `SPRING_*`, `SERVER_PORT` and `POSTGRES_*` by
+framework convention rather than by a name in its own source. That is why the general gate is its own
+unit (**D1554**) with per-service roots and a convention allow-list, and why this unit took the one
+block whose readers are all in one tree and all greppable: `ai:`.
+
+| the block said | the value it carried | why nothing heard it |
+| --- | --- | --- |
+| `NEXUS_CORS_ORIGINS` | `http://localhost:3000` | `apps/ai/nexus_ai/config.py:125` resolves **`NEXUS_AI_CORS_ORIGINS`**. In the compose plane `cors_origins` therefore stayed the empty-tuple default, and `apps/ai/nexus_ai/api/app.py:111` installs `CORSMiddleware` only `if deps.settings.cors_origins:` — the deployment names an origin and the service answers no browser origin at all. |
+| `NEXUS_JWT_SECRET` | `${NEXUS_JWT_SECRET:-}` → empty to the census, which resolves compose defaults; the operator's untracked `.env` carries a real 64-char value on its line 22 (`tmp/d1551_env_lines.txt`) | `git grep -l jwt apps/ai` returns nothing. Its readers are `services/platform/src/main/java/com/nexus/platform/JwtService.java:39`, `services/platform/src/main/resources/application.yml:86` and the platform block (compose:108) — and compose:108 is the file's only other occurrence, so the AI's copy had no reader and no sibling keeping it honest. An operator rotating it in the AI's block changes the platform and believes the AI moved. |
+| `NEXUS_DB_SCHEMA_SCRIPTS` | `/migrations` | no spelling of it exists anywhere in `apps/ai`. |
+
+The fix is one renamed line and two deletions, and it keeps the operator's single knob:
+
+* `infra/docker-compose.yml:151` — `NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}`.
+  The value still comes from the one key every tier reads, on line 42 of the repo's untracked `.env`
+  (`NEXUS_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000`, counted into
+  `tmp/d1551_env_lines.txt:5-11`), but it arrives under the name
+  `config.py:125` resolves. Measured after the change (`tmp/d1551_census_after.txt:14,27`): the block is
+  **12 keys, 0 unread**.
+* deleted `NEXUS_JWT_SECRET` and `NEXUS_DB_SCHEMA_SCRIPTS` from the `ai:` block. A key nothing reads is
+  not documentation — it is a promise to the next operator.
+* `apps/ai/tests/deploy_plane.py` (new) — the D1550 door's three parsers (`compose_text_for`,
+  `compose_environment`, `dockerfile_env`, `published_container_port`) moved out of that test into one
+  module, because a second door needed them; `unread_ai_keys()` was added there, searching
+  `AI_READER_ROOTS` = `nexus_ai/`, `app/`, `start_ai.py`, `Dockerfile`, `pyproject.toml` — everything a
+  container can be configured through, and deliberately **not** `apps/ai/tests/`, so a test that mentions
+  a name cannot certify that the service reads it. `tests/test_d1550_…` now imports them.
+
+`tests/test_d1551_ai_block_names_reach_the_ai.py` is the door. Against the unmodified deployment it is
+red first (`tmp/d1551_door_red.txt` → **2 failed, 2 passed**), the assertion texts verbatim:
+
+> `the deployment configures the AI's CORS allow-list as NEXUS_CORS_ORIGINS, but
+> nexus_ai/config.py:125 resolves NEXUS_AI_CORS_ORIGINS`
+
+> `infra/docker-compose.yml's ai: block configures the AI under names apps/ai never reads:
+> NEXUS_CORS_ORIGINS='http://localhost:3000', NEXUS_DB_SCHEMA_SCRIPTS='/migrations',
+> NEXUS_JWT_SECRET=''`
+
+* **R1** the CORS key the block carries *is* the key the config resolves, and `load_settings()` splits
+  its value into the non-empty tuple the deployment means.
+* **R2** `not unread_ai_keys()` — the whole block, re-censused on every run, so the next copy-paste from
+  the platform block reddens here rather than in a reviewer's eye.
+* **R3** the consequence, watched through the real ASGI app rather than asserted about: a preflight to
+  `POST /ai/v1/health` with `Origin: http://localhost:3000` returns **no** `access-control-allow-origin`
+  when the configured list is empty, and returns that exact origin when it is not. Green before and
+  after by design; it guards the premise R1 rests on.
+* **R4** the boundary: `NEXUS_AI_INTERNAL_TOKEN` stays in the block and stays readable. Without this
+  leg, the R2 sweep that is correct about JWT is one keystroke away from deleting the secret the AI's
+  own door verifies — the tier would go unauthenticated while every test still passed.
+
+Arms (`tmp/d1551_arms.py` → `tmp/d1551_arms.txt`), one variable each, shipped bytes byte-compared and
+restored after every arm (`shipped bytes restored: True`):
+
+| arm | single change | legs it reddens | signature |
+| --- | --- | --- | --- |
+| A1 | the platform's spelling returns on the CORS line | R1 **+ R2** | the name/config sentence, and the census naming `NEXUS_CORS_ORIGINS='http://localhost:3000'` |
+| A2 | `NEXUS_DB_SCHEMA_SCRIPTS: /migrations` is re-inserted | R2 only | the census naming that one key |
+| A3 | the right name, an empty value (`${NEXUS_AI_CORS_ORIGINS:-}`) | R1 | *"the deployment's CORS value has to survive the comma split"* |
+| A4 | the `NEXUS_AI_INTERNAL_TOKEN` line is deleted | R4 | *"removing unread names must never remove this one"* |
+| A5 | product side: `app.py:111` → `if True:` and `allow_origins=["*"]` | R3 | *"the app now answers a preflight with an allow-origin even with an EMPTY configured list"* |
+
+A5 is the arm that matters most here, because it is the tempting wrong fix: making CORS "work" by
+ignoring what was configured would leave R1 green, R2 green and the deployment still unable to say
+which origins it allows.
+
+**The number is re-scoped, not quietly narrowed.** §1453 queued "the rest, plus the `web:` block's five
+unread keys" under D1551's number. This unit took the `ai:` block only. The `web:` half moves to
+**D1554**, and the reason is not convenience: the census says all five of its keys are unread, and the
+tier those keys configure has no image (`apps/web/Dockerfile` does not exist), so a rename there would
+be unverifiable in the plane it claims to describe — the decision has to be "give the tier an image" or
+"document that it runs on the host", and that is a different unit's work. `docs/DEPLOYMENT.md` and
+`.env` carry the same dead names, which is why the sweep belongs together.
+
+**Verdict.** **Verdict.** `38054 passed, 522 skipped` in `1570.33s`, exit 0 (`tmp/d1551_full_suite.txt`) — 38050 at
+D1550 plus this unit's four legs, and no other count moved. The wall time is not comparable to D1550's
+1231 s: this box runs 38 containers from other projects, so the clock is shared and the counts are the
+verdict. Both deployment doors together on the shipped bytes: **9 passed** in 14.02 s
+(`tmp/d1551_door_green.txt`), and the six node gates that parse `infra/docker-compose.yml` all exited 0
+on the edited file (`tmp/d1551_node_gates.txt`), including `check_cloud_discovery`, which is why nothing
+this unit did touched the platform's or the gateway's own blocks.
+
+**What this does not reach.** No `docker compose up`: the door proves the name and the header, not the
+daemon. And the honest size of the user-facing consequence is zero for the shipped UI — per
+`docs/API_CONTRACT.md:104-107` §0.1 "the browser talks to the Next server, not to :8080/:8000", and
+`apps/web/src/components/search-results.tsx:171` fetches the same-origin `/api/nexus/ai/stream`. What
+was broken is the deployment's own claim: an allow-list that was configured, resolved, and discarded,
+which any non-BFF caller (an operator's page on another port, an embed, a future direct call) would
+have met as an outright refusal. One thing the fix does not do: it makes the compose plane honest, not
+the host plane. Outside `apps/ai` the only files `git grep -l NEXUS_AI_CORS_ORIGINS` returns are this
+compose file and the ledger itself — no host script or launcher sets it, and
+`apps/ai/tests/conftest.py:38` deletes it for the unit lane — so a developer running `start_ai.py` on
+the host still gets an empty allow-list. That is a configuration question with its own evidence needs
+(which host lane should carry that `.env` key?) and it belongs to the same sweep:
+
+* **D1554** — the `web:` block's five unread keys (the same untracked `.env` carries two of the same dead
+  names on its lines 40-41, and
+  against that `.env` the code's own reads are inverted: all **14** names
+  `apps/web/src/lib/env.ts` resolves — `PLATFORM_API_BASE_URL`, `AI_API_BASE_URL`,
+  `NEXT_PUBLIC_DATA_MODE`, `NEXUS_TENANT`, … — are declared by **none** of it, while four names it does
+  declare are read by none of the code; `apps/web/.env.example` documents several of the real ones, so
+  the gap is between the deployment and the code, not inside the code), against a tier that has no image
+  to configure: `apps/web/Dockerfile` and
+  `services/platform/Dockerfile` do not exist while `apps/ai/Dockerfile` does
+  (`tmp/d1554_pre_measure.txt` §1) — and yet `infra/docker-compose.yml:7,9,12` and
+  `docs/DEPLOYMENT.md:51,56,59,73,261` all still tell the reader that none of the three exist. Renaming
+  a dead block behind a build that cannot run would be polishing fiction; that file needs its own
+  decision. The same unit takes the `/migrations` mount (compose:156): `apps/ai/nexus_ai`, `apps/ai/app`,
+  `start_ai.py`, `Dockerfile` and `pyproject.toml` name `/migrations` nowhere, and the only `apps/ai`
+  hits are test docstrings citing the REPO path `infra/db/migrations/…` — which is exactly why the
+  reader roots exclude `apps/ai/tests/`. It also takes the general name-vs-reader gate, whose naive
+  whole-file count (55 keys, 33 unread) over-reports until per-service roots
+  (`services/cloud/*/src/main/resources/application.yaml`) and a framework-convention allow-list
+  (`SPRING_*`, `SERVER_PORT`, `POSTGRES_*`) are in place. One premise is retired by this measurement:
+  `NEXT_PUBLIC_DATA_MODE` defaulting to `mock` in the deployed plane is NOT a silent lie —
+  `apps/web/src/lib/i18n/dict.ts:4681` prints a demo banner naming the variable, and
+  `ci.yml:345` inlines `live` for the built lane — so the question there is which lane a reviewer is
+  looking at, not whether the page hides it (`tmp/d1554_pre_measure.txt` §5, including the banner's
+  three locales).
+* **D1552** (task #61) — CI's AI jobs still hand the service `NEXUS_DB_URL` (ci.yml:272,280), and the
+  measurement already says which way the fix goes: **delete, don't rename**, because
+  `apps/ai/tests/conftest.py:31` deletes `NEXUS_DATABASE_URL` and :59 builds the app-under-test with
+  `database_url=""` — the unit lane is a no-database lane by design, and the live legs read
+  `NEXUS_TEST_DATABASE_URL` themselves (`tmp/d1552_pre_measure.txt`).
+* **D1553** (task #63) — the proxy census §1452 amended, whose premise this session falsified:
+  `NODE_USE_ENV_PROXY` appears in no code file, and a probed loopback hop goes direct without the flag
+  and through a dead proxy with it, so the web tier is honest by default and the JVM reads no `*_PROXY`
+  at all — what remains is a pin, not a fix (`tmp/d1553_pre_measure.txt` §6).
+
+Evidence: `tmp/d1551_census.txt`, `tmp/d1551_measure.txt`, `tmp/d1551_census_after.txt`,
+`tmp/d1551_door_red.txt`, `tmp/d1551_door_green.txt`, `tmp/d1551_arms.txt`, `tmp/d1551_full_suite.txt`,
+and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.txt`,
+`tmp/d1552_pre_measure.txt`, `tmp/d1553_pre_measure.txt`, `tmp/d1553_node_proxy_probe.txt`.
