@@ -45,21 +45,22 @@ describe('world answer lane', () => {
   // D1514 — the reader-owned context budget. These are source readers, not render tests:
   // the promise is that the depth knob is wired end-to-end and its copy teaches the reader,
   // so a lane that removes any hop (panel -> proxy -> service) reddens here.
-  it('the panel offers a reader-owned quick/deep budget with how-to copy', () => {
+  it('the panel offers a reader-owned quick/deep/full budget with how-to copy', () => {
     const p = read('apps/web/src/components/world-answer-panel.tsx');
     expect(p).toContain("const [depth, setDepth] = useState<Depth>('quick')");
-    expect(p).toContain("(['quick', 'deep'] as const).map");
+    expect(p).toContain("(['quick', 'deep', 'full'] as const).map");
     expect(p).toContain('aria-pressed={active}');
     expect(p).toContain('body: JSON.stringify({ query, locale, depth })');
     expect(p).toContain('copy.quickHint');
     expect(p).toContain('copy.deepHint');
+    expect(p).toContain('copy.fullHint');
     expect(p).toContain('copy.budgetLabel');
     expect(p).toContain('copy.measuredLabel');
   });
 
   it('the proxy repeats the depth whitelist — a client cannot name a raw char budget', () => {
     const bff = read('apps/web/app/api/nexus/ai/world-answer/route.ts');
-    expect(bff).toContain("body.depth === 'deep' ? 'deep' : 'quick'");
+    expect(bff).toContain("['quick', 'deep', 'full'] as const");
     expect(bff).toContain('body: { query, locale, depth }');
   });
 
@@ -70,10 +71,14 @@ describe('world answer lane', () => {
       expect(arm).toContain('depthLabel:');
       expect(arm).toContain('quickHint:');
       expect(arm).toContain('deepHint:');
+      expect(arm).toContain('fullHint:');
       expect(arm).toContain('budgetLabel:');
     }
     expect(dict).toContain("deepLabel: '深讀'");
     expect(dict).toContain("deepLabel: 'Deep read'");
+    expect(dict).toContain("fullLabel: '全讀'");
+    expect(dict).toContain("fullLabel: 'Full read'");
     expect(cn).toContain("deepLabel: '深读'");
+    expect(cn).toContain("fullLabel: '全读'");
   });
 });

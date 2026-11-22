@@ -27,10 +27,14 @@ _SYSTEM = """You are the archivist of a synthetic Hong Kong story world. You rec
 
 #: D1514 — two reader-visible budgets. `quick` is the original D1497 cost; `deep` puts
 #: ~27k characters of real chapter body in front of the model for a cross-chapter question.
-#: The client names a depth, never a raw token/char count — the graph owns the budget.
+#: D1540 — `full` is the §四 context-utilization tier: it reads at chapter_rag's own hard
+#: clamps (40 chunks × 4,000 chars = up to 160k characters of real body), pushing the prompt
+#: toward the 50–90k-token context the directive asks the lane to use. The client names a
+#: depth, never a raw token/char count — the graph owns the budget, and every tier is bounded.
 DEPTH_BUDGETS: dict[str, dict[str, int]] = {
     "quick": {"limit": 8, "chunk_chars": 520},
     "deep": {"limit": 20, "chunk_chars": 1350},
+    "full": {"limit": 40, "chunk_chars": 4000},
 }
 DEPTH_DEFAULT = "quick"
 

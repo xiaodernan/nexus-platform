@@ -30,13 +30,17 @@ def _canned_llm(calls: list[str]) -> Callable[..., Awaitable[dict[str, Any] | No
 
 
 def test_depth_vocabulary_is_closed_and_bounded() -> None:
-    assert set(DEPTH_BUDGETS) == {"quick", "deep"}
+    assert set(DEPTH_BUDGETS) == {"quick", "deep", "full"}
     assert DEPTH_DEFAULT == "quick"
-    q, d = DEPTH_BUDGETS["quick"], DEPTH_BUDGETS["deep"]
-    # deep must actually widen both knobs, and the widenest budget must stay finite.
+    q, d, f = DEPTH_BUDGETS["quick"], DEPTH_BUDGETS["deep"], DEPTH_BUDGETS["full"]
+    # each tier must strictly widen both knobs, and the widest budget must sit exactly at
+    # chapter_rag's own hard clamps (40 × 4000) — no tier can out-grow the retrieval contract.
     assert d["limit"] > q["limit"]
     assert d["chunk_chars"] > q["chunk_chars"]
-    assert d["limit"] * d["chunk_chars"] <= 40 * 4000  # chapter_rag's own hard clamps
+    assert f["limit"] > d["limit"]
+    assert f["chunk_chars"] > d["chunk_chars"]
+    assert (f["limit"], f["chunk_chars"]) == (40, 4000)  # chapter_rag's own hard clamps
+    assert f["limit"] * f["chunk_chars"] <= 40 * 4000
 
 
 def test_retrieve_chunk_chars_is_bounded_no_matter_the_caller() -> None:

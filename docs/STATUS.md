@@ -48354,3 +48354,36 @@ in both directions.
 
 **Readers.** `apps/ai/tests/test_story_recap_graph.py`, `apps/web/src/lib/i18n/dict-contract.test.ts`,
 this ledger entry.
+
+## 1443. D1540 — the context-utilization tier: full opens chapter_rag's own clamps, and the live 50k-token measurement waits on an exhausted key
+
+**The tier.** §四 asks the lane to use the 50–90k-token context the big models offer; D1514's deep
+stopped at ~30.5k measured prompt tokens. `full` joins the depth vocabulary at chapter_rag's OWN hard
+clamps — 40 chunks × 4,000 chars, up to 160k characters of real chapter body per question — widening
+both knobs from deep's 20 × 1,350. The vocabulary stays closed and server-owned: `test_depth_
+vocabulary_is_closed_and_bounded` now asserts the three tiers, each strictly wider than the last, and
+`full` pinned exactly at the clamps; the BFF proxy repeats the three-name whitelist; the panel offers
+the third button with teaching copy in all three dictionaries (全讀 / Full read / 全读).
+
+**The wiring discipline held.** `world-answer-ui.test.ts` arms updated to the three-tier shape and
+its dictionary arm now pins `fullLabel` in both files' scripts; `dict-contract` structure parity keeps
+the three dicts honest; `tsc --noEmit` 0. 16 web tests + 8 AI tests green. The panel's stale
+"175-chapter corpus" docblock is corpus-agnostic now.
+
+**The measurement that could not run — and why.** A live `depth: "full"` call landed on
+`provider: mock` with `all_fields_refused`. Chasing it exposed two facts worth more than the number:
+1. `summary` maps to tier `mid` (TASK_MODEL_DEFAULTS), so a server launched without
+   NEXUS_LLM_MODEL_MID sends an EMPTY model name and the gateway answers HTTP 400 未指定模型名称 —
+   the ladder swallows it and lands on mock without a log line. All three model envs must be set.
+2. With the env complete, the adapter answers for real: **HTTP 403 insufficient_user_quota — the
+   key's balance is exhausted (−$0.001488)** as of 2026-11-22 08:06 UTC. Every live lane silently
+   rides the mock ladder until the key is topped up; the response's `measured.provider` field is
+   how a caller tells. The 50k-token full-tier measurement is recorded as pending that top-up —
+   the code path, its bounds and its tests do not wait on it.
+
+**Gates.** `test_world_answer_deep_budget.py` 8/8; mypy clean; ruff clean; web 16/16; tsc 0.
+
+**Readers.** `apps/ai/nexus_ai/orchestrator/world_answer_graph.py`,
+`apps/ai/tests/test_world_answer_deep_budget.py`, `apps/web/app/api/nexus/ai/world-answer/route.ts`,
+`apps/web/src/components/world-answer-panel.tsx`, `apps/web/src/lib/world-answer-ui.test.ts`,
+`apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, this ledger entry.

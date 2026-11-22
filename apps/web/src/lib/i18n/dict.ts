@@ -1297,8 +1297,8 @@ export interface Dict {
       eyebrow: string; title: string; intro: string; placeholder: string;
       cta: string; pending: string; degraded: string; sourceLabel: string;
       /** D1514: reader-owned context budget — quick keeps the original cost, deep reads more. */
-      depthLabel: string; quickLabel: string; deepLabel: string;
-      quickHint: string; deepHint: string;
+      depthLabel: string; quickLabel: string; deepLabel: string; fullLabel: string;
+      quickHint: string; deepHint: string; fullHint: string;
       /** D1524: a template, not a function — this copy crosses into a client island. */
       budgetLabel: string;
       /** D1524: a template, not a function — this copy crosses into a client island. */
@@ -3523,8 +3523,10 @@ const zhHK: Dict = {
       depthLabel: '閱讀深度',
       quickLabel: '速讀',
       deepLabel: '深讀',
+      fullLabel: '全讀',
       quickHint: '教學：只讀 8 章的重點段落，最快、最慳。',
       deepHint: '教學：一次讀最多 20 章、約三萬字內文，適合追跨章節的線索；會用較多配額。',
+      fullHint: '教學：把上限開滿——最多 40 章、每章 4,000 字，整個系列的真實內文都攤給你；配額用得最多，答案也最扎實。',
       budgetLabel: '本次翻了 {chapters} 章 · 約 {chars} 字內文',
       measuredLabel: '快取命中 {cached} / {prompt} token',
     },
@@ -5776,8 +5778,10 @@ const en: Dict = {
       depthLabel: 'Reading depth',
       quickLabel: 'Quick read',
       deepLabel: 'Deep read',
+      fullLabel: 'Full read',
       quickHint: 'How-to: reads the key passages of 8 chapters — fastest and cheapest.',
       deepHint: 'How-to: reads up to 20 chapters, ~30k characters of body text — for clues spanning chapters. Uses more quota.',
+      fullHint: 'How-to: opens the cap all the way — up to 40 chapters at 4,000 characters each, the whole series laid out for you. The most quota by far, and the most grounded answer.',
       budgetLabel: 'Read {chapters} chapters · ~{chars} characters this time',
       measuredLabel: 'Cache hit {cached} / {prompt} tokens',
     },

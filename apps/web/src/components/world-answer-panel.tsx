@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * World Answer — ask one question across the whole 175-chapter corpus (§四 deep RAG).
+ * World Answer — ask one question across the whole chapter corpus (§四 deep RAG).
  * The backend retrieves real chapter bodies and fences every citation; this island just
  * asks on an explicit click and shows the result. No automatic call, no token until asked.
  *
@@ -27,8 +27,10 @@ export interface WorldAnswerCopy {
   depthLabel: string;
   quickLabel: string;
   deepLabel: string;
+  fullLabel: string;
   quickHint: string;
   deepHint: string;
+  fullHint: string;
   /** D1524: a template, not a function — this payload crosses into a client island. */
   budgetLabel: string;
   /** D1524: a template, not a function — this payload crosses into a client island. */
@@ -46,7 +48,7 @@ interface Result {
   measured?: { cached_tokens: number; prompt_tokens: number; cache_reported: boolean };
 }
 
-type Depth = 'quick' | 'deep';
+type Depth = 'quick' | 'deep' | 'full';
 
 export function WorldAnswerPanel({ locale, copy }: { locale: string; copy: WorldAnswerCopy }) {
   const [query, setQuery] = useState('');
@@ -82,9 +84,9 @@ export function WorldAnswerPanel({ locale, copy }: { locale: string; copy: World
       <fieldset className="mt-4">
         <legend className="text-xs font-semibold text-ink-strong">{copy.depthLabel}</legend>
         <div className="mt-2 flex flex-wrap gap-2">
-          {(['quick', 'deep'] as const).map((d) => {
+          {(['quick', 'deep', 'full'] as const).map((d) => {
             const active = depth === d;
-            const label = d === 'quick' ? copy.quickLabel : copy.deepLabel;
+            const label = d === 'quick' ? copy.quickLabel : d === 'deep' ? copy.deepLabel : copy.fullLabel;
             return (
               <button
                 key={d}
@@ -103,7 +105,7 @@ export function WorldAnswerPanel({ locale, copy }: { locale: string; copy: World
           })}
         </div>
         <p className="mt-2 text-2xs leading-relaxed text-ink-faint">
-          {depth === 'quick' ? copy.quickHint : copy.deepHint}
+          {depth === 'quick' ? copy.quickHint : depth === 'deep' ? copy.deepHint : copy.fullHint}
         </p>
       </fieldset>
 

@@ -31,7 +31,11 @@ export async function POST(request: Request): Promise<Response> {
   const locale = normalizeLocale(typeof body.locale === 'string' ? body.locale : null);
   // D1514: the proxy repeats the depth whitelist; the service repeats it again. Neither
   // trusts the other, and a client cannot send a raw char budget through either hop.
-  const depth = body.depth === 'deep' ? 'deep' : 'quick';
+  // D1540: the vocabulary is quick/deep/full — the tiers mirror the graph's DEPTH_BUDGETS.
+  const DEPTHS = ['quick', 'deep', 'full'] as const;
+  const depth = DEPTHS.includes(body.depth as (typeof DEPTHS)[number])
+    ? (body.depth as (typeof DEPTHS)[number])
+    : 'quick';
   if (!query) return json({ ...EMPTY, reason: 'invalid_query' }, { status: 422 });
   if (IS_MOCK) return json({ ...EMPTY, reason: 'mock_provider' });
   try {
