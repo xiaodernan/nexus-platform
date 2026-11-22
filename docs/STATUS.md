@@ -48085,3 +48085,62 @@ reader (167 crossings), the chapter radar and its wiring, the world-corpus atlas
 chronicle pages, the try-flow, the admin analytics and the world-answer / world-guide / chapter-ask live
 panels — **451 passed**. `tsc --noEmit` 0; both Simplified mirrors regenerate and verify in lockstep;
 `check_console_i18n` PASS.
+
+## 1437. D1534 — the chapter lane told the model the world ended three chapters early, and the reader that was supposed to catch it was reading its own number back
+
+**The defect, found by accident.** `node scripts/check_atlas_lockstep.mjs` was red on a clean HEAD:
+`atlas_digest has 175 chapter lines != corpus 178`, `atlas_index has 175 chapter lines != corpus 178`,
+`routes_chapter fence 175 != corpus 178`. Three chapters (176, 177, 178 — the Layer R close and the
+Layer S opening D1533 shipped) had landed without their atlas lines being regenerated, so every
+`/ai/v1/chapter/ask` call for three releases carried a world map that stopped at 175 while the
+system prompt above it said, in words, `THE 175-CHAPTER HONG KONG ARC`. The model was being told the
+size of a world that no longer existed, in the same contract that forbids it from naming anything
+outside that world.
+
+**Why no gate caught it.** The lockstep reader *did* have a fence assertion — `THE (\d+)-CHAPTER HONG
+KONG ARC` in `routes_chapter.py` compared to the corpus count. But the number it compared was the
+literal the route wrote, so the reader was checking that the stale copy matched the stale copy. It
+passed for three chapters because both sides were 175. A reader that derives its expectation from the
+same literal it is auditing can only ever confirm the literal.
+
+**The fix, in two layers.** The route no longer writes the number: `_atlas_chapter_count()` counts the
+numbered rows of `atlas_index.txt` and the fence interpolates it, so the sentence is right by
+construction (it now reads `THE 178-CHAPTER HONG KONG ARC` because the index holds 178 rows). The
+reader inverted its assertion to match — a literal digit in that position is now the OFFENDER, on the
+grounds that a literal is the only shape of that sentence that can be wrong. `--root` was added so
+`falsify_atlas_fence.mjs` can point the shipped reader at a fixture instead of a copy of it.
+
+**The fences it was hiding behind.** `test_atlas_digest.py` pinned `"175 chapters"` and a
+hand-maintained tuple of chapter numbers ending at 175; `test_atlas_index.py` pinned `== 175`,
+`range(1, 176)` and `"175 ·"` in the contract. All three were true when written and all three were
+wrong at once — four copies of a number the corpus owns. Both files now read the count off the
+artifact and assert the properties that actually matter: the header agrees with its own rows, the rows
+are contiguous 1..N, and the contract agrees with the index. `test_the_fence_reads_its_number_from_the_
+index_rather_than_writing_it` scans the module source, so even a quoted copy of the literal in a
+comment reddens it.
+
+**The second door that raised.** Uncommitted in the tree from the previous unit: `world_guide_graph`'s
+`_fallback_text` read `chosen[1] if len(chosen) > 1 else chosen[0]`. With ONE candidate that is right;
+with ZERO it is `IndexError` — out of the function whose entire purpose is to guarantee the caller
+always gets an answer. `run_guide(candidates=[])` raised. Repaired by binding the second door to `{}`
+when the list is empty, with `test_the_guide_fallback_never_raises.py` (5 legs: zero candidates, one,
+two, three locales, and the graph lane itself) and `live_world_guide_probe.py` for the live plane.
+
+**The nav that was not there.** `/admin/analytics` — the password-123 behaviour page §九 asks for, shipped
+D1512/D1513 — was reachable only by typing its URL. `adminNavItems` now carries it, and
+`console-nav-routes.test.ts` (22 legs) walks every nav href across all three shells and asserts a real
+`page.tsx` answers it (§155's rule, finally applied to the admin side too).
+
+**Gates.** `falsify_atlas_fence.mjs` — 8 arms, 8 held: green on the derivation, red on a literal that is
+RIGHT, red on a literal that is stale, red on a missing fence, red on a digest header behind the corpus,
+red on a short index, and two refusals (a corpus too small to judge, a tree with no atlas at all).
+`test_atlas_digest.py` + `test_atlas_index.py` — 11 passed. `check_atlas_lockstep` → `PASS — atlas
+lockstep at 178 chapters (digest 178 / index 178 / fence derived)`. `console-nav-routes` 22/22.
+`mypy nexus_ai` Success 99 files; `ruff` clean. `verify_all` → **NO OFFENDER (PASS 73 · FAIL 0)**.
+
+**Readers.** `apps/ai/nexus_ai/api/routes_chapter.py`, `apps/ai/nexus_ai/models/atlas_digest.txt`,
+`apps/ai/nexus_ai/models/atlas_index.txt`, `apps/ai/nexus_ai/orchestrator/world_guide_graph.py`,
+`apps/ai/tests/test_atlas_digest.py`, `apps/ai/tests/test_atlas_index.py`,
+`apps/ai/tests/test_the_guide_fallback_never_raises.py`, `apps/ai/live_world_guide_probe.py`,
+`apps/web/src/components/console/console-nav.tsx`, `apps/web/src/lib/console-nav-routes.test.ts`,
+`scripts/check_atlas_lockstep.mjs`, `scripts/falsify_atlas_fence.mjs`.

@@ -46,8 +46,28 @@ try:
 except OSError:
     log.warning("chapter ask: atlas_index unreadable — falling back to bare contract")
 
+def _atlas_chapter_count(index_text: str) -> int:
+    """Count the numbered chapter rows in the atlas index.
+
+    D1534: the header below used to write the chapter count as a literal. It was correct on the
+    day it was written and then silently wrong for three chapters — 178 shipped, the prompt said
+    175 — because a number copied into a sentence nobody asserts on cannot fail loudly. Reading
+    the count off the index itself is the only version of this sentence that cannot drift: the
+    index IS the corpus, and `check_atlas_lockstep` already fails if it disagrees with the chapters.
+
+    Note for the next reader: do NOT reintroduce the literal anywhere in this module, not even in
+    a comment. `test_atlas_index.test_the_fence_reads_its_number_from_the_index_rather_than_writing_it`
+    scans this file's source for it, so a quoted copy in prose reddens the same gate.
+    """
+    return sum(1 for line in index_text.splitlines() if line.lstrip()[:1].isdigit())
+
+
+_ATLAS_CHAPTERS = _atlas_chapter_count(_ATLAS_INDEX)
+
 _ATLAS_BLOCK = (
-    "\n\nTHE 175-CHAPTER HONG KONG ARC — order is chronological. Use it to understand\n"
+    "\n\nTHE "
+    + (str(_ATLAS_CHAPTERS) if _ATLAS_CHAPTERS else "HONG KONG")
+    + "-CHAPTER HONG KONG ARC — order is chronological. Use it to understand\n"
     "where this chapter sits in the world. The atlas grounds your answer in the world that actually exists.\n"
     "The chapter arc is synthetic narrative, never travel advice; merchants are fictional.\n"
     "Never name a character, place or rule beyond the provided excerpts.\n"

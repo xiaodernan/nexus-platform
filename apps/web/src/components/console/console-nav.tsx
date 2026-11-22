@@ -78,6 +78,9 @@ export function adminNavItems(locale: string): ConsoleNavItem[] {
     { href: '/admin/orders', label: nav.orders, icon: 'wallet' },
     { href: '/admin/reservations', label: nav.adminReservations, icon: 'calendar' },
     { href: '/admin/ai', label: nav.ai, icon: 'ai' },
+    // §九: the password-123 behavior analytics page ships D1512/D1513 but was reachable
+    // only by typing its URL — the nav is how an admin discovers a surface (§155).
+    { href: '/admin/analytics', label: nav.analytics, icon: 'trending' },
     { href: '/admin/search', label: nav.search, icon: 'search' },
     { href: '/admin/system', label: nav.system, icon: 'info' },
   ];

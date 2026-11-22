@@ -146,8 +146,14 @@ def _bigram_tokens(text: str) -> set[str]:
 
 
 def _fallback_text(locale: str, intent: str, chosen: list[dict[str, Any]]) -> str:
+    # D1534: the SECOND door is read from `chosen[0]` when there is only one, which is right, but
+    # when there are NONE the index is out of range - and an empty candidate list is exactly the
+    # shape a caller with no corpus in hand produces. Measured: `run_guide(candidates=[])` raised
+    # IndexError out of the fallback that exists to guarantee the caller always gets an answer, so
+    # the one path that promised never to raise did.
     t1 = str((chosen[0] if chosen else {}).get("title") or "the next door")
-    t2 = str((chosen[1] if len(chosen) > 1 else chosen[0]).get("title") or "the one after")
+    second = chosen[1] if len(chosen) > 1 else (chosen[0] if chosen else {})
+    t2 = str(second.get("title") or "the one after")
     loc = _locale_of(locale)
     template = {"en": _FALLBACK_EN, "zh-HK": _FALLBACK_HK, "zh-CN": _FALLBACK_CN}[loc]
     return template.format(intent=_intent_label(locale, intent), t1=t1, t2=t2)
