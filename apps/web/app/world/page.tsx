@@ -9,6 +9,7 @@ import { StoryRecap } from '@/components/story-recap';
 import { WayfinderPanel } from '@/components/wayfinder-panel';
 import { WorldAnswerPanel } from '@/components/world-answer-panel';
 import { WebFactsPanel } from '@/components/web-facts-panel';
+import { WorldCensusBand } from '@/components/world-census-band';
 
 /**
  * `/world` — the atlas page. A single-scroll dossier of the entire HK-series corpus,
@@ -104,6 +105,7 @@ export default async function WorldPage() {
         <WayfinderPanel locale={locale} copy={t.wayfinder} />
         <WorldAnswerPanel locale={locale} copy={t.worldAnswer} />
         <WebFactsPanel locale={locale} copy={t.webFacts} />
+        <WorldCensusBand guides={corpus} copy={t.census} />
         <nav aria-label={t.clockLabel} className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
           {t.layers.map((layer) => (
             <a

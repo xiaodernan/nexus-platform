@@ -1287,6 +1287,13 @@ export interface Dict {
     title: string;
     intro: string;
     clockLabel: string;
+    /** D1560: measured world size + deterministic re-entry doors. */
+    census: {
+      eyebrow: string; title: string; intro: string;
+      chaptersLabel: string; armsLabel: string; blocksLabel: string;
+      cardsLabel: string; hoursLabel: string; layersLabel: string;
+      doorsTitle: string; doorsHint: string;
+    };
     /** D1502: real public reference facts through the SSRF-guarded web tool. */
     webFacts: {
       eyebrow: string; title: string; intro: string; note: string; placeholder: string;
@@ -3500,6 +3507,15 @@ const zhHK: Dict = {
     intro: '這一頁不是列表，是一張攤開的世界圖：全系列一百八十一章，按時辰排成七層——凌晨前行、天光市場、早上集、午後街、薄暮收心、夜市樓長街、夜貓子與通風口。同一座城的一整天，一次讀完；每一格都可點進去。',
     clockLabel: '時刻 — 章名 — 點即開',
     countNote: '一百零六個時辰格 — 全部是合成敘事示例，與真實商戶、真實人物全不相關。',
+    census: {
+      eyebrow: '世界普查 · 實測',
+      title: '這座城有多大 — 由語料自己說',
+      intro: '以下每一個數字都是從平台真正收錄的章節即時算出來，不是文案寫的。讀完看得見的那一圈，還有別的小時與層等著你。',
+      chaptersLabel: '章節', armsLabel: '完整英文臂', blocksLabel: '文字段落',
+      cardsLabel: '可認卡片', hoursLabel: '時辰帶', layersLabel: '世界層',
+      doorsTitle: '再進去一次',
+      doorsHint: '這三扇門從你還沒讀過、且在不同時辰的章節中選出——選擇只存在你的瀏覽器。',
+    },
     webFacts: {
       eyebrow: '真實資料 · 聯網',
       title: '問這座真實的城',
@@ -5755,6 +5771,15 @@ const en: Dict = {
     intro: 'Not a list — a map. All one hundred and eighty-one HK-series chapters, laid out in seven layers by the hour: night run, dawn market, morning market, afternoon street, dusk settling, night-market row, the stayers. Read the city from 00:00 to midnight in one go; every cell is a door you can walk through.',
     clockLabel: 'Time — chapter — tap to open',
     countNote: 'One hundred and eighty-one chambers of one fictional city — synthetic from the first step to wherever the series goes next; no real merchant, no real person.',
+    census: {
+      eyebrow: 'WORLD CENSUS · MEASURED',
+      title: 'How big is this city — the corpus answers',
+      intro: 'Every number below is computed live from the chapters the platform actually carries, not written into copy. When the visible arc ends, other hours and layers are still waiting.',
+      chaptersLabel: 'Chapters', armsLabel: 'Full EN arms', blocksLabel: 'Text blocks',
+      cardsLabel: 'Discover cards', hoursLabel: 'Time bands', layersLabel: 'World layers',
+      doorsTitle: 'Re-enter the world',
+      doorsHint: 'Three doors chosen from chapters you have not read, in different hours — the choice lives only in this browser.',
+    },
     webFacts: {
       eyebrow: 'REAL FACTS · ONLINE',
       title: 'Ask the real city',

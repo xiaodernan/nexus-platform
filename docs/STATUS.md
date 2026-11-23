@@ -48884,3 +48884,11 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 - `hk-sha-tin-shui-chuen-o-ticket-for-two-chronicle` — chapter 181 （中午十二點二十分——街市頭的桌上，一張票正面寫著十點數，背面兩行字：一行是阿文自己寫的，另一行是陌生人的新墨。檔主說是早上一位問過第一車時間的老人留下的：「寫了就有人來認。」阿文把自己的票收好，把兩名那張放回桌角，等第二個人）. zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
 - Frozen artifacts in lockstep: digest 181 / 15,253 B, index 181 lines / 14,365 B; pins, `routes_chapter.py` fence and story-recap window advanced; `check_atlas_lockstep` PASS at 181/181/181.
 - Both authored arms + all web count pins + roadmap advanced 180→181. Web 97 files / **976 passed**; atlas/recap 20/20; `verify_all` NO OFFENDER.
+
+
+## 1459. D1560 — world census & endless re-entry: the bigness measured, finishing is a door (§六)
+
+- Audit found a real §六 gap: the primary hub surfaces cap at 106 chapters (arc clock / timeline / continue-reading / stamp) while the corpus is 181 — a reader finishing the visible arc hits "done / back to index", and no surface states the world's size with derived numbers.
+- New pure `src/lib/world-census.ts` — derives chapters, full EN arms, body blocks, discover-card sets, time bands and layers from the guides the product actually carries (nothing printed that cannot be computed). `endlessDoors()` picks deterministic unvisited chapters from different hours, soft-filling so it never returns fewer than asked and never dead-ends even on a full read-set.
+- New `src/components/world-census-band.tsx` (local-first, no fetch/LLM) renders the measured statistics band plus three re-entry doors, wired into `/world` next to the derived full-corpus section. `dict.world.census` in both authored arms + regenerated Simplified fold.
+- Tests: `world-census.test.ts` (4 — real numbers, determinism, unvisited/varied doors, no dead end) + `world-census-wiring.test.ts` (3). Full web **99 files / 984 passed**; full AI **38,065 passed / 0 failed**; `verify_all` NO OFFENDER · tsc 0 · `check_ui_script` 0 offenders.

@@ -2180,6 +2180,15 @@ export const zhCN: Dict = {
     intro: '这一页不是列表，是一张摊开的世界图：全系列一百八十一章，按时辰排成七层——凌晨前行、天光市场、早上集、午后街、薄暮收心、夜市楼长街、夜猫子与通风口。同一座城的一整天，一次读完；每一格都可点进去。',
     clockLabel: '时刻 — 章名 — 点即开',
     countNote: '一百零六个时辰格 — 全部是合成叙事示例，与真实商户、真实人物全不相关。',
+    census: {
+      eyebrow: '世界普查 · 实测',
+      title: '这座城有多大 — 由语料自己说',
+      intro: '以下每一个数字都是从平台真正收录的章节即时算出来，不是文案写的。读完看得见的那一圈，还有别的小时与层等著你。',
+      chaptersLabel: '章节', armsLabel: '完整英文臂', blocksLabel: '文字段落',
+      cardsLabel: '可认卡片', hoursLabel: '时辰带', layersLabel: '世界层',
+      doorsTitle: '再进去一次',
+      doorsHint: '这三扇门从你还没读过、且在不同时辰的章节中选出——选择只存在你的浏览器。',
+    },
     webFacts: {
       eyebrow: '真实资料 · 联网',
       title: '问这座真实的城',
