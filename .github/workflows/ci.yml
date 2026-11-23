@@ -52,7 +52,7 @@ jobs:
           # So a change to the seed, to the claim vocabulary both sides read, or to the reader and its
           # arms must run this job — otherwise the copy can go back to claiming what its members do not
           # support, and nothing would notice.
-          p ai '^(apps/ai|infra/config|data/seed/|scripts/(check|falsify)_collection_claims\.mjs)'
+          p ai '^(apps/ai|infra/config|data/seed/|scripts/(check|falsify)_collection_claims\.mjs|\.github/workflows/ci\.yml)'
           p cloud '^(services/cloud/|services/platform/|scripts/(check_|verify_|falsify_|cloud|ci_ensure_redis|dispatcher_config_|insight_|eureka_|events_|ratelimit_|sliding_window_|ttl_jitter_|singleflight_|fixture_insight_upstream|events_config_smoke|bus_))'
           p docs '^(docs/|README\.md)'
 
@@ -269,7 +269,6 @@ jobs:
               echo "the seed published no merchant - the live suite would skip its own regressions"; exit 1; }
       - name: Tests + evaluation gate
         env:
-          NEXUS_DB_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_TEST_DATABASE_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_REDIS_URL: redis://127.0.0.1:6380/0
           NEXUS_LLM_PROVIDER: mock
@@ -277,7 +276,6 @@ jobs:
         working-directory: apps/ai
       - name: "Eval gate (blocks merge: hallucination < 2%, injection containment 100%)"
         env:
-          NEXUS_DB_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_TEST_DATABASE_URL: postgresql://nexus_ai:ci_nexus_ai@127.0.0.1:5433/nexus_test
           NEXUS_LLM_PROVIDER: mock
         run: uv run python -m nexus_ai.eval.cli --suite intent_v1,rag_faithfulness_v1,safety_injection_v1,personalization_v1,tool_selection_v1 --fail-on-gate

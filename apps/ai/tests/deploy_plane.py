@@ -20,6 +20,15 @@ AI_DIR = Path(__file__).resolve().parents[1]
 REPO = AI_DIR.parents[1]
 DOCKERFILE = AI_DIR / "Dockerfile"
 COMPOSE = REPO / "infra" / "docker-compose.yml"
+CI_WORKFLOW = REPO / ".github" / "workflows" / "ci.yml"
+
+
+def ci_workflow() -> dict:
+    import yaml
+
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8")) or {}
+    assert isinstance(workflow.get("jobs"), dict), "ci.yml has no jobs mapping"
+    return workflow
 
 # Where a name has to appear for the service to count as reading it. Everything a container can be
 # configured through is in this set: the application source, the entrypoint, the image, the build
