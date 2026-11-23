@@ -62,6 +62,9 @@ the fastest development loop, while `full` is the container path.
   `environment:` cannot change a bundle that `next build` already inlined.
 * The root `.dockerignore` keeps local env files, dependencies, stale build output and `tmp/` evidence out
   of both root-context builds.
+* The root `package.json` deliberately overrides Next's pinned PostCSS 8.4.31 with 8.5.33. Because
+  Next's own manifest still names the old version, `npm ls` labels the override `invalid`; the deployment
+  acceptance gates are `npm ci`, `npm audit --omit=dev`, the production build/prune and runtime smoke.
 * This workstation has no reachable Docker daemon, so the recipes and compose file are checked statically and
   by host builds; a real `--profile full` image build and container smoke remain a Docker-host verification,
   not a result claimed by this page.

@@ -4438,11 +4438,16 @@ by what is already verified, not by date.
   pre-existing production npm findings, queued separately as **D1572** rather than hidden by the image
   delivery.
 
-- **Queued — D1572: patch the production Next.js audit findings without a blind major upgrade.** The
-  D1571 clean build reports **4 vulnerabilities (3 high, 1 critical)** in production dependencies:
-  Next.js, its nested PostCSS, sharp and source-map-js. The lockfile already carried them, so this is not
-  caused by the Dockerfile; the next unit must prove a patched Next 15 lock, re-audit production, rebuild
-  and smoke the clean context, and keep any scoped override explicit.
+- **Landed — D1572 (§1473): the production npm tree is patched without a blind major upgrade.** The
+  D1571 clean build's **4 vulnerabilities (3 high, 1 critical)** came from Next 15.5.25, its nested
+  PostCSS 8.4.31, sharp 0.35.4 and source-map-js 1.2.1 already in the lockfile. Web now declares Next and
+  its ESLint config at `^15.5.29`, PostCSS at `^8.5.33`, and the workspace root explicitly overrides
+  `next -> postcss` to `8.5.33`; the lock resolves sharp 0.35.5 and source-map-js 1.2.4 and removes the
+  old nested copy. Production audit is **0 vulnerabilities**, the targeted lock passes clean install,
+  live build, prune and runtime smoke, and Web remains **1007 tests passed** with typecheck/lint green.
+  **3 static legs** and **6 mutation arms** guard the manifest, override, runtime closure and every locked
+  copy. Next's own manifest still pins the old PostCSS, so `npm ls` reports the intentional override as
+  invalid; the documented acceptance gates are install, prune, audit, build and smoke.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own

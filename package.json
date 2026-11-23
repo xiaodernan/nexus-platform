@@ -11,6 +11,11 @@
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "next": {
+      "postcss": "8.5.33"
+    }
+  },
   "scripts": {
     "dev:web": "npm run dev --workspace @nexus/web",
     "build:web": "npm run build --workspace @nexus/web",
