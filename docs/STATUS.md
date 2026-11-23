@@ -48875,3 +48875,12 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 - Heavy-milestone cadence (171→180 chapters, Layer S opened, admin/analytics and replay-cache work, and the API-closure directive) — the io fact-pack was refreshed from the curated `docs/SHOWCASE.json` (both authored arms) with real GitHub REST numbers: head `3771e93`, **1,823** commits at measure time.
 - The old io clones had been cleaned away by a session restart; re-cloned fresh via the Clash proxy. Mirrored tiles in `index.html` (zh + en) and the static feature fallback now read D1557 / Layer S open / 180 chapters; `latest.json` carries the curated facts plus real REST head/commits.
 - `pages.yml` + `sync-nexus-platform.yml` dispatched (204) and completed success alongside identity-guard and site-gates. Live re-verified with a cache-buster: `D1557` ×6, `180` ×6, `Layer S` ×4, `NaN` **0**, stale `D1502` **0**; `latest.json` head `a5272c6` / 1,824 commits / 6 zh + 6 en feature mirrors. identity-guard OK.
+
+
+## 1458. D1559 — chapter 181: a ticket with two names; arc reaches 181
+
+**Code-lane written; no LLM API.** Controlled vocabulary throughout.
+
+- `hk-sha-tin-shui-chuen-o-ticket-for-two-chronicle` — chapter 181 （中午十二點二十分——街市頭的桌上，一張票正面寫著十點數，背面兩行字：一行是阿文自己寫的，另一行是陌生人的新墨。檔主說是早上一位問過第一車時間的老人留下的：「寫了就有人來認。」阿文把自己的票收好，把兩名那張放回桌角，等第二個人）. zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- Frozen artifacts in lockstep: digest 181 / 15,253 B, index 181 lines / 14,365 B; pins, `routes_chapter.py` fence and story-recap window advanced; `check_atlas_lockstep` PASS at 181/181/181.
+- Both authored arms + all web count pins + roadmap advanced 180→181. Web 97 files / **976 passed**; atlas/recap 20/20; `verify_all` NO OFFENDER.
