@@ -321,7 +321,7 @@ def test_the_builder_is_the_only_place_the_score_is_chosen():
     """
     out = subprocess.run(
         ["git", "grep", "-nE", r"\[.rating.\]\s*=|rating\s*=\s*\{", "--", "apps/ai/nexus_ai"],
-        cwd=str(REPO), capture_output=True, text=True, encoding="utf-8", errors="replace")
+        cwd=str(REPO), capture_output=True, text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
     lines = [ln for ln in (out.stdout or "").splitlines() if ln.strip()]
     writers, projections = [], []
     for ln in lines:

@@ -258,8 +258,10 @@ docker inspect -f '{{json .HostConfig.PortBindings}} {{json .NetworkSettings.Por
 
 ## 8. What must happen before this is deployable for real
 
-1. Three Dockerfiles (platform / ai / web) + a `--profile full` smoke test; `web` needs
-   `PLATFORM_INTERNAL_URL`/`AI_INTERNAL_URL`, the other two need their DB/Redis URLs (already in compose).
+1. Three Dockerfiles (platform / ai / web) + a `--profile full` smoke test; `web` needs the two names its own
+   server module resolves — `PLATFORM_API_BASE_URL`/`AI_API_BASE_URL` (`apps/web/src/lib/env.ts:36,39`), which the
+   `web:` block now carries (D1554; the `*_INTERNAL_URL` pair this line used to demand is spelled nowhere in the
+   repository) — the other two need their DB/Redis URLs (already in compose).
 2. ~~Decide the schema owner~~ — decided, and no longer open: `postgres` applies migrations and owns the schema,
    `nexus_app` holds `USAGE` with no `CREATE` and is never a migration role (D30, D32). What remains is the
    production half of that split: the deploy pipeline needs a migration credential that is *not* the runtime one,

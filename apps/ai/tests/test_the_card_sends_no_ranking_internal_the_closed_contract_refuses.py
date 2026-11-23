@@ -324,7 +324,7 @@ def test_no_shipped_surface_reads_either_name():
     g = subprocess.run(["git", "-C", str(REPO), "grep", "-nE",
                         "organic_rank|score_breakdown", "--",
                         "apps/web", "packages/ui/src", "packages/types/src"],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
     if g.returncode not in (0, 1):
         pytest.skip(f"git grep unavailable: {g.stderr[:120]}")
     hits = [ln for ln in g.stdout.splitlines() if ln.strip()]

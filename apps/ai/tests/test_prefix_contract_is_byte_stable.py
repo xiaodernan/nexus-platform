@@ -77,7 +77,7 @@ def test_the_preamble_is_byte_identical_across_processes():
         "sys.stdout.write(contract_for('summary'))" % str(AI_ROOT)
     )
     runs = [subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
-                           cwd=str(AI_ROOT), check=True).stdout for _ in range(3)]
+                           cwd=str(AI_ROOT), check=True, stdin=subprocess.DEVNULL).stdout for _ in range(3)]
     assert runs[0] == runs[1] == runs[2]
     assert runs[0].splitlines()[0] == PREFIX_CONTRACT_SHA256
     assert runs[0].split("\n", 1)[1] == contract_for("summary")

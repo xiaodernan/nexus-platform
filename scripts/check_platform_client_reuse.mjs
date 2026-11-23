@@ -67,6 +67,9 @@ const PATHS = [PLATFORM, APP, STREAM, PROBE, CI, ATLAS, STATUS, SELF];
 /* Exact source needles. */
 const REUSE = 'resp = await self._http().request(method, url, json=json_body,';
 const PER_CALL = 'async with httpx.AsyncClient(timeout=self.timeout_s) as client:';
+// D1548: the lazy build carries `trust_env=False` so the internal hop does not
+// inherit the ambient proxy. The gate pins the WHOLE current construct.
+const BUILD_ONCE = 'self._client = httpx.AsyncClient(timeout=self.timeout_s, trust_env=False)';
 const CI_SELFTEST = `node ${SELF} --self-test`;
 const HEADING_RE = /^## 969\. D969(?=\s|$)/m;
 
@@ -107,7 +110,7 @@ export function judge(files, present, ciPath = CI) {
   has(PLATFORM, 'self._client = client', 'the injected/lazy client is stored on the instance', 'STORE');
   has(PLATFORM, 'def _http(self):', 'the lazy accessor exists', 'ACCESSOR');
   has(PLATFORM, 'if self._client is None:', 'the lazy-build guard exists', 'LAZY-GUARD');
-  has(PLATFORM, 'self._client = httpx.AsyncClient(timeout=self.timeout_s)', 'one AsyncClient is built carrying the timeout contract', 'BUILD-ONCE');
+  has(PLATFORM, BUILD_ONCE, 'one AsyncClient is built with the timeout and no ambient proxy', 'BUILD-ONCE');
   has(PLATFORM, 'return self._client', 'the same client is returned on subsequent calls', 'RETURN-SAME');
   has(PLATFORM, 'async def aclose(self) -> None:', 'the adapter exposes aclose', 'ACLOSE');
   has(PLATFORM, 'await self._client.aclose()', 'aclose releases the pooled client', 'ACLOSE-CALL');
@@ -190,7 +193,7 @@ if (SELF_TEST) {
     ['_request reverted to per-call new', mutate(real, PLATFORM, REUSE, 'async with httpx.AsyncClient(timeout=self.timeout_s) as client:\n                resp = await client.request(method, url, json=json_body)'), 'NO-PER-CALL'],
     ['reuse accessor erased', mutate(real, PLATFORM, 'def _http(self):', 'def _unused(self):'), 'ACCESSOR'],
     ['lazy-build guard removed', mutate(real, PLATFORM, 'if self._client is None:', 'if True:'), 'LAZY-GUARD'],
-    ['build-once dropped', mutate(real, PLATFORM, 'self._client = httpx.AsyncClient(timeout=self.timeout_s)', 'self._client = None'), 'BUILD-ONCE'],
+    ['build-once dropped', mutate(real, PLATFORM, BUILD_ONCE, 'self._client = None'), 'BUILD-ONCE'],
     ['return-same removed', mutate(real, PLATFORM, 'return self._client', 'return httpx.AsyncClient(timeout=self.timeout_s)'), 'RETURN-SAME'],
     ['injection point removed', mutate(real, PLATFORM, 'client: Any = None', 'verbose: Any = None'), 'INJECT'],
     ['stored client removed', mutate(real, PLATFORM, 'self._client = client', 'self._client = None'), 'STORE'],
@@ -200,7 +203,7 @@ if (SELF_TEST) {
     ['stub duck-typing removed', mutate(real, PLATFORM, 'aclose = getattr(_CLIENT, "aclose", None)', '_CLIENT.aclose()'), 'DUCK-TYPE'],
     ['lifespan call cut', mutate(real, APP, 'await aclose_platform_client()', 'pass  # D969 noop'), 'LIFESPAN-CALL'],
     ['hot-path caller cut', mutate(real, STREAM, 'get_platform_client(deps.settings).append_conversation_message', '_unused_append_conversation_message'), 'HOT-PATH'],
-    ['timeout contract broken', mutate(real, PLATFORM, 'self._client = httpx.AsyncClient(timeout=self.timeout_s)', 'self._client = httpx.AsyncClient()'), 'BUILD-ONCE'],
+    ['timeout contract broken', mutate(real, PLATFORM, BUILD_ONCE, 'self._client = httpx.AsyncClient()'), 'BUILD-ONCE'],
     ['probe positive arm erased', mutate(real, PROBE, 'async def test_one_client_serves_n_relays():', 'async def _positive_removed():'), 'PROBE-POSITIVE'],
     ['probe falsifier arm erased', mutate(real, PROBE, 'async def test_per_call_client_falsifier(monkeypatch):', 'async def _falsifier_removed(monkeypatch):'), 'PROBE-FALSIFIER'],
     ['falsifier flip-variable weakened', mutate(real, PROBE, 'monkeypatch.setattr(HttpPlatformClient, "_http", per_call, raising=True)', 'monkeypatch.setattr(HttpPlatformClient, "_http", HttpPlatformClient._http, raising=True)'), 'FLIP-VARIABLE'],

@@ -57,7 +57,7 @@ live = pytest.mark.skipif(not DB_URL, reason="NEXUS_TEST_DATABASE_URL is not set
 
 TENANT = str(S.DEFAULT_TENANT_ID)
 PAGE = 20            # the page a caller asks to see
-CANDIDATES = 60      # service.py:996 - max(60, plan.limit * 3), the rows the SQL actually cuts
+CANDIDATES = 60      # service.py:1601 - max(60, plan.limit * 3), the rows the SQL actually cuts
 RESTAURANT = {"category": "restaurant"}
 
 

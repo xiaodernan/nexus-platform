@@ -57,7 +57,7 @@ def _lane_run(extra):
     env = {k: v for k, v in os.environ.items() if k.upper() not in PROXY_NAMES}
     env.update(extra)
     r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", LANE_FILE],
-                       cwd=str(AI_DIR), env=env, capture_output=True, text=True, timeout=600)
+                       cwd=str(AI_DIR), env=env, capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL)
     out = (r.stdout or "") + (r.stderr or "")
     return next((l for l in out.strip().splitlines()
                  if " passed" in l or "failed" in l or "error" in l), out[-200:])

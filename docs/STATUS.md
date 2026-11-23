@@ -48847,3 +48847,14 @@ Evidence: `tmp/d1551_census.txt`, `tmp/d1551_measure.txt`, `tmp/d1551_census_aft
 `tmp/d1551_door_red.txt`, `tmp/d1551_door_green.txt`, `tmp/d1551_arms.txt`, `tmp/d1551_full_suite.txt`,
 and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.txt`,
 `tmp/d1552_pre_measure.txt`, `tmp/d1553_pre_measure.txt`, `tmp/d1553_node_proxy_probe.txt`.
+
+
+## 1416. D1556 — integration: two red gates cleared, and the LLM API is now closed by directive
+
+**Owner directive (2026-11-23): the `gpt-6.2-sol` API is closed for cost/usage control; further development cannot call it.** Recorded here as a standing constraint: all later narrative content is written in controlled vocabulary by the code lane (no live beat selection), and rule-based/API-free work continues unchanged. Earlier live measurements in this ledger remain historical facts, not a promise of a live lane.
+
+**Two red gates from the D1548–D1551 parallel wave, cleared (§二 take-over):**
+- `check_platform_client_reuse.mjs`: D1548 added `trust_env=False` to the pooled AsyncClient so the internal hop stops inheriting the ambient proxy, but the gate's BUILD-ONCE needle still pinned the pre-D1548 literal. Updated the needle (and both self-test mutations) to the whole current construct; the gate now pins timeout AND no-ambient-proxy. Self-test 22 corruption arms + 1 control all redden for cause / stay green.
+- `check_comment_citations.mjs`: four line-number cites drifted onto blank lines after `search/service.py` grew. Repointed to the live anchors — district→geo placement `service.py:1123-1127`, candidate cut `service.py:1601`, kind→subject_types `search/service.py:1084-1090` — and disambiguated the admin `application.yaml:18-21` cite to its full service path. 314/314 cites resolve.
+
+**Integrated parallel work D1554/D1555** (compose env names resolve in their own services; spawned doors use `stdin=DEVNULL` so pytest collection no longer aborts on an invalid inherited handle) — 20/20 AI pins green; web `client-boundary-copy.test.ts` 168/168; Maven cloud modules compile. `verify_all` **74 PASS / 0 FAIL / 2 honest UNCHECKED**.

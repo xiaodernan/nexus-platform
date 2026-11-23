@@ -66,6 +66,7 @@ def _decide(env: dict[str, str], tmp_path) -> dict:
     run_env = dict(env)
     run_env["PYTHONPATH"] = str(stub)             # captured before site-packages, so run() is ours
     r = subprocess.run([sys.executable, str(AI_DIR / "start_ai.py")], env=run_env, cwd=str(AI_DIR),
+                       stdin=subprocess.DEVNULL,                                  # the child reads no console
                        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
     out = (r.stdout or "") + (r.stderr or "")
     bind = re.search(r"^BIND (\{.*\})", out, re.M)

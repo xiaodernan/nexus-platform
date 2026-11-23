@@ -463,7 +463,7 @@ def _filter_static(rows: list[dict[str, Any]], text: str,
         # `haversine_expr` mirrors in SQL, so the two lanes measure with one formula.
         # D663: a row that states NO location is not deleted when it states the DISTRICT the
         # request named. The plan places a district filter at the district's own coordinates
-        # (`DISTRICTS[...]`, `service.py:922-927`) so the live lane can order by distance, and the
+        # (`DISTRICTS[...]`, `service.py:1123-1127`) so the live lane can order by distance, and the
         # clause above has already answered the district the row claims - so a row without a point
         # is in the pool by its own statement. Only a row that states NEITHER is dropped, which is
         # what the live `loc.id IS NOT NULL` does to it. The offline demo catalogue is all of this

@@ -68,7 +68,7 @@ def _run(venv: Path, *extra: str, encoding: str | None = None) -> subprocess.Com
         cmd += ["--locale-encoding", encoding]
     return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8",
                           cwd=str(REPO_ROOT), env={**os.environ, "PYTHONUTF8": "1"},
-                          check=False)
+                          check=False, stdin=subprocess.DEVNULL)
 
 
 def _broken_tree(tmp_path: Path) -> tuple[Path, Path]:
@@ -122,7 +122,7 @@ def test_the_repaired_importer_installs_the_path_it_moved(tmp_path: Path) -> Non
               f"import {IMPORTER}; import d580_probe; print(d580_probe.MARKER)")
     result = subprocess.run([sys.executable, "-E", "-S", "-c", script],
                             capture_output=True, text=True, encoding="utf-8", check=False,
-                            env={**os.environ, "PYTHONUTF8": "1"})
+                            env={**os.environ, "PYTHONUTF8": "1"}, stdin=subprocess.DEVNULL)
     assert "1" in result.stdout, (
         f"the importer did not let an interpreter reach {project}: {result.stderr or result.stdout}")
 

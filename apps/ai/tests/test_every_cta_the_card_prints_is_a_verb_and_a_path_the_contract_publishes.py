@@ -127,7 +127,7 @@ def _cards_from(database_url: str) -> list[dict]:
     with TestClient(create_app(settings)) as client:
         out = []
         # the merchant plane and the offering plane: `filters.kind` is the reader that puts
-        # `subject_types` on the offering lane (`search/service.py:675`), and the six queries of the
+        # `subject_types` on the offering lane (`search/service.py:1084-1090`), and the six queries of the
         # D619 census answered only merchants, so the two offering branches were never served once.
         for body in ({"query": "browse restaurant", "limit": 6},
                     {"query": "ramen", "filters": {"kind": "service"}, "limit": 6},

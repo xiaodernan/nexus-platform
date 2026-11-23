@@ -19,6 +19,12 @@ import { getDict } from './i18n';
  * "no function may CROSS the boundary". This file discovers the crossings the way the product
  * makes them — a page hands `dict.<path>` to a component — and checks the value it hands.
  *
+ * Four spellings carry a dictionary value across the boundary and all four are policed: the direct
+ * form, the local alias, a `{...spread}` (every key crosses, so the whole subtree is checked), and
+ * a helper that forwards a subtree (`copy={pick(dict.x)}` — the argument is the subtree the helper
+ * draws from). D1529 measured the last two as absent and banned the SHAPE by census; this reader
+ * resolves them instead, so a future one is checked by VALUE rather than forbidden outright.
+ *
  * Discovery is textual (which page hands which path to which component); the check is a runtime
  * walk of the real dictionary object, so a new function added under a crossed path reddens here
  * rather than in a user's browser.

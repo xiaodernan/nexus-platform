@@ -74,7 +74,7 @@ REPO = Path(__file__).resolve().parents[3]
 def _tracked_root() -> Path:
     """The repository whose INDEX `git grep` can read, which an arm tree is not."""
     top = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--show-toplevel"],
-                         capture_output=True, text=True, encoding="utf-8", errors="replace")
+                         capture_output=True, text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
     return Path(top.stdout.strip()) if top.returncode == 0 else REPO
 
 
@@ -278,7 +278,7 @@ def test_no_shipped_reader_asks_for_a_pointer_inside_a_value_block():
     g = subprocess.run(["git", "-C", str(TRACKED), "grep", "-nE",
                         r"(rating|distance)\s*[?.]+\s*fact_id", "--",
                         "apps/web", "packages/ui/src", "packages/types/src"],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
     if g.returncode not in (0, 1):
         pytest.skip(f"git grep unavailable: {g.stderr[:120]}")
     hits = [ln for ln in g.stdout.splitlines() if ln.strip()]
@@ -287,7 +287,7 @@ def test_no_shipped_reader_asks_for_a_pointer_inside_a_value_block():
         f"{hits[:4]} - the removal needs the reader moved to `facts[]` first")
     u = subprocess.run(["git", "-C", str(TRACKED), "grep", "-n", "-e", "findFact(card, 'rating')",
                         "--", "packages/ui/src/trust/Renderers.tsx"],
-                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+                       capture_output=True, text=True, encoding="utf-8", errors="replace", stdin=subprocess.DEVNULL)
     assert u.returncode == 0, (
         "the trust badge no longer resolves the rating through a fact - D28's ruling rests on "
         "that renderer reading `facts[]`, so the whole premise needs re-reading")

@@ -43,6 +43,28 @@ def compose_text_for(service: str) -> str:
     return "\n".join(lines[start:])
 
 
+def services_region() -> list[str]:
+    """The lines inside the top-level `services:` mapping, and only those.
+
+    `compose_text_for` matches any two-space key, which is right for a named service but cannot answer
+    "what services does this deployment have": the children of the top-level `volumes:` mapping
+    (`pgdata:`, `redisdata:`) are the same shape. A census that walked them as services would report
+    them as blocks with no reader.
+    """
+    lines = COMPOSE.read_text(encoding="utf-8").splitlines()
+    start = next((i for i, l in enumerate(lines) if l == "services:"), None)
+    if start is None:
+        raise AssertionError("infra/docker-compose.yml has no `services:` mapping")
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"^[a-z0-9_-]+:$", lines[i])),
+               len(lines))
+    return lines[start + 1:end]
+
+
+def compose_services() -> list[str]:
+    return [m.group(1) for m in (re.match(r"^  ([a-z0-9_-]+):$", l) for l in services_region()) if m]
+
+
+
 def compose_environment(service: str) -> dict[str, str]:
     """The `environment:` mapping of one service, with `${X:-default}` resolved to the default.
 
@@ -82,12 +104,58 @@ def published_container_port(service: str) -> str:
 
 def unread_ai_keys() -> list[tuple[str, str]]:
     """Every `ai:` environment key with no reader in the AI's own source, as (key, value)."""
-    import subprocess
-
     dead = []
     for key, value in sorted(compose_environment("ai").items()):
-        r = subprocess.run(["git", "grep", "-l", key, "--", *AI_READER_ROOTS], cwd=REPO,
-                           capture_output=True, text=True, encoding="utf-8", errors="replace")
-        if not [l for l in r.stdout.splitlines() if l.strip()]:
+        if not source_names(key, AI_READER_ROOTS):
             dead.append((key, value))
     return dead
+
+
+# Where each service's configuration is consumed. A key with no hit in its own row's roots is a key that
+# service cannot hear. `postgres` and `redis` are upstream images: what they read is their entrypoint
+# script, and the only part of that this repo owns is the init SQL bind-mounted at compose:53, so it is
+# in the row rather than being waved through as "third-party image".
+SERVICE_READER_ROOTS: dict[str, list[str]] = {
+    "postgres": ["infra/postgres/init", "infra/db/migrations"],
+    "redis": [],
+    "platform": ["services/platform/src/main"],
+    "ai": list(AI_READER_ROOTS),
+    "web": ["apps/web/src", "apps/web/next.config.mjs", "apps/web/package.json"],
+    "eureka": ["services/cloud/eureka-server/src/main", "services/cloud/Dockerfile"],
+    "config-server": ["services/cloud/config-server/src/main", "services/cloud/Dockerfile"],
+    "gateway": ["services/cloud/gateway/src/main", "services/cloud/Dockerfile"],
+    "admin-server": ["services/cloud/admin-server/src/main", "services/cloud/Dockerfile"],
+    "insight-service": ["services/cloud/insight-service/src/main", "services/cloud/Dockerfile"],
+}
+
+# Names a RUNTIME resolves without any source naming them: Spring Boot's relaxed binding (`SPRING_*`,
+# `SERVER_PORT`), the Postgres image's own entrypoint (`POSTGRES_*`, `PGDATA`), the container's C
+# library (`TZ`) and the Node/JVM launchers. Deliberately narrow: `NEXUS_*` is NOT here, because a
+# `NEXUS_` name only means something where a file in the service's own tree spells it out.
+FRAMEWORK_CONVENTION = re.compile(r"^(SPRING_|SERVER_PORT$|POSTGRES_|PGDATA$|TZ$|JAVA_|NODE_ENV$)")
+
+
+def source_names(key: str, roots: list[str]) -> bool:
+    """Does any tracked file under these roots spell this name?"""
+    if not roots:
+        return False
+    r = subprocess.run(["git", "grep", "-l", key, "--", *roots], cwd=REPO, stdin=subprocess.DEVNULL,
+                       capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return any(l.strip() for l in r.stdout.splitlines())
+
+
+def unread_compose_keys() -> list[tuple[str, str, str]]:
+    """Every (service, key, value) the deployment configures under a name that service cannot hear."""
+    dead = []
+    for service in compose_services():
+        roots = SERVICE_READER_ROOTS.get(service)
+        if roots is None:
+            raise AssertionError(
+                f"compose service `{service}` has no reader roots declared in deploy_plane.py - "
+                "a new service must say where its configuration is consumed, or the census would "
+                "report it as unread and a later sweep would 'fix' it by deleting the block")
+        for key, value in sorted(compose_environment(service).items()):
+            if not source_names(key, roots) and not FRAMEWORK_CONVENTION.match(key):
+                dead.append((service, key, value))
+    return dead
+

@@ -106,8 +106,13 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"
       NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:-}
-      NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
-      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}
+      # D1554: services/platform resolves its default tenant as NEXUS_TENANT (`application.yml:78`'s
+      # `${NEXUS_TENANT:hong-kong}`, bound by `TenantFilter.java:23`), not NEXUS_DEFAULT_TENANT - the
+      # block carried the operator's knob name and the tier never heard it. The knob keeps its spelling in
+      # `.env`; the container gets the name the code reads. `NEXUS_CORS_ORIGINS` left this block in the
+      # same sweep: `git grep -i cors services/platform/src/main` is empty, and the gateway owns the
+      # allow-list (`services/cloud/gateway/src/main/resources/application.yaml:92`, its own copy below).
+      NEXUS_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
       # The internal door the AI persists merchant-agent dialogue through. Shared secret read in
       # constant time by AiServiceTokenGuard; must match the AI service's own NEXUS_AI_INTERNAL_TOKEN.
       NEXUS_AI_INTERNAL_TOKEN: ${NEXUS_AI_INTERNAL_TOKEN:-dev_nexus_internal_token_for_local_compose_0123456789abcdef}
@@ -165,11 +170,19 @@ services:
     restart: unless-stopped
     depends_on: [platform, ai]
     environment:
-      NEXT_PUBLIC_PLATFORM_URL: ${NEXT_PUBLIC_PLATFORM_URL:-http://localhost:8080}
-      NEXT_PUBLIC_AI_URL: ${NEXT_PUBLIC_AI_URL:-http://localhost:8000}
-      PLATFORM_INTERNAL_URL: http://platform:8080
-      AI_INTERNAL_URL: http://ai:8000
-      NEXUS_DEFAULT_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
+      # D1554: these are the names the Next SERVER resolves for its own hops - `env.ts:36,39` read
+      # PLATFORM_API_BASE_URL / AI_API_BASE_URL and fall back to the HOST lane's `127.0.0.1:8090` and
+      # `:8010`, so a container that is not given these names calls itself and is refused. The two
+      # `NEXT_PUBLIC_*` lines are gone: no file in apps/web spells them, and a `NEXT_PUBLIC_` value is
+      # inlined by `next build` from the BUILD environment, so a key in a running container's
+      # `environment:` could not reach a bundle that was already built. Deleting them is not a regression
+      # because the browser talks to the Next server, not to these URLs (docs/API_CONTRACT.md §0.1).
+      # The tenant default follows the same rule: `env.ts:47` resolves NEXUS_TENANT.
+      # NB: this tier has no image yet - `apps/web/Dockerfile` does not exist (line 168 says so) - so
+      # what the gate proves is name-vs-reader, not a container that answers.
+      PLATFORM_API_BASE_URL: http://platform:8080
+      AI_API_BASE_URL: http://ai:8000
+      NEXUS_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}
     ports:
       - "127.0.0.1:${NEXUS_WEB_HOST_PORT:-3000}:3000"
 
@@ -251,7 +264,10 @@ services:
     environment:
       NEXUS_ADMIN_PORT: 8080
       NEXUS_EUREKA_URI: http://eureka:8761/eureka/
-      NEXUS_ADMIN_REGISTER: "false"
+      # D1554: `NEXUS_ADMIN_REGISTER` was deleted here. Nothing in services/cloud/admin-server spells it,
+      # and the module states the design itself (`services/cloud/admin-server/src/main/resources/application.yaml:18-21`, "The admin server WATCHES; it
+      # does not register", with `register-with-eureka: false`). A knob no code resolves is an invitation
+      # to turn it.
       TZ: Asia/Hong_Kong
     ports:
       - "127.0.0.1:${NEXUS_ADMIN_HOST_PORT:-25445}:8080"
