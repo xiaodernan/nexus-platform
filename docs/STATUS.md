@@ -49193,3 +49193,89 @@ Whole-suite verdict on the shipped bytes: **38068 passed, 525 skipped, 0 failed 
 (`tmp/d1555_suite_final3.txt`). This run includes D1570's four live-funnel legs (`bc3cfa2`); relative to
 §1454's 38054 passed / 522 skipped it is +14 passed / +3 skipped, of which 11 belong to D1554/D1555 and
 the same 2 remain explicitly unattributed. The measured totals are **6 arms** and **9 sites**.
+
+## 1472. D1571 · the full profile now builds the images it declares
+
+**Number correction.** This unit was provisionally labelled D1556, but that number already names §1455's
+content milestone. An all-ref census (`tmp/d1571_number_census.txt`) found D1571/D1572 unused across local
+and remote refs; the unit, audit follow-up, test file and mutation harness were renumbered before the final
+runs. Early clean-build records retain their provisional `d1556_*` filenames and are cited as such below.
+
+§1470 closed the deployment's name-vs-reader defect but explicitly left the platform and web without images.
+The `full` profile still declared `build:` for all three application tiers, so compose named two recipes a
+clean checkout could not open. D1571 supplies them without pretending that a static check is a container run.
+
+* `services/platform/Dockerfile` builds from the repository root with Maven/JDK 25, copies
+  `infra/db/migrations` before Maven runs because the POM's resource plugin reads `../../infra/db/migrations`,
+  packages `nexus-platform.jar`, and launches that jar on a JRE 25 runtime stage.
+* `apps/web/Dockerfile` builds from the repository root with Node 24, installs the npm workspaces, copies
+  `packages/` and `docs/evidence`, inlines `NEXT_PUBLIC_DATA_MODE=live` at build time, prunes dev dependencies,
+  and starts the production Next server. The evidence copy is not decoration: `real-trace.ts` reads
+  `docs/evidence/user-journey-2026-11-16.md` when `/command` renders its measured trace.
+* `infra/docker-compose.yml` points platform and web at those recipes with root contexts, passes the web's
+  two public values as build arguments, removes the AI's unread `/migrations` mount, and keeps Postgres's
+  migration mount used by `make db-migrate`.
+* The new root `.dockerignore` excludes local env files, dependencies, Next/Maven/workspace outputs,
+  caches and `tmp/` evidence. `docs/DEPLOYMENT.md`, `docs/ENVIRONMENT_REPORT.md` and `Makefile` now describe
+  the shipped recipes and the still-unverified Docker-host run instead of calling the files missing.
+
+`apps/ai/tests/test_d1571_full_profile_images_exist_and_mount_only_what_ai_reads.py` is the six-leg door:
+
+| leg | claim it refuses to let drift |
+| --- | --- |
+| R1 | every `full` application's Dockerfile exists inside its declared context |
+| R2 | platform carries the POM-read migrations and copies the jar name the POM actually produces |
+| R3 | web builds the workspaces, carries runtime evidence, inlines live mode, and keeps public values out of runtime `environment:` |
+| R4 | AI has no `/migrations` reader-shaped mount; Postgres keeps the mount its migration command uses |
+| R5 | the runbook no longer calls the shipped recipes missing |
+| R6 | the root build context excludes secrets, dependencies and stale host output |
+
+**10 arms** (`tmp/d1571_arms.py` → `tmp/d1571_arms.txt`) reddened exactly their intended legs; every
+mutated file was restored byte-for-byte and md5-checked:
+
+| arm | regression | legs reddened |
+| --- | --- | --- |
+| 1 | platform Dockerfile absent | r1, r2 |
+| 2 | web Dockerfile absent | r1, r3 |
+| 3 | platform migrations `COPY` omitted | **r2 only** |
+| 4 | web defaults to `mock` | **r3 only** |
+| 5 | AI's unread migration mount restored | **r4 only** |
+| 6 | stale runbook claim restored | **r5 only** |
+| 7 | root `.dockerignore` absent | **r6 only** |
+| 8 | platform context narrowed to its service directory | r1, r2 |
+| 9 | web runtime evidence `COPY` omitted | **r3 only** |
+| 10 | workspace `dist`/`dist-test` exclusions removed | **r6 only** |
+
+The clean-context host builds ran the Dockerfiles' commands in scratch trees, not against host build output:
+
+* Platform: both Maven commands exited 0; the jar is **57,364,555 bytes**, contains **14 migrations**, and
+  holds `org/springframework/boot/loader/launch/JarLauncher.class` (`tmp/d1556_platform_context.txt`).
+* Web: `npm ci`, `next build`, `npm prune --omit=dev` and the production start command all exited 0.
+  `/`, `/hong-kong` and `/command` answered **HTTP 200**; `/command` carried both `REAL-TRACE=True` and
+  `impatient-close=True` (`tmp/d1556_clean_context.txt`). The workspace-root warning names the scratch
+  tree's second lockfile; the Docker build stage has only `/app/package-lock.json`.
+* Registry resolution succeeded without a daemon for `maven:3.9-eclipse-temurin-25`,
+  `eclipse-temurin:25-jre` and `node:24-bookworm-slim` (`tmp/d1556_maven_image.txt`,
+  `tmp/d1556_jre_image.txt`, `tmp/d1556_node_image.txt`).
+* Compose config exited 0 (`tmp/d1571_compose_config.txt`); Ruff exited 0 (`tmp/d1571_ruff_final.txt`);
+  the five deployment doors together are **26 passed** (`tmp/d1571_deploy_doors_final.txt`); all six Node
+  gates that parse compose exited 0 (`tmp/d1556_node_gates.txt`).
+* Web verification is **102 test files / 1007 tests passed**, typecheck exit 0, lint exit 0 with six
+  pre-existing warnings (`tmp/d1556_web_tests.txt`, `tmp/d1556_web_typecheck.txt`, `tmp/d1556_web_lint.txt`).
+
+The platform suite is **not** reported green: `mvn test` ran **367 tests, 0 failures, 292 errors, 5 skipped**
+and failed (`tmp/d1556_platform_tests.txt`). The cause census names PostgreSQL connection refusals on
+`127.0.0.1:5433` (`tmp/d1571_platform_causes.txt`). A HEAD archive with none of D1571's files reproduced the
+same class: `AdminConsoleApiTest` ran 7, errored 7, and failed on that refused connection
+(`tmp/d1571_platform_base_test.txt`). The archive was removed after the log was retained; this attributes
+the red to an unavailable database rather than claiming the new recipe fixed or caused it.
+
+Whole AI suite on the renumbered bytes: **38074 passed, 525 skipped, 0 failed in 749.82 s**
+(`tmp/d1571_ai_suite_final.txt`) — the six new door legs over §1471's 38068 passed, with skips unchanged.
+
+Two limits stay explicit. Docker Desktop's Linux daemon is unreachable
+(`failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine`), so no image-build,
+container-network or full-profile smoke verdict is claimed. And the clean production prune reported
+**4 vulnerabilities (3 high, 1 critical)** — Next.js, nested PostCSS, sharp and source-map-js
+(`tmp/d1556_npm_audit.json`). Those findings already live in the lockfile; they are queued as **D1572**,
+not hidden by the image delivery or "fixed" with a blind major upgrade.
