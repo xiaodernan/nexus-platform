@@ -35,6 +35,22 @@ describe('demo behavior events', () => {
     expect(r.hourly.reduce((a, h) => a + h.n, 0)).toBe(r.total_events);
   });
 
+  it('the funnel is ordered, shares are honest, and the weakest transition is named (D1569)', () => {
+    const r = demoBehavior('2026-11-21', 'zh-HK');
+    expect(r.funnel.map((f) => f.step)).toEqual(['view', 'click', 'search', 'read', 'save']);
+    // Every session starts with a view; a day's crowd may not reach every step — zero is honest.
+    expect(r.funnel[0]!.share).toBe(1);
+    expect(r.funnel.every((f) => f.share >= 0 && f.share <= 1 && f.sessions <= r.profiles.reduce((a, p) => a + p.sessions, 0))).toBe(true);
+    const weakest = r.recommendations.find((x) => x.includes('weakest transition'));
+    expect(weakest).toMatch(/demo funnel weakest transition: \w+→\w+ keeps \d+% of sessions/);
+    // Profiles: one row per ghost crowd; every session belongs to exactly one profile, and
+    // depths are real event-set sizes bounded by the pipeline length.
+    expect(r.profiles.length).toBeGreaterThan(0);
+    expect(r.profiles.every((p) => p.sessions > 0 && p.avg_depth >= 1 && p.avg_depth <= 5)).toBe(true);
+    const sorted = [...r.profiles].sort((a, b) => b.sessions - a.sessions);
+    expect(r.profiles.map((p) => p.actor)).toEqual(sorted.map((p) => p.actor));
+  });
+
   it('one day of raw events is honest and shaped right', () => {
     const rows = eventsForDay('2026-11-21', 'zh-HK');
     expect(rows.length).toBeGreaterThan(0);

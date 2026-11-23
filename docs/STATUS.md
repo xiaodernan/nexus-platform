@@ -48974,3 +48974,13 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **Gates.** web 102 files / 1,005 passed. tsc 0. atlas digest/index regenerated: 184/184/184, fence derived, lockstep PASS. verify_all NO OFFENDER. No LLM call — the API is closed.
 
 **Readers.** `apps/web/src/lib/mock/seed.ts`, `apps/web/src/lib/mock/seed-cn.ts`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/app/chronicle/page.tsx`, eight test files, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1468. D1569 — the admin analytics read grows a funnel and reader profiles (§九)
+
+**The gap.** The password-123 behavior page showed events, hourly histograms and a projection — but never WHERE the crowd falls off. A recommendation saying "improve the funnel" pointed at a funnel nobody could see.
+
+**The build.** `demoBehavior` now computes a drop-off funnel over the canonical pipeline view → click → search → read → save (session reached a step when its event NAME SET contains it, so double clicks count once), a per-profile depth table (sessions + avg event-set depth per ghost crowd), and a recommendation naming the weakest transition with its keep-rate — the first thing an operator should work on, derived from data. A day's crowd may not reach every step; a zero share is honest and rendered. The client island renders both sections with graceful degradation for the live upstream path, both arms carry the copy, and the opencc generator keeps the simplified arm in lockstep.
+
+**Gates.** web 102 files / 1,007 passed. tsc 0. verify_all NO OFFENDER. No LLM call — the API is closed.
+
+**Readers.** `apps/web/src/lib/behavior-events.ts`, `apps/web/src/components/admin-analytics.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/src/lib/behavior-events.test.ts`, `apps/web/src/lib/admin-analytics-depth.test.ts`, `docs/SHOWCASE.json`, this ledger entry.

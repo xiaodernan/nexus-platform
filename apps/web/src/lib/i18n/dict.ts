@@ -49,6 +49,9 @@ export interface Dict {
     eventsColumn: string; hourlyTitle: string; hourlyHint: string; topEventsTitle: string; recommendationsTitle: string; recommendationsHint: string;
     /** D1522: a template, not a function — this copy crosses into a client island. */
     windowLabel: string; needPassword: string; demoBadge: string;
+    /** D1569: the drop-off funnel and the per-profile depth sections. */
+    funnelTitle: string; funnelHint: string; profilesTitle: string; profilesHint: string;
+    actorColumn: string; depthColumn: string;
   };
   locale: Locale;
   htmlLang: string;
@@ -1379,6 +1382,12 @@ const zhHK: Dict = {
     windowLabel: '觀測窗口：過去 {hours} 小時',
     needPassword: '需要管理員密碼',
     demoBadge: 'Demo 資料 · 同一天的模擬讀者，非真實事件',
+    funnelTitle: '行為漏斗',
+    funnelHint: '教學：橫條是走到每一步的工作階段份額——份額跌得最狠的那一步，就是最該先修的地方。',
+    profilesTitle: '讀者畫像',
+    profilesHint: '教學：每種模擬讀者走了多少工作階段、平均走多深——畫像越深，留客越成功。',
+    actorColumn: '畫像',
+    depthColumn: '平均深度',
   },
   locale: 'zh-HK',
   htmlLang: 'zh-HK',
@@ -3659,6 +3668,12 @@ const en: Dict = {
     windowLabel: 'Window: last {hours} hours',
     needPassword: 'Admin password required',
     demoBadge: 'Demo data · simulated readers for the same day, not real events',
+    funnelTitle: 'The behavior funnel',
+    funnelHint: 'How-to: each bar is the share of sessions that reached a step - the sharpest drop is the first thing to fix.',
+    profilesTitle: 'Reader profiles',
+    profilesHint: 'How-to: how many sessions each simulated crowd ran, and how deep it went - deeper profiles mean better retention.',
+    actorColumn: 'Profile',
+    depthColumn: 'Avg depth',
   },
   locale: 'en',
   htmlLang: 'en',

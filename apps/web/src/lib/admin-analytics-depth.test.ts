@@ -21,4 +21,22 @@ describe('admin analytics depth', () => {
     expect(dict).toContain("hourlyTitle: '每小時分佈'");
     expect(dict).toContain("hourlyTitle: 'Hourly distribution'");
   });
+
+  it('renders the drop-off funnel and reader profiles the payload now carries (D1569)', () => {
+    const ui = read('apps/web/src/components/admin-analytics.tsx');
+    expect(ui).toContain('funnel?: Array<{ step: string; sessions: number; share: number }>');
+    expect(ui).toContain('profiles?: Array<{ actor: string; sessions: number; avg_depth: number }>');
+    expect(ui).toContain('copy.funnelTitle');
+    expect(ui).toContain('(data?.funnel ?? []).map(');
+    expect(ui).toContain('(data?.profiles ?? []).map(');
+    const dict = read('apps/web/src/lib/i18n/dict.ts');
+    expect(dict).toContain("funnelTitle: '行為漏斗'");
+    expect(dict).toContain("funnelTitle: 'The behavior funnel'");
+    const cn = read('apps/web/src/lib/i18n/dict-cn.ts');
+    expect(cn).toContain("funnelTitle: '行为漏斗'");
+    // The payload side actually computes the funnel and names its weakest transition.
+    const events = read('apps/web/src/lib/behavior-events.ts');
+    expect(events).toContain("const FUNNEL_STEPS = ['view', 'click', 'search', 'read', 'save'] as const;");
+    expect(events).toContain('demo funnel weakest transition:');
+  });
 });

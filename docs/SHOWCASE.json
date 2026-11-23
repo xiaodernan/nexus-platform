@@ -1,11 +1,12 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1568",
+  "milestone": "D1569",
   "milestone_full": "Layer S continues: 184 Hong Kong chapters in three arms, atlas lockstep 183/183/183 with a derived fence. 184 Hong Kong chapters in three arms. Two curated arcs walk the corpus — the ticket arc (179-183, one object across a whole day) and the crossing arc (64-61-62-65-67, one border from midnight into the morning); chapter 184 closes the ticket's story — the time-only ticket is claimed at 23:30 — both server-rendered rails with titles derived from the live locale corpus; no model, no network, no client state. The stack was siege-tested at PRODUCTION rate limits: 2,702 credential-stuffing requests ALL 429 at p50=25 ms, zero 5xx, read plane 244/244 throughout at p50=8 ms. Spring Cloud edge (Eureka/Config/Gateway/OpenFeign/LoadBalancer/resilience4j), 12 StateGraph lanes, admin behavior analytics (password 123), embedded handbook, contract-enforced English arm. The gpt-6.2-sol API was closed by directive; all recent work is code-and-rules only. verify_all NO OFFENDER, 1005 web + 38k AI green.",
   "headline": "184 Hong Kong chapters in three arms · two curated arcs walkable (ticket 179-183, crossing 64-67) · production-limit siege: 2,702 stuffing requests ALL 429 at p50=25ms, zero 5xx, read plane 244/244 · Spring Cloud edge + 12 StateGraph lanes · 1005 web tests + 38k AI green · LLM API closed.",
   "as_of": "2026-11-23",
   "updated_at_commit": "TBD",
   "features": [
+    "D1569: admin analytics depth - the drop-off funnel (view/click/search/read/save session shares, weakest transition named with a keep-rate) and per-profile reader depth join the password-123 behavior read; demo payload and both arms' copy, live path degrades gracefully.",
     "D1568: chapter 184 — the coda: at 23:30 the ticket that carried only a time is claimed at the Central terminus; the count ripple moved every claim from 183 to 184 across both arms, seven count pins and the atlas (184/184/184, fence derived).",
     "D1567: the crossing arc — five chapters (64, 61, 62, 65, 67), one border, a night into a morning, walkable from any of its chapters; the arc primitive is now shared (story-arc.ts) and the handbook teaches both arcs in every arm.",
     "D1563: the ticket arc — five chapters (179-183), one object, a whole day, made walkable from any of its chapters; curated, server-rendered, local-only.",
@@ -18,6 +19,7 @@
   "milestone_full_zh": "Layer S 持續：184 章香港系列三語臂，圖譜鎖步 184/184/184，圍欄由索引推導。兩條策展弧已可走完——「票之弧」（179–183，一件東西走過一整天）與「渡之弧」（64–61–62–65–67，一道口岸由午夜走到早晨）——皆為服務端渲染路徑，標題由當前語言語料即時推導；零模型、零網絡、零客戶端狀態。以生產級限流實測攻城：2,702 發撞庫全部 429（p50=25ms、零 5xx），讀面全程 244/244（p50=8ms）。Spring Cloud 邊緣、12 條 StateGraph、密碼 123 管理員行為分析、嵌入式說明書、契約強制英文臂。gpt-6.2-sol API 已按指令關閉，近期工作皆為純程式與規則。verify_all 全綠，web 1005＋AI 38k 全綠。",
   "headline_zh": "184 章香港系列三語臂 · 兩條策展弧可走完（票之弧 179–183、渡之弧 64–67）· 生產級攻城：2,702 發撞庫全數 429、p50=25ms、零 5xx、讀面 244/244 · Spring Cloud 邊緣＋12 條 StateGraph · 1005 web＋38k AI 全綠 · 大模型 API 已關閉。",
   "features_zh": [
+    "D1569：管理員分析深化——行為漏斗（view/click/search/read/save 的工作階段份額，点名掉得最狠的一步）與讀者畫像深度進入密碼 123 行為分析；demo 載荷與兩臂文案，live 路徑優雅降級。",
     "D1568：第 184 章——尾聲：23:30，那張只寫了時間的票在中環終點站被認走；計數漣漪把兩臂、七個計數釘與圖譜（184/184/184）全部推到新數。",
     "D1567：「渡之弧」——五章（64、61、62、65、67）、一道口岸、一夜到早，可從任一章走完；弧原語下沉為共享模組（story-arc.ts），說明書三臂都教兩條弧。",
     "D1563：「票之弧」——五章（179–183）、一件東西、一整天，可從任一章走完；策展式、服務端渲染、純本機。",

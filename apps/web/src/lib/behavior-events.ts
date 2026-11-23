@@ -27,9 +27,20 @@ export interface DemoBehavior {
   top_events: Array<{ name: string; n: number }>;
   sessions: Array<{ session_id: string; n: number; first_at: string; last_at: string }>;
   recommendations: string[];
+  /**
+   * D1569 — the drop-off funnel: the share of ghost sessions that reached each step of the
+   * engagement pipeline, in order. Curated step order; a session "reached" a step when its
+   * event set contains it, regardless of sequence.
+   */
+  funnel: Array<{ step: string; sessions: number; share: number }>;
+  /** D1569 — per-actor-profile depth: how many sessions each profile ran, and how deep each went. */
+  profiles: Array<{ actor: string; sessions: number; avg_depth: number }>;
   degraded: boolean;
   demo: boolean;
 }
+
+/** The engagement pipeline the funnel measures, in order. */
+const FUNNEL_STEPS = ['view', 'click', 'search', 'read', 'save'] as const;
 
 /** Profile index → event sequence. Mirrors the stable order of simulateJourneys' profiles. */
 const PROFILE_EVENTS: string[][] = [
@@ -124,7 +135,37 @@ export function demoBehavior(baseDay: string, locale: 'zh-HK' | 'zh-CN' | 'en', 
     last_at: String(s.last).padStart(2, '0') + ':00',
   }));
 
-  // data-derived measures — the same honesty rule as routes_behavior._recommendations
+  // D1569 — the funnel: sessions are counted by their event NAME SET, so 'search' twice still
+  // counts once. Shares are over the total session count, not the previous step's.
+  const sessionNames = new Map<string, Set<string>>();
+  const sessionActor = new Map<string, string>();
+  for (const e of events) {
+    if (!sessionNames.has(e.session_id)) sessionNames.set(e.session_id, new Set());
+    sessionNames.get(e.session_id)!.add(e.name);
+    sessionActor.set(e.session_id, e.actor);
+  }
+  const totalSessions = sessionNames.size || 1;
+  const funnel = FUNNEL_STEPS.map((step) => {
+    const reached = [...sessionNames.values()].filter((set) => set.has(step)).length;
+    return { step, sessions: reached, share: Math.round((reached / totalSessions) * 1000) / 1000 };
+  });
+  // The weakest transition: the largest share drop between consecutive steps — the step where
+  // the crowd falls off hardest, and therefore the first thing an operator should work on.
+  const profilesMap = new Map<string, { sessions: number; depthSum: number }>();
+  for (const [session_id, set] of sessionNames) {
+    const actor = sessionActor.get(session_id) ?? 'unknown';
+    const p = profilesMap.get(actor) ?? { sessions: 0, depthSum: 0 };
+    p.sessions += 1;
+    p.depthSum += set.size;
+    profilesMap.set(actor, p);
+  }
+  const profiles = [...profilesMap.entries()]
+    .map(([actor, p]) => ({
+      actor,
+      sessions: p.sessions,
+      avg_depth: Math.round((p.depthSum / p.sessions) * 100) / 100,
+    }))
+    .sort((a, b) => b.sessions - a.sessions);
   const recommendations: string[] = [];
   if (projection.length >= 2) {
     const a = projection[0]!.projected;
@@ -134,6 +175,21 @@ export function demoBehavior(baseDay: string, locale: 'zh-HK' | 'zh-CN' | 'en', 
   const peak = hourly.indexOf(Math.max(...hourly));
   recommendations.push(`demo peak hour ${String(peak).padStart(2, '0')}:00 carries ${hourly[peak]} events`);
   recommendations.push(`demo funnel: ${top.find((t) => t.name === 'search')?.n ?? 0} search / ${top.find((t) => t.name === 'save')?.n ?? 0} save events across ${sessions.size} ghost sessions`);
+  let weakest = -1;
+  let weakestDrop = 0;
+  for (let i = 1; i < funnel.length; i += 1) {
+    const drop = funnel[i - 1]!.share - funnel[i]!.share;
+    if (drop > weakestDrop) {
+      weakestDrop = drop;
+      weakest = i;
+    }
+  }
+  if (weakest > 0) {
+    const kept = Math.round(funnel[weakest]!.share * 100);
+    recommendations.push(
+      `demo funnel weakest transition: ${funnel[weakest - 1]!.step}→${funnel[weakest]!.step} keeps ${kept}% of sessions — the first thing an operator should work on`,
+    );
+  }
 
   return {
     window_hours: hours,
@@ -144,6 +200,8 @@ export function demoBehavior(baseDay: string, locale: 'zh-HK' | 'zh-CN' | 'en', 
     top_events: top,
     sessions: sessionRows,
     recommendations,
+    funnel,
+    profiles,
     degraded: false,
     demo: true,
   };

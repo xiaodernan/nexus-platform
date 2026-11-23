@@ -16,6 +16,9 @@ interface Behavior {
   top_events: Array<{ name: string; n: number }>;
   sessions: Array<{ session_id: string; n: number; first_at: string; last_at: string }>;
   recommendations: string[];
+  /** D1569 — the drop-off funnel and the per-profile depth (demo payload; live may omit them). */
+  funnel?: Array<{ step: string; sessions: number; share: number }>;
+  profiles?: Array<{ actor: string; sessions: number; avg_depth: number }>;
   demo?: boolean;
 }
 
@@ -218,6 +221,57 @@ export function AdminAnalyticsClient({ copy }: { copy: AdminAnalyticsCopy }) {
                     {row.session_id}
                   </td>
                   <td className="p-2 text-ink-strong">{row.n}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
+
+      {/* D1569 — the drop-off funnel: where the crowd falls off, step by step. */}
+      {(data?.funnel?.length ?? 0) > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold text-ink-strong">{copy.funnelTitle}</h2>
+          <p className="mt-1 text-xs text-ink-muted">{copy.funnelHint}</p>
+          <div className="mt-4 flex flex-col gap-2">
+            {(data?.funnel ?? []).map((row) => (
+              <div key={row.step} className="flex items-center gap-3">
+                <span className="w-20 shrink-0 font-mono text-xs text-ink-strong">{row.step}</span>
+                <div className="h-4 flex-1 rounded bg-canvas" aria-hidden="true">
+                  <div
+                    className="h-4 rounded bg-accent/70"
+                    style={{ width: `${Math.max(2, Math.round(row.share * 100))}%` }}
+                    title={`${row.sessions} sessions · ${Math.round(row.share * 100)}%`}
+                  />
+                </div>
+                <span className="w-24 shrink-0 text-right text-2xs text-ink-muted">
+                  {row.sessions} · {Math.round(row.share * 100)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* D1569 — per-profile depth: who the ghost crowd is, and how deep each crowd reads. */}
+      {(data?.profiles?.length ?? 0) > 0 ? (
+        <section className="mt-10">
+          <h2 className="text-lg font-semibold text-ink-strong">{copy.profilesTitle}</h2>
+          <p className="mt-1 text-xs text-ink-muted">{copy.profilesHint}</p>
+          <table className="mt-3 w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-2xs uppercase tracking-[0.14em] text-ink-faint">
+                <th className="p-2">{copy.actorColumn}</th>
+                <th className="p-2">{copy.sessionsTitle}</th>
+                <th className="p-2">{copy.depthColumn}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data?.profiles ?? []).map((row) => (
+                <tr key={row.actor} className="border-b border-line/60">
+                  <td className="p-2 font-mono text-xs text-ink-muted">{row.actor}</td>
+                  <td className="p-2 text-ink-strong">{row.sessions}</td>
+                  <td className="p-2 text-ink-strong">{row.avg_depth.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
