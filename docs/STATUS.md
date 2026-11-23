@@ -48926,3 +48926,13 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **Gates.** ticket-arc + wiring 8/8 (walk shape/ends, all five slugs in all three arms, outside chapters excluded, the in-story ticket test, both copy arms, page mount, local titles). Full web **101 files / 994 passed** (+10). tsc 0. check_simplified_mirror PASS. check_ui_script 0 offenders. verify_all NO OFFENDER (74 PASS / 0 FAIL). No LLM call — the API is closed.
 
 **Readers.** `apps/web/src/lib/ticket-arc.ts`, `apps/web/src/lib/ticket-arc.test.ts`, `apps/web/src/lib/ticket-arc-wiring.test.ts`, `apps/web/src/components/ticket-arc-rail.tsx`, `apps/web/app/guides/[slug]/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, this ledger entry.
+
+## 1463. D1564 — the io fact pack was two milestones stale: D1502 at the entry point while master ran D1563
+
+**The audit.** §十 asks that the entry page show the newest result. Reading the shipped fact pack rather than the ledger found `assets/nexus-platform/latest.json` and BOTH static blocks in `index.html` still at D1502 / 171 chapters / 1,758 commits. D1558's ledger had claimed "LIVE at D1557 / 180 chapters", but its commit in this repo touched only `docs/` — no file in the io repository changed. A claim in a ledger is not a fact in the product; this entry is the correction.
+
+**The sync.** Rewrote the fact pack from measured git facts (head a7376fc, 1,830 commits, pushed 2026-11-23) and the current corpus (183 chapters, atlas lockstep 183/183/183) — headline, milestone_full, features and their Simplified arms all re-aimed, with the API closure stated plainly rather than promising live model runs. Both `index.html` static blocks (zh / en) moved to the same facts; no stale D1502 / D1557 / 171 / 180 string remains in the nexus blocks. This repo's `docs/SHOWCASE.json` was moved from D1557 to the same D1563 fact set so the two sources no longer disagree.
+
+**The merge discipline.** The io repo had moved on in parallel (D1557 fact pack + specproof syncs). A direct push was rejected as non-fast-forward; fetched and rebased, resolving the two `index.html` blocks and `latest.json` by taking the newer D1563 side (the upstream side was D1557/180). Only nexus-owned files were touched; the parallel session's career-os / crossrealm / specproof work was left intact.
+
+**Readers.** `docs/SHOWCASE.json`, this ledger entry; in the io repo: `assets/nexus-platform/latest.json`, `index.html`.

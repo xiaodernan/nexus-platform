@@ -1,27 +1,25 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1557",
-  "milestone_full": "Layer S - Shui Chuen O - is OPEN. All 180 Hong Kong chapters ship in three arms (Traditional HK / opencc Simplified fold / full English prose). Layer R closed with the brass tags claimed; Layer S follows Ah Man at the first bus in Sha Tin, the nameless ticket that carried only a time, and the kept ticket he waits with the next morning. Deep LLM lanes (world guide, story recap, Wayfinder, cross-chapter corpus RAG, real Wikipedia facts) run with a bounded process-local replay cache. Admin analytics derives next-step measures from real numbers and renders the hourly histogram; deterministic labelled ghost events feed the offline view. IMPORTANT: the gpt-6.2-sol API has been closed by directive for cost control; all later chapters are written in controlled vocabulary by the code lane, and no further live model calls are assumed. Full AI suite 38,065 green; web 975 green; verify_all NO OFFENDER.",
-  "headline": "Layer S open · 180 chapters in three arms · no further live model calls · bounded replay cache · real web facts · admin measures from numbers · every gate green.",
+  "milestone": "D1563",
+  "milestone_full": "Layer S continues: 183 Hong Kong chapters in three arms, atlas lockstep 183/183/183 with a derived fence. The five-chapter ticket arc (179–183) is now a curated, server-rendered walk from any of its chapters — no model, no network, no client state. The stack was siege-tested at PRODUCTION rate limits: 2,702 credential-stuffing requests ALL 429 at p50=25 ms, zero 5xx, read plane 244/244 throughout at p50=8 ms. Spring Cloud edge (Eureka/Config/Gateway/OpenFeign/LoadBalancer/resilience4j), 12 StateGraph lanes, admin behavior analytics (password 123), embedded handbook, contract-enforced English arm. The gpt-6.2-sol API was closed by directive; all recent work is code-and-rules only. verify_all NO OFFENDER, 994 web + 38k AI green.",
+  "headline": "183 Hong Kong chapters in three arms · the ticket arc (179-183) made walkable · production-limit siege: 2,702 stuffing requests ALL 429 at p50=25ms, zero 5xx, read plane 244/244 · Spring Cloud edge + 12 StateGraph lanes · 994 web tests + 38k AI green · LLM API closed.",
   "as_of": "2026-11-23",
-  "updated_at_commit": "3771e93",
+  "updated_at_commit": "a7376fc",
   "features": [
-    "D1557: chapter 180 - waiting once more with the kept ticket. Arc 180 chapters, three arms; WORLD_ROADMAP drift repaired (it still said 175 / Layer R); Layer R closed 167-177, Layer S opens at 178.",
-    "API closure: the gpt-6.2-sol key is closed by directive for cost control. No further live beats; chapters are written by the code lane in controlled vocabulary. Historical live measurements remain facts, not a promise.",
-    "D1513: deterministic labelled ghost events derived from the /insights reader simulator now feed the offline admin analytics read (password 123); no more fake zeros on an unreachable read.",
-    "D1512: admin \"next measures\" are derived from real numbers (OLS slope, peak hour, funnel counts, session density) and the server's hourly histogram is finally rendered.",
-    "D1499: provider cache flicker measured (95.3% / 0% on identical calls) and removed with a bounded in-process replay arm: 1 provider call + 5 zero-token replays.",
-    "D1497: cross-chapter RAG over real chapter bodies (7,937-token prompt measured) with fenced citations; zero-token Wikipedia facts door also live."
+    "D1563: the ticket arc — five chapters (179-183), one object, a whole day, made walkable from any of its chapters; curated, server-rendered, local-only.",
+    "D1562: chapter 183 — the three-name ticket crosses the harbour at 23:05 and lands beside ANOTHER ticket already waiting at the Central terminus.",
+    "D1561: chapter 182 — the second name comes to claim the ticket; the count ripple caught and fixed a self-contradicting series claim.",
+    "D1541: siege re-measured at PRODUCTION limits — 10 grants then the 429 wall; stuffing 2,702 ALL 429 at p50=25ms; read plane 244/244 throughout, zero 5xx.",
+    "D1540: World Answer full-read tier (40x4000, the retrieval contract's own clamps) toward the 50k-token context goal; the live measurement is pending — the key was exhausted and the API is now closed."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page.",
-  "milestone_full_zh": "Layer S（水泉澳邨）已開啟。全部 180 章香港系列以三語臂呈現（繁體香港／opencc 簡體／完整英文）。Layer R 以銅牌被認走收官；Layer S 跟著阿文在沙田等頭班車、那張只有時間的無名票，以及隔天他帶著留下來的票再等一次。深度 LLM 通道（世界向導、故事回顧、Wayfinder、全語料問答、真實維基資料）配合有界進程內重播快取運行。管理員分析從真實數字推導下一步措施並顯示每小時分佈；確定性且標明來源的模擬事件供離線檢視。**重要：gpt-6.2-sol API 已因成本控制關閉；後續章節由程式在受控詞彙內撰寫，不再假設有 live 模型呼叫。** 全套 AI 38,065 綠、web 975 綠、verify_all 全綠。",
-  "headline_zh": "Layer S 開啟 · 180 章三語臂 · 不再呼叫 live 模型 · 有界重播快取 · 真實聯網資料 · 管理員措施由數字推導 · 所有閘門全綠。",
+  "milestone_full_zh": "Layer S 持續：183 章香港系列三語臂，圖譜鎖步 183/183/183，圍欄由索引推導。五章「票之弧」（179–183）已成為可從任一章走完的策展式、服務端渲染路徑——零模型、零網絡、零客戶端狀態。以生產級限流實測攻城：2,702 發撞庫全部 429（p50=25ms、零 5xx），讀面全程 244/244（p50=8ms）。Spring Cloud 邊緣、12 條 StateGraph、密碼 123 管理員行為分析、嵌入式說明書、契約強制英文臂。gpt-6.2-sol API 已按指令關閉，近期工作皆為純程式與規則。verify_all 全綠，web 994＋AI 38k 全綠。",
+  "headline_zh": "183 章香港系列三語臂 · 「票之弧」（179–183）可沿章節走完 · 生產級攻城：2,702 發撞庫全數 429、p50=25ms、零 5xx、讀面 244/244 · Spring Cloud 邊緣＋12 條 StateGraph · 994 web＋38k AI 全綠 · 大模型 API 已關閉。",
   "features_zh": [
-    "D1557：第 180 章——帶著留下來的票再等一次。全系列 180 章三語臂；修好 WORLD_ROADMAP 漂移（原仍寫 175／Layer R）；Layer R 於 167–177 收官，Layer S 從 178 開啟。",
-    "API 關閉：gpt-6.2-sol key 因成本控制由指令關閉。不再有 live 選節拍；章節由程式在受控詞彙內撰寫。先前的 live 測量仍是事實，不是承諾。",
-    "D1513：由 /insights 讀者模擬器衍生的確定性、標明來源的模擬事件，現在供離線管理員分析頁使用（密碼 123）；不再把讀取失敗當成假零。",
-    "D1512：管理員「下一步措施」從真實數字推導（最小平方法斜率、尖峰小時、漏斗計數、工作階段密度），並終於渲染伺服器每小時直方圖。",
-    "D1499：實測並修掉快取抖動（相同呼叫 95.3%／0%）——有界進程內重播：1 次供應商呼叫＋5 次零 token 重播。",
-    "D1497：對真實章節內文做跨章節 RAG（實測 7,937-token prompt），附圍欄引文；另有零 token 維基百科資料門。"
+    "D1563：「票之弧」——五章（179–183）、一件東西、一整天，可從任一章走完；策展式、服務端渲染、純本機。",
+    "D1562：第 183 章——寫了三個名字的票在 23:05 過海，落在中環終點站另一張仍在等認領的票旁。",
+    "D1561：第 182 章——第二個名字前來認票；計數漣漪抓到並修好一處自相矛盾的系列總數聲明。",
+    "D1541：以生產級限流重測攻城——10 次配額後即 429 牆；撞庫 2,702 發全數 429（p50=25ms）；讀面全程 244/244，零 5xx。",
+    "D1540：跨章問答全讀檔（40×4000），向 5 萬 token 上下文目標推進；live 實測待辦——key 耗盡且 API 現已關閉。"
   ]
 }
