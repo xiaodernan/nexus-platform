@@ -13,6 +13,7 @@ import { WorldGuideBeacon } from '@/components/world-guide-beacon';
 import { ChapterRadar } from '@/components/chapter-radar';
 import { TicketArcRail } from '@/components/ticket-arc-rail';
 import { ticketArcFor, TICKET_ARC_SLUGS } from '@/lib/ticket-arc';
+import { crossingArcFor, CROSSING_ARC_SLUGS } from '@/lib/crossing-arc';
 
 /**
  * `/guides/{slug}` (§8, §28). An unreviewed AI guide is still readable, but it is kept out of the
@@ -62,13 +63,17 @@ export default async function GuidePage(props: Props) {
         />
         {/* D1530 — the chapter radar: this chapter's neighbours, computed on this machine. */}
         <ChapterRadar guides={corpus} slug={guide.slug} copy={dict.growth.chapterRadar} />
-        {/* D1563 — the ticket arc: five chapters, one object, a whole day. Curated, local,
-            server-rendered; renders on the five arc chapters and nowhere else. */}
+        {/* D1563 + D1567 — the curated arcs: the ticket arc and the crossing arc. Curated, local,
+            server-rendered; each rail renders on its own five chapters and nowhere else. */}
         {(() => {
-          const arc = ticketArcFor(guide.slug);
+          const ticket = ticketArcFor(guide.slug);
+          const crossing = crossingArcFor(guide.slug);
+          const arc = ticket ?? crossing;
           if (!arc) return null;
-          const titles = TICKET_ARC_SLUGS.map((s) => corpus.find((g) => g.slug === s)?.title ?? s);
-          return <TicketArcRail position={arc} titles={titles} copy={dict.growth.ticketArc} />;
+          const slugs = ticket ? TICKET_ARC_SLUGS : CROSSING_ARC_SLUGS;
+          const titles = slugs.map((s) => corpus.find((g) => g.slug === s)?.title ?? s);
+          const copy = ticket ? dict.growth.ticketArc : dict.growth.crossingArc;
+          return <TicketArcRail position={arc} titles={titles} copy={copy} />;
         })()}
         {/* D1306 — the live world guide; one compass button, one next step. */}
         <WorldGuideBeacon

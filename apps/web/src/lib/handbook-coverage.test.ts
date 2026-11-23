@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(HERE, '..', '..', '..', '..');
 const dict = readFileSync(join(repoRoot, 'apps/web/src/lib/i18n/dict.ts'), 'utf8');
+const dictCn = readFileSync(join(repoRoot, 'apps/web/src/lib/i18n/dict-cn.ts'), 'utf8');
 
 describe('handbook coverage of current features', () => {
   it('states the real chapter count, not the old 87 or the stale 172', () => {
@@ -24,6 +25,14 @@ describe('handbook coverage of current features', () => {
     // The five-chapter arc is a new way into the world; a manual that omits it hides a door.
     expect(dict).toContain('另有「票之弧」：第 179 至 183 章講同一張票走過一整天');
     expect(dict).toContain('There is also the TICKET ARC: chapters 179–183 tell the story of one ticket across a whole day');
+  });
+
+  it('teaches the crossing arc in both arms (D1567)', () => {
+    // The border's night into morning is the second curated arc; the manual must name it too.
+    expect(dict).toContain('還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸');
+    expect(dict).toContain('There is also the CROSSING ARC: chapters 64, 61, 62, 65 and 67 tell one border');
+    // The simplified arm is regenerated, not hand-kept — one leg proves the sync.
+    expect(dictCn).toContain('还有「渡之弧」：第 64、61、62、65、67 章讲同一道口岸');
   });
 
   it('teaches the reading thread in both arms (D1517)', () => {

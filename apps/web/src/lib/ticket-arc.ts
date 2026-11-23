@@ -13,7 +13,12 @@
  * renders nothing elsewhere. Titles are deliberately NOT stored here — the component receives
  * the current locale's guide titles from the same corpus the index serves, so a rename upstream
  * can never leave a stale copy in this rail.
+ *
+ * D1567: the walk semantics moved into the shared story-arc primitive; this module stays the
+ * curated slug list over it, and its exports are unchanged.
  */
+
+import { arcPositionFor, type StoryArcPosition } from './story-arc';
 
 /** The five chapters of the ticket's day, in reading order. */
 export const TICKET_ARC_SLUGS = [
@@ -24,26 +29,9 @@ export const TICKET_ARC_SLUGS = [
   'hk-sha-tin-to-central-night-ticket-chronicle',
 ] as const;
 
-export interface TicketArcPosition {
-  /** 1-based, for the copy's "{n} of 5" slot. */
-  step: number;
-  total: number;
-  /** The five slugs in reading order; stable, curated, never derived from a similarity score. */
-  slugs: readonly string[];
-  /** The neighbouring doors, null at the two ends of the arc. */
-  prev: string | null;
-  next: string | null;
-}
+export type TicketArcPosition = StoryArcPosition;
 
 /** Where a chapter sits in the arc, or null when it is not one of the five. */
 export function ticketArcFor(slug: string): TicketArcPosition | null {
-  const index = (TICKET_ARC_SLUGS as readonly string[]).indexOf(slug);
-  if (index < 0) return null;
-  return {
-    step: index + 1,
-    total: TICKET_ARC_SLUGS.length,
-    slugs: TICKET_ARC_SLUGS,
-    prev: index > 0 ? TICKET_ARC_SLUGS[index - 1] ?? null : null,
-    next: index + 1 < TICKET_ARC_SLUGS.length ? TICKET_ARC_SLUGS[index + 1] ?? null : null,
-  };
+  return arcPositionFor(TICKET_ARC_SLUGS, slug);
 }

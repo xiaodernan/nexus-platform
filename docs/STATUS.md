@@ -48954,3 +48954,13 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **Measured LIVE state (read back from the pushed repo).** `assets/nexus-platform/latest.json` = milestone D1563, head a7376fc, 1,830 commits; `index.html` carries D1563 at four sites and ZERO D1502 / D1557 / 171 / 180 stale strings. io HEAD deeee80 pushed to master. Unlike D1558's ledger-only claim, this one was verified against the destination repository after the push.
 
 **Readers.** io repo: `assets/nexus-platform/latest.json`, `index.html`; this ledger entry.
+
+## 1466. D1567 — the crossing arc: the second curated line, and the arc primitive goes shared (§六)
+
+**The gap.** D1563 proved a curated arc works — but it shipped as a single hardwired module. The corpus already held a second obvious hidden line the index page could never show: the border chapters (64, 61, 62, 65, 67) tell one border's night into morning — Ho Ming's first rice truck through Man Kam To at 00:45, the Huanggang night gate at 02:45, the night market below Lo Wu at 03:45, his third run at 07:15, his second truck out at 08:15. No reader landing on chapter 61 from a search had any way to see that the rice driver's chapters before and after were the same story.
+
+**The build.** A shared `story-arc.ts` primitive now owns the walk semantics (1-based step, honest null ends, full slug order); `ticket-arc.ts` was refactored onto it with exports unchanged, and a new `crossing-arc.ts` is a thin curated slug list over the same primitive. The chapter page mounts both rails behind one null-safe lookup; the copy follows the arc. Three arms carry the `crossingArc` block; the handbook's HK-series section teaches both arcs in every arm; `handbook-coverage` pins the new paragraph, and the wiring test charges the both-arms copy multiplicity. New `crossing-arc.test.ts` charges the walk shape, every-locale corpus presence, arc-outside null, and arc DISJOINTNESS — no chapter may serve two curated lines.
+
+**Gates.** web lib 101 files / 1,002 passed (was 995). tsc 0. verify_all NO OFFENDER (re-run after the wave). No LLM call — the API is closed.
+
+**Readers.** `apps/web/src/lib/story-arc.ts` (new), `apps/web/src/lib/crossing-arc.ts` (new), `apps/web/src/lib/crossing-arc.test.ts` (new), `apps/web/src/lib/ticket-arc.ts`, `apps/web/app/guides/[slug]/page.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/src/lib/ticket-arc-wiring.test.ts`, `apps/web/src/lib/handbook-coverage.test.ts`, `docs/SHOWCASE.json`, this ledger entry.

@@ -38,11 +38,38 @@ describe('ticket arc wiring', () => {
     expect(page).toContain("import { TicketArcRail } from '@/components/ticket-arc-rail'");
     expect(page).toContain('ticketArcFor(guide.slug)');
     expect(page).toContain('if (!arc) return null;');
-    expect(page).toContain('copy={dict.growth.ticketArc}');
+    // D1567: the copy follows the arc — ticket copy on the ticket arc, crossing copy elsewhere.
+    expect(page).toContain('ticket ? dict.growth.ticketArc : dict.growth.crossingArc');
   });
 
   it('the rail derives all five titles from the corpus, in the current locale', () => {
     const page = read('apps/web/app/guides/[slug]/page.tsx');
     expect(page).toContain('corpus.find((g) => g.slug === s)?.title');
+  });
+});
+
+describe('crossing arc wiring (D1567)', () => {
+  it('both authored arms carry every copy key', () => {
+    const dict = read('apps/web/src/lib/i18n/dict.ts');
+    for (const key of KEYS) {
+      // One key in the type declaration, one value in each of the two arms.
+      expect(dict.split(`${key}:`).length - 1, `crossingArc.${key} multiplicity`).toBeGreaterThanOrEqual(6);
+    }
+    expect(dict).toContain('crossingArc: {');
+    expect(dict).toContain('同一道口岸，由午夜走到早晨');
+    expect(dict).toContain('One border, from midnight into the morning');
+  });
+
+  it('the simplified arms are regenerated from the authored ones', () => {
+    const cn = read('apps/web/src/lib/i18n/dict-cn.ts');
+    expect(cn).toContain('crossingArc: {');
+    expect(cn).toContain('同一道口岸，由午夜走到早晨');
+  });
+
+  it('the chapter page mounts the second arc behind the same null-safe lookup', () => {
+    const page = read('apps/web/app/guides/[slug]/page.tsx');
+    expect(page).toContain("import { crossingArcFor, CROSSING_ARC_SLUGS } from '@/lib/crossing-arc'");
+    expect(page).toContain('crossingArcFor(guide.slug)');
+    expect(page).toContain("ticket ? dict.growth.ticketArc : dict.growth.crossingArc");
   });
 });
