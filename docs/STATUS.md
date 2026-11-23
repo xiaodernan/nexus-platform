@@ -49279,3 +49279,47 @@ container-network or full-profile smoke verdict is claimed. And the clean produc
 **4 vulnerabilities (3 high, 1 critical)** — Next.js, nested PostCSS, sharp and source-map-js
 (`tmp/d1556_npm_audit.json`). Those findings already live in the lockfile; they are queued as **D1572**,
 not hidden by the image delivery or "fixed" with a blind major upgrade.
+
+## 1473. D1572 · the production npm tree no longer carries the four audited copies
+
+§1472's clean prune exposed **4 vulnerabilities (3 high, 1 critical)**, all already present in the committed
+lockfile: Next 15.5.25, its nested PostCSS 8.4.31, sharp 0.35.4 and source-map-js 1.2.1
+(`tmp/d1556_npm_audit.json`). A direct PostCSS update was proved insufficient in isolation: Next retained
+its own old copy (`tmp/d1572_registry_versions.txt`, `tmp/d1572_override_audit.json`). D1572 therefore
+patches the Next 15 line and makes the transitive override explicit rather than jumping to a new major.
+
+* `apps/web/package.json` now declares Next and `eslint-config-next` `^15.5.29` and PostCSS `^8.5.33`.
+  The root `package.json` overrides `next -> postcss` to `8.5.33`; `package-lock.json` resolves Next
+  15.5.29, PostCSS 8.5.33, sharp 0.35.5 and source-map-js 1.2.4, removes the nested old PostCSS entry,
+  and keeps the shared PostCSS copy in the production closure.
+* The lock change is targeted: no unrelated package was added or removed, and the only removed entry is
+  `node_modules/next/node_modules/postcss`. The changed versions are Next and its matching SWC/env/lint
+  packages, PostCSS/nanoid, sharp and its platform binaries/libvips, and source-map-js. Re-resolving the
+  lockfile is byte-identical (`tmp/d1572_lock_idempotence.txt`).
+* `apps/ai/tests/test_d1572_production_dependency_lock_has_no_known_vulnerable_copies.py` adds **3 legs**:
+  the Web manifest and lock declare the patched Next line; Next's override, lock edge and runtime PostCSS
+  stay coherent; every locked copy of the four audited packages meets its safe minimum. The doors pass
+  (`tmp/d1572_dependency_doors.txt`), Ruff exits 0 (`tmp/d1572_ruff.txt`), and **6 arms** redden exactly
+  their intended legs with byte-for-byte restoration (`tmp/d1572_arms.py`, `tmp/d1572_arms.txt`). All five
+  deployment door modules remain **26 passed** (`tmp/d1572_deploy_doors.txt`).
+
+The real workspace clean install exits 0 (`tmp/d1572_real_ci.txt`). Production audit is now **0
+vulnerabilities** across every severity (`tmp/d1572_production_audit.json`). Web verification remains
+**102 test files / 1007 tests passed**, typecheck exit 0 and lint exit 0 with six pre-existing warnings
+(`tmp/d1572_web_tests.txt`, `tmp/d1572_web_typecheck.txt`, `tmp/d1572_web_lint.txt`); the live production
+build exits 0 (`tmp/d1572_web_build.txt`).
+
+The isolated clean context repeats `npm ci`, live build and `npm prune --omit=dev` successfully
+(`tmp/d1572_clean_ci.txt`), audits **0 vulnerabilities** after pruning
+(`tmp/d1572_clean_production_audit.json`), and serves `/`, `/hong-kong` and `/command` with HTTP 200;
+`/command` still carries both `REAL-TRACE` and `impatient-close` (`tmp/d1572_clean_runtime.txt`). This is
+the same host-level clean-context verdict as D1571, not a Docker-daemon claim.
+
+One override caveat is explicit: Next's published package manifest still pins PostCSS 8.4.31, so
+`npm ls` labels the deliberately overridden 8.5.33 copy `invalid` (`tmp/d1572_scratch_tree.txt`). `npm ci`,
+production pruning, audit, build and runtime smoke are the acceptance gates; the static door prevents the
+old nested copy or a development-only shared copy from returning unnoticed.
+
+The full AI regression is **38077 passed, 525 skipped, 48 warnings in 1041.64s**, exit 0
+(`tmp/d1572_ai_suite_final.txt`); the skips are the declared live-database tests waiting for
+`NEXUS_TEST_DATABASE_URL`, not failed offline coverage.
