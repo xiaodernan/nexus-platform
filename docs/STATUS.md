@@ -48849,12 +48849,22 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 `tmp/d1552_pre_measure.txt`, `tmp/d1553_pre_measure.txt`, `tmp/d1553_node_proxy_probe.txt`.
 
 
-## 1416. D1556 — integration: two red gates cleared, and the LLM API is now closed by directive
+## 1455. D1556 — integration: two red gates cleared, and the LLM API is now closed by directive
 
 **Owner directive (2026-11-23): the `gpt-6.2-sol` API is closed for cost/usage control; further development cannot call it.** Recorded here as a standing constraint: all later narrative content is written in controlled vocabulary by the code lane (no live beat selection), and rule-based/API-free work continues unchanged. Earlier live measurements in this ledger remain historical facts, not a promise of a live lane.
 
 **Two red gates from the D1548–D1551 parallel wave, cleared (§二 take-over):**
 - `check_platform_client_reuse.mjs`: D1548 added `trust_env=False` to the pooled AsyncClient so the internal hop stops inheriting the ambient proxy, but the gate's BUILD-ONCE needle still pinned the pre-D1548 literal. Updated the needle (and both self-test mutations) to the whole current construct; the gate now pins timeout AND no-ambient-proxy. Self-test 22 corruption arms + 1 control all redden for cause / stay green.
-- `check_comment_citations.mjs`: four line-number cites drifted onto blank lines after `search/service.py` grew. Repointed to the live anchors — district→geo placement `service.py:1123-1127`, candidate cut `service.py:1601`, kind→subject_types `search/service.py:1084-1090` — and disambiguated the admin `application.yaml:18-21` cite to its full service path. 314/314 cites resolve.
+- `check_comment_citations.mjs`: four line-number cites drifted onto blank lines after `search/service.py` grew. Repointed to the live anchors — district→geo placement `service.py:1123-1127`, candidate cut `service.py:1601`, kind→subject_types `search/service.py:1084-1090` — and disambiguated the admin `services/cloud/admin-server/src/main/resources/application.yaml:18-21` cite to its full service path. 314/314 cites resolve.
 
 **Integrated parallel work D1554/D1555** (compose env names resolve in their own services; spawned doors use `stdin=DEVNULL` so pytest collection no longer aborts on an invalid inherited handle) — 20/20 AI pins green; web `client-boundary-copy.test.ts` 168/168; Maven cloud modules compile. `verify_all` **74 PASS / 0 FAIL / 2 honest UNCHECKED**.
+
+
+## 1456. D1557 — chapter 180 opens the next hundred; Layer S continues with no LLM API
+
+**Owner directive honoured:** the `gpt-6.2-sol` API is closed for cost control. This chapter was written entirely by the code lane in controlled vocabulary — no live beat selection, no provider call. Rule-based work (gates, analytics, retrieval) is unaffected.
+
+- `hk-sha-tin-shui-chuen-o-second-morning-wait-chronicle` — chapter 180 （隔天上午十點零八分——阿文在同一個站牌下，把昨天留下來、背面寫了自己名字的票放在最上面；老人問「昨天第一車，幾點來」，他看票面如實答「十點數」。巴士照樣來，留下來的那張不是要送走，是要帶著）. zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S (Shui Chuen O) continues from ch178–179.
+- Frozen artifacts in lockstep: digest 180 / 15,156 B, index 180 lines / 14,272 B; pins, `routes_chapter.py` fence and story-recap window advanced; `check_atlas_lockstep` PASS at 180/180/180.
+- **Ledger drift repaired:** the parallel wave had grown the atlas to 179 while `WORLD_ROADMAP.md` still said 175 / Layer R. Roadmap now states **180 chapters, Layer R closed (167–177), Layer S opens at 178**, with a Layer S summary. Count labels and both authored arms advanced 179→180; the four parallel-era web count pins (handbook/hk-type/home-rail/stamp) were repointed too.
+- Full web suite **97 files / 975 passed**; atlas/recap 20/20; `verify_all` gates green after commit (HEAD's stale duplicate STATUS number and ambiguous cite are fixed by this commit).
