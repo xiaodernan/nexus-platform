@@ -49323,3 +49323,38 @@ old nested copy or a development-only shared copy from returning unnoticed.
 The full AI regression is **38077 passed, 525 skipped, 48 warnings in 1041.64s**, exit 0
 (`tmp/d1572_ai_suite_final.txt`); the skips are the declared live-database tests waiting for
 `NEXUS_TEST_DATABASE_URL`, not failed offline coverage.
+
+## 1474. D1552 · CI's AI gates no longer advertise a database name the AI cannot read
+
+The two AI steps in `.github/workflows/ci.yml:270,277` carried `NEXUS_DB_URL` beside the live-test
+knob. That is the platform's JDBC spelling, not one of the AI's application aliases. The unit fixture
+clears `NEXUS_DATABASE_URL` and `DATABASE_URL` before building its app, while the third alias,
+`NEXUS_AI_DB_URL`, is now explicitly forbidden in both AI gate environments
+(`tmp/d1552_pre_measure.txt`). Renaming the dead key to an application-pool spelling would advertise a
+pool to a lane designed not to open one. The eval CLI was measured separately: all five suites pass
+and the application pool is never connected (`tmp/d1552_eval_base.txt`,
+`tmp/d1552_eval_no_pool_probe.txt`).
+
+D1552 deletes the two dead lines and keeps both `NEXUS_TEST_DATABASE_URL` values identical, restricted
+to `nexus_ai` at `127.0.0.1:5433/nexus_test` (`ci.yml:272,279`). The platform's three JDBC consumers
+remain at `ci.yml:133,183,192`: one on `platform`, two on `cloud`. Because a workflow-only edit would
+otherwise skip the AI path filter, that filter now names `.github/workflows/ci.yml` itself
+(`ci.yml:55`). Before the deletion, the selected affected lane was **41 passed** under the old CI
+environment shape (`tmp/d1552_test_job_base.txt`), while the initial new door was **2 failed, 2 passed**
+on the two dead keys and their platform-boundary count (`tmp/d1552_door_base.txt`).
+
+`apps/ai/tests/test_d1552_ci_ai_gates_name_the_database_they_read.py` adds **4 legs** over the parsed
+workflow: both gates retain the restricted live-test URL; their step-level key sets are exact and
+workflow/job inheritance introduces no database alias; neither gate advertises an application pool
+and the real eval CLI opens none; all three JDBC declarations retain their `platform:1, cloud:2`
+ownership. The door is **4 passed** (`tmp/d1552_dependency_doors.txt`), the refreshed eight-module
+affected lane is **38 passed** (`tmp/d1552_test_job_after.txt`), Ruff exits 0 (`tmp/d1552_ruff.txt`),
+and all six deployment/CI door modules are **30 passed** (`tmp/d1552_deploy_doors.txt`). **8 arms**
+redden exactly their intended legs, including workflow/job inheritance and a widened database role,
+and restore the workflow byte-for-byte (`tmp/d1552_arms.py`, `tmp/d1552_arms.txt`).
+
+The final full AI suite is **38081 passed, 525 skipped, 48 warnings in 965.04s**, exit 0
+(`tmp/d1552_ai_suite_final_utf8.txt`). It ran with `PYTHONUTF8=1` and `PYTHONIOENCODING=utf-8`:
+the earlier lone prefix-contract failure was a Windows subprocess decoded as GBK, not a product
+failure, and that file passes all 10 legs in isolation under UTF-8
+(`tmp/d1552_prefix_recheck.txt`, `tmp/d1552_prefix_utf8_recheck.txt`).

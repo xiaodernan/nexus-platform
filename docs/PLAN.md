@@ -4449,6 +4449,14 @@ by what is already verified, not by date.
   copy. Next's own manifest still pins the old PostCSS, so `npm ls` reports the intentional override as
   invalid; the documented acceptance gates are install, prune, audit, build and smoke.
 
+- **Landed — D1552 (§1474): CI's Python gates keep the live-test database boundary, not the
+  platform's JDBC name.** The two AI steps no longer carry `NEXUS_DB_URL`; both retain the same
+  restricted `nexus_ai` / `nexus_test` URL, and the platform/cloud JDBC consumers remain exactly one
+  and two. Four parsed-workflow legs pin each step's environment, reject workflow/job inheritance of
+  any database alias, execute the real eval CLI with application-pool connection forbidden, and pin
+  JDBC ownership. The workflow file now selects the AI job itself, so a CI-only regression cannot
+  skip its door. Eight mutation arms and 30 deployment/CI checks pass.
+
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
   evidence rather than a date.
