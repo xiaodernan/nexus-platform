@@ -48946,3 +48946,11 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **Gates.** handbook-coverage + ticket-arc + wiring + count-claims 16/16. tsc 0. check_simplified_mirror PASS. No LLM call — the API is closed.
 
 **Readers.** `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/src/lib/handbook-coverage.test.ts`, this ledger entry.
+
+## 1465. D1566 — the io sync is LIVE this time: the fact pack and both static blocks agree with master
+
+**D1564 wrote the facts; this entry records them landing.** The io repo had moved ahead in parallel (D1557 fact pack + specproof portfolio syncs). A rebase was attempted, but its per-commit pre-commit hook hung for ten minutes in this environment; the task was stopped, rebase aborted, and the two resolved files saved as a patch first (so no work was lost). The sync was then redone as a single merge: both `index.html` conflicts and the `latest.json` conflict resolved by taking the D1563 side (the upstream side was the older D1557/180), while the parallel session's career-os / crossrealm / specproof files were absorbed unchanged.
+
+**Measured LIVE state (read back from the pushed repo).** `assets/nexus-platform/latest.json` = milestone D1563, head a7376fc, 1,830 commits; `index.html` carries D1563 at four sites and ZERO D1502 / D1557 / 171 / 180 stale strings. io HEAD deeee80 pushed to master. Unlike D1558's ledger-only claim, this one was verified against the destination repository after the push.
+
+**Readers.** io repo: `assets/nexus-platform/latest.json`, `index.html`; this ledger entry.
