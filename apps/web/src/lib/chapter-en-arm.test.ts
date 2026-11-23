@@ -2686,4 +2686,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /two names|left that morning|waiting for the second person/i.test(b.text))).toBe(true);
   });
+  it('chapter 182 (Shui Chuen O the second name comes to claim the ticket — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-sha-tin-shui-chuen-o-second-name-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/下午三點四十分/);
+    const cn = mockGuide('hk-sha-tin-shui-chuen-o-second-name-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/下午三点四十分/);
+    const en = mockGuide('hk-sha-tin-shui-chuen-o-second-name-chronicle', 'en');
+    expect(en?.title).toMatch(/Sha Tin|Shui Chuen O|second name/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/father|claim/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /the one who came to claim it|all he wanted was the time|the third line/i.test(b.text))).toBe(true);
+  });
 });

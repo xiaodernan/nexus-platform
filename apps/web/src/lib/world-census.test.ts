@@ -9,7 +9,7 @@ describe('world census', () => {
   it('derives real numbers from the corpus', () => {
     const c = worldCensus(guides);
     expect(c.chapters).toBe(guides.filter((g) => g.slug.startsWith('hk-')).length);
-    expect(c.chapters).toBeGreaterThanOrEqual(181);
+    expect(c.chapters).toBeGreaterThanOrEqual(182);
     expect(c.englishArms).toBe(c.chapters);
     expect(c.bodyBlocks).toBeGreaterThan(1000);
     expect(c.cardSets).toBeGreaterThan(0);
