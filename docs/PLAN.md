@@ -4414,7 +4414,8 @@ by what is already verified, not by date.
   (`:115`, `:185`), and three dead keys are deleted. Re-censused: **52 keys, 0 unread outside the runtime
   convention set**. The door has eight legs and nine mutation arms; the final AI suite is **38068 passed,
   525 skipped, 0 failed** (`tmp/d1555_suite_final3.txt`). Code was integrated by `79bd126`; §1470 is the
-  complete late evidence record. The two absent Dockerfiles remain **D1556**, not a pretend green image.
+  complete late evidence record. The two absent Dockerfiles are delivered by **D1571** (§1472), not a
+  pretend green image.
 
 - **Landed — D1555 (§1471): every AI door spawns without inheriting the launcher's stdin.** One
   module-level `subprocess.run` aborted COLLECTION with `OSError: [WinError 6]`, reporting `1 error in
@@ -4423,6 +4424,25 @@ by what is already verified, not by date.
   rejects `stdin=None`, and asserts it saw at least one spawn before declaring the tree clean. Six mutation
   arms redden their intended legs, including the all-pins-removed pre-repair tree; every file is restored
   byte-for-byte. Final AI suite **38068 passed / 525 skipped / 0 failed** (`tmp/d1555_suite_final3.txt`).
+
+- **Landed — D1571 (§1472): the `full` profile has real platform/Web recipes and protected root
+  contexts.** The unit was provisionally labelled D1556, but that number already names §1455's content
+  milestone; an all-ref census cleared **D1571/D1572** as unused and the door was renamed before the final
+  run. Platform now builds its POM-named jar with Maven/JDK 25 and copies all 14 migrations; Web builds the
+  npm workspaces with Node 24, inlines `live` at build time, carries `docs/evidence` for `/command`'s real
+  trace, prunes dev dependencies and starts the production server. Root `.dockerignore` excludes local
+  env files, dependencies and stale outputs; the AI's unread `/migrations` mount is gone while Postgres
+  keeps its used one. Six static legs and ten mutation arms pass; all five deployment doors together are
+  **26 passed**. Clean-context host builds and production smoke pass, but no Docker image/container verdict
+  is claimed because this workstation's daemon is unreachable. The clean prune also exposed four
+  pre-existing production npm findings, queued separately as **D1572** rather than hidden by the image
+  delivery.
+
+- **Queued — D1572: patch the production Next.js audit findings without a blind major upgrade.** The
+  D1571 clean build reports **4 vulnerabilities (3 high, 1 critical)** in production dependencies:
+  Next.js, its nested PostCSS, sharp and source-map-js. The lockfile already carried them, so this is not
+  caused by the Dockerfile; the next unit must prove a patched Next 15 lock, re-audit production, rebuild
+  and smoke the clean context, and keep any scoped override explicit.
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own

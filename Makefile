@@ -1,9 +1,9 @@
 # NEXUS — Makefile (Git Bash / MSYS make on Windows; every recipe is plain bash).
 #
 # WHY SOME THINGS RUN ON THE HOST: Phase 1 = containerized data stores (postgres + redis) and host
-# processes for platform / ai / web, because those three source trees are authored by parallel work
-# streams and have no Dockerfiles yet. `up` / `--profile full` is the Phase-7 path and will fail on a
-# missing Dockerfile until then. See docs/DEPLOYMENT.md §3 and docs/ENVIRONMENT_REPORT.md §3/§4.
+# processes for platform / ai / web, because that is the fastest edit-and-review loop. All three app
+# Dockerfiles now exist; `up` / `--profile full` builds them but still requires a reachable Docker daemon.
+# See docs/DEPLOYMENT.md §3 and docs/ENVIRONMENT_REPORT.md §3/§4.
 #
 # make itself is not installed on this machine (docs/ENVIRONMENT_REPORT.md §3): every recipe below is
 # a self-contained bash command, so `make x` and copy-pasting `x`'s body into Git Bash are equivalent.
@@ -134,7 +134,7 @@ lint: ## Lint/format checks where configured
 	@if [ -d apps/ai ]; then (cd apps/ai && (uv run ruff check . || python -m ruff check .) || true); fi
 
 # ------------------------------------------------------------------ full stack (profile: full)
-up: ## Build + start ALL services; REQUIRES a Dockerfile in each of services/platform, apps/ai, apps/web
+up: ## Build + start ALL services; requires a reachable Docker daemon
 	$(COMPOSE) --profile full up -d --build
 	$(COMPOSE) --profile full ps
 

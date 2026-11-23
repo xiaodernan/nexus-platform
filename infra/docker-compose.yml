@@ -3,15 +3,12 @@
 # Contract refs: docs/DECISIONS.md D1/D3, docs/API_CONTRACT.md §0 (role split + ports).
 #
 # TWO EXECUTION PATHS (deliberate):
-#   1. DEFAULT (works today):   docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis
-#      -> only the two containerized data stores start. platform / ai / web run as HOST PROCESSES in Phase 1
-#         (see docs/DEPLOYMENT.md §2) because their source trees are being authored concurrently and have no
-#         Dockerfile yet.
-#   2. FULL (needs Dockerfiles): docker compose --profile full up --build
-#      -> additionally builds services/platform/Dockerfile, apps/ai/Dockerfile, apps/web/Dockerfile.
-#         Those three files do NOT exist in the repository yet; until they do, `--profile full` fails at build
-#         with "failed to read dockerfile". Expected and tracked: docs/DEPLOYMENT.md §3 + §8,
-#         docs/ENVIRONMENT_REPORT.md §7.
+#   1. DEFAULT: docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis
+#      -> only the two containerized data stores start; platform / ai / web can run as host processes.
+#   2. FULL: docker compose --profile full up --build
+#      -> builds services/platform/Dockerfile, apps/ai/Dockerfile and apps/web/Dockerfile. The platform
+#         and web recipes use the repository root as context so Maven can copy infra/db/migrations and
+#         npm can install the @nexus/ui workspace. A Docker daemon and image/dependency pulls are required.
 #
 # NOTE ON HOST PORTS: 5432 and 6379 are already occupied on this machine by unrelated projects
 # (careeros-postgres, specproof-redis), so NEXUS publishes on 127.0.0.1:5433 -> 5432 and
@@ -84,8 +81,8 @@ services:
     container_name: nexus-platform
     profiles: ["full"]
     build:
-      context: ../services/platform           # requires services/platform/Dockerfile
-      dockerfile: Dockerfile
+      context: ..                              # root: platform/pom.xml copies infra/db/migrations
+      dockerfile: services/platform/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres: {condition: service_healthy}
@@ -157,16 +154,17 @@ services:
       TZ: Asia/Hong_Kong
     ports:
       - "127.0.0.1:${NEXUS_AI_HOST_PORT:-8000}:8000"
-    volumes:
-      - ./db/migrations:/migrations:ro        # read-only: eval fixtures/SQL snippets for the AI service
 
   web:
     image: nexus/web:dev
     container_name: nexus-web
     profiles: ["full"]
     build:
-      context: ../apps/web                    # requires apps/web/Dockerfile
-      dockerfile: Dockerfile
+      context: ..                              # root: npm workspaces include packages/ui
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_DATA_MODE: ${NEXUS_WEB_DATA_MODE:-live}
+        NEXT_PUBLIC_DEFAULT_GEO: ${NEXUS_WEB_DEFAULT_GEO:-22.3809,114.1861}
     restart: unless-stopped
     depends_on: [platform, ai]
     environment:
@@ -178,8 +176,6 @@ services:
       # `environment:` could not reach a bundle that was already built. Deleting them is not a regression
       # because the browser talks to the Next server, not to these URLs (docs/API_CONTRACT.md §0.1).
       # The tenant default follows the same rule: `env.ts:47` resolves NEXUS_TENANT.
-      # NB: this tier has no image yet - `apps/web/Dockerfile` does not exist (line 168 says so) - so
-      # what the gate proves is name-vs-reader, not a container that answers.
       PLATFORM_API_BASE_URL: http://platform:8080
       AI_API_BASE_URL: http://ai:8000
       NEXUS_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}

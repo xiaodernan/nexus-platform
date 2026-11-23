@@ -47,16 +47,24 @@ product's container (see §6) and proves nothing about this one.
 
 ## 3. Phase 1 = host processes + containerized data stores
 
-`infra/docker-compose.yml` ships all five services, but `platform`, `ai` and `web` carry `profiles: ["full"]` because
-their source trees are being authored concurrently and have no Dockerfile yet. Consequences:
+`infra/docker-compose.yml` keeps `platform`, `ai` and `web` behind `profiles: ["full"]` so the default
+command starts only the data stores. All three application Dockerfiles now exist; the host-process path remains
+the fastest development loop, while `full` is the container path.
 
-* `make infra-up` / `docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis` works today and
-  **cannot** be broken by an unbuilt app service (profile-gated services are ignored unless `--profile full` is passed).
-* `make up` (`docker compose --profile full up -d --build`) is the Phase-7 path. It requires, per service:
-  `services/platform/Dockerfile`, `apps/ai/Dockerfile`, `apps/web/Dockerfile` in their build contexts. Today it fails
-  with `failed to read dockerfile` — verified, see ENVIRONMENT_REPORT §7.
-* Env plumbing for the full path is already written (JDBC/asyncpg URLs pointing at `postgres:5432`, `redis:6379`,
-  `http://platform:8080`, `http://ai:8000`), so adding the three Dockerfiles is the only remaining step.
+* `make infra-up` / `docker compose -f infra/docker-compose.yml --env-file .env up -d postgres redis` starts
+  Postgres and Redis without building an application service.
+* `make up` (`docker compose --profile full up -d --build`) builds `services/platform/Dockerfile`,
+  `apps/ai/Dockerfile` and `apps/web/Dockerfile`. Platform and web use the repository root as their build
+  context: the platform pom copies `infra/db/migrations` into its jar, and the web app consumes the
+  `@nexus/ui` npm workspace.
+* The web image takes `NEXT_PUBLIC_DATA_MODE` as a build argument and defaults it to `live`; compose exposes
+  the operator knob as `NEXUS_WEB_DATA_MODE`. A `NEXT_PUBLIC_*` value in the running container's
+  `environment:` cannot change a bundle that `next build` already inlined.
+* The root `.dockerignore` keeps local env files, dependencies, stale build output and `tmp/` evidence out
+  of both root-context builds.
+* This workstation has no reachable Docker daemon, so the recipes and compose file are checked statically and
+  by host builds; a real `--profile full` image build and container smoke remain a Docker-host verification,
+  not a result claimed by this page.
 
 ## 4. Daily commands (Makefile — every recipe is plain bash for Git Bash)
 
@@ -70,7 +78,7 @@ make dev-platform dev-ai dev-web   # one per terminal (host processes)
 make test                   # npm/maven/pytest, guarded by directory presence
 make e2e                    # Playwright (needs infra + the three dev servers)
 make status / logs / infra-down / db-reset
-make up / down              # profile "full" (needs the missing Dockerfiles)
+make up / down              # profile "full" (Docker daemon + image builds)
 ```
 
 `make` is not reliably available on this workstation (ENVIRONMENT_REPORT §3). GNU Make 4.x is required: the file uses
@@ -258,10 +266,11 @@ docker inspect -f '{{json .HostConfig.PortBindings}} {{json .NetworkSettings.Por
 
 ## 8. What must happen before this is deployable for real
 
-1. Three Dockerfiles (platform / ai / web) + a `--profile full` smoke test; `web` needs the two names its own
-   server module resolves — `PLATFORM_API_BASE_URL`/`AI_API_BASE_URL` (`apps/web/src/lib/env.ts:36,39`), which the
-   `web:` block now carries (D1554; the `*_INTERNAL_URL` pair this line used to demand is spelled nowhere in the
-   repository) — the other two need their DB/Redis URLs (already in compose).
+1. ~~Write the three Dockerfiles~~ — shipped: `services/platform/Dockerfile`, `apps/ai/Dockerfile` and
+   `apps/web/Dockerfile`. The remaining verification is a `--profile full` image build and smoke on a reachable
+   Docker daemon. The web recipe builds with `NEXT_PUBLIC_DATA_MODE=live` by default (`NEXUS_WEB_DATA_MODE`
+   overrides it) and receives `PLATFORM_API_BASE_URL`/`AI_API_BASE_URL` at runtime, the two names its server
+   module resolves (`apps/web/src/lib/env.ts:36,39`). Platform and AI keep their DB/Redis URLs in compose.
 2. ~~Decide the schema owner~~ — decided, and no longer open: `postgres` applies migrations and owns the schema,
    `nexus_app` holds `USAGE` with no `CREATE` and is never a migration role (D30, D32). What remains is the
    production half of that split: the deploy pipeline needs a migration credential that is *not* the runtime one,
