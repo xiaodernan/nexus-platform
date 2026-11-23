@@ -11,6 +11,8 @@ import { JsonLd } from '@/components/json-ld';
 import { ChapterAskLive } from '@/components/chapter-ask-live';
 import { WorldGuideBeacon } from '@/components/world-guide-beacon';
 import { ChapterRadar } from '@/components/chapter-radar';
+import { TicketArcRail } from '@/components/ticket-arc-rail';
+import { ticketArcFor, TICKET_ARC_SLUGS } from '@/lib/ticket-arc';
 
 /**
  * `/guides/{slug}` (§8, §28). An unreviewed AI guide is still readable, but it is kept out of the
@@ -60,6 +62,14 @@ export default async function GuidePage(props: Props) {
         />
         {/* D1530 — the chapter radar: this chapter's neighbours, computed on this machine. */}
         <ChapterRadar guides={corpus} slug={guide.slug} copy={dict.growth.chapterRadar} />
+        {/* D1563 — the ticket arc: five chapters, one object, a whole day. Curated, local,
+            server-rendered; renders on the five arc chapters and nowhere else. */}
+        {(() => {
+          const arc = ticketArcFor(guide.slug);
+          if (!arc) return null;
+          const titles = TICKET_ARC_SLUGS.map((s) => corpus.find((g) => g.slug === s)?.title ?? s);
+          return <TicketArcRail position={arc} titles={titles} copy={dict.growth.ticketArc} />;
+        })()}
         {/* D1306 — the live world guide; one compass button, one next step. */}
         <WorldGuideBeacon
           chapterSlug={guide.slug}

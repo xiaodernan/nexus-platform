@@ -548,6 +548,19 @@ export interface Dict {
       via: string;
       open: string;
     };
+    /**
+     * D1563: the ticket arc — five chapters, one object, a whole day. Curated data, not a
+     * similarity guess; copy only, no functions, because the rail is a server component.
+     */
+    ticketArc: {
+      eyebrow: string;
+      title: string;
+      intro: string;
+      progress: string;
+      previous: string;
+      next: string;
+      pathLabel: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -2184,6 +2197,15 @@ const zhHK: Dict = {
       shared: '共同關鍵詞：',
       via: '《{title}》',
       open: '開門',
+    },
+    ticketArc: {
+      eyebrow: '票之弧 · 五章一件事',
+      title: '這張票，走過了香港的一天',
+      intro: '由水泉澳邨街邊一張無名票，到中環終點站桌角另一張還在等認領的票——五章連成一條暗線。順住行，或者跳去任何一站。',
+      progress: '第 {n} / {total} 章',
+      previous: '上一站',
+      next: '下一站',
+      pathLabel: '票走過的五站',
     },
   },
   hkType: {
@@ -4445,6 +4467,15 @@ const en: Dict = {
       shared: 'Shared words: ',
       via: '“{title}”',
       open: 'Open the door',
+    },
+    ticketArc: {
+      eyebrow: 'THE TICKET ARC · FIVE CHAPTERS, ONE THING',
+      title: 'This ticket walked a whole Hong Kong day',
+      intro: 'From a nameless ticket by the road at Shui Chuen O to another still waiting at the Central terminus — five chapters form one hidden line. Walk it in order, or jump to any stop.',
+      progress: 'Stop {n} of {total}',
+      previous: 'Previous stop',
+      next: 'Next stop',
+      pathLabel: 'The five stops the ticket made',
     },
   },
   hkType: {

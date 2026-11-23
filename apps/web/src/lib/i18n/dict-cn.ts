@@ -858,6 +858,15 @@ export const zhCN: Dict = {
       via: '《{title}》',
       open: '开门',
     },
+    ticketArc: {
+      eyebrow: '票之弧 · 五章一件事',
+      title: '这张票，走过了香港的一天',
+      intro: '由水泉澳邨街边一张无名票，到中环终点站桌角另一张还在等认领的票——五章连成一条暗线。顺住行，或者跳去任何一站。',
+      progress: '第 {n} / {total} 章',
+      previous: '上一站',
+      next: '下一站',
+      pathLabel: '票走过的五站',
+    },
   },
   hkType: {
     eyebrow: '香港系列 · 互动篇章',
