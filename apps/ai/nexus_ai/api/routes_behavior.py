@@ -26,6 +26,11 @@ log = logging.getLogger("nexus_ai.behavior")
 
 ADMIN_PASSWORD = "123"
 
+# D1569 — the engagement pipeline the live funnel measures, in order. Shape parity with the
+# web demo payload (same {step, sessions, share} rows); the STEP NAMES follow the events
+# table's own engagement vocabulary, so a live zero is a real zero, never a mapped guess.
+FUNNEL_STEPS = ("view", "click", "search", "favorite", "reserve")
+
 
 @router.get("/ai/v1/admin/behavior", include_in_schema=False)
 async def behavior(request: Request, password: str = "", hours: int = 168):
@@ -53,6 +58,13 @@ async def behavior(request: Request, password: str = "", hours: int = 168):
                        min(occurred_at) AS first_at, max(occurred_at) AS last_at
                 FROM events WHERE occurred_at > now() - {window} AND session_id IS NOT NULL
                 GROUP BY 1 ORDER BY n DESC LIMIT 25""")]
+        session_shapes = [dict(r) for r in await db.fetch(
+            f"""SELECT session_id,
+                       MIN(COALESCE(actor_type, 'unknown')) AS actor,
+                       array_agg(DISTINCT name) AS names,
+                       count(*) AS n
+                FROM events WHERE occurred_at > now() - {window} AND session_id IS NOT NULL
+                GROUP BY session_id""")]
         hourly = [dict(r) for r in await db.fetch(
             f"""SELECT EXTRACT(HOUR FROM occurred_at)::int AS hour, count(*) AS n
                 FROM events WHERE occurred_at > now() - {window}
@@ -67,8 +79,12 @@ async def behavior(request: Request, password: str = "", hours: int = 168):
         )
     daily_counts = [(row["day"], int(row["n"])) for row in daily]
     projection = _project(daily_counts, 7)
+    funnel, profiles = _funnel_and_profiles(session_shapes)
     recommendations = _recommendations(by_name, sessions, total, daily_counts, projection, hourly)
+    recommendations.extend(_funnel_recommendations(funnel))
     return {
+        "funnel": funnel,
+        "profiles": profiles,
         "window_hours": hours,
         "total_events": int(total[0]["count"]) if total else 0,
         "daily": daily_counts,
@@ -109,6 +125,59 @@ def _project(daily: list[tuple[str, int]], days: int) -> list[dict[str, Any]]:
         x = n + i
         out.append({"day_index": x, "projected": max(0, round(intercept + slope * x))})
     return out
+
+
+def _funnel_and_profiles(
+    session_shapes: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """D1569 — the drop-off funnel and per-actor depth, from real session shapes.
+
+    A session "reached" a step when its DISTINCT name set contains it (double clicks count
+    once). Shares are over ALL sessions in the window, not the previous step's, so the
+    funnel reads as crowd shares rather than conditional conversions.
+    """
+    total_sessions = len(session_shapes)
+    funnel = []
+    for step in FUNNEL_STEPS:
+        reached = sum(1 for row in session_shapes if step in (row.get("names") or []))
+        share = round(reached / total_sessions, 3) if total_sessions else 0.0
+        funnel.append({"step": step, "sessions": reached, "share": share})
+    profiles: dict[str, dict[str, Any]] = {}
+    for row in session_shapes:
+        actor = str(row.get("actor") or "unknown")
+        p = profiles.setdefault(actor, {"actor": actor, "sessions": 0, "depth_sum": 0})
+        p["sessions"] += 1
+        p["depth_sum"] += int(row.get("n") or 0)
+    out = [
+        {"actor": actor, "sessions": p["sessions"],
+         "avg_depth": round(p["depth_sum"] / p["sessions"], 2)}
+        for actor, p in profiles.items()
+    ]
+    out.sort(key=lambda r: -r["sessions"])
+    return funnel, out
+
+
+def _funnel_recommendations(funnel: list[dict[str, Any]]) -> list[str]:
+    """Name the weakest transition — the sharpest share drop — with its keep-rate.
+
+    One recommendation, the argmax over the pipeline: the step where the crowd falls off
+    hardest is the first thing an operator should work on. A pipeline nobody reaches past
+    the first step names the view→next drop; a flat pipeline names nothing.
+    """
+    drops = [
+        (funnel[i - 1]["share"] - funnel[i]["share"], i)
+        for i in range(1, len(funnel))
+    ]
+    if not drops:
+        return []
+    drop, i = max(drops)
+    if drop <= 0:
+        return []
+    kept = round(100 * funnel[i]["share"])
+    return [
+        f"funnel weakest transition: {funnel[i - 1]['step']}→{funnel[i]['step']} "
+        f"keeps {kept}% of sessions — the first thing an operator should work on"
+    ]
 
 
 def _recommendations(

@@ -48984,3 +48984,13 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **Gates.** web 102 files / 1,007 passed. tsc 0. verify_all NO OFFENDER. No LLM call — the API is closed.
 
 **Readers.** `apps/web/src/lib/behavior-events.ts`, `apps/web/src/components/admin-analytics.tsx`, `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/src/lib/behavior-events.test.ts`, `apps/web/src/lib/admin-analytics-depth.test.ts`, `docs/SHOWCASE.json`, this ledger entry.
+
+## 1469. D1570 — the live behavior route reaches funnel parity with the demo payload (§九 + §三)
+
+**The gap.** D1569 gave the web's demo behavior payload a drop-off funnel and reader profiles, but the live Python route (`/ai/v1/admin/behavior`) returned neither — an operator reading the real events plane got fewer measures than an operator reading the ghost crowd.
+
+**The build.** One session-shape query (per session: actor, DISTINCT names, event count) feeds two pure functions: `_funnel_and_profiles` (the live pipeline view → click → search → favorite → reserve — the events table's own engagement vocabulary, so a live zero is a real zero, never a mapped guess; shares are over ALL sessions) and `_funnel_recommendations` (exactly one recommendation, the argmax sharpest-drop transition, with its keep-rate). The response gains `funnel` and `profiles`; the web island already degrades gracefully when either is absent, so older upstreams stay renderable.
+
+**Gates.** AI suite 38,069 passed / 522 skipped (+4 funnel legs: distinct-names-counted-once, honest zero step, per-actor depth roll-up, weakest-transition-named-once, flat-pipeline-names-nothing). Web 1,007 green (unchanged). No LLM call — the API is closed.
+
+**Readers.** `apps/ai/nexus_ai/api/routes_behavior.py`, `apps/ai/tests/test_behavior_analytics.py` (also repaired: a duplicated file header from an earlier parallel append made the whole module uncollectable — it had never been imported since; the fix kept one header and one upgraded import).
