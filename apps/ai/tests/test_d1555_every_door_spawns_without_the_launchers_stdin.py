@@ -10,7 +10,7 @@ during COLLECTION with
         h = _winapi.DuplicateHandle(...)
     E   OSError: [WinError 6] The handle is invalid.
 
-and the run reported `1 error in 16.21s` - not ~260 verdicts (`tmp/d1555_suite_abort.txt`). Nothing about the
+and the run reported `1 error in 23.40s` - no test verdicts at all (`tmp/d1555_suite_abort.txt`). Nothing about the
 repository was broken: the module-level `subprocess.run([...], capture_output=True)` asks Python to hand the
 child the PARENT's stdin, and while pytest is capturing output fd 0 is a temporary file that has already been
 closed, so the handle it duplicates is invalid. The same spawn without pytest in front of it succeeds

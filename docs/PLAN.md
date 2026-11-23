@@ -4375,7 +4375,7 @@ by what is already verified, not by date.
   service answered no browser origin whatsoever), `NEXUS_JWT_SECRET` (`git grep -l jwt apps/ai` is
   empty; a secret in a block that cannot use it invites an operator to rotate the wrong one), and
   `NEXUS_DB_SCHEMA_SCRIPTS` (no spelling of it exists in the service). Fixed with one renamed line
-  that keeps the operator's single knob — `infra/docker-compose.yml:151`
+  that keeps the operator's single knob — `infra/docker-compose.yml:156`
   `NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}`, still fed by the untracked root
   `.env`'s `NEXUS_CORS_ORIGINS` — plus
   two deletions. Post-fix, re-counted by the same reader: **12 keys, 0 unread**
@@ -4404,6 +4404,25 @@ by what is already verified, not by date.
   (`SPRING_*`, `SERVER_PORT`, `POSTGRES_*`) because the naive whole-file count (55 keys, 33 unread)
   over-reports. **D1552** (CI's AI jobs still hand the service `NEXUS_DB_URL`, and needs its own BASE
   pass first) and **D1553** (the proxy census §1452 promised) stay queued behind it.
+
+- **Landed — D1554 (§1470): every compose environment name reaches a reader in its own service.**
+  The whole-file census measured **56 keys in 10 services**, with **10 no-reader names**; two of those
+  were the census's own blind spot (`00_roles.sql:34,39` reads the Postgres passwords), leaving eight real
+  findings: five in `web:`, two in `platform:`, one in `admin-server:`. The web block now carries
+  `PLATFORM_API_BASE_URL: http://platform:8080` / `AI_API_BASE_URL: http://ai:8000`
+  (`infra/docker-compose.yml:183,184`), both tiers receive `NEXUS_TENANT` under the name they resolve
+  (`:115`, `:185`), and three dead keys are deleted. Re-censused: **52 keys, 0 unread outside the runtime
+  convention set**. The door has eight legs and nine mutation arms; the final AI suite is **38068 passed,
+  525 skipped, 0 failed** (`tmp/d1555_suite_final3.txt`). Code was integrated by `79bd126`; §1470 is the
+  complete late evidence record. The two absent Dockerfiles remain **D1556**, not a pretend green image.
+
+- **Landed — D1555 (§1471): every AI door spawns without inheriting the launcher's stdin.** One
+  module-level `subprocess.run` aborted COLLECTION with `OSError: [WinError 6]`, reporting `1 error in
+  23.40s` and no test verdicts. Nine sites in six files now pass `stdin=subprocess.DEVNULL`; D1550's
+  `_decide()` is the tenth line carried by the same wave. The static gate uses a balanced-paren scan,
+  rejects `stdin=None`, and asserts it saw at least one spawn before declaring the tree clean. Six mutation
+  arms redden their intended legs, including the all-pins-removed pre-repair tree; every file is restored
+  byte-for-byte. Final AI suite **38068 passed / 525 skipped / 0 failed** (`tmp/d1555_suite_final3.txt`).
 
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own

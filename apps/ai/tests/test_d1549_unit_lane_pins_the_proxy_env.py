@@ -59,8 +59,8 @@ def _lane_run(extra):
     r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", LANE_FILE],
                        cwd=str(AI_DIR), env=env, capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL)
     out = (r.stdout or "") + (r.stderr or "")
-    return next((l for l in out.strip().splitlines()
-                 if " passed" in l or "failed" in l or "error" in l), out[-200:])
+    return next((line for line in out.strip().splitlines()
+                 if " passed" in line or "failed" in line or "error" in line), out[-200:])
 
 
 def _counts(summary: str):

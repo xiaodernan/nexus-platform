@@ -36718,7 +36718,7 @@ closed port 9 - the unit proves the wiring, not a proxied request, and it needs 
   unchanged - the smoke was rerun after the rename and passed again.
 
 **Compose is the deployment path, not the test path.** The opt-in `cloud` profile
-(`infra/docker-compose.yml:168-228`) builds one image per module from one Dockerfile (Java 21 build,
+(`infra/docker-compose.yml:189-294`) builds one image per module from one Dockerfile (Java 21 build,
 Java 25 runtime, `MODULE` build arg) and points the gateway at `host.docker.internal` on the full
 profile's published ports. `docker compose --profile cloud config --quiet` exits 0.
 
@@ -36740,7 +36740,7 @@ would add a Maven build to every gate run.
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/GatewayApplication.java:13-15`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeRequestIdFilter.java:22-36`,
   `services/cloud/gateway/src/main/java/com/nexus/cloud/gateway/EdgeInfoController.java:39-40`,
-  `scripts/cloud_smoke.sh:134-170`, `infra/docker-compose.yml:168-228`.
+  `scripts/cloud_smoke.sh:134-170`, `infra/docker-compose.yml:189-294`.
 ## 846. D846 · the consumer's question gets a thread: the agent door relays a user turn, the chat writes both sides, and the merchant page asks (`services/platform/src/main/java/com/nexus/conversation/ConversationService.java`, `apps/ai/nexus_ai/api/routes_stream.py`, `apps/web/src/components/ask-merchant.tsx`)
 
 **The gap, in three places.** The §142 loop was open at every joint: the platform's internal agent door accepted only `ai_agent|system`, so a consumer's own turn had no write path; the AI stream wrote `agent_runs` and nothing else, so the merchant inbox could not see what was asked; and the merchant page had no question box, so the loop had no entering edge. Each joint is closed here, and the joins are proven by three suites rather than by prose.
@@ -36820,8 +36820,8 @@ authentication: a squatter answering our exact JSON would read as ours.
   `services/cloud/eureka-server/src/main/resources/application.yaml:2-7`,
   `services/cloud/config-server/src/main/resources/application.yaml:2-5`,
   `services/cloud/gateway/src/main/resources/application.yaml:13`,
-  `services/cloud/gateway/src/main/resources/application.yaml:118`, `infra/docker-compose.yml:186`,
-  `infra/docker-compose.yml:201`, `infra/docker-compose.yml:228`.
+  `services/cloud/gateway/src/main/resources/application.yaml:118`, `infra/docker-compose.yml:199`,
+  `infra/docker-compose.yml:214`, `infra/docker-compose.yml:241`.
 
 ## 848. D848 — the merchant console's live identity: the caller's own merchant, not the mock fixture (D843 follow-through)
 
@@ -48624,7 +48624,7 @@ owns rather than inventing new ones:
   resolves and the port chain `nexus_ai/discovery.py:94` already registers, so socket, registration
   and image cannot drift apart. The `setdefault('NEXUS_AI_HOST_PORT', …)` line is **gone**: the host
   side of a published mapping is not this process's to invent.
-* `infra/docker-compose.yml:131` renames the ai block's `NEXUS_DB_URL` to **`NEXUS_DATABASE_URL`**,
+* `infra/docker-compose.yml:136` renames the ai block's `NEXUS_DB_URL` to **`NEXUS_DATABASE_URL`**,
   which is the name `apps/ai/nexus_ai/config.py:101` actually resolves. `NEXUS_DB_URL` is the
   platform's JDBC name (`services/platform/src/main/resources/application.yml:29`); the AI read it
   nowhere, so the URL it carried was decoration. The credential is valid in that network:
@@ -48728,7 +48728,7 @@ block whose readers are all in one tree and all greppable: `ai:`.
 
 The fix is one renamed line and two deletions, and it keeps the operator's single knob:
 
-* `infra/docker-compose.yml:151` — `NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}`.
+* `infra/docker-compose.yml:156` — `NEXUS_AI_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:-http://localhost:3000}`.
   The value still comes from the one key every tier reads, on line 42 of the repo's untracked `.env`
   (`NEXUS_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000`, counted into
   `tmp/d1551_env_lines.txt`), but it arrives under the name
@@ -48994,3 +48994,202 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **Gates.** AI suite 38,069 passed / 522 skipped (+4 funnel legs: distinct-names-counted-once, honest zero step, per-actor depth roll-up, weakest-transition-named-once, flat-pipeline-names-nothing). Web 1,007 green (unchanged). No LLM call — the API is closed.
 
 **Readers.** `apps/ai/nexus_ai/api/routes_behavior.py`, `apps/ai/tests/test_behavior_analytics.py` (also repaired: a duplicated file header from an earlier parallel append made the whole module uncollectable — it had never been imported since; the fix kept one header and one upgraded import).
+
+## 1470. D1554 · every name the deployment uses to configure a tier is a name that tier can hear
+
+**Late evidence record.** Commit `79bd126` had already integrated this unit's code while the final verification
+was running, and §1455 records that integration. This section carries the complete census, arms and
+shipped-bytes verdict rather than leaving the finding at a one-line integration note.
+
+§1454 fixed the `ai:` block and handed the rest of `infra/docker-compose.yml` to this unit, because the
+finding was never the two renames — it was that the file is a list of environment names copied between
+blocks, and a name only means something where the service it belongs to spells it out. The census
+(`tmp/d1554_census.py` → `tmp/d1554_census.txt`) read all ten services with per-service reader roots and
+separated what a *runtime* resolves from what this repository names:
+
+| block | keys | a name its own source spells | resolved by a runtime | **no reader at all** |
+| --- | --- | --- | --- | --- |
+| `postgres:` | 7 | 0 | 5 | **2** |
+| `platform:` | 14 | 3 | 9 | **2** |
+| `ai:` | 12 | 12 | 0 | 0 |
+| `web:` | 5 | 0 | 0 | **5** |
+| `gateway:` | 8 | 7 | 1 | 0 |
+| `admin-server:` | 4 | 2 | 1 | **1** |
+| `redis`, `eureka`, `config-server`, `insight-service` | 6 | 4 | 2 | 0 |
+| **whole file (10 services)** | **56** | 28 | 18 | **10** |
+
+The reader roots are the *main* trees — `services/platform/src/main`, `apps/ai/nexus_ai`, `apps/web/src`,
+`services/cloud/*/src/main` — because a test that mentions a name cannot certify that the service reads it
+(`SPRING_PROFILES_ACTIVE` counted as read above only because the census's first root set included
+`services/platform/src/test`; the door's narrower roots put it back in the runtime column, which is where
+`tmp/d1554_census_after.txt` counts it).
+
+Two of the ten were the census's own blind spot, not the deployment's: `NEXUS_DB_APP_PASSWORD` and
+`NEXUS_DB_AI_PASSWORD` looked unread because no Java or Python file names them, and they are in fact read
+by `infra/postgres/init/00_roles.sql:34,39` (`psql \getenv`), the SQL that compose:53 bind-mounts into the
+image's entrypoint. That is why `postgres` has a reader-root row at all rather than being waved through as
+"third-party image", and why the eight below are the whole of the finding.
+
+| the block said | what the tier resolves | the consequence |
+| --- | --- | --- |
+| `web: PLATFORM_INTERNAL_URL`, `AI_INTERNAL_URL` | `apps/web/src/lib/env.ts:36,39` → `PLATFORM_API_BASE_URL`, `AI_API_BASE_URL` | the only finding with a live consequence: the fallbacks are the HOST lane's `127.0.0.1:8090`/`:8010`, so in the compose plane the BFF calls **its own loopback** and every server-rendered hop is refused while the page still paints from same-origin data. |
+| `web: NEXT_PUBLIC_PLATFORM_URL`, `NEXT_PUBLIC_AI_URL` | nothing — and no `NEXT_PUBLIC_*` value can be set on a running container | unread twice over: a `NEXT_PUBLIC_` constant is inlined by `next build` from the BUILD environment, so a key in `environment:` cannot reach a bundle that was already built. The browser talks to the Next server, not to these URLs (`docs/API_CONTRACT.md` §0.1). |
+| `web: NEXUS_DEFAULT_TENANT`, `platform: NEXUS_DEFAULT_TENANT` | `env.ts:47` → `NEXUS_TENANT`; `application.yml:78` → `${NEXUS_TENANT:hong-kong}`, bound by `TenantFilter.java:23` | both tiers silently kept their default slug. Here the default equals the `.env` value, so nothing was visibly wrong — which is what makes a copied name dangerous rather than merely untidy. |
+| `platform: NEXUS_CORS_ORIGINS` | nothing: `git grep -i cors services/platform/src/main` is empty | the platform is not the CORS owner — the gateway is (`services/cloud/gateway/src/main/resources/application.yaml:92`), and its block keeps the name. The platform line let an operator edit an allow-list that the monolith never reads. |
+| `admin-server: NEXUS_ADMIN_REGISTER` | nothing | it sat beside its own yaml comment saying the admin server WATCHES and does not register (`services/cloud/admin-server/src/main/resources/application.yaml:18-21`, `register-with-eureka: false`). A knob no code resolves is an invitation to turn it. |
+
+Repairs, all of them keeping the operator's single `.env` knob and changing only the name the container
+receives:
+
+* `infra/docker-compose.yml:115` (platform) and `:185` (web) — `NEXUS_TENANT: ${NEXUS_DEFAULT_TENANT:-hong-kong}`.
+* `infra/docker-compose.yml:183,184` (web) — `PLATFORM_API_BASE_URL: http://platform:8080`,
+  `AI_API_BASE_URL: http://ai:8000`, the container-DNS names `env.ts` actually resolves.
+* deleted: the platform's `NEXUS_CORS_ORIGINS`, the web's two `NEXT_PUBLIC_*`, `NEXUS_ADMIN_REGISTER`.
+* `docs/DEPLOYMENT.md:261-264` — §8 item 1 told whoever writes the web Dockerfile to supply
+  `PLATFORM_INTERNAL_URL`/`AI_INTERNAL_URL`, i.e. it was the source of the dead names; it now demands the
+  two `env.ts` resolves.
+* Re-censused after (`tmp/d1554_census_after.py` → `tmp/d1554_census_after.txt`): **52 keys (four lines
+  deleted), 0 unread outside the runtime-convention set**. That script calls the door's own
+  `unread_compose_keys()` rather than a copy, so a weakened helper and a fixed deployment cannot both
+  report success.
+
+`apps/ai/tests/deploy_plane.py` grew the general machinery — `services_region()`/`compose_services()` (a
+service census must not walk the children of the top-level `volumes:` mapping, which are the same shape),
+`SERVICE_READER_ROOTS` (one row per service), `FRAMEWORK_CONVENTION`, `source_names()`,
+`unread_compose_keys()`. `AI_READER_ROOTS` deliberately excludes `apps/ai/tests/`, so a test that mentions a
+name cannot certify that the service reads it.
+
+`apps/ai/tests/test_d1554_compose_names_reach_their_own_services.py` is the door: red first against the
+unmodified deployment (`tmp/d1554_door_red.txt` → **5 failed, 3 passed**) and green after
+(`tmp/d1554_door_green2.txt` → the three deployment doors together, **17 passed**).
+
+* **R1** re-censuses the whole file on every run.
+* **R2** the census judges the `services:` mapping and nothing else — every parsed block has `image:` or
+  `build:`, and `pgdata`/`redisdata` are not services.
+* **R3** refuses to run against a service nobody mapped: a new block either says where its configuration is
+  consumed or reddens here, instead of becoming a silent hole in R1.
+* **R4** the `web:` keys ⊆ the names `env.ts` reads out of `process.env`, parsed from that file.
+* **R5** the consequence, not the spelling: both hops present, both matching `^https?://[a-z][a-z0-9_-]*:\d+$`,
+  and no `localhost`/`127.0.0.1` anywhere in the block.
+* **R6** the tenant default arrives under the name each tier resolves, read out of `application.yml`'s own
+  `${...}` placeholder, and `NEXUS_DEFAULT_TENANT` is absent from both blocks.
+* **R7** the sweep leaves what works: the gateway keeps its CORS name, no CORS name returns to the platform,
+  and both `ai:`/`platform:` keep the internal token their doors verify.
+* **R8** the census's blind spot pinned: the names `00_roles.sql` `\getenv`s must be present in the
+  `postgres:` block — deleting them as "unread" would bootstrap roles with wrong passwords on a fresh volume.
+
+Arms (`tmp/d1554_arms.py` → `tmp/d1554_arms.txt`), nine regressions, each with its own signature; the
+compose file came back byte-identical after every one (md5 `4ee9eabd…`):
+
+| arm | regression | legs reddened |
+| --- | --- | --- |
+| A | `web:` given a name no file resolves | r1, r4, r5 |
+| B | right name, host-lane loopback value | **r5 only** |
+| C | platform's tenant under the operator's knob name | r1, r6 |
+| D | platform's unread CORS name restored | r1, r7 |
+| E | the gateway's *read* CORS name deleted | **r7 only** |
+| F | the postgres app password deleted as if unread | **r8 only** |
+| G | a new service block with no reader roots declared | r1, r3 |
+| H | a top-level volume name walked as a service | r1, r2, r3 |
+| I | the web tier's tenant default removed | **r6 only** |
+
+B, E, F and I are the arms that justify the specific legs: each is invisible to the whole-file sweep (R1)
+because a wrong *value*, an over-deletion and a missing default are not unread names.
+
+One limit, stated where the fix is: `apps/web/Dockerfile` and `services/platform/Dockerfile` do not exist,
+so what this unit proves about those two blocks is name-vs-reader, not a container that answers. The missing
+images are their own decision (**D1556**, task #66) and are called out in the compose comment rather than
+left for a reviewer to discover.
+
+Whole suite on the shipped bytes: **38068 passed, 525 skipped, 0 failed in 640.95 s**
+(`tmp/d1555_suite_final3.txt`; the run also carries D1555's §1471 repair, and it is the first full AI-suite
+verdict this machine has produced since §1454 because collection was aborting — see that section). Against
+§1454's record of 38054 passed / 522 skipped the delta is **14 passed + 3 skipped = 17**: 11 are this unit
+and its neighbour (8 legs + 3 legs), 4 are D1570's live-funnel legs (`bc3cfa2`), and **the other 2 this run
+does not attribute**, recorded as unattributed rather than claimed. The three deployment doors together:
+**17 passed** (`tmp/d1554_door_green2.txt`). The six node gates that parse `infra/docker-compose.yml` all exit
+0 on the edited file (`tmp/d1554_node_gates.txt`).
+
+## 1471. D1555 · one unpinned spawn was enough to silence the entire AI gate
+
+**Late evidence record.** Commit `79bd126` integrated the nine pins and the gate before this final record;
+§1455 names the integration. This section preserves the abort mechanism, six mutation arms and the
+shipped-bytes verdict.
+
+The AI suite stopped being a suite. `python -m pytest -q` in `apps/ai` reported **`1 error in 23.40s`**
+instead of any test verdicts — `Interrupted: 1 error during collection`
+(`tmp/d1555_suite_abort.txt`):
+
+> `tests/test_no_card_repeats_a_value_pointer_inside_a_closed_block.py:81: in <module>`
+> `    TRACKED = _tracked_root()`
+> `C:\...\Lib\subprocess.py, line 1431: in _make_inheritable`
+> `    h = _winapi.DuplicateHandle(...)`
+> `E   OSError: [WinError 6] The handle is invalid.`
+
+Nothing in the repository was broken by D1554's edits, and the aborting file is not a file D1554 touched: the
+defect is that a door which spawns a probe without saying what to do about stdin hands the child **the test
+runner's** file descriptor 0. While pytest is capturing, fd 0 is a temporary file that has already been
+closed, so the handle Python tries to duplicate is invalid. The same `git rev-parse` in the same
+interpreter succeeds outside pytest (`tmp/d1555_probe.txt`), and the same door passed for weeks on launchers
+that left a usable fd 0 behind — which is the whole problem: **the launcher, not the repository, was
+deciding whether the lane had a gate.**
+
+The consequence class is the one §1452 (D1549) named. A red test tells you which claim broke; an aborting
+collection tells you nothing and hides behind an exit code, and it silences every other door in the file
+tree at once.
+
+The census (`tmp/d1555_stdin_census.txt`, a regex scan tolerant of one level of nested parentheses — the
+door re-does it with a real balanced-paren scanner) found **9 spawn sites in 6 files** of `apps/ai/tests`
+with no `stdin=` keyword:
+
+| file | sites | what it spawns |
+| --- | --- | --- |
+| `test_no_card_repeats_a_value_pointer_inside_a_closed_block.py` | 3 (`:76` at **module** level) | `git rev-parse`, two `git grep` |
+| `test_the_local_interpreter_can_read_its_editable_install.py` | 2 | the interpreter under test |
+| `test_a_subject_with_no_reviews_prints_no_rating_score.py` | 1 | `git grep` |
+| `test_d1549_unit_lane_pins_the_proxy_env.py` | 1 | a nested `pytest -q` |
+| `test_prefix_contract_is_byte_stable.py` | 1 | `python -c` |
+| `test_the_card_sends_no_ranking_internal_the_closed_contract_refuses.py` | 1 | `git grep` |
+
+None of the nine reads a console, so the repair is one keyword at each site
+(`tmp/d1555_pin.py` wrote them, `py_compile`-checked; the diff is 9 lines across 6 files), plus the
+accidental control that proved the mechanism: D1550's `_decide()` got the same keyword mid-unit and its four
+legs went from `OSError` to green (`tmp/d1554_door_green2.txt`, the three deployment doors together
+**17 passed**). No product path is exposed — every `subprocess` call in the AI service lives in `tests/`,
+which the census walked file by file.
+
+`apps/ai/tests/test_d1555_every_door_spawns_without_the_launchers_stdin.py` keeps the class closed:
+red first (`tmp/d1555_door_red.txt` → **2 failed, 1 passed**, its R1 naming all nine sites verbatim), green
+after (`tmp/d1555_door_green.txt` → **3 passed**).
+
+* **R1** scans every `subprocess.*(...)` call in the tests tree, balanced-paren so a call written across
+  lines is still judged, and treats `stdin=None` as unpinned — re-asking for the parent's handle is the
+  defect, not the fix.
+* **R2** proves R1's scanner is the thing doing the work: a multi-line unpinned call must be seen, and a
+  pinned one must not. Without this leg the regex could degrade to one line and R1 would read "all clean".
+* **R3** re-checks the premise: the file whose module-level probe aborted collection still exists, still
+  spawns, and is still scanned — so this gate cannot pass because the lane deleted the door it was written
+  for.
+
+Arms (`tmp/d1555_arms.py` → `tmp/d1555_arms.txt`), each restoring the shipped bytes md5-checked:
+
+| arm | regression | legs reddened |
+| --- | --- | --- |
+| 1 | the premise file's collection-time spawn unpinned again | r1, r3 |
+| 2 | the same pin replaced by `stdin=None` | r1, r3 — same legs, and only the excerpt tells them apart, which is why R1's excerpt keeps the call's tail: arm 1 prints no keyword, arm 2 prints `stdin=None)` |
+| 3 | the premise file deleted | **r3 only** |
+| 4 | the scanner degraded to one physical line per call | r1, r2, r3 |
+| 5 | the tests glob stopped matching anything | **r1 only** |
+| 6 | every pin removed from every scanned file — the pre-repair defect under the shipped door | **r1, r3** |
+
+Arm 5 is the arm that changed the door. As first written the gate passed green with nothing scanned — an
+empty offender list is indistinguishable from a clean tree — so R1 now asserts it saw a spawn somewhere
+before it is allowed to say everything is pinned. Its assertion text says so in the same breath. Arm 6 is
+the red-first proof on the shipped scanner: seven files lose every literal `stdin=subprocess.DEVNULL`, the
+ten resulting offenders (the nine this unit repaired plus one already-pinned probe) are named, and every
+file is restored byte-for-byte.
+
+Whole-suite verdict on the shipped bytes: **38068 passed, 525 skipped, 0 failed in 640.95 s**
+(`tmp/d1555_suite_final3.txt`). This run includes D1570's four live-funnel legs (`bc3cfa2`); relative to
+§1454's 38054 passed / 522 skipped it is +14 passed / +3 skipped, of which 11 belong to D1554/D1555 and
+the same 2 remain explicitly unattributed. The measured totals are **6 arms** and **9 sites**.

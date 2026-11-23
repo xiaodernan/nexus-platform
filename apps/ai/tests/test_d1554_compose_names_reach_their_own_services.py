@@ -47,7 +47,7 @@ from __future__ import annotations
 import re
 
 from deploy_plane import (REPO, SERVICE_READER_ROOTS, compose_environment, compose_services,
-                          compose_text_for, services_region, unread_compose_keys)
+                          compose_text_for, unread_compose_keys)
 
 WEB_ENV = REPO / "apps" / "web" / "src" / "lib" / "env.ts"
 PLATFORM_YML = REPO / "services" / "platform" / "src" / "main" / "resources" / "application.yml"

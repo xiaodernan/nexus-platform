@@ -52,7 +52,7 @@ def services_region() -> list[str]:
     them as blocks with no reader.
     """
     lines = COMPOSE.read_text(encoding="utf-8").splitlines()
-    start = next((i for i, l in enumerate(lines) if l == "services:"), None)
+    start = next((i for i, line in enumerate(lines) if line == "services:"), None)
     if start is None:
         raise AssertionError("infra/docker-compose.yml has no `services:` mapping")
     end = next((i for i in range(start + 1, len(lines)) if re.match(r"^[a-z0-9_-]+:$", lines[i])),
@@ -61,7 +61,7 @@ def services_region() -> list[str]:
 
 
 def compose_services() -> list[str]:
-    return [m.group(1) for m in (re.match(r"^  ([a-z0-9_-]+):$", l) for l in services_region()) if m]
+    return [m.group(1) for m in (re.match(r"^  ([a-z0-9_-]+):$", line) for line in services_region()) if m]
 
 
 
@@ -141,7 +141,7 @@ def source_names(key: str, roots: list[str]) -> bool:
         return False
     r = subprocess.run(["git", "grep", "-l", key, "--", *roots], cwd=REPO, stdin=subprocess.DEVNULL,
                        capture_output=True, text=True, encoding="utf-8", errors="replace")
-    return any(l.strip() for l in r.stdout.splitlines())
+    return any(line.strip() for line in r.stdout.splitlines())
 
 
 def unread_compose_keys() -> list[tuple[str, str, str]]:
