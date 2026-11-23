@@ -20,6 +20,12 @@ describe('handbook coverage of current features', () => {
     expect(dict).not.toContain('Eighty-seven chapters arranged by the hour');
   });
 
+  it('teaches the ticket arc in both arms (D1565)', () => {
+    // The five-chapter arc is a new way into the world; a manual that omits it hides a door.
+    expect(dict).toContain('另有「票之弧」：第 179 至 183 章講同一張票走過一整天');
+    expect(dict).toContain('There is also the TICKET ARC: chapters 179–183 tell the story of one ticket across a whole day');
+  });
+
   it('teaches the reading thread in both arms (D1517)', () => {
     expect(dict).toContain("title: '續讀線 · /guides'");
     expect(dict).toContain("title: 'Reading thread · /guides'");

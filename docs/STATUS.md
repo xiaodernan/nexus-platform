@@ -48936,3 +48936,13 @@ and the queued-unit records taken while the suite ran: `tmp/d1554_pre_measure.tx
 **The merge discipline.** The io repo had moved on in parallel (D1557 fact pack + specproof syncs). A direct push was rejected as non-fast-forward; fetched and rebased, resolving the two `index.html` blocks and `latest.json` by taking the newer D1563 side (the upstream side was D1557/180). Only nexus-owned files were touched; the parallel session's career-os / crossrealm / specproof work was left intact.
 
 **Readers.** `docs/SHOWCASE.json`, this ledger entry; in the io repo: `assets/nexus-platform/latest.json`, `index.html`.
+
+## 1464. D1565 — the manual finally teaches the arc it shipped (§七)
+
+**The gap.** D1563 shipped the ticket arc — five chapters that tell one story about one ticket — but the embedded handbook's HK-series section still taught only the chapter radar and the read-set thread. A first-time reader opening the manual to learn "how to fully experience the world" had no word for the newest door, even though the door itself was rendered at the foot of chapters 179–183.
+
+**The fix.** One paragraph added to the `hkseries` section in BOTH authored arms: the five chapters, the five-stop path, the marked position / previous / next doors, and the honest distinction that this is a CURATED line rather than a guessed similarity. Regenerated Simplified arms; new `handbook-coverage` leg pins the paragraph in both arms so it cannot drift again.
+
+**Gates.** handbook-coverage + ticket-arc + wiring + count-claims 16/16. tsc 0. check_simplified_mirror PASS. No LLM call — the API is closed.
+
+**Readers.** `apps/web/src/lib/i18n/dict.ts`, `apps/web/src/lib/i18n/dict-cn.ts`, `apps/web/src/lib/handbook-coverage.test.ts`, this ledger entry.
