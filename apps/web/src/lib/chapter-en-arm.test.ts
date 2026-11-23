@@ -2700,4 +2700,18 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[一-鿿]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /the one who came to claim it|all he wanted was the time|the third line/i.test(b.text))).toBe(true);
   });
+  it('chapter 183 (Sha Tin to Central the ticket crosses the harbour — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-sha-tin-to-central-night-ticket-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/晚上十一點零五分/);
+    const cn = mockGuide('hk-sha-tin-to-central-night-ticket-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/晚上十一点零五分/);
+    const en = mockGuide('hk-sha-tin-to-central-night-ticket-chronicle', 'en');
+    expect(en?.title).toMatch(/Sha Tin|Central|night driver/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/terminus|harbour/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /across the harbour|desk at the terminus|the next one/i.test(b.text))).toBe(true);
+  });
 });
