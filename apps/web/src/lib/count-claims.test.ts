@@ -24,6 +24,9 @@ const STALE = [
   // D1542: the 178-era claims join the stale list as the corpus grows to 179.
   // D1561: the 181-era claims join it as the corpus grows to 182.
   // D1562: the 182-era claims join it as the corpus grows to 183.
+  // D1568: the 183-era claims join it as the corpus grows to 184.
+  '一百八十三章反覆走完一個 HK', '一百八十三章香港系列指南', '一百八十三章香港系列', '一百八十三章讀竟',
+  'One hundred and eighty-three chapters', 'one hundred and eighty-three chapters',
   '一百八十二章反覆走完一個 HK', '一百八十二章香港系列指南', '一百八十二章香港系列', '一百八十二章讀竟',
   'One hundred and eighty-two chapters', 'one hundred and eighty-two chapters',
   '一百八十一章反覆走完一個 HK', '一百八十一章香港系列指南', '一百八十一章香港系列', '一百八十一章讀竟',
@@ -33,9 +36,9 @@ const STALE = [
   'One hundred and seventy-eight chapters',
 ];
 const CURRENT = [
-  '一百八十三章反覆走完一個 HK', '一百八十三章香港系列指南',
-  '一百八十三章香港系列', '一百八十三章讀竟',
-  'One hundred and eighty-three chapters',
+  '一百八十四章反覆走完一個 HK', '一百八十四章香港系列指南',
+  '一百八十四章香港系列', '一百八十四章讀竟',
+  'One hundred and eighty-four chapters',
 ];
 
 describe('chapter-count claims across locales', () => {
@@ -51,6 +54,6 @@ describe('chapter-count claims across locales', () => {
   it('the chronicle page comment is not frozen at 105', () => {
     const page = read('apps/web/app/chronicle/page.tsx');
     expect(page).not.toContain('one city, one day, 105 chapters');
-    expect(page).toContain('183 chapters');
+    expect(page).toContain('184 chapters');
   });
 });

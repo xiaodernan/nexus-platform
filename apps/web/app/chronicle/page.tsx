@@ -6,7 +6,7 @@ import { getDict } from '@/lib/i18n';
 import { currentLocale } from '@/lib/i18n/server';
 
 /**
- * `/chronicle` — the framing codex of the HK series: one city, one day, 183 chapters across many layers.
+ * `/chronicle` — the framing codex of the HK series: one city, one day, 184 chapters across many layers.
  * Three acts pinned straight from the actual corpus (real chapter numbers, real
  * timestamps — the codex claims nothing the series does not carry). SSR, dict-carried,
  * canonical /chronicle, no island.

@@ -2714,4 +2714,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[一-鿿]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /across the harbour|desk at the terminus|the next one/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 184 (Central terminus — the ticket that carried only a time is claimed — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-terminus-claimed-ticket-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/晚上十一點半/);
+    const cn = mockGuide('hk-central-terminus-claimed-ticket-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/晚上十一点半/);
+    const en = mockGuide('hk-central-terminus-claimed-ticket-chronicle', 'en');
+    expect(en?.title).toMatch(/Central|terminus|claimed/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/terminus|ticket/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /ticket that left|rule of claiming|fresh ticket/i.test(b.text))).toBe(true);
+  });
 });
