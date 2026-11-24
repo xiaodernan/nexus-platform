@@ -211,7 +211,7 @@ export interface Dict {
       };
       /** D1580: the post-106 continuation rail — derived from the full corpus, never a stale claim. */
       continuation: {
-        eyebrow: string; title: string; hint: string; chapterLabel: string;
+        eyebrow: string; title: string; hint: string; chapterLabel: string; cardHint: string;
         cta: string; ctaHref: string;
       };
       /** D1115: 每日一句 — the Cantonese-of-the-day pool, picked by the HK date's FNV hash. */
@@ -1334,12 +1334,12 @@ export interface Dict {
     census: {
       eyebrow: string; title: string; intro: string;
       chaptersLabel: string; armsLabel: string; blocksLabel: string;
-      cardsLabel: string; hoursLabel: string; layersLabel: string;
+      cardsLabel: string; hoursLabel: string; layersLabel: string; doorHint: string;
       doorsTitle: string; doorsHint: string;
     };
     /** D1600: per-layer census of the curated clock, with real counts and shares. */
     layerCensus: {
-      eyebrow: string; title: string; hint: string; chaptersLabel: string; shareLabel: string;
+      eyebrow: string; title: string; hint: string; chaptersLabel: string; shareLabel: string; cardHint: string;
     };
     /** D1502: real public reference facts through the SSRF-guarded web tool. */
     webFacts: {
@@ -1821,7 +1821,7 @@ const zhHK: Dict = {
         eyebrow: '再往前走 · 全語料',
         title: '讀完時辰表，世界還在',
         hint: '上面的時辰表與「續讀」只排到前 106 章；這裡直接取全語料最新的八章，從哪裡進來都能再往前走。',
-        chapterLabel: '第 {n} 章',
+        chapterLabel: '第 {n} 章', cardHint: '第 {n} 章：點一下直接讀；全部本機計算。',
         cta: '去 /world 攤開整座城',
         ctaHref: '/world',
       },
@@ -3603,12 +3603,13 @@ const zhHK: Dict = {
       cardsLabel: '可認卡片', hoursLabel: '時辰帶', layersLabel: '世界層',
       doorsTitle: '再進去一次',
       doorsHint: '這三扇門從你還沒讀過、且在不同時辰的章節中選出——選擇只存在你的瀏覽器。',
+        doorHint: '點一下就進這一章；閱讀紀錄只存在你的瀏覽器。',
     },
       layerCensus: {
         eyebrow: '七層明細 · 實測',
         title: '每一層有多少時辰格',
         hint: '下面的數字直接從上面 106 個時辰格按時段算出，每一格只進一層；不是文案寫的。點進任一層可跳到那一帶。',
-        chaptersLabel: '格', shareLabel: '佔比',
+        chaptersLabel: '格', shareLabel: '佔比', cardHint: '第 {code} 層：{n} 個時辰格。點一下跳到那一帶。',
       },
     webFacts: {
       eyebrow: '真實資料 · 聯網',
@@ -4129,7 +4130,7 @@ const en: Dict = {
         eyebrow: 'KEEP GOING · FULL CORPUS',
         title: 'The clock ends. The world does not.',
         hint: 'The clock strip and continue-reading above cover only the first 106 chapters. This rail takes the eight newest chapters straight from the full corpus — there is always a way forward.',
-        chapterLabel: 'Chapter {n}',
+        chapterLabel: 'Chapter {n}', cardHint: 'Chapter {n}: open it in one tap; all computed locally.',
         cta: 'Unfold the whole city at /world',
         ctaHref: '/world',
       },
@@ -5914,12 +5915,13 @@ const en: Dict = {
       cardsLabel: 'Discover cards', hoursLabel: 'Time bands', layersLabel: 'World layers',
       doorsTitle: 'Re-enter the world',
       doorsHint: 'Three doors chosen from chapters you have not read, in different hours — the choice lives only in this browser.',
+        doorHint: 'Open this chapter in one tap; the read mark stays only in your browser.',
     },
       layerCensus: {
         eyebrow: 'SEVEN LAYERS · MEASURED',
         title: 'How many hours live in each layer',
         hint: 'These numbers are computed from the 106 clock chips above by time band — each chip lands in exactly one layer. Nothing here is written into copy. Tap a layer to jump to its hours.',
-        chaptersLabel: 'chips', shareLabel: 'share',
+        chaptersLabel: 'chips', shareLabel: 'share', cardHint: 'Layer {code}: {n} clock chips. Tap to jump to that band.',
       },
     webFacts: {
       eyebrow: 'REAL FACTS · ONLINE',

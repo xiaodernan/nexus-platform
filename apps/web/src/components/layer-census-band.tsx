@@ -15,6 +15,7 @@ export interface LayerCensusCopy {
   hint: string;
   chaptersLabel: string;
   shareLabel: string;
+  cardHint: string;
 }
 
 export function LayerCensusBand({
@@ -37,6 +38,7 @@ export function LayerCensusBand({
           <li key={row.code}>
             <Link
               href={`#world-layer-${row.code}`}
+              title={copy.cardHint.replace('{n}', String(row.chapters)).replace('{code}', row.code)}
               className="block h-full rounded-xl border border-line bg-canvas px-3 py-2.5 transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <span className="font-mono text-2xs uppercase text-accent">{row.code}</span>

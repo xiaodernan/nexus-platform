@@ -447,7 +447,7 @@ export const zhCN: Dict = {
         eyebrow: '再往前走 · 全语料',
         title: '读完时辰表，世界还在',
         hint: '上面的时辰表与「续读」只排到前 106 章；这里直接取全语料最新的八章，从哪里进来都能再往前走。',
-        chapterLabel: '第 {n} 章',
+        chapterLabel: '第 {n} 章', cardHint: '第 {n} 章：点一下直接读；全部本机计算。',
         cta: '去 /world 摊开整座城',
         ctaHref: '/world',
       },
@@ -2229,12 +2229,13 @@ export const zhCN: Dict = {
       cardsLabel: '可认卡片', hoursLabel: '时辰带', layersLabel: '世界层',
       doorsTitle: '再进去一次',
       doorsHint: '这三扇门从你还没读过、且在不同时辰的章节中选出——选择只存在你的浏览器。',
+        doorHint: '点一下就进这一章；阅读纪录只存在你的浏览器。',
     },
       layerCensus: {
         eyebrow: '七层明细 · 实测',
         title: '每一层有多少时辰格',
         hint: '下面的数字直接从上面 106 个时辰格按时段算出，每一格只进一层；不是文案写的。点进任一层可跳到那一带。',
-        chaptersLabel: '格', shareLabel: '占比',
+        chaptersLabel: '格', shareLabel: '占比', cardHint: '第 {code} 层：{n} 个时辰格。点一下跳到那一带。',
       },
     webFacts: {
       eyebrow: '真实资料 · 联网',

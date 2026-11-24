@@ -15,6 +15,7 @@ export interface HkContinuationCopy {
   chapterLabel: string;
   cta: string;
   ctaHref: string;
+  cardHint: string;
 }
 
 export function HkContinuationRail({ guides, copy }: { guides: Guide[]; copy: HkContinuationCopy }) {
@@ -30,6 +31,7 @@ export function HkContinuationRail({ guides, copy }: { guides: Guide[]; copy: Hk
           <li key={c.slug}>
             <Link
               href={c.href}
+              title={copy.cardHint.replace('{n}', String(c.number))}
               className="group block h-full rounded-xl border border-line bg-canvas px-3 py-2.5 transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <span className="font-mono text-2xs text-accent">

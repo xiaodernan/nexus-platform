@@ -49879,3 +49879,16 @@ Web **104 files / 1,037 passed**, tsc 0, `verify_all` NO OFFENDER.
   and the `/world` nav hint advanced 190 -> 191. A Simplified `从` in the first draft was corrected
   to `從` before the script ran; `check_ui_script.mjs` reports 0 offenders.
 - Web **104 files / 1,038 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1507. D1607 — teaching tooltips on the newest interactive cards (§五)
+
+The mandate asks for teaching copy on buttons and operations. The three newest card surfaces had
+no tooltip at all: the world-census re-entry doors, the hub continuation cards and the per-layer
+census cards. Each now renders a `title` hint from dict-owned copy in both authored arms, with a
+`{n}` / `{code}` placeholder filled from the real row. The first draft collided with an existing
+`hint` key (`layerCensus.hint` was the band intro) and tsc caught it; the card key is now
+`cardHint`, and `doorHint` was added to the census copy interface and both arms.
+`teaching-tooltips.test.ts` pins all three components and both arms' copy.
+Browser: `/world` shows 36 titled controls, 0 console errors, no overflow. Web **104 files /
+1,040 passed**, tsc 0, `check_ui_script` 0 offenders, `verify_all` NO OFFENDER.

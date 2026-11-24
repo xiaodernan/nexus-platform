@@ -25,6 +25,7 @@ export interface WorldCensusCopy {
   layersLabel: string;
   doorsTitle: string;
   doorsHint: string;
+  doorHint: string;
 }
 
 export function WorldCensusBand({ guides, copy, layers }: { guides: Guide[]; copy: WorldCensusCopy; layers: number }) {
@@ -66,6 +67,7 @@ export function WorldCensusBand({ guides, copy, layers }: { guides: Guide[]; cop
             <li key={g.slug}>
               <Link
                 href={`/guides/${g.slug}`}
+              title={copy.doorHint}
                 className="block rounded-xl border border-line bg-canvas px-3 py-2 text-2xs leading-snug text-ink-strong transition-colors hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {g.title}
