@@ -49614,3 +49614,22 @@ in the in-app browser in both authored locales:
 So the production read plane holds a 64-way burst of the heaviest hub route with no 5xx or dropped
 requests; the dev server is explicitly NOT the plane to quote for capacity. No code changed — the
 production server and the stress script are operator tools, the numbers are the evidence.
+
+
+## 1488. D1587 — browser sweep of every main route: five stale English numerals repaired
+
+A production build (`npm run build`, exit 0) was served on :3200 and the in-app browser swept `/`,
+`/world`, `/guides`, `/chronicle`, `/handbook`, `/stamp`, `/insights`: **0 console errors and
+0 horizontal overflow** on all of them in the English locale. But the visible copy exposed five
+hand-written numerals the phrase-based count gate had missed:
+
+- `/chronicle` title: `the hundred-and-six-chapter marathon` -> `the hundred-and-eighty-six-chapter marathon`;
+- handbook intro: `172-chapter HK series` -> `186-chapter HK series`;
+- handbook reading-order prose: `the full series now runs to 184. Newest: Chapter 184 (…)` -> 186 / Chapter 186 (first bus, 06:10);
+- `/world` intro and `countNote`: `one hundred and eighty-three` -> `one hundred and eighty-six`.
+
+`count-claims.test.ts` now pins the old hand-written forms as stale and the new English title /
+`186-chapter HK series` as current. The Simplified fold was regenerated. Browser re-check on the
+rebuilt production plane: `/chronicle` shows the 186-chapter title with no stale text, `/world` has
+no `eighty-three`, both with 0 console errors and no overflow. Web **104 files / 1,016 passed**,
+`verify_all` **NO OFFENDER**.

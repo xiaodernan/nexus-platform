@@ -39,12 +39,16 @@ const STALE = [
   'One hundred and eighty-five chapters', 'one hundred and eighty-five chapters',
 
   '一百七十八章反覆走完一個 HK', '一百七十八章香港系列指南', '一百七十八章香港系列', '一百七十八章讀竟',
+  // D1587: the browser sweep caught hand-written English numerals the earlier phrase list missed.
+  'hundred-and-six-chapter', '172-chapter HK series', 'the full series now runs to 184',
+  'one hundred and eighty-three',
   'One hundred and seventy-eight chapters',
 ];
 const CURRENT = [
   '一百八十六章反覆走完一個 HK', '一百八十六章香港系列指南',
   '一百八十六章香港系列', '一百八十六章讀竟',
   'One hundred and eighty-six chapters',
+  'the hundred-and-eighty-six-chapter marathon', '186-chapter HK series',
 ];
 
 describe('chapter-count claims across locales', () => {
