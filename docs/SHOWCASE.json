@@ -1,29 +1,29 @@
 {
   "schema_version": "nexus-platform.showcase.v1",
-  "milestone": "D1585",
-  "milestone_full": "Layer S continues: 186 Hong Kong chapters in three arms, atlas lockstep 186/186/186 with a derived fence. The ticket arc (179-183), the crossing arc (64-67) and chapter 186 — the first bus carries the ticket away at 06:10 — make the world walkable in both directions. A measured world census states the real size, two deterministic re-entry doors end the old 106-chapter dead end, and the primary hub now renders a derived eight-chapter continuation rail. A browser pass in both locales found and fixed 12 React duplicate-key errors. Production-limit siege: 2,702 credential-stuffing requests ALL 429 at p50=25 ms, zero 5xx, read plane 244/244. Spring Cloud edge, 12 StateGraph lanes, admin behavior analytics (password 123) with a real funnel, embedded in-app handbook, contract-enforced English arm. D1577 removed the Clash Verge dependency; all outbound lanes use direct egress by default. The gpt-6.2-sol API is closed by directive. verify_all NO OFFENDER, 1016 web + 38k AI green.",
-  "headline": "186 Hong Kong chapters in three arms · atlas lockstep 186/186/186 · two curated arcs, measured census and a hub continuation rail · browser-verified bilingual UI · production siege 2,702 ALL 429, zero 5xx · Spring Cloud + 12 StateGraph lanes · admin funnel · Clash-free egress · 1016 web + 38k AI green · LLM API closed.",
+  "milestone": "D1591",
+  "milestone_full": "Layer S continues: 187 Hong Kong chapters in three arms, atlas lockstep 187/187/187 with a derived fence. Three curated arcs are walkable from any of their chapters — the ticket arc (179-183), the crossing arc (64-67) and the new timetable arc (184-187, one folded sheet from the Central terminus to Wan Chai). A measured world census states the real size, the primary hub renders a derived eight-chapter continuation rail beyond the 106-chapter clock, and both locales were browser-verified with zero console errors. Production-limit siege: 2,702 stuffing requests ALL 429 at p50=25 ms, zero 5xx; production read plane 512/512 at 64-way concurrency. Spring Cloud edge, 12 StateGraph lanes, admin behavior analytics (password 123) with a real funnel, embedded in-app handbook, contract-enforced English arm. D1577 removed the Clash Verge dependency; all outbound lanes use direct egress. The gpt-6.2-sol API is closed by directive. verify_all NO OFFENDER, 1022 web + 38k AI green.",
+  "headline": "187 Hong Kong chapters in three arms · atlas lockstep 187/187/187 · three curated arcs incl. the timetable 184-187 · measured census + hub continuation rail · bilingual browser clean · production 512/512 at 64-way concurrency · Spring Cloud + 12 StateGraph lanes · admin funnel · Clash-free egress · 1022 web + 38k AI green.",
   "as_of": "2026-11-24",
-  "updated_at_commit": "97b7d65",
+  "updated_at_commit": "c6cd504",
   "features": [
-    "D1584: browser-verified /hong-kong in both locales — rail and 8 cards intact, zero console errors after fixing 12 duplicate-key React warnings.",
-    "D1583: chapter 186 — at 06:10 the first bus carries the ticket away; the arc reaches 186 with atlas lockstep 186/186/186.",
-    "D1580/D1581: the primary hub offers a derived eight-chapter continuation rail beyond the 106-chapter curated clock, and the in-app handbook teaches it in both arms.",
-    "D1577/1578: no Clash Verge dependency — LLM, embedding and Wikipedia-facts lanes use direct egress; a proxy is explicit opt-in only.",
-    "D1570/D1569: the behavior funnel and reader profiles reach parity on the live route, not just the demo payload.",
-    "D1567/D1563: two curated arcs — the ticket arc (179-183) and the crossing arc (64-67) — walkable from any chapter, server-rendered, locale-derived titles.",
-    "D1541: siege re-measured at PRODUCTION limits — 2,702 stuffing requests ALL 429 at p50=25 ms; read plane 244/244, zero 5xx."
+    "D1590: the third curated arc — the timetable (184-187) — is walkable from any of its four chapters; the handbook teaches all three arcs in both arms.",
+    "D1589/D1583: chapters 186 and 187 — the first bus carries the ticket away, then the folded timetable reaches Wan Chai; arc 187, atlas 187/187/187.",
+    "D1584/D1587: bilingual browser sweep of eight routes — zero console errors, no overflow, five stale English count claims repaired.",
+    "D1580: primary hub offers a derived eight-chapter continuation rail beyond the 106-chapter curated clock.",
+    "D1586: production read plane holds 512/512 requests at 64-way concurrency, zero 5xx; dev server is explicitly not a capacity plane.",
+    "D1577/1578: no Clash Verge dependency — LLM, embedding and Wikipedia-facts lanes use direct egress; proxy is explicit opt-in only.",
+    "D1541: production-limit siege — 2,702 stuffing requests ALL 429 at p50=25 ms, zero 5xx."
   ],
   "privacy_note": "All consumer fixtures are synthetic (demo flags); no real merchant, stall or operator is represented. /insights replay is deterministic synthetic inference, not stored user data. All REAL-HK figures are public sources with URLs inline on the handbook page.",
-  "milestone_full_zh": "Layer S 持續：186 章香港系列三語臂，圖譜鎖步 186/186/186，圍欄由索引推導。票之弧（179–183）、渡之弧（64–67）與第 186 章（06:10 頭班車把票帶走）讓世界可雙向行走；世界普查實測規模、確定性再入門結束舊有 106 章死胡同，主站現在渲染由語料派生的八章續走軌道。雙語瀏覽器實測找出並修好 12 個 React 重複 key 報錯。生產級攻城：2,702 發撞庫全部 429（p50=25ms、零 5xx），讀面 244/244。Spring Cloud 邊緣、12 條 StateGraph、密碼 123 管理員漏斗、嵌入式說明書、契約強制英文臂。D1577 移除 Clash Verge 依賴，出站默認直連；gpt-6.2-sol API 已按指令關閉。verify_all 全綠，web 1016＋AI 38k 全綠。",
-  "headline_zh": "186 章香港系列三語臂 · 圖譜鎖步 186/186/186 · 兩條策展弧、世界普查與主站續走軌道 · 雙語瀏覽器實測 · 攻城 2,702 發全數 429、零 5xx · Spring Cloud＋12 條 StateGraph · 管理員漏斗 · 脫離 Clash 直連 · 1016 web＋38k AI 全綠 · 大模型 API 已關閉。",
+  "milestone_full_zh": "Layer S 持續：187 章香港系列三語臂，圖譜鎖步 187/187/187，圍欄由索引推導。三條策展弧可從任一章走完——票之弧（179–183）、渡之弧（64–67）與新增的時刻表之弧（184–187，一張摺了三折的紙由中環終點站到灣仔）。世界普查實測規模，主站在 106 章時辰表之後提供八章續走軌道，雙語瀏覽器實測零報錯。生產級攻城：2,702 發撞庫全數 429、零 5xx；生產讀面 64 路並發 512/512。Spring Cloud 邊緣、12 條 StateGraph、密碼 123 管理員漏斗、嵌入式說明書、契約強制英文臂。D1577 移除 Clash Verge 依賴，出站默認直連；API 已按指令關閉。verify_all 全綠，web 1022＋AI 38k 全綠。",
+  "headline_zh": "187 章香港系列三語臂 · 圖譜鎖步 187/187/187 · 三條策展弧含時刻表之弧 184–187 · 世界普查與主站續走軌道 · 雙語瀏覽器零報錯 · 生產 64 路並發 512/512 · Spring Cloud＋12 條 StateGraph · 管理員漏斗 · 脫離 Clash 直連 · 1022 web＋38k AI 全綠。",
   "features_zh": [
-    "D1584：雙語瀏覽器實測 /hong-kong——續走軌道與 8 張卡完整，修好 12 個重複 key 報錯後控制台零錯。",
-    "D1583：第 186 章——06:10，頭班車把票帶走；全系列 185→186，圖譜鎖步 186/186/186。",
-    "D1580／D1581：主站在 106 章時辰表之後提供由語料派生的八章續走軌道，內嵌說明書兩語臂都有教。",
-    "D1577／1578：移除 Clash Verge 依賴——LLM、向量與維基資料通道全部直連，代理僅為顯式可選項。",
-    "D1570／D1569：行為漏斗與讀者畫像在 live 路徑與 demo 載荷對等。",
-    "D1567／D1563：兩條策展弧——票之弧（179–183）與渡之弧（64–67）——可從任一章走完，服務端渲染、標題隨語言推導。",
-    "D1541：以生產級限流重測攻城——2,702 發撞庫全數 429（p50=25ms）；讀面 244/244，零 5xx。"
+    "D1590：第三條策展弧——時刻表之弧（184–187）——四章任一章都能走完；說明書兩語臂都教三條弧。",
+    "D1589／D1583：第 186、187 章——頭班車把票帶走，摺了三折的時刻表到灣仔；全系列 187，圖譜 187/187/187。",
+    "D1584／D1587：雙語瀏覽器巡檢八條路由——零報錯、無溢出，修好五處舊英文數字。",
+    "D1580：主站在 106 章時辰表之後提供由語料派生的八章續走軌道。",
+    "D1586：生產讀面 64 路並發 512/512、零 5xx；開發伺服器明確不是容量面。",
+    "D1577／1578：移除 Clash Verge 依賴——三條出站通道直連，代理僅為顯式可選項。",
+    "D1541：生產級攻城——2,702 發撞庫全數 429（p50=25ms）、零 5xx。"
   ]
 }

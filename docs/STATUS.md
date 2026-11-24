@@ -49677,3 +49677,16 @@ Chai — were only reachable through affinity engines. This adds a third curated
   shipped slugs, null-safe ends and page wiring; the older arc-wiring pins were updated to the
   three-way copy selection.
 - Web **104 files / 1,022 passed**, tsc 0, `verify_all` NO OFFENDER (75 PASS, 2 UNCHECKED).
+
+
+## 1492. D1591 · the io entry point is LIVE at D1591 — 187 chapters, three curated arcs
+
+- `docs/SHOWCASE.json` -> D1591 / 2026-11-24 / head c6cd504 / 1,863 commits; both arms rewritten
+  with chapter 187, atlas 187/187/187, the new timetable arc, the bilingual browser sweep, the
+  production 512/512 pressure evidence and the Clash-free direct-egress note.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. Both static halves mirror head,
+  commits, milestone, as-of, generated foot and the seven-feature list; a 12-check verifier passed.
+- io commit `347b36a` pushed with a rebase loop, no force push. Read back from the public raw URL:
+  `latest.json` is D1591 / c6cd504 / 1,863 commits, headline says 187 chapters and three curated arcs.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
