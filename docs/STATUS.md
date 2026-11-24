@@ -49517,3 +49517,12 @@ size — the hub itself still offered no way forward.
   empty-corpus behaviour) and `hk-continuation-wiring.test.ts` (3 — hub wiring, server-only local
   component, copy in both arms). tsc 0; web **104 files / 1,014 passed**; `verify_all` **NO
   OFFENDER** (75 PASS, 2 UNCHECKED by design).
+
+
+## 1482. D1581 · the in-app handbook teaches the continuation rail (§七)
+
+The handbook's step 4 now says what the hub's new rail does in both authored arms: after the clock
+strip is finished, the "再往前走 / continuation rail" below it offers the eight newest chapters
+straight from the full corpus. Ten-step structure and chapter counts are untouched, so the existing
+coverage pins still hold; the Simplified fold was regenerated and `check_ui_script.mjs` stays at
+zero offenders. Targeted handbook + continuation tests 12/12; `verify_all` NO OFFENDER.
