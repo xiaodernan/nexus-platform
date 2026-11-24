@@ -49722,3 +49722,19 @@ A browser-driven honesty audit of `/world` found two claims that static phrase g
 - The count-claims gate's hand-written numerals on the stale list were advanced without
   contaminating the 187-era line — verified by reading the resulting CURRENT block.
 - Web **104 files / 1,025 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1495. D1594 · the stamp tracker now collects all 188 chapters, not the 106-chip clock
+
+The earliest exploration audit had flagged a copy/data mismatch that survived every later pass:
+`/stamp` built its entries from `dict.home.hkHub.clock` (106 curated chips) while both arms promised
+“188 chapters, 188 stamps”. A reader who completed the visible clock got a certificate at 106/106
+while eleven series chapters later still existed.
+
+- `apps/web/app/stamp/page.tsx` now derives entries from the full `mockGuides(locale)` HK corpus
+  (188 guides, unique slugs, numbered by corpus position), the same source `/world` and the hub
+  continuation rail use. The tracker's denominator, progress bar and certificate are now the real
+  corpus size; the copy was already honest.
+- New `stamp-tracker-total.test.ts` pins 188 unique chapters and the page's corpus-derived wiring,
+  and refuses any return to the 106-chip clock. `stamp-collection.test.ts` unchanged, still 6/6.
+- Web **104 files / 1,026 passed**, tsc 0, `verify_all` NO OFFENDER.
