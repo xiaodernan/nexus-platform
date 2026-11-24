@@ -49830,3 +49830,15 @@ world" step now tells the reader that the page hosts a measured world census and
 breakdown, in both authored arms; the Simplified fold was regenerated and `check_ui_script.mjs`
 stays at zero offenders. `handbook-coverage.test.ts` pins both sentences.
 Web **104 files / 1,035 passed**, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1503. D1602 — chapter 190: the sixth line ashore; the arc reaches 190
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-central-pier-timetable-sixth-line-chronicle` — chapter 190 （08:45 中環碼頭，送報員把寫著「對岸」的時刻表帶上岸，在第六行添了「中環」。報攤老闆說：「紙還在，就有人要寫；城市還醒著，就有人要接。」收檔時紙進了裝著很多紙的鐵盒——每一張都寫過幾行，沒有一張寫滿）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- The timetable arc grew from six stops to seven (184 → 190), with copy, handbook, wiring and
+  both arms advanced. Frozen artifacts in lockstep: digest 190 / 16,041 B, index 190 / 15,157 B,
+  derived fence; `check_atlas_lockstep` PASS at 190/190/190. All count pins, `WORLD_ROADMAP` and
+  the `/world` nav hint advanced 189 -> 190.
+- Web **104 files / 1,036 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.

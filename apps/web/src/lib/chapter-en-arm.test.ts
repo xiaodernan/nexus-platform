@@ -2804,4 +2804,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /not a time|one who crossed|shadow is longest/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 190 (sixth line ashore at Central — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-pier-timetable-sixth-line-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上八點三刻/);
+    const cn = mockGuide('hk-central-pier-timetable-sixth-line-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上八点三刻/);
+    const en = mockGuide('hk-central-pier-timetable-sixth-line-chronicle', 'en');
+    expect(en?.title).toMatch(/Central pier|sixth line/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/runner|stall owner/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /sixth line|ashore|never filled/i.test(b.text))).toBe(true);
+  });
 });

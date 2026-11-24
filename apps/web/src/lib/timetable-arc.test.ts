@@ -4,8 +4,8 @@ import { timetableArcFor, TIMETABLE_ARC_SLUGS } from './timetable-arc';
 
 /** D1590 — the timetable arc is a curated path through four real chapters, walkable both ways. */
 describe('timetable arc', () => {
-  it('names six shipped chapters in order', () => {
-    expect(TIMETABLE_ARC_SLUGS).toHaveLength(6);
+  it('names seven shipped chapters in order', () => {
+    expect(TIMETABLE_ARC_SLUGS).toHaveLength(7);
     for (const slug of TIMETABLE_ARC_SLUGS) {
       expect(mockGuide(slug, 'zh-HK')?.slug, `missing ${slug}`).toBe(slug);
       expect(mockGuide(slug, 'en')?.slug, `missing EN arm ${slug}`).toBe(slug);
@@ -15,13 +15,13 @@ describe('timetable arc', () => {
   it('gives honest positions and nulls at the two ends', () => {
     const first = timetableArcFor(TIMETABLE_ARC_SLUGS[0]!);
     expect(first?.step).toBe(1);
-    expect(first?.total).toBe(6);
+    expect(first?.total).toBe(7);
     expect(first?.prev).toBeNull();
     expect(first?.next).toBe(TIMETABLE_ARC_SLUGS[1]);
-    const last = timetableArcFor(TIMETABLE_ARC_SLUGS[5]!);
-    expect(last?.step).toBe(6);
+    const last = timetableArcFor(TIMETABLE_ARC_SLUGS[6]!);
+    expect(last?.step).toBe(7);
     expect(last?.next).toBeNull();
-    expect(last?.prev).toBe(TIMETABLE_ARC_SLUGS[4]);
+    expect(last?.prev).toBe(TIMETABLE_ARC_SLUGS[5]);
     expect(timetableArcFor('hk-mong-kok-ging-fa-shu-mai-chronicle')).toBeNull();
   });
 });
