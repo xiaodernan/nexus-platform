@@ -321,8 +321,7 @@ class HttpLLMAdapter:
             # D1577: an ambient HTTP(S)_PROXY must never silently bind this product to a local
             # proxy (Clash Verge :7897 on this host). trust_env=False makes egress direct
             # unless NEXUS_LLM_PROXY explicitly names a proxy.
-            self._client = httpx.AsyncClient(timeout=self.timeout_s,
-                                             proxy=self.proxy or None, trust_env=False)
+            self._client = httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None, trust_env=False)
         return self._client
 
     async def health(self) -> dict[str, Any]:

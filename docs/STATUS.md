@@ -49464,3 +49464,19 @@ named, all three outbound clients pin `trust_env=False`), plus the amended R3/R3
 `test_d1549_unit_lane_pins_the_proxy_env.py` and R4/R5 of
 `test_d1548_internal_hop_ignores_ambient_proxy.py`: 15 passed offline. Historical measurements
 that name Clash :7897 remain facts in the ledger and UI copy; they are not a runtime dependency.
+
+
+## 1479. D1578 — the unbind keeps the old gates honest
+
+- The docstring edit in `config.py` shifted a cited line (`infra/docker-compose.yml:133` cites
+  `apps/ai/nexus_ai/config.py:101`): the line became blank and `check_comment_citations.mjs`
+  correctly reddened. The two-line docstring is now line-count-neutral; 314 citations across
+  121 files all resolve again.
+- `check_d983_request_timeout_wired.mjs` pinned the exact honest-wire constructor. Its two
+  needles now include `trust_env=False`, so the real client stays green while the timeout-flip
+  corruption still reddens (47 holds, 30 self-test arms).
+- `verify_all --report`: **NO OFFENDER** (72 PASS, 2 UNCHECKED by design). Full AI suite:
+  **38,085 passed, 525 skipped** with one setup error `RuntimeError: can't start new thread`
+  on `test_recommend_needs_intent_or_query` — host thread exhaustion during the parallel run,
+  NOT a product failure; the file passes 8/8 in isolation. Historical live figures remain facts;
+  normal egress is direct from here on.

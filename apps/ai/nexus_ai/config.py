@@ -39,9 +39,8 @@ class Settings:
     llm_model_mid: str = ""
     llm_model_reason: str = ""
     #: Outbound proxy for the live provider (e.g. a local Clash Verge at http://127.0.0.1:7897).
-    #: Empty = direct connection. D1577: ambient HTTP(S)_PROXY is NOT inherited — a local
-    # proxy (Clash Verge :7897) is opt-in only, so an off/uninstalled proxy cannot produce
-    # ECONNREFUSED on the product's normal path. The closed api.aizzz.xyz remains 403 direct.
+    #: D1577: empty = direct; ambient HTTP(S)_PROXY is NOT inherited, so an off Clash :7897 cannot
+    #: cause ECONNREFUSED. A proxy is opt-in; the closed aizzz provider stays 403 direct anyway.
     llm_proxy: str = ""
     #: D983: per-request LLM deadline. 12s was parsed but never reached the adapters (the
     #: factory dropped it), and even once wired a slow OpenAI-compatible proxy beats it too

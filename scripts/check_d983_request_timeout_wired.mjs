@@ -154,7 +154,7 @@ export function judge(files, present, ciPath = CI) {
   /* 4 — honest-wire contracts survive: the httpx client is built from self.timeout_s, the
      degrade ladder floor + order are untouched, and the adapters keep their real shape. */
   has(BASE, 'self.timeout_s = timeout_s', 'the adapter stores the deadline', 'STORE');
-  has(BASE, 'httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None)',
+  has(BASE, 'httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None, trust_env=False)',
       'the real httpx client uses the deadline and the proxy', 'HTTPX');
   has(BASE, 'timeout_s: float = 20.0', 'the base default remains a safe fallback for direct ctors', 'BASE-DEFAULT');
   has(FACTORY, 'pool["mock"] = MockAdapter()', 'the §105 mock floor is still installed', 'MOCK-FLOOR');
@@ -234,7 +234,7 @@ if (SELF_TEST) {
     ['framing probe reverts to hand-rolled key', mutate(real, FRAMING, 'factory.pool_key(live_settings)', 'f"{live_settings.llm_provider}|{live_settings.llm_base_url}"'), 'FRAMING-KEY'],
     ['config default reverted', mutate(real, CONFIG, 'request_timeout_s: float = 45.0', 'request_timeout_s: float = 12.0'), 'CFG-DEFAULT'],
     ['config env parser cut', mutate(real, CONFIG, 'float(_env("NEXUS_REQUEST_TIMEOUT_S") or 45)', '12.0'), 'CFG-ENV'],
-    ['httpx client built without deadline', mutate(real, BASE, 'httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None)', 'httpx.AsyncClient(timeout=0, proxy=self.proxy or None)'), 'HTTPX'],
+    ['httpx client built without deadline', mutate(real, BASE, 'httpx.AsyncClient(timeout=self.timeout_s, proxy=self.proxy or None, trust_env=False)', 'httpx.AsyncClient(timeout=0, proxy=self.proxy or None)'), 'HTTPX'],
     ['mock floor removed', mutate(real, FACTORY, 'pool["mock"] = MockAdapter()', 'pool["_gone"] = None'), 'MOCK-FLOOR'],
     ['probe both-adapters arm erased', mutate(real, PROBE, 'def test_both_live_adapters_receive_the_operator_timeout():', 'def _both_removed():'), 'P-BOTH'],
     ['probe env-flow arm erased', mutate(real, PROBE, 'def test_env_value_flows_from_load_settings_through_the_pool_to_the_client(monkeypatch):', 'def _env_removed(monkeypatch):'), 'P-ENV'],
