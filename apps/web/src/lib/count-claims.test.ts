@@ -26,6 +26,7 @@ const STALE = [
   // D1575: the 184-era claims join it as the corpus grows to 185.
   // D1583: the 185-era claims join it as the corpus grows to 186.
   // D1589: the 186-era claims join it as the corpus grows to 187.
+  // D1593: the 187-era claims join it as the corpus grows to 188.
   '一百八十三章反覆走完一個 HK', '一百八十三章香港系列指南', '一百八十三章香港系列', '一百八十三章讀竟',
   'One hundred and eighty-three chapters', 'one hundred and eighty-three chapters',
   '一百八十二章反覆走完一個 HK', '一百八十二章香港系列指南', '一百八十二章香港系列', '一百八十二章讀竟',
@@ -40,15 +41,16 @@ const STALE = [
   '一百七十八章反覆走完一個 HK', '一百七十八章香港系列指南', '一百七十八章香港系列', '一百七十八章讀竟',
   // D1587: the browser sweep caught hand-written English numerals the earlier phrase list missed.
   'hundred-and-eighty-six-chapter', '186-chapter HK series',
+  'hundred-and-eighty-seven-chapter', '187-chapter HK series',
   'hundred-and-six-chapter', '172-chapter HK series', 'the full series now runs to 184',
   'one hundred and eighty-three',
   'One hundred and seventy-eight chapters',
 ];
 const CURRENT = [
-  '一百八十七章反覆走完一個 HK', '一百八十七章香港系列指南',
-  '一百八十七章香港系列', '一百八十七章讀竟',
-  'One hundred and eighty-seven chapters',
-  'the hundred-and-eighty-seven-chapter marathon', '187-chapter HK series',
+  '一百八十八章反覆走完一個 HK', '一百八十八章香港系列指南',
+  '一百八十八章香港系列', '一百八十八章讀竟',
+  'One hundred and eighty-eight chapters',
+  'the hundred-and-eighty-eight-chapter marathon', '188-chapter HK series',
 ];
 
 describe('chapter-count claims across locales', () => {
@@ -69,6 +71,6 @@ describe('chapter-count claims across locales', () => {
   it('the chronicle page comment is not frozen at 105', () => {
     const page = read('apps/web/app/chronicle/page.tsx');
     expect(page).not.toContain('one city, one day, 105 chapters');
-    expect(page).toContain('187 chapters');
+    expect(page).toContain('188 chapters');
   });
 });

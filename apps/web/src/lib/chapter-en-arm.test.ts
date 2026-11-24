@@ -2774,4 +2774,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /second station name|promise of three stops|paper travels further/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 188 (third stop at North Point — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-north-point-third-stop-timetable-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上七點一刻/);
+    const cn = mockGuide('hk-north-point-third-stop-timetable-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上七点一刻/);
+    const en = mockGuide('hk-north-point-third-stop-timetable-chronicle', 'en');
+    expect(en?.title).toMatch(/North Point|third stop/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/dock worker|fourth line/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /fourth line|who passes it|folded back/i.test(b.text))).toBe(true);
+  });
 });

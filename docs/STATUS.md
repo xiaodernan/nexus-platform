@@ -49707,3 +49707,18 @@ A browser-driven honesty audit of `/world` found two claims that static phrase g
 - Two host restarts interrupted the simplified fold; the generated arm was stale against the
   edited zh-HK copy and `check_simplified_mirror.mjs` correctly reddened. Regenerated, green again.
 - Web **104 files / 1,024 passed**, tsc 0, `check_ui_script` 0 offenders, `verify_all` NO OFFENDER.
+
+
+## 1494. D1593 — chapter 188: the timetable's fourth line at North Point; the arc reaches 188
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-north-point-third-stop-timetable-chronicle` — chapter 188 （07:15 北角碼頭，摺了三折的時刻表到第三站，碼頭工友在背面第四行寫下「七點一刻，開工」，再摺回三折壓在工具箱底。一張紙、三站、四行時間——城市很大，就是靠這樣一張一張的紙把人接起來）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- The timetable arc (D1590) grew from four stops to five: 184 → 188; its copy, handbook pin,
+  wiring pin and both authored arms advanced together. The chapter-page rail renders five steps.
+- Frozen artifacts in lockstep: digest 188 / 15,870 B, index 188 / 14,980 B, derived fence;
+  `check_atlas_lockstep` PASS at 188/188/188. All count pins, `WORLD_ROADMAP` and the `/world`
+  nav hint advanced 187 -> 188.
+- The count-claims gate's hand-written numerals on the stale list were advanced without
+  contaminating the 187-era line — verified by reading the resulting CURRENT block.
+- Web **104 files / 1,025 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
