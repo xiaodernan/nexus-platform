@@ -49578,3 +49578,19 @@ in the in-app browser in both authored locales:
   `scrollWidth == clientWidth`. New `hk-series-progress-keys.test.ts` pins the key shape AND the
   existence of duplicate slugs in the curated list, so removing the index reddens the gate.
 - Web **104 files / 1,016 passed**, tsc 0, `verify_all` **NO OFFENDER** (75 PASS, 2 UNCHECKED).
+
+
+## 1486. D1585 · the io entry point is LIVE at D1585 — 186 chapters, bilingual browser-clean
+
+- The io clone's temp directory had been wiped by a host restart (a `.git` shell with no HEAD);
+  it was re-cloned from the public remote before editing. Current static state was D1579, so this
+  is a genuine heavy-milestone refresh, not a per-chapter push.
+- `docs/SHOWCASE.json` -> D1585 / 2026-11-24 / head 97b7d65 / 1,857 commits; both arms rewritten
+  with chapter 186, atlas 186/186/186, the hub continuation rail, the browser duplicate-key fix,
+  the D1577 direct-egress change and the production-limit siege.
+- Only `assets/nexus-platform/latest.json` and `index.html` were edited. Both static halves mirror
+  head, commits, milestone, as-of, generated foot and the seven-feature list; a 12-check verifier
+  passed. io commit `6deb18b` pushed with a rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1585 / 97b7d65 / 1,857 commits, headline
+  says 186 chapters, atlas 186/186/186 and bilingual browser clean.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
