@@ -49430,3 +49430,37 @@ warrants one sync, so this is the heavy-milestone refresh, not a per-commit one.
 - Frozen artifacts in lockstep: digest 185 / 15,602 B, index 185 / 14,713 B, derived fence; `check_atlas_lockstep` PASS at 185/185/185. Both authored arms + every count pin (zh/en, chronicle, handbook, stamp, hk-type, home rail, corpus sanity) and `WORLD_ROADMAP` advanced 184 -> 185 and cleaned from its stale 181/D1559 header. `count-claims` keeps the 184-era copy on the stale list.
 - Two gates exposed by the preceding D1553 land were closed here: `check_atlas.mjs` now names `check_internal_proxy_launch_paths.mjs` on the page (454 cited paths), and `check_d952.mjs`'s cited-line-stable pin moved 548 -> 546 after D1552 deleted two CI lines; its 11-arm self-test reddens every corruption including the new 546 line.
 - Gates: web **102 files / 1,008 passed**; atlas/recap 20/20; `verify_all` **NO OFFENDER** (73 PASS, 2 UNCHECKED by design); `check_ui_script` 0 offenders; tsc 0.
+
+
+## 1478. D1577 — unbound from Clash Verge: direct egress is the default, proxy is opt-in
+
+**The report.** With Clash Verge off, `ECONNREFUSED: Unable to connect` still appeared. Measured
+on this host: the process environment carried `HTTP_PROXY`/`HTTPS_PROXY=http://127.0.0.1:7897`,
+the gitignored `.env` and `apps/ai/.env` both carried `NEXUS_LLM_PROXY=http://127.0.0.1:7897`,
+and three outbound lanes silently inherited those values:
+
+- `HttpLLMAdapter._http()` built `httpx.AsyncClient(proxy=self.proxy or None)` — with an empty
+  explicit proxy httpx still honours the ambient `HTTP(S)_PROXY`, so the closed provider's lane
+  dialled the dead Clash port.
+- `HttpEmbedding._shared_client()` used httpx's proxy-reading default.
+- `search_web._fetch_json()` used `urllib.request.urlopen`, whose global opener reads the same
+  ambient variables — the `/world` Wikipedia facts lane failed whenever Clash was off.
+
+**Measured direct network (no proxy):** GitHub HTTP 200 in 2.26 s, Wikipedia HTTP 301 in 0.62 s,
+`api.aizzz.xyz/v1/models` HTTP 403 in 0.65 s (the provider's regional block — the API is closed
+by directive anyway, so no live call is expected). Nothing in the product needs a local proxy
+for normal operation.
+
+**The fix.** `trust_env=False` on the LLM, shared-embedding and platform clients; an explicit
+`proxy=` still works, so a chosen proxy remains a deliberate opt-in. `search_web` now builds a
+dedicated opener with an empty `ProxyHandler` (direct) unless `NEXUS_WEB_PROXY` is explicitly
+set. The two local, gitignored `.env` files no longer contain `NEXUS_LLM_PROXY` at all. No
+listening port was ever bound to Clash: :7897 was only an upstream egress setting, and the
+product's own ports (3002 / 8000 / 8080) are unchanged.
+
+**Evidence.** `test_d1577_no_clash_dependency.py` (5 arms — hostile ambient proxy stays direct,
+explicit proxy still proxied, web-facts opener has an empty proxy map by default, opt-in map when
+named, all three outbound clients pin `trust_env=False`), plus the amended R3/R3b of
+`test_d1549_unit_lane_pins_the_proxy_env.py` and R4/R5 of
+`test_d1548_internal_hop_ignores_ambient_proxy.py`: 15 passed offline. Historical measurements
+that name Clash :7897 remain facts in the ledger and UI copy; they are not a runtime dependency.

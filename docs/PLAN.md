@@ -4468,6 +4468,12 @@ by what is already verified, not by date.
   reader reachability (**77/77 readers**). PASS covers selected working-tree bytes, not the caller's
   ambient environment.
 
+- **Landed — D1577 (§1478): no Clash Verge dependency.** Direct egress is the default on all
+  three outbound lanes (LLM, shared embedding, web facts); ambient HTTP(S)_PROXY is ignored and
+  `NEXUS_LLM_PROXY` / `NEXUS_WEB_PROXY` are explicit opt-ins. The two local `.env` files were
+  unbound; 15 offline proxy arms pass. GitHub/Wikipedia are reachable directly; the closed
+  aizzz provider stays 403 direct by its own regional block, not by a missing local proxy.
+
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
   evidence rather than a date.

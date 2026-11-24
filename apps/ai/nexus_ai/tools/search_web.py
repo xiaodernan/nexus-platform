@@ -23,6 +23,7 @@ import asyncio
 import html
 import ipaddress
 import json
+import os
 import socket
 import urllib.parse
 import urllib.request
@@ -92,14 +93,21 @@ def _search_url(query: str, host: str = "zh.wikipedia.org") -> str:
 
 def _fetch_json(url: str) -> dict[str, Any]:
     """One bounded GET; returns {} on any failure. Runs in a worker thread."""
-    # Explicitly refuse a proxy-less direct egress on planes that require one: an
-    # operator proxy in the environment is respected by urllib automatically.
+    # D1577: direct egress is the DEFAULT. urllib's global opener would silently honour
+    # HTTP(S)_PROXY from the environment (Clash Verge :7897 here) and fail with ECONNREFUSED
+    # whenever that local proxy is off. A dedicated opener with an empty ProxyHandler keeps
+    # the normal path on the real network; an explicit, opt-in NEXUS_WEB_PROXY still routes
+    # through a chosen proxy when a plane genuinely needs one.
+    explicit = os.environ.get("NEXUS_WEB_PROXY", "").strip()
+    handlers = ([urllib.request.ProxyHandler({"http": explicit, "https": explicit})]
+                if explicit else [urllib.request.ProxyHandler({})])
+    opener = urllib.request.build_opener(*handlers)
     req = urllib.request.Request(url, headers={
         "User-Agent": "nexus-ai-search-web/1.0 (+product tool; untrusted source)",
         "Accept": "application/json",
     })
     try:
-        with urllib.request.urlopen(req, timeout=_TIMEOUT_S) as resp:
+        with opener.open(req, timeout=_TIMEOUT_S) as resp:
             raw = resp.read(_MAX_BYTES + 1)
             if len(raw) > _MAX_BYTES:
                 return {}

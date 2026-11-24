@@ -14,10 +14,10 @@ the environment decides two things about a call that never leaves the host or th
     relay is then a proxied round trip, which is the most likely cause of the 7-19 s per live call
     PLAN OWED (d) records.
 
-`trust_env=False` fixes both, and it is scoped to this one client on purpose: the LLM lane is a hop
-that genuinely leaves the host, where an ambient proxy is the operator's instrument (and it already
-carries an explicit `proxy=` setting). R4 pins that boundary so a future sweep of the flag across
-every client in the package reddens instead of passing quietly.
+`trust_env=False` fixes both. D1577 later extended the same rule to the LLM and embedding
+clients: an ambient proxy on this host was a Clash Verge :7897 dependency, and with Clash off
+every lane using it died with ECONNREFUSED. A proxy is now opt-in via `NEXUS_LLM_PROXY` only;
+R4 pins that the LLM lane also ignores the environment, while a new R5 keeps the explicit seam.
 
 Offline throughout: no socket is opened, only the mounted transport is inspected.
 """
@@ -75,10 +75,19 @@ class TestInternalHopIgnoresAmbientProxy:
         finally:
             await client.aclose()
 
-    async def test_r4_the_llm_lane_still_honours_the_ambient_proxy(self, monkeypatch):
-        """The flag must not be swept onto the hop that genuinely leaves the host."""
+    async def test_r4_the_llm_lane_ignores_the_ambient_proxy_too(self, monkeypatch):
+        """D1577: no outbound lane silently inherits a local proxy (Clash :7897)."""
         _set_proxy_env(monkeypatch, no_proxy="localhost,127.0.0.1")
         adapter = HttpLLMAdapter(base_url="https://api.test/v1", api_key="k")
+        try:
+            assert _pool_for(adapter._http(), "https://api.test/v1/chat/completions") == "AsyncConnectionPool"
+        finally:
+            await adapter._http().aclose()
+
+    async def test_r5_an_explicit_proxy_is_still_honoured(self, monkeypatch):
+        """Unbinding from the ambient proxy must not remove the deliberate opt-in seam."""
+        _set_proxy_env(monkeypatch, no_proxy=None, proxy=None)
+        adapter = HttpLLMAdapter(base_url="https://api.test/v1", api_key="k", proxy=PROXY_URL)
         try:
             assert _pool_for(adapter._http(), "https://api.test/v1/chat/completions") == "AsyncHTTPProxy"
         finally:

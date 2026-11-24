@@ -100,13 +100,23 @@ class TestUnitLanePinsTheProxyEnv:
         left = sorted(k for k in os.environ if k.upper() in PROXY_NAMES)
         assert left == [], f"the autouse fixture let these reach the test: {left}"
 
-    def test_r3_a_proxy_a_test_sets_on_purpose_still_routes_the_live_hop(self, monkeypatch):
-        """Hermetic is not deaf: clearing the lane's environment must not remove the operator's knob."""
-        monkeypatch.setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+    def test_r3_an_explicit_proxy_is_still_honoured(self, monkeypatch):
+        """D1577: environment is not a proxy knob; the explicit NEXUS_LLM_PROXY seam is."""
+        monkeypatch.delenv("HTTPS_PROXY", raising=False)
+        monkeypatch.delenv("HTTP_PROXY", raising=False)
+        adapter = HttpLLMAdapter(base_url="https://api.test/v1", api_key="k",
+                                 proxy="http://proxy.invalid:3128")
+        try:
+            assert _pool_for(adapter._http(), "https://api.test/v1/chat/completions") == "AsyncHTTPProxy"
+        finally:
+            asyncio.run(adapter._http().aclose())
+
+    def test_r3b_an_ambient_proxy_does_not_bind_the_lane_to_clash(self, monkeypatch):
+        monkeypatch.setenv("HTTPS_PROXY", "http://127.0.0.1:7897")
         monkeypatch.setenv("NO_PROXY", "localhost,127.0.0.1")
         adapter = HttpLLMAdapter(base_url="https://api.test/v1", api_key="k")
         try:
-            assert _pool_for(adapter._http(), "https://api.test/v1/chat/completions") == "AsyncHTTPProxy"
+            assert _pool_for(adapter._http(), "https://api.test/v1/chat/completions") == "AsyncConnectionPool"
         finally:
             asyncio.run(adapter._http().aclose())
 

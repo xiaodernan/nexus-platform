@@ -53,7 +53,7 @@ def _shared_client(timeout_s: float):
     global _HTTP_CLIENT
     if _HTTP_CLIENT is None:
         import httpx
-        _HTTP_CLIENT = httpx.AsyncClient(timeout=timeout_s)
+        _HTTP_CLIENT = httpx.AsyncClient(timeout=timeout_s, trust_env=False)  # D1577: no ambient proxy
     return _HTTP_CLIENT
 
 
