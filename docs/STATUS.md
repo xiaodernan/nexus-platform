@@ -49561,3 +49561,20 @@ from the Clash Verge GUI with service mode off) — this agent cannot do it with
 - The D1580 continuation test had pinned chapter 185's slug; it now derives the expected last slug
   from the corpus, so it stays correct as the arc grows. Web **104 files / 1,015 passed**, atlas
   11/11, tsc 0, `verify_all` **NO OFFENDER** (75 PASS, 2 UNCHECKED by design).
+
+
+## 1485. D1584 — browser-verified both locales; a 12-error duplicate-key bug found and fixed
+
+**§五 verification, not a static gate.** With the dev server back on :3100, `/hong-kong` was opened
+in the in-app browser in both authored locales:
+
+- zh-HK: rail title `讀完時辰表，世界還在`, 8 chapter cards, no horizontal overflow;
+- en: rail title `The clock ends. The world does not.`, `document.lang=en`, 8 cards, no overflow;
+- **12 React console errors in both** — `Encountered two children with the same key,
+  hk-kennedy-town-junk-books-chronicle / hk-causeway-bay-teacher-chalkboard-chronicle / …`.
+  The curated `dict.home.hkSeries.cards` list has 112 entries but only 106 unique slugs, and
+  `HkSeriesProgress` keyed its `<li>` by slug alone. The key is now `${card.slug}-${index}`.
+- Re-verified in the browser after the fix: **0 console errors in both locales**, rail intact,
+  `scrollWidth == clientWidth`. New `hk-series-progress-keys.test.ts` pins the key shape AND the
+  existence of duplicate slugs in the curated list, so removing the index reddens the gate.
+- Web **104 files / 1,016 passed**, tsc 0, `verify_all` **NO OFFENDER** (75 PASS, 2 UNCHECKED).

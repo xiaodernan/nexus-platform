@@ -109,7 +109,7 @@ export function HkSeriesProgress({
         {cards.map((card, index) => {
           const isRead = ready && readSet.has(card.slug);
           return (
-            <li key={card.slug}>
+            <li key={`${card.slug}-${index}`}>
               <Link
                 href={`/guides/${card.slug}`}
                 onClick={() => mark(card.slug)}
