@@ -49842,3 +49842,17 @@ Web **104 files / 1,035 passed**, tsc 0, `verify_all` NO OFFENDER.
   derived fence; `check_atlas_lockstep` PASS at 190/190/190. All count pins, `WORLD_ROADMAP` and
   the `/world` nav hint advanced 189 -> 190.
 - Web **104 files / 1,036 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1504. D1603/D1604 · the io entry point is LIVE at 190 chapters, with a corrected zh arc range
+
+- `docs/SHOWCASE.json` -> D1603 / 2026-11-25 / head 1d243f5 / 1,875 commits; both arms rewritten
+  with chapter 190, atlas 190/190/190, the seven-stop timetable arc, the measured seven-layer
+  census (17/20/18/21/10/10/10 from 106 chips), the 190/190 stamp tracker, the bilingual browser
+  evidence and the production pressure numbers.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. io commit `0bf8dbf` pushed with a
+  rebase loop, no force push. A follow-up corrected the zh `milestone_full_zh` arc range from
+  184–189 to 184–190 in the source pack and the live fact pack (io `b5ff107`, repo `7a00ebf`).
+- Read back from the public raw URL: `latest.json` is D1603 / 1d243f5 / 1,875 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
