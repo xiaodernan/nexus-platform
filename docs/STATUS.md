@@ -49757,3 +49757,15 @@ by `href + index`; new pin in `rail-nav-chrome.test.ts`.
 **Browser evidence after both fixes:** the timetable rail shows **5 steps** in `zh-HK`, `zh-CN` and
 `en`, no overflow, **0 console errors**. `/stamp` shows `188 / 188` denominator with **188 cards**,
 also 0 errors. Web **104 files / 1,027 passed**, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1497. D1596 · the io entry point is LIVE at D1596 — 188 chapters, 188 stamps, five-stop arc
+
+- `docs/SHOWCASE.json` -> D1596 / 2026-11-25 / head 6d3af8c / 1,868 commits; both arms rewritten
+  with chapter 188, atlas 188/188/188, the five-stop timetable arc, the 188/188 stamp tracker, the
+  derived census, the browser-verified bilingual UI and the production pressure evidence.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed, and both static halves mirror the
+  source. io commit `6cefc4b` pushed with a rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1596 / 6d3af8c / 1,868 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
