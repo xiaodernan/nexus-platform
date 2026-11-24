@@ -49633,3 +49633,14 @@ hand-written numerals the phrase-based count gate had missed:
 rebuilt production plane: `/chronicle` shows the 186-chapter title with no stale text, `/world` has
 no `eighty-three`, both with 0 console errors and no overflow. Web **104 files / 1,016 passed**,
 `verify_all` **NO OFFENDER**.
+
+
+## 1489. D1588 · the Chinese plane gets the same browser sweep (clean)
+
+The locale toggle was switched back to `zh-HK` and the same eight production routes (`/`, `/world`,
+`/guides`, `/chronicle`, `/handbook`, `/stamp`, `/insights`, `/hong-kong`) were visited:
+`document.lang=zh-HK`, **0 console errors, 0 horizontal overflow** everywhere. The `/world` and
+`/hong-kong` hits for `第一百八十二/三/四/五章` are legitimate chapter titles in the full corpus
+rail, not stale totals — verified by walking the text nodes and reading their parent spans.
+`/chronicle` shows `一座城的一天，一百八十六章的完整馬拉松`. No code change; the sweep is recorded
+so the two authored planes have equal browser evidence.
