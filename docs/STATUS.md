@@ -49905,3 +49905,15 @@ Browser: `/world` shows 36 titled controls, 0 console errors, no overflow. Web *
   rebase loop, no force push.
 - Read back from the public raw URL: `latest.json` is D1608 / c970426 / 1,880 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1509. D1609 · the owner's identity record is written once, canonically, and gated
+
+The §十 sweep found the two `隐图` occurrences in this repo are negative assertions in historical
+memory, not shipped copy — but the ledger's identity line listed the competition, universities and
+internship while omitting the 江西省 first/second prizes. The canonical record, as the owner
+specified, is: **赵欣曈 · 南方科技大学（本科，计算机科学与技术）· 香港中文大学（硕士，计算机科学与技术）
+· 全国中学生物理竞赛铜牌 · 江西省一等奖 · 江西省二等奖 · 法狗狗公司实习 · IELTS 6.5 · CET-6 546 ·
+product name 隐盾 (never 隐图)**. A new `identity-lock.test.ts` reads the three shipped copy
+surfaces and the ledger: no forbidden name in shipped copy, all canonical facts present, and any
+ledger mention of the forbidden word must be an explicit zero/negative assertion.
