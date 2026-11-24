@@ -49769,3 +49769,13 @@ also 0 errors. Web **104 files / 1,027 passed**, tsc 0, `verify_all` NO OFFENDER
   source. io commit `6cefc4b` pushed with a rebase loop, no force push.
 - Read back from the public raw URL: `latest.json` is D1596 / 6d3af8c / 1,868 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1498. D1597 — the secondary route plane is browser-clean too
+
+After the eight primary routes, the in-app browser swept twelve more — `/search`, `/collections`,
+`/try`, `/hk-type`, `/afterward`, `/llm-ops`, `/stategraph`, `/command`, `/insights`, `/me`, `/daily`
+and `/admin/analytics` — in **both** authored planes. Every route in both locales: no error page,
+no console error, no horizontal overflow, and no stale count claim (`160 chapters`, `87 hourly`,
+`hundred-and-six-chapter`, `172-chapter`, `184. Newest`, `隐图`, `160 章`, `87 個坐標`). This is
+browser evidence, not a static gate; no code change.
