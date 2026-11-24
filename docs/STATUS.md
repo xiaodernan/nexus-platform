@@ -49547,3 +49547,17 @@ The owner kept seeing connection-refused errors after the D1577 unbind. Measured
 No tracked product code changed; the local env file is gitignored. If the owner wants Clash gone
 from the machine entirely, the two services must be stopped/disabled from an elevated prompt (or
 from the Clash Verge GUI with service mode off) — this agent cannot do it without admin rights.
+
+
+## 1484. D1583 — chapter 186: the first bus carries the ticket away; the arc reaches 186
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-central-terminus-first-bus-ticket-chronicle` — chapter 186 （早上六點十分——中環終點站，票背「明早六點十分」的時間到了。頭班車進站，穿反光背心的清潔女工上車認票；司機在摺了三折的時刻表上添了三個站名交給她。車開了，值夜的清潔工又撕下記事簿一角，寫上自己收工的鐘點壓回桌角。寫時間的人不一定認票，認票的人不一定寫時間——兩件事加起來，才是這座城把日子往下傳的辦法）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- Frozen artifacts in lockstep: digest 186 / 15,688 B, index 186 / 14,800 B, derived fence;
+  `check_atlas_lockstep` PASS at 186/186/186. Every count pin (zh/en, chronicle, handbook, stamp,
+  hk-type, home rail, corpus sanity, count-claims) and `WORLD_ROADMAP` advanced 185 -> 186, with
+  the 185-era copy moved onto the stale list.
+- The D1580 continuation test had pinned chapter 185's slug; it now derives the expected last slug
+  from the corpus, so it stays correct as the arc grows. Web **104 files / 1,015 passed**, atlas
+  11/11, tsc 0, `verify_all` **NO OFFENDER** (75 PASS, 2 UNCHECKED by design).

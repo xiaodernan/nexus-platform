@@ -13,7 +13,7 @@ describe('HK continuation rail', () => {
     expect(rail.chapters).toHaveLength(8);
     expect(rail.chapters[0]?.number).toBe(rail.total - 7);
     expect(rail.chapters.at(-1)?.number).toBe(rail.total);
-    expect(rail.chapters.at(-1)?.slug).toBe('hk-central-terminus-tomorrow-time-ticket-chronicle');
+    expect(rail.chapters.at(-1)?.slug).toBe(guides.filter((g) => g.slug.startsWith('hk-')).at(-1)?.slug);
   });
 
   it('links every chapter one tap away and stays deterministic', () => {
