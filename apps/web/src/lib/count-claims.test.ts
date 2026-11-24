@@ -16,17 +16,16 @@ const read = (rel: string) => readFileSync(join(repoRoot, rel), 'utf8');
 const dict = read('apps/web/src/lib/i18n/dict.ts');
 
 const STALE = [
-  '八十七章香港系列', '八十七章之後', '八十七章，由凌晨', '八十七章讀竟',
   '一百零六章反覆走完一個 HK', '一百零六章香港系列指南', '一百零六章、三幕',
   '一百零六章反覆走一遍香港', '拓至第一百零六章', '一百零六章的完整馬拉松',
   '這一百零六章不是目錄',
-  'Eighty-seven chapters', 'eighty-seven chapters',
   // D1542: the 178-era claims join the stale list as the corpus grows to 179.
   // D1561: the 181-era claims join it as the corpus grows to 182.
   // D1562: the 182-era claims join it as the corpus grows to 183.
   // D1568: the 183-era claims join it as the corpus grows to 184.
   // D1575: the 184-era claims join it as the corpus grows to 185.
   // D1583: the 185-era claims join it as the corpus grows to 186.
+  // D1589: the 186-era claims join it as the corpus grows to 187.
   '一百八十三章反覆走完一個 HK', '一百八十三章香港系列指南', '一百八十三章香港系列', '一百八十三章讀竟',
   'One hundred and eighty-three chapters', 'one hundred and eighty-three chapters',
   '一百八十二章反覆走完一個 HK', '一百八十二章香港系列指南', '一百八十二章香港系列', '一百八十二章讀竟',
@@ -40,21 +39,27 @@ const STALE = [
 
   '一百七十八章反覆走完一個 HK', '一百七十八章香港系列指南', '一百七十八章香港系列', '一百七十八章讀竟',
   // D1587: the browser sweep caught hand-written English numerals the earlier phrase list missed.
+  'hundred-and-eighty-six-chapter', '186-chapter HK series',
   'hundred-and-six-chapter', '172-chapter HK series', 'the full series now runs to 184',
   'one hundred and eighty-three',
   'One hundred and seventy-eight chapters',
 ];
 const CURRENT = [
-  '一百八十六章反覆走完一個 HK', '一百八十六章香港系列指南',
-  '一百八十六章香港系列', '一百八十六章讀竟',
-  'One hundred and eighty-six chapters',
-  'the hundred-and-eighty-six-chapter marathon', '186-chapter HK series',
+  '一百八十七章反覆走完一個 HK', '一百八十七章香港系列指南',
+  '一百八十七章香港系列', '一百八十七章讀竟',
+  'One hundred and eighty-seven chapters',
+  'the hundred-and-eighty-seven-chapter marathon', '187-chapter HK series',
 ];
 
 describe('chapter-count claims across locales', () => {
   it('no stale count claim survives in either authored arm', () => {
     const found = STALE.filter((s) => dict.includes(s));
     expect(found, `stale counts: ${found.join(' | ')}`).toEqual([]);
+    // D1589: with the arc at 187, bare "八十七章" / "eighty-seven chapters" are SUBSTRINGS of
+    // the current 187 wording. Boundary-aware regexes keep the old-87 arms without false reds.
+    const bounded = [/(?<!一百)八十七章(?:香港系列|之後|，由凌晨|讀竟)/, /(?<!and )(?:E|e)ighty-seven chapters/]
+      .filter((r) => r.test(dict)).map(String);
+    expect(bounded, `bounded stale counts: ${bounded.join(' | ')}`).toEqual([]);
   });
 
   it('both arms carry the current count', () => {
@@ -64,6 +69,6 @@ describe('chapter-count claims across locales', () => {
   it('the chronicle page comment is not frozen at 105', () => {
     const page = read('apps/web/app/chronicle/page.tsx');
     expect(page).not.toContain('one city, one day, 105 chapters');
-    expect(page).toContain('186 chapters');
+    expect(page).toContain('187 chapters');
   });
 });

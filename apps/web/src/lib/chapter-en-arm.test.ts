@@ -2759,4 +2759,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /one who claimed it|folded timetable|bus goes/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 187 (folded timetable at Wan Chai — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-wan-chai-folded-timetable-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上六點四十分/);
+    const cn = mockGuide('hk-wan-chai-folded-timetable-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上六点四十分/);
+    const en = mockGuide('hk-wan-chai-folded-timetable-chronicle', 'en');
+    expect(en?.title).toMatch(/Wan Chai|timetable/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/vendor|third stop/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /second station name|promise of three stops|paper travels further/i.test(b.text))).toBe(true);
+  });
 });

@@ -49644,3 +49644,18 @@ The locale toggle was switched back to `zh-HK` and the same eight production rou
 rail, not stale totals — verified by walking the text nodes and reading their parent spans.
 `/chronicle` shows `一座城的一天，一百八十六章的完整馬拉松`. No code change; the sweep is recorded
 so the two authored planes have equal browser evidence.
+
+
+## 1490. D1589 — chapter 187: the folded timetable reaches Wan Chai; the arc reaches 187
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-wan-chai-folded-timetable-chronicle` — chapter 187 （06:40 灣仔，頭班車第二站，清潔女工把摺了三折、寫著中環／灣仔／北角三個站名的時刻表交給報紙檔老闆；老闆在「灣仔」旁用鉛筆補上開檔時間，再摺回三折壓在報紙捆下。紙比人走得遠——城市很大，靠的就是這樣一張接一張的紙）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- Frozen artifacts in lockstep: digest 187 / 15,774 B, index 187 / 14,884 B, derived fence;
+  `check_atlas_lockstep` PASS at 187/187/187. Every count pin (zh/en, chronicle, handbook, stamp,
+  hk-type, home rail, corpus sanity, count-claims) and `WORLD_ROADMAP` advanced 186 -> 187.
+- The advance exposed a latent gate bug: the old-87 stale needles (`八十七章…`, `eighty-seven
+  chapters`) are substrings of the NEW 187 wording. Those needles are now boundary-aware regexes
+  with a negative lookbehind, in both `count-claims.test.ts` and `handbook-coverage.test.ts`, so
+  they still detect real 87-era copy without reddening on 187.
+- Web **104 files / 1,017 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
