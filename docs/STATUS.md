@@ -49396,3 +49396,27 @@ The limit is stated by the gate itself: Git chooses tracked paths, but the reade
 working-tree bytes; CI inspects a clean checkout. PASS means no selected file on disk contains an
 opt-in, not that the caller's ambient environment has been neutralized. The untracked `tmp/`
 probes and logs are evidence only and are not deployment inputs.
+
+
+## 1476. D1574 · the io entry point is LIVE at D1573 again, with the atlas lie removed
+
+**Why:** the io fact pack was at D1570 while master had moved through D1571, D1572, D1552 and
+D1553; its static fallback still advertised `a7376fc / 1,830 / D1568`, and the D1570
+`milestone_full` text still said "atlas lockstep 183/183/183" beside a correct 184 in the same
+paragraph. A big milestone (the hardened deployment/CI stack plus chapter 184 and two arcs)
+warrants one sync, so this is the heavy-milestone refresh, not a per-commit one.
+
+- `docs/SHOWCASE.json` -> D1573, `as_of` 2026-11-24, `updated_at_commit` ed4d68c; both arms
+  rewritten; the 183/183/183 sentence is corrected to **184/184/184**; features now carry the
+  proxy launch-path census, the production npm/image closures, the live funnel parity, the two
+  curated arcs, the measured world census and the production-limit siege.
+- The io clone was fast-forwarded from D1557-era local history to the real remote (17 commits of
+  parallel cross-project syncs), then only `assets/nexus-platform/latest.json` and `index.html`
+  were edited. Both static halves (zh at :272-279, en at :1088-1095) now mirror head, commit
+  count, milestone, as-of, generated foot and the whole feature list. A verification gate ran
+  14 checks (fact fields match source, both arms mirrored, zero stale needles) — all PASS.
+- io commit `674b818` pushed to master with a rebase loop and **no force push**. Read back from
+  the public raw URL: `latest.json` is D1573 / `ed4d68c` / 1,847 commits, and the live `index.html`
+  shows `master @ ed4d68c`, `1,847`, `D1573` and the corrected 184/184/184 static foot.
+- Limit stated honestly: other projects' tiles in `index.html` are refreshed by their own syncs;
+  this entry owns the NEXUS Platform tile only. The API stays closed — no live model calls.
