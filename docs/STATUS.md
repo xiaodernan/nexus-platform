@@ -49358,3 +49358,41 @@ The final full AI suite is **38081 passed, 525 skipped, 48 warnings in 965.04s**
 the earlier lone prefix-contract failure was a Windows subprocess decoded as GBK, not a product
 failure, and that file passes all 10 legs in isolation under UTF-8
 (`tmp/d1552_prefix_recheck.txt`, `tmp/d1552_prefix_utf8_recheck.txt`).
+
+## 1475. D1553 · tracked launch paths cannot accidentally opt into ambient proxy routing
+
+The census premise was falsified before any product code changed. On Node 24, ambient
+`HTTP_PROXY`/`HTTPS_PROXY` alone leaves global `fetch` direct; `NODE_USE_ENV_PROXY=0`, `false` and
+`true` also stay direct, while `1` routes through the proxy. The CLI opt-in is presence-sensitive:
+`--use-env-proxy=false` and `--use-env-proxy=0` still route through it, and explicit `NO_PROXY`
+still permits a deliberate bypass (`tmp/d1553_node_proxy_values.txt`,
+`tmp/d1553_node_cli_values.txt`, `tmp/d1553_node_no_proxy_control.txt`). The JVM likewise ignores
+ambient `*_PROXY`; non-loopback probes distinguish direct transport from `-Dhttp.proxyHost` /
+`-Dhttps.proxyHost` and `-Djava.net.useSystemProxies`, including both option-file channels
+(`tmp/d1553_jvm_proxy_probe_v2.txt`, `tmp/d1553_jvm_option_channels.txt`). The apparent production
+seam at `services/cloud/dispatcher-service/src/main/java/com/nexus/cloud/dispatcher/DispatcherWorker.java:91`
+is not one: its production constructor builds a plain `HttpClient`, and `ProxySelector` occurs only
+in fake test clients. D1553 therefore changes no deliberate proxy-aware application seam.
+
+`scripts/check_internal_proxy_launch_paths.mjs` adds a static launch/configuration door over paths
+selected by `git ls-files -z`: manifests, Dockerfiles, Maven POMs, Spring resources, framework
+configs, launchers, Compose files, CI workflows and script directories. It rejects the active Node
+environment/CLI opt-ins, JVM proxy hosts and system-proxy selection, and inherited
+`JAVA_TOOL_OPTIONS`/`JDK_JAVA_OPTIONS` passthrough. File-specific comment and string handling keeps
+inert prose, quoted documentation and Compose `null` values green; package manifests must parse and
+only their `scripts` values execute as commands, while XML scans only active launch/configuration
+blocks. The real selector currently reads **245 launch files from 1,668 tracked paths**, finds all
+**8 required anchors** and reports **0 activation hits** (`tmp/d1553_gate_fourth.txt`). Its
+**63 in-memory mutation arms** pass with the real selector (`tmp/d1553_selftest_eighth.txt`).
+
+The CI reader step runs the reachability check, the real census and the self-test inside one
+`pipefail`-protected `&&` group before `tee`, so a later PASS cannot hide an earlier failure
+(`.github/workflows/ci.yml:502`). The exact grouped command passes with **77 of 77 first-party
+readers reached** (`tmp/d1553_ci_pipeline_final.txt`); the edited workflow parses as **9 jobs**
+(`tmp/d1553_ci_yaml_parse.txt`), the gate passes `node --check`
+(`tmp/d1553_node_syntax.txt`) and `git diff --check` is clean (`tmp/d1553_diff_check.txt`).
+
+The limit is stated by the gate itself: Git chooses tracked paths, but the reader inspects their
+working-tree bytes; CI inspects a clean checkout. PASS means no selected file on disk contains an
+opt-in, not that the caller's ambient environment has been neutralized. The untracked `tmp/`
+probes and logs are evidence only and are not deployment inputs.

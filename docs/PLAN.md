@@ -4457,6 +4457,17 @@ by what is already verified, not by date.
   JDBC ownership. The workflow file now selects the AI job itself, so a CI-only regression cannot
   skip its door. Eight mutation arms and 30 deployment/CI checks pass.
 
+- **Landed — D1553 (§1475): tracked launch/configuration paths cannot accidentally opt into
+  ambient proxy routing.** Node/JVM probes falsified the proposed product fix: Node 24 needs
+  `NODE_USE_ENV_PROXY=1` or the presence-sensitive `--use-env-proxy` flag (even `=false`/`=0`),
+  while the JVM needs explicit proxy properties; `DispatcherWorker`'s production constructor is not
+  a `ProxySelector` seam. The new tracked-path census reads **245 launch files**, finds **0 active
+  opt-ins**, and passes **63 mutation arms**. It rejects active Node/JVM activation and inherited
+  JVM option passthrough without touching deliberate application seams; inert prose and Compose
+  `null` stay green. CI runs the census and its self-test in the same fail-fast `pipefail` group as
+  reader reachability (**77/77 readers**). PASS covers selected working-tree bytes, not the caller's
+  ambient environment.
+
 - **The twelve-item directive re-inventoried 2026-11-22 — what is DONE, what is OWED, measured.** The
   owner's §一 asks for a plan; this is the plan as the repo stands today, each line carrying its own
   evidence rather than a date.

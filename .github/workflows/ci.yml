@@ -499,7 +499,7 @@ jobs:
       - name: Every reader is reachable, and every pipe that runs one can fail
         shell: bash
         run: |
-          node scripts/check_reader_reachability.mjs | tee reader-reachability.txt
+          (node scripts/check_reader_reachability.mjs && node scripts/check_internal_proxy_launch_paths.mjs && node scripts/check_internal_proxy_launch_paths.mjs --self-test) | tee reader-reachability.txt
           { echo "## Reader reachability + pipe protection"; echo '```'; cat reader-reachability.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 # ------------------------------------------------------------------ security
   security:
