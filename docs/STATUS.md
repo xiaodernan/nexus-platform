@@ -49526,3 +49526,24 @@ strip is finished, the "再往前走 / continuation rail" below it offers the ei
 straight from the full corpus. Ten-step structure and chapter counts are untouched, so the existing
 coverage pins still hold; the Simplified fold was regenerated and `check_ui_script.mjs` stays at
 zero offenders. Targeted handbook + continuation tests 12/12; `verify_all` NO OFFENDER.
+
+
+## 1483. D1582 · the remaining `ECONNREFUSED` was a local port drift, not Clash
+
+The owner kept seeing connection-refused errors after the D1577 unbind. Measured on this host:
+
+- Clash Verge is still running as two SYSTEM services (`clash_verge_service`,
+  `FlClashHelperService`, both Automatic/Running) and `verge-mihomo.exe` still owns :7897. Stopping
+  the process or the services is **access denied** from this shell — it needs an elevated prompt.
+  This is no longer a product dependency: direct GitHub 200 / Wikipedia 301 were measured.
+- The real refusal came from the gitignored `apps/web/.env.local`: it still pointed the server-side
+  BFF at `127.0.0.1:8090` (platform) and `127.0.0.1:8010` (AI), while the running compose plane
+  listens on **8080** and **8000**. Both stale ports refused instantly. The local file is now
+  8080 / 8000; `GET /` on :3100 returns 200 and `POST /api/nexus/ai/web-facts` reaches the AI
+  service (422 on a deliberately malformed body — a real response, not a refused socket).
+- A hung `next dev` on :3100 was also restarted; the old process held 355 s CPU and 1.2 GB while
+  never answering. The home page is back to ~0.5 s after warm-up.
+
+No tracked product code changed; the local env file is gitignored. If the owner wants Clash gone
+from the machine entirely, the two services must be stopped/disabled from an elevated prompt (or
+from the Clash Verge GUI with service mode off) — this agent cannot do it without admin rights.
