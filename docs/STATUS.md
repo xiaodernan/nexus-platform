@@ -49659,3 +49659,21 @@ so the two authored planes have equal browser evidence.
   with a negative lookbehind, in both `count-claims.test.ts` and `handbook-coverage.test.ts`, so
   they still detect real 87-era copy without reddening on 187.
 - Web **104 files / 1,017 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1491. D1590 — a third curated arc: the timetable, chapters 184–187, walkable from any step
+
+Two curated arcs already existed (ticket 179–183, crossing 64–67), but the newest four chapters —
+the claimed ticket, the ticket bearing tomorrow's time, the first bus, the folded timetable at Wan
+Chai — were only reachable through affinity engines. This adds a third curated path (§六):
+
+- New pure `apps/web/src/lib/timetable-arc.ts`: four shipped slugs in reading order over the shared
+  `arcPositionFor` primitive; `timetableArcFor()` returns an honest null outside the arc.
+- `growth.timetableArc` copy in both authored arms (zh + en, Simplified fold regenerated); the
+  chapter page now selects ticket → crossing → timetable copy for whichever arc the chapter sits
+  on, and the existing server-only `TicketArcRail` renders the numbered four-stop path.
+- The in-app handbook teaches all three arcs in both arms; `handbook-coverage.test.ts` pins the
+  new third-arc copy. `timetable-arc.test.ts` (2) + `timetable-arc-wiring.test.ts` (2) pin the
+  shipped slugs, null-safe ends and page wiring; the older arc-wiring pins were updated to the
+  three-way copy selection.
+- Web **104 files / 1,022 passed**, tsc 0, `verify_all` NO OFFENDER (75 PASS, 2 UNCHECKED).

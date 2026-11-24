@@ -27,6 +27,11 @@ describe('handbook coverage of current features', () => {
     expect(dict).toContain('There is also the TICKET ARC: chapters 179–183 tell the story of one ticket across a whole day');
   });
 
+  it('teaches the timetable arc in both arms (D1590)', () => {
+    expect(dict).toContain('時刻表之弧」：第 184 至 187 章');
+    expect(dict).toContain('the TIMETABLE ARC (chapters 184–187)');
+  });
+
   it('teaches the crossing arc in both arms (D1567)', () => {
     // The border's night into morning is the second curated arc; the manual must name it too.
     expect(dict).toContain('還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸');

@@ -38,8 +38,8 @@ describe('ticket arc wiring', () => {
     expect(page).toContain("import { TicketArcRail } from '@/components/ticket-arc-rail'");
     expect(page).toContain('ticketArcFor(guide.slug)');
     expect(page).toContain('if (!arc) return null;');
-    // D1567: the copy follows the arc — ticket copy on the ticket arc, crossing copy elsewhere.
-    expect(page).toContain('ticket ? dict.growth.ticketArc : dict.growth.crossingArc');
+    // D1567 + D1590: copy follows the arc — ticket, crossing or timetable.
+    expect(page).toContain('ticket ? dict.growth.ticketArc : crossing ? dict.growth.crossingArc : dict.growth.timetableArc');
   });
 
   it('the rail derives all five titles from the corpus, in the current locale', () => {
@@ -70,6 +70,6 @@ describe('crossing arc wiring (D1567)', () => {
     const page = read('apps/web/app/guides/[slug]/page.tsx');
     expect(page).toContain("import { crossingArcFor, CROSSING_ARC_SLUGS } from '@/lib/crossing-arc'");
     expect(page).toContain('crossingArcFor(guide.slug)');
-    expect(page).toContain("ticket ? dict.growth.ticketArc : dict.growth.crossingArc");
+    expect(page).toContain("ticket ? dict.growth.ticketArc : crossing ? dict.growth.crossingArc : dict.growth.timetableArc");
   });
 });

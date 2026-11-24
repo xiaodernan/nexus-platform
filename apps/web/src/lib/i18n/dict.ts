@@ -583,6 +583,10 @@ export interface Dict {
       next: string;
       pathLabel: string;
     };
+    timetableArc: {
+      eyebrow: string; title: string; intro: string; progress: string;
+      previous: string; next: string; pathLabel: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -884,6 +888,10 @@ export interface Dict {
         notWired: string;
         errors: { required: string; too_long: (max: number) => string; invalid: string };
       };
+    /**
+     * D1590: the timetable arc — four chapters, one folded sheet, terminus to Wan Chai. Curated
+     * data, not a similarity guess; copy only, because the rail is a server component.
+     */
       team: {
         empty: string;
         columns: { name: string; email: string; role: string; permissions: string; status: string; joined: string };
@@ -2252,6 +2260,13 @@ const zhHK: Dict = {
       next: '下一站',
       pathLabel: '口岸走過的五站',
     },
+      timetableArc: {
+        eyebrow: '時刻表之弧 · 四章',
+        title: '一張摺了三折的紙，走了四站',
+        intro: '從 23:30 被認走的票，到明早六點十分的頭班車，再到灣仔報紙檔下壓著的那張時刻表——四章跟著同一張紙走。',
+        progress: '第 {n} 站，共 {total} 站',
+        previous: '上一站', next: '下一站', pathLabel: '時刻表的路線',
+      },
   },
   hkType: {
     eyebrow: '香港系列 · 互動篇章',
@@ -3135,7 +3150,7 @@ const zhHK: Dict = {
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
         '兩空開始讀下去，不必回目錄：每章底部的「章節雷達」按共享詞語推出同你讀的這章最相似的三章；/guides 上的「續讀線」則按你已讀過的內容指出下三度值得開的門。兩者都在你的電腦裡算——零 token、零網絡，同一個讀過清單永遠指同一條路。',
         '另有「票之弧」：第 179 至 183 章講同一張票走過一整天。在這五章的任何一章底部，會出現一條五站的路徑——你在第幾站、上一站、下一站都清楚標明。這是編輯選好的線，不是猜出來的相似度；按順序走，或跳到任何一站，都可由你決定。',
-        '還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸——由文錦渡零點四十五分的第一班米車，到皇崗夜閘、羅湖橋下的夜市，再到早晨八點一刻浩明的第二輛米車出閘。口岸的一夜到早，同樣在五章任何一章底部出現五站路徑；跟不跟，由你。',
+        '還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸——由文錦渡零點四十五分的第一班米車，到皇崗夜閘、羅湖橋下的夜市，再到早晨八點一刻浩明的第二輛米車出閘。口岸的一夜到早，同樣在五章任何一章底部出現五站路徑；跟不跟，由你。再有「時刻表之弧」：第 184 至 187 章跟著一張摺了三折的紙，由中環終點站走到灣仔報紙檔；四站路徑在任一章底部都看得到。',
       ] },
       { id: 'quiz', kicker: 'PLAY', title: '4 · /hk-type「香港人格」：怎麼玩', paragraphs: [
         '10 題——由早餐到夜宵，找出你在香港的最近似的人格：常餐店長、茶餐廳老闆、廟街解籤婆婆。沒有對錯，結果只是一面哈哈鏡。',
@@ -4547,6 +4562,13 @@ const en: Dict = {
       next: 'Next stop',
       pathLabel: 'The five stops the border kept',
     },
+      timetableArc: {
+        eyebrow: 'TIMETABLE ARC · FOUR CHAPTERS',
+        title: 'One folded sheet, four stops',
+        intro: 'From the ticket claimed at 23:30 to the first bus at 06:10 and the timetable pressed under the Wan Chai newspaper bundle — four chapters follow one sheet of paper.',
+        progress: 'Stop {n} of {total}',
+        previous: 'Previous stop', next: 'Next stop', pathLabel: 'The timetable route',
+      },
   },
   hkType: {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
@@ -5433,7 +5455,7 @@ const en: Dict = {
         'The strip above the chapter grid on /hong-kong remembers which ones you read (localStorage only; a new device starts from zero).',
         'Two ways to keep reading without an index: the CHAPTER RADAR at the foot of every chapter names the three chapters that share the most words with the one you just finished, and the READING THREAD on /guides names the three doors most worth opening next from what you have already read. Both are computed on your machine — zero tokens, zero network, and the same read-set always opens the same path.',
         'There is also the TICKET ARC: chapters 179–183 tell the story of one ticket across a whole day. At the foot of any of those five chapters, a five-stop path appears — where you are, the previous stop and the next are all marked. This is a curated line, not a guessed similarity; walk it in order or jump to any stop, as you like.',
-        'There is also the CROSSING ARC: chapters 64, 61, 62, 65 and 67 tell one border — from Ho Ming’s first rice truck through Man Kam To at a quarter to one, through the Huanggang night gate and the night market below Lo Wu, to his second truck rolling out at a quarter past eight. One border’s night into morning; the same five-stop path appears at the foot of any of them. Walk it or leave it, as you like.',
+        'There is also the CROSSING ARC: chapters 64, 61, 62, 65 and 67 tell one border — from Ho Ming’s first rice truck through Man Kam To at a quarter to one, through the Huanggang night gate and the night market below Lo Wu, to his second truck rolling out at a quarter past eight. One border’s night into morning; the same five-stop path appears at the foot of any of them. A third path, the TIMETABLE ARC (chapters 184–187), follows one folded sheet from the Central terminus to the Wan Chai newspaper stall; its four-stop path appears at the foot of each chapter. Walk it or leave it, as you like.',
       ] },
       { id: 'quiz', kicker: 'PLAY', title: '4 · /hk-type — how to play the Hong Kong persona quiz', paragraphs: [
         'Ten questions — from the first bowl at dawn to the one before you sleep — find the closest-matching Hong Kong you. There are no wrong answers; the result is a fun mirror, not a diagnosis.',
