@@ -49480,3 +49480,19 @@ that name Clash :7897 remain facts in the ledger and UI copy; they are not a run
   on `test_recommend_needs_intent_or_query` — host thread exhaustion during the parallel run,
   NOT a product failure; the file passes 8/8 in isolation. Historical live figures remain facts;
   normal egress is direct from here on.
+
+
+## 1480. D1579 · the io entry point is LIVE at D1579 — 185 chapters and the Clash-free note
+
+- `docs/SHOWCASE.json` -> D1579 / 2026-11-24 / head 379c345 / 1,851 commits; both arms rewritten
+  with chapter 185, atlas 185/185/185, the measured world census, the two curated arcs, the
+  D1577 direct-egress change and the production-limit siege. The old 183/183/183 sentence is gone.
+- The io clone was fast-forwarded through seven parallel cross-project syncs before the edit;
+  only `assets/nexus-platform/latest.json` and `index.html` were changed. Both static halves now
+  mirror head, commits, milestone, as-of, generated foot and the seven-feature list. A 14-check
+  verifier passed (fields match source, both arms mirrored, zero stale needles).
+- io commit `2a3f6e0` pushed with a rebase loop, no force push. Read back from the public raw URL:
+  `latest.json` is D1579 / 379c345 / 1,851 commits, and the page static half says 185 chapters,
+  atlas 185/185/185 and "Clash-free direct egress".
+- Limit: other projects' tiles on the io page are owned by their own syncs; this entry owns the
+  NEXUS Platform tile only.
