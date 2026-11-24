@@ -49821,3 +49821,12 @@ distributed. The measured world census already gave totals, but not per-layer de
   (3 — wiring, server-only local component, copy in both arms).
 - Browser: the band renders **7 cards / 106 chips** in `zh-HK`, zero console errors, no overflow.
   Web **104 files / 1,034 passed**, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1502. D1601 · the in-app handbook teaches the measured world statistics (§七)
+
+The new per-layer census on `/world` was invisible to the manual. The handbook's "Unfold the
+world" step now tells the reader that the page hosts a measured world census and a seven-layer
+breakdown, in both authored arms; the Simplified fold was regenerated and `check_ui_script.mjs`
+stays at zero offenders. `handbook-coverage.test.ts` pins both sentences.
+Web **104 files / 1,035 passed**, tsc 0, `verify_all` NO OFFENDER.

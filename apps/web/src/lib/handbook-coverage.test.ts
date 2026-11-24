@@ -27,6 +27,11 @@ describe('handbook coverage of current features', () => {
     expect(dict).toContain('There is also the TICKET ARC: chapters 179–183 tell the story of one ticket across a whole day');
   });
 
+  it('teaches the measured world statistics in both arms (D1601)', () => {
+    expect(dict).toContain('世界普查、七層實測明細');
+    expect(dict).toContain('a measured world census, a per-layer breakdown');
+  });
+
   it('teaches the timetable arc in both arms (D1590)', () => {
     expect(dict).toContain('時刻表之弧」：第 184 至 189 章');
     expect(dict).toContain('the TIMETABLE ARC (chapters 184–189)');
