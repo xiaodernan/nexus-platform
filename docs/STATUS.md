@@ -49594,3 +49594,23 @@ in the in-app browser in both authored locales:
 - Read back from the public raw URL: `latest.json` is D1585 / 97b7d65 / 1,857 commits, headline
   says 186 chapters, atlas 186/186/186 and bilingual browser clean.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1487. D1586 · §十一 pressure evidence after the direct-egress change: dev chokes, production holds
+
+`scripts/stress_search.mjs` floods a real route with real HTTP and counts real bytes/timeouts
+(measurement, not a CI gate). Run against the direct-network stack on this host:
+
+- **Next dev** on :3100, `/hong-kong`, 4 × 64 @ concurrency 32: `0/256` ok, **256 timeouts** at the
+  15 s ceiling, 2.1 req/s, p50 15,000 ms. The dev compiler/server is not a capacity plane; it also
+  left the single request path at ~5 s afterwards. This is a dev-mode limitation, not a product
+  crash — the process stayed up and recovered.
+- **Production build** (`npm run build`, exit 0) served by `next start` on :3200, same route:
+  - 4 × 64 @ concurrency 32 → `256/256` ok, **0 errors / 0 timeouts**, 97,518,592 bytes, 11.4 req/s,
+    p50 2,575 ms, p99 3,932 ms.
+  - 4 × 128 @ concurrency 64 → `512/512` ok, **0 errors / 0 timeouts**, 195,037,184 bytes,
+    16.4 req/s, p50 3,989 ms, p99 5,686 ms.
+
+So the production read plane holds a 64-way burst of the heaviest hub route with no 5xx or dropped
+requests; the dev server is explicitly NOT the plane to quote for capacity. No code changed — the
+production server and the stress script are operator tools, the numbers are the evidence.
