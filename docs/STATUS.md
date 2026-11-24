@@ -49496,3 +49496,24 @@ that name Clash :7897 remain facts in the ledger and UI copy; they are not a run
   atlas 185/185/185 and "Clash-free direct egress".
 - Limit: other projects' tiles on the io page are owned by their own syncs; this entry owns the
   NEXUS Platform tile only.
+
+
+## 1481. D1580 — the hub's 106-chapter dead end is closed with a derived continuation rail
+
+**Audit finding.** `/hong-kong` is the primary world hub, but its clock strip, continue-reading
+strip and progress cards are curated to the first **106** chapters while the corpus is **185**.
+A reader who finishes the visible clock gets "done / back to index"; the newest chapters are only
+reachable through affinity engines. The measured world census (D1560) already stated the real
+size — the hub itself still offered no way forward.
+
+- New pure `apps/web/src/lib/hk-continuation.ts` takes the newest eight chapters from the real
+  corpus and numbers them by corpus position — nothing hand-maintained, no model, no network.
+- New server component `apps/web/src/components/hk-continuation-rail.tsx` renders those eight
+  chapters as one-tap links plus a CTA to `/world`; it reads `mockGuides(locale)` on the hub next
+  to `HkContinueReading`. Both authored arms carry `hkHub.continuation` copy (zh + en), the
+  Simplified fold is regenerated, and both arms stay locale-pure. A first draft used one
+  Simplified glyph (`進来`) in the zh-HK copy; `check_ui_script.mjs` caught it, it is now `進來`.
+- Tests: `hk-continuation.test.ts` (3 — derived numbering, deterministic unique links, honest
+  empty-corpus behaviour) and `hk-continuation-wiring.test.ts` (3 — hub wiring, server-only local
+  component, copy in both arms). tsc 0; web **104 files / 1,014 passed**; `verify_all` **NO
+  OFFENDER** (75 PASS, 2 UNCHECKED by design).

@@ -209,6 +209,11 @@ export interface Dict {
         allRead: string;
         toGo: string;
       };
+      /** D1580: the post-106 continuation rail — derived from the full corpus, never a stale claim. */
+      continuation: {
+        eyebrow: string; title: string; hint: string; chapterLabel: string;
+        cta: string; ctaHref: string;
+      };
       /** D1115: 每日一句 — the Cantonese-of-the-day pool, picked by the HK date's FNV hash. */
       cantonese: {
         eyebrow: string;
@@ -1799,6 +1804,14 @@ const zhHK: Dict = {
         newHere: '這是你第一次來',
         allRead: '你讀完所有章節',
         toGo: '還有 {n} 章',
+      },
+      continuation: {
+        eyebrow: '再往前走 · 全語料',
+        title: '讀完時辰表，世界還在',
+        hint: '上面的時辰表與「續讀」只排到前 106 章；這裡直接取全語料最新的八章，從哪裡進來都能再往前走。',
+        chapterLabel: '第 {n} 章',
+        cta: '去 /world 攤開整座城',
+        ctaHref: '/world',
       },
       clock: [
         { time: '23:30', name: '金花街譚華阿婆的最後一鍋燒賣', href: '/guides/hk-mong-kok-ging-fa-shu-mai-chronicle' },
@@ -4086,6 +4099,14 @@ const en: Dict = {
         newHere: 'This is your first time',
         allRead: 'You’ve finished them all',
         toGo: '{n} to go',
+      },
+      continuation: {
+        eyebrow: 'KEEP GOING · FULL CORPUS',
+        title: 'The clock ends. The world does not.',
+        hint: 'The clock strip and continue-reading above cover only the first 106 chapters. This rail takes the eight newest chapters straight from the full corpus — there is always a way forward.',
+        chapterLabel: 'Chapter {n}',
+        cta: 'Unfold the whole city at /world',
+        ctaHref: '/world',
       },
       clock: [
         { time: '23:30', name: 'Tam Mui-po’s last pot of shu mai', href: '/guides/hk-mong-kok-ging-fa-shu-mai-chronicle' },

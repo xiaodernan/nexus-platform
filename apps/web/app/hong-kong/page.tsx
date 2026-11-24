@@ -8,6 +8,8 @@ import { HkSeriesProgress } from '@/components/hk-series-progress';
 import { HkCantoneseDaily } from '@/components/hk-cantonese-daily';
 import { HkArcTimeline } from '@/components/hk-arc-timeline';
 import { HkContinueReading } from '@/components/hk-continue-reading';
+import { HkContinuationRail } from '@/components/hk-continuation-rail';
+import { mockGuides } from '@/lib/mock';
 
 
 /**
@@ -54,6 +56,11 @@ export default async function HongKongHubPage() {
       {/* Continue where you left off — localStorage-powered, zero network */}
       <Container size="shell" className="pt-3">
         <HkContinueReading copy={hub.continueReading} entries={hub.clock} />
+      </Container>
+
+      {/* D1580: the curated clock stops at ch.106; the full corpus keeps going */}
+      <Container size="shell" className="pt-3">
+        <HkContinuationRail guides={mockGuides(locale)} copy={hub.continuation} />
       </Container>
 
       {/* Fifty-three chapter cards */}

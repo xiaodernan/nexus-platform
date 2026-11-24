@@ -443,6 +443,14 @@ export const zhCN: Dict = {
         allRead: '你读完所有章节',
         toGo: '还有 {n} 章',
       },
+      continuation: {
+        eyebrow: '再往前走 · 全语料',
+        title: '读完时辰表，世界还在',
+        hint: '上面的时辰表与「续读」只排到前 106 章；这里直接取全语料最新的八章，从哪里进来都能再往前走。',
+        chapterLabel: '第 {n} 章',
+        cta: '去 /world 摊开整座城',
+        ctaHref: '/world',
+      },
       clock: [
         { time: '23:30', name: '金花街谭华阿婆的最后一锅烧卖', href: '/guides/hk-mong-kok-ging-fa-shu-mai-chronicle' },
         { time: '00:00', name: '纸包饮品贩卖机', href: '/guides/hk-vending-machine-chronicle' },
