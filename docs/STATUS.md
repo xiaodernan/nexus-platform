@@ -49892,3 +49892,16 @@ census cards. Each now renders a `title` hint from dict-owned copy in both autho
 `teaching-tooltips.test.ts` pins all three components and both arms' copy.
 Browser: `/world` shows 36 titled controls, 0 console errors, no overflow. Web **104 files /
 1,040 passed**, tsc 0, `check_ui_script` 0 offenders, `verify_all` NO OFFENDER.
+
+
+## 1508. D1608 · the io entry point is LIVE at 191 chapters, eight-stop arc and teaching hints
+
+- `docs/SHOWCASE.json` -> D1608 / 2026-11-25 / head c970426 / 1,880 commits; both arms rewritten
+  with chapter 191, atlas 191/191/191, the eight-stop timetable arc, the measured seven-layer
+  census, the 191/191 stamp tracker, the teaching tooltips, the bilingual browser evidence and the
+  production pressure numbers.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. io commit `301de19` pushed with a
+  rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1608 / c970426 / 1,880 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
