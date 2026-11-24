@@ -49803,3 +49803,21 @@ browser evidence, not a static gate; no code change.
   rebase loop, no force push.
 - Read back from the public raw URL: `latest.json` is D1599 / 9d6cfe2 / 1,871 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1501. D1600 — /world now shows the real per-layer census (§六 statistics)
+
+The first exploration audit found "world statistics missing": no surface stated how the world is
+distributed. The measured world census already gave totals, but not per-layer detail.
+
+- New pure `apps/web/src/lib/layer-census.ts` counts the 106 curated clock chips into seven layers
+  with the same boundaries the atlas page uses; each chip lands exactly once, shares are rounded
+  percentages, and an empty chip list reports honest zeros.
+- New server component `apps/web/src/components/layer-census-band.tsx` renders the seven layer
+  cards with chapter counts and shares, each linking to its layer anchor. `growth.world.layerCensus`
+  copy in both authored arms (zh + en), Simplified fold regenerated; wired into `/world`.
+- Tests: `layer-census.test.ts` (3 — the measured 17/20/18/21/10/10/10 partition sums to 106, the
+  boundary helper agrees with the page, empty input is honest) and `layer-census-wiring.test.ts`
+  (3 — wiring, server-only local component, copy in both arms).
+- Browser: the band renders **7 cards / 106 chips** in `zh-HK`, zero console errors, no overflow.
+  Web **104 files / 1,034 passed**, tsc 0, `verify_all` NO OFFENDER.

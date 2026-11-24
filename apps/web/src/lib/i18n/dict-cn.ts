@@ -2230,6 +2230,12 @@ export const zhCN: Dict = {
       doorsTitle: '再进去一次',
       doorsHint: '这三扇门从你还没读过、且在不同时辰的章节中选出——选择只存在你的浏览器。',
     },
+      layerCensus: {
+        eyebrow: '七层明细 · 实测',
+        title: '每一层有多少时辰格',
+        hint: '下面的数字直接从上面 106 个时辰格按时段算出，每一格只进一层；不是文案写的。点进任一层可跳到那一带。',
+        chaptersLabel: '格', shareLabel: '占比',
+      },
     webFacts: {
       eyebrow: '真实资料 · 联网',
       title: '问这座真实的城',

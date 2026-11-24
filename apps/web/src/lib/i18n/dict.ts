@@ -1337,6 +1337,10 @@ export interface Dict {
       cardsLabel: string; hoursLabel: string; layersLabel: string;
       doorsTitle: string; doorsHint: string;
     };
+    /** D1600: per-layer census of the curated clock, with real counts and shares. */
+    layerCensus: {
+      eyebrow: string; title: string; hint: string; chaptersLabel: string; shareLabel: string;
+    };
     /** D1502: real public reference facts through the SSRF-guarded web tool. */
     webFacts: {
       eyebrow: string; title: string; intro: string; note: string; placeholder: string;
@@ -3600,6 +3604,12 @@ const zhHK: Dict = {
       doorsTitle: '再進去一次',
       doorsHint: '這三扇門從你還沒讀過、且在不同時辰的章節中選出——選擇只存在你的瀏覽器。',
     },
+      layerCensus: {
+        eyebrow: '七層明細 · 實測',
+        title: '每一層有多少時辰格',
+        hint: '下面的數字直接從上面 106 個時辰格按時段算出，每一格只進一層；不是文案寫的。點進任一層可跳到那一帶。',
+        chaptersLabel: '格', shareLabel: '佔比',
+      },
     webFacts: {
       eyebrow: '真實資料 · 聯網',
       title: '問這座真實的城',
@@ -5905,6 +5915,12 @@ const en: Dict = {
       doorsTitle: 'Re-enter the world',
       doorsHint: 'Three doors chosen from chapters you have not read, in different hours — the choice lives only in this browser.',
     },
+      layerCensus: {
+        eyebrow: 'SEVEN LAYERS · MEASURED',
+        title: 'How many hours live in each layer',
+        hint: 'These numbers are computed from the 106 clock chips above by time band — each chip lands in exactly one layer. Nothing here is written into copy. Tap a layer to jump to its hours.',
+        chaptersLabel: 'chips', shareLabel: 'share',
+      },
     webFacts: {
       eyebrow: 'REAL FACTS · ONLINE',
       title: 'Ask the real city',
