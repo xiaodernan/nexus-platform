@@ -11,13 +11,13 @@ describe('world census wiring', () => {
   it('the /world page renders the measured census band', () => {
     const page = read('apps/web/app/world/page.tsx');
     expect(page).toContain("import { WorldCensusBand } from '@/components/world-census-band'");
-    expect(page).toContain('<WorldCensusBand guides={corpus} copy={t.census} />');
+    expect(page).toContain('layers={t.layers.length}');
   });
 
   it('the band is local-first and never fabricates a number', () => {
     const ui = read('apps/web/src/components/world-census-band.tsx');
     expect(ui.startsWith("'use client';")).toBe(true);
-    expect(ui).toContain('worldCensus(guides)');
+    expect(ui).toContain('worldCensus(guides, layers)');
     expect(ui).toContain('endlessDoors(guides');
     expect(ui).toContain('readChapters()');
     expect(ui).not.toContain('fetch(');

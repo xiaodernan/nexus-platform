@@ -49690,3 +49690,20 @@ Chai — were only reachable through affinity engines. This adds a third curated
 - io commit `347b36a` pushed with a rebase loop, no force push. Read back from the public raw URL:
   `latest.json` is D1591 / c6cd504 / 1,863 commits, headline says 187 chapters and three curated arcs.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1493. D1592 · the world census stops inventing its layer count; two stale atlas numbers fixed
+
+A browser-driven honesty audit of `/world` found two claims that static phrase gates had missed:
+
+- The nav hint still said `全系列 160 章 / 87 個坐標` and `160 chapters / 87 hourly coordinates`.
+  The real corpus is 187 chapters and the curated clock has **106** chips (pinned by
+  `world-atlas.test.ts` as 17+20+18+21+10+10+10). Both arms are corrected and a new test walks the
+  dict tree for the `/world` hint, requiring 187 and 106 and refusing 160 / 87.
+- `worldCensus()` returned a hardcoded `layers: 7` while its own docstring promised that no
+  un-derivable number is printed. `layers` is now an explicit caller argument fed from the real
+  `t.layers.length` on `/world`; with no argument the census honestly reports 0 rather than a
+  fabricated 7. Three census tests pin 7 / 3 / 0, and the wiring pin checks the derived prop.
+- Two host restarts interrupted the simplified fold; the generated arm was stale against the
+  edited zh-HK copy and `check_simplified_mirror.mjs` correctly reddened. Regenerated, green again.
+- Web **104 files / 1,024 passed**, tsc 0, `check_ui_script` 0 offenders, `verify_all` NO OFFENDER.

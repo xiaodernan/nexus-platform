@@ -5,6 +5,9 @@
  * Pure, offline, no network and no LLM. Everything here is computed from the guides the
  * product actually carries — if a number cannot be derived, it is not printed. This is the
  * antidote to "看着很大、里面很空": the bigness is measured, not claimed.
+ *
+ * D1592: `layers` used to be a hardcoded 7, which contradicted the module's own promise. It is
+ * now passed in by the caller from the real `world.layers` list, so a copy edit cannot lie.
  */
 
 import type { Guide } from './types';
@@ -23,7 +26,7 @@ const TIME_BANDS: string[] = [
   '凌晨', '半夜', '清晨', '早上', '上午', '中午', '下午', '傍晚', '晚上',
 ];
 
-export function worldCensus(guides: Guide[]): WorldCensus {
+export function worldCensus(guides: Guide[], layerCount = 0): WorldCensus {
   const unique = new Map<string, Guide>();
   for (const g of guides) if (g.slug.startsWith('hk-')) unique.set(g.slug, g);
   const all = [...unique.values()];
@@ -45,7 +48,7 @@ export function worldCensus(guides: Guide[]): WorldCensus {
     bodyBlocks,
     cardSets,
     timeBands: bands.size,
-    layers: 7,
+    layers: layerCount,
   };
 }
 

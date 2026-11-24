@@ -105,7 +105,7 @@ export default async function WorldPage() {
         <WayfinderPanel locale={locale} copy={t.wayfinder} />
         <WorldAnswerPanel locale={locale} copy={t.worldAnswer} />
         <WebFactsPanel locale={locale} copy={t.webFacts} />
-        <WorldCensusBand guides={corpus} copy={t.census} />
+        <WorldCensusBand guides={corpus} copy={t.census} layers={t.layers.length} />
         <nav aria-label={t.clockLabel} className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
           {t.layers.map((layer) => (
             <a

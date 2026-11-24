@@ -3110,7 +3110,7 @@ const zhHK: Dict = {
       { href: '/llm-ops', label: '模型手術枱', title: '大模型怎麼在產品裡流轉 — envelope A/B · prefix cache · router · weekly probe（真機實測）' },
       { href: '/chronicle', label: '系列全書', title: '一座城的一天 — 一百八十七章、多層、一段史詩的全書錨位' },
       { href: '/afterward', label: '收工之後', title: '第二十四版全書的尾巴——零點到天亮之間的五個守夜瞬間' },
-      { href: '/world', label: '世界地圖', title: '世界地圖 · 全系列 160 章；地圖按時辰選 87 個坐標，七層一次讀完' },
+      { href: '/world', label: '世界地圖', title: '世界地圖 · 全系列 187 章；地圖按時辰選 106 個坐標，七層一次讀完' },
     ],
   },
   handbook: {
@@ -5412,7 +5412,7 @@ const en: Dict = {
       { href: '/llm-ops', label: 'LLM ops', title: 'How the model actually moves through the product — envelope A/B · prefix cache · router · weekly probe (live-measured)' },
       { href: '/chronicle', label: 'The Chronicle', title: 'One city, one day — the 105-chapter, three-act codex of this arc' },
       { href: '/afterward', label: 'The Afterward', title: 'The tail of the closed day — five flashes between midnight and dawn' },
-      { href: '/world', label: 'World atlas', title: 'World atlas · 160 chapters in the series; 87 hourly coordinates across seven layers' },
+      { href: '/world', label: 'World atlas', title: 'World atlas · 187 chapters in the series; 106 hourly coordinates across seven layers' },
     ],
   },
   handbook: {

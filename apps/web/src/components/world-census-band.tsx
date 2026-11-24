@@ -27,8 +27,9 @@ export interface WorldCensusCopy {
   doorsHint: string;
 }
 
-export function WorldCensusBand({ guides, copy }: { guides: Guide[]; copy: WorldCensusCopy }) {
-  const census = worldCensus(guides);
+export function WorldCensusBand({ guides, copy, layers }: { guides: Guide[]; copy: WorldCensusCopy; layers: number }) {
+  // D1592: the layer count comes from the real world.layers list, never a hardcoded number.
+  const census = worldCensus(guides, layers);
   const [doors, setDoors] = useState<Guide[]>([]);
 
   useEffect(() => {

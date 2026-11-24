@@ -65,6 +65,32 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
     expect(enCounts).toEqual(counts);
   });
 
+  it('the atlas nav hint states the real corpus size and clock-chip count', () => {
+    const zh = getDict('zh-HK');
+    const en = getDict('en');
+    const nav = (dict: typeof zh) => {
+      const found: string[] = [];
+      const walk = (node: unknown): void => {
+        if (!node || typeof node !== 'object') return;
+        if (Array.isArray(node)) { for (const x of node) walk(x); return; }
+        const rec = node as Record<string, unknown>;
+        if (rec.href === '/world' && typeof rec.title === 'string') found.push(rec.title);
+        for (const value of Object.values(rec)) walk(value);
+      };
+      walk(dict);
+      return found;
+    };
+    for (const locale of [zh, en]) {
+      const titles = nav(locale);
+      expect(titles.length, 'the /world nav hint must exist in every arm').toBeGreaterThan(0);
+      for (const title of titles) {
+        expect(title).toContain('187');
+        expect(title).toContain('106');
+        expect(title).not.toMatch(/160|87 hourly|87 個坐標/);
+      }
+    }
+  });
+
   it('ships identical layer codes in both locales, bilingual blurbs', () => {
     const zh = getDict('zh-HK');
     const en = getDict('en');

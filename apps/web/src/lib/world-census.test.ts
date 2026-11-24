@@ -14,7 +14,13 @@ describe('world census', () => {
     expect(c.bodyBlocks).toBeGreaterThan(1000);
     expect(c.cardSets).toBeGreaterThan(0);
     expect(c.timeBands).toBeGreaterThanOrEqual(7);
-    expect(c.layers).toBe(7);
+    expect(c.layers).toBe(0); // no layer list supplied => no number invented
+  });
+
+  it('takes the layer count from the real layer list instead of inventing one', () => {
+    expect(worldCensus(guides, 7).layers).toBe(7);
+    expect(worldCensus(guides, 3).layers).toBe(3);
+    expect(worldCensus(guides).layers).toBe(0);
   });
 
   it('is deterministic over the same corpus', () => {
