@@ -49866,3 +49866,16 @@ the path length (5 for ≤5 steps, 4 for 6–8, 3/4 for longer), so seven steps 
 `timeline-arc-wiring.test.ts` pins both the selection logic and the dynamic class. Browser check on
 the chapter-190 page: 7 steps, 2 balanced rows, `sm:grid-cols-4`, 0 console errors, no overflow.
 Web **104 files / 1,037 passed**, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1506. D1606 — chapter 191: the iron box of unfinished sheets; the arc reaches 191
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-central-iron-box-unfinished-sheets-chronicle` — chapter 191 （16:30 中環報攤，寫了六行的時刻表放進鐵盒；十幾張紙各自只寫了幾行，沒有一張寫滿。盒子永遠不會空，也永遠不會滿。收檔後陌生人手裡捏著空白紙走過——這座城不需要招募寫字的人，只要有人肯接過紙，故事就自己往下走）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- The timetable arc grew from seven stops to eight (184 → 191), with copy, handbook, wiring and
+  both arms advanced. Frozen artifacts in lockstep: digest 191 / 16,117 B, index 191 / 15,229 B,
+  derived fence; `check_atlas_lockstep` PASS at 191/191/191. All count pins, `WORLD_ROADMAP`
+  and the `/world` nav hint advanced 190 -> 191. A Simplified `从` in the first draft was corrected
+  to `從` before the script ran; `check_ui_script.mjs` reports 0 offenders.
+- Web **104 files / 1,038 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.

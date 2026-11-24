@@ -1,6 +1,6 @@
 /**
- * D1590 — the timetable arc (§六): seven chapters, one folded sheet, a bus ride from the terminus through
- * Wan Chai and North Point, onto the ferry and ashore at Central. A curated fact about the corpus, not a similarity guess. Shared walk semantics.
+ * D1590 — the timetable arc (§六): eight chapters, one folded sheet, a bus ride from the terminus through
+ * Wan Chai and North Point, onto the ferry, ashore at Central and into the iron box. A curated fact about the corpus, not a similarity guess. Shared walk semantics.
  */
 import { arcPositionFor, type StoryArcPosition } from './story-arc';
 
@@ -12,11 +12,12 @@ export const TIMETABLE_ARC_SLUGS: readonly string[] = [
   'hk-north-point-third-stop-timetable-chronicle',
   'hk-north-point-ferry-timetable-chronicle',
   'hk-central-pier-timetable-sixth-line-chronicle',
+  'hk-central-iron-box-unfinished-sheets-chronicle',
 ] as const;
 
 export type TimetableArcPosition = StoryArcPosition;
 
-/** Where a chapter sits in the timetable arc, or null when it is not one of the seven. */
+/** Where a chapter sits in the timetable arc, or null when it is not one of the eight. */
 export function timetableArcFor(slug: string): TimetableArcPosition | null {
   return arcPositionFor(TIMETABLE_ARC_SLUGS, slug);
 }

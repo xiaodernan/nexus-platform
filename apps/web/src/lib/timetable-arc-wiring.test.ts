@@ -25,8 +25,8 @@ describe('timetable arc wiring', () => {
 
   it('both authored arms carry the copy and the shared primitive is local', () => {
     const dict = read('apps/web/src/lib/i18n/dict.ts');
-    expect(dict).toContain("eyebrow: '時刻表之弧 · 七章'");
-    expect(dict).toContain("eyebrow: 'TIMETABLE ARC · SEVEN CHAPTERS'");
+    expect(dict).toContain("eyebrow: '時刻表之弧 · 八章'");
+    expect(dict).toContain("eyebrow: 'TIMETABLE ARC · EIGHT CHAPTERS'");
     const lib = read('apps/web/src/lib/timetable-arc.ts');
     expect(lib).toContain("from './story-arc'");
     expect(lib).not.toMatch(/\bfetch\s*\(/);

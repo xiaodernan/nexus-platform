@@ -14,8 +14,8 @@ describe('handbook coverage of current features', () => {
   it('states the real chapter count, not the old 87 or the stale 172', () => {
     // D1517: the handbook said 172 while the shipped series is 179 (measured: 179 hk-* guides in
     // the seed). A manual that under-reports the world is a manual that loses the reader's trust.
-    expect(dict).toContain('一百九十章按時辰攤成七層');
-    expect(dict).toContain('One hundred and ninety chapters arranged by the hour');
+    expect(dict).toContain('一百九十一一章按時辰攤成七層');
+    expect(dict).toContain('One hundred and ninety-one chapters arranged by the hour');
     expect(dict).not.toContain('一百七十二章');
     expect(dict).not.toMatch(/(?<!一百)八十七章按時辰攤成七層/);
     expect(dict).not.toMatch(/(?<!and )Eighty-seven chapters arranged by the hour/);
@@ -33,8 +33,8 @@ describe('handbook coverage of current features', () => {
   });
 
   it('teaches the timetable arc in both arms (D1590)', () => {
-    expect(dict).toContain('時刻表之弧」：第 184 至 190 章');
-    expect(dict).toContain('the TIMETABLE ARC (chapters 184–190)');
+    expect(dict).toContain('時刻表之弧」：第 184 至 191 章');
+    expect(dict).toContain('the TIMETABLE ARC (chapters 184–191)');
   });
 
   it('teaches the crossing arc in both arms (D1567)', () => {
