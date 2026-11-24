@@ -49738,3 +49738,22 @@ while eleven series chapters later still existed.
 - New `stamp-tracker-total.test.ts` pins 188 unique chapters and the page's corpus-derived wiring,
   and refuses any return to the 106-chip clock. `stamp-collection.test.ts` unchanged, still 6/6.
 - Web **104 files / 1,026 passed**, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1496. D1595 — chapter pages render again locally, and the five-stop arc is browser-verified
+
+A browser check of `/guides/hk-north-point-third-stop-timetable-chronicle` showed an SSR error page
+(`加載失敗 / Authentication required`) on both the dev and the production server. Measured cause:
+the gitignored `apps/web/.env.local` set `NEXT_PUBLIC_DATA_MODE=live`, so `guideBySlug()` called the
+platform BFF; this host has no authenticated platform session (401). The shipped default is `mock`,
+and `data.ts` deliberately refuses to backfill a failed live read with fixtures — so the honest fix
+for a standalone local box is the shipped default, not a silent fallback. `.env.local` is now
+`DATA_MODE=mock`; the chapter page renders again. No tracked data-plane policy changed.
+
+The same page then surfaced a second React warning: the site-chrome footer list contained
+`/hong-kong` twice (once from `footer.extraLinks`, once appended) and keyed by `href` alone. Keyed
+by `href + index`; new pin in `rail-nav-chrome.test.ts`.
+
+**Browser evidence after both fixes:** the timetable rail shows **5 steps** in `zh-HK`, `zh-CN` and
+`en`, no overflow, **0 console errors**. `/stamp` shows `188 / 188` denominator with **188 cards**,
+also 0 errors. Web **104 files / 1,027 passed**, tsc 0, `verify_all` NO OFFENDER.

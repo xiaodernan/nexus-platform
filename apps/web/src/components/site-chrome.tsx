@@ -164,8 +164,8 @@ export function SiteFooter({ locale }: { locale: string }) {
         <div className="flex flex-col gap-2">
           <span className="text-sm font-semibold text-ink-strong">{dict.footer.exploreTitle}</span>
           <ul className="flex flex-col gap-1.5">
-            {links.map((link) => (
-              <li key={link.href}>
+            {links.map((link, index) => (
+              <li key={`${link.href}-${index}`}>
                 <Link href={link.href} title={link.title} className="text-xs text-ink-muted hover:text-accent hover:underline">
                   {link.label}
                 </Link>

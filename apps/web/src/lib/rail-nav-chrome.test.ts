@@ -15,6 +15,15 @@ const CARD = read('packages/ui/src/trust/EntityCard.tsx');
 const RENDERER = read('packages/ui/src/trust/Renderers.tsx');
 const ZH = read('apps/web/src/lib/i18n/trust-labels.ts');
 
+/** D1596 — the footer/nav links include /hong-kong twice across sections; key by href + index. */
+describe('site chrome list keys', () => {
+  it('keys nav links by href and index', () => {
+    const src = readFileSync(join(repoRoot, 'apps/web/src/components/site-chrome.tsx'), 'utf8');
+    expect(src).toContain('key={`${link.href}-${index}`}');
+    expect(src).not.toContain('<li key={link.href}>');
+  });
+});
+
 describe('D1018 rail chrome — the contract is pinned where it can be read', () => {
   it('the rail measures its own geometry, not a media query', () => {
     expect(CARD).toContain('const railRef = React.useRef<HTMLDivElement>(null)');
