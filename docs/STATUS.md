@@ -49779,3 +49779,15 @@ and `/admin/analytics` — in **both** authored planes. Every route in both loca
 no console error, no horizontal overflow, and no stale count claim (`160 chapters`, `87 hourly`,
 `hundred-and-six-chapter`, `172-chapter`, `184. Newest`, `隐图`, `160 章`, `87 個坐標`). This is
 browser evidence, not a static gate; no code change.
+
+
+## 1499. D1598 — chapter 189: the timetable boards the ferry; the arc reaches 189
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-north-point-ferry-timetable-chronicle` — chapter 189 （08:00 北角渡輪碼頭，工友把摺了三折的時刻表交給售票員；前四行都是時間，他寫的第五行卻是「對岸」。紙從此不按鐘點走，而按目的地走。城市很大，大到一張紙永遠寫不完）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- The timetable arc grew from five stops to six: 184 → 189, with copy, handbook, wiring and both
+  arms advanced together. Frozen artifacts in lockstep: digest 189 / 15,950 B, index 189 / 15,061 B,
+  derived fence; `check_atlas_lockstep` PASS at 189/189/189. All count pins, `WORLD_ROADMAP` and the
+  `/world` nav hint advanced 188 -> 189 (the latter needed its digit-form zh line fixed separately).
+- Web **104 files / 1,028 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.

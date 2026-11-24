@@ -2789,4 +2789,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /fourth line|who passes it|folded back/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 189 (far shore on the ferry — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-north-point-ferry-timetable-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/早上八點/);
+    const cn = mockGuide('hk-north-point-ferry-timetable-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/早上八点/);
+    const en = mockGuide('hk-north-point-ferry-timetable-chronicle', 'en');
+    expect(en?.title).toMatch(/North Point|ferry/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/far shore|clerk/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /not a time|one who crossed|shadow is longest/i.test(b.text))).toBe(true);
+  });
 });
