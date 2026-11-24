@@ -49856,3 +49856,13 @@ Web **104 files / 1,035 passed**, tsc 0, `verify_all` NO OFFENDER.
   184–189 to 184–190 in the source pack and the live fact pack (io `b5ff107`, repo `7a00ebf`).
 - Read back from the public raw URL: `latest.json` is D1603 / 1d243f5 / 1,875 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1505. D1605 — the shared arc rail adapts to paths longer than five steps (§五)
+
+The ticket-arc rail was originally laid out as a single five-column row. With the timetable arc
+now seven steps, it wrapped as an uneven 5+2. `TicketArcRail` now chooses its column count from
+the path length (5 for ≤5 steps, 4 for 6–8, 3/4 for longer), so seven steps render as 4+3.
+`timeline-arc-wiring.test.ts` pins both the selection logic and the dynamic class. Browser check on
+the chapter-190 page: 7 steps, 2 balanced rows, `sm:grid-cols-4`, 0 console errors, no overflow.
+Web **104 files / 1,037 passed**, tsc 0, `verify_all` NO OFFENDER.

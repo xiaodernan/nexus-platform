@@ -33,6 +33,9 @@ interface Props {
 export function TicketArcRail({ position, titles, copy }: Props) {
   const { step, total, slugs, prev, next } = position;
   const progress = copy.progress.replace('{n}', String(step)).replace('{total}', String(total));
+  // D1605: the rail was laid out for five steps. Longer curated arcs wrap to a column count that
+  // fits the actual path, so seven steps become 4+3 rather than an unbalanced 5+2.
+  const columns = total <= 5 ? 'sm:grid-cols-5' : total <= 8 ? 'sm:grid-cols-4' : 'sm:grid-cols-3 lg:grid-cols-4';
 
   return (
     <section aria-label={copy.title} className="rounded-2xl border border-accent-line bg-surface p-5 sm:p-6">
@@ -41,7 +44,7 @@ export function TicketArcRail({ position, titles, copy }: Props) {
       <p className="mt-2 max-w-prose text-sm leading-relaxed text-ink-muted">{copy.intro}</p>
       <p className="mt-3 font-mono text-xs text-accent">{progress}</p>
 
-      <ol className="mt-4 grid gap-2 sm:grid-cols-5" aria-label={copy.pathLabel}>
+      <ol className={`mt-4 grid gap-2 ${columns}`} aria-label={copy.pathLabel}>
         {slugs.map((slug, index) => {
           const here = index + 1 === step;
           return (

@@ -17,6 +17,12 @@ describe('timetable arc wiring', () => {
     expect(page).toContain('dict.growth.timetableArc');
   });
 
+  it('the shared rail adapts its columns to arcs longer than five steps', () => {
+    const rail = read('apps/web/src/components/ticket-arc-rail.tsx');
+    expect(rail).toContain("total <= 5 ? 'sm:grid-cols-5' : total <= 8 ? 'sm:grid-cols-4'");
+    expect(rail).toContain('className={`mt-4 grid gap-2 ${columns}`}');
+  });
+
   it('both authored arms carry the copy and the shared primitive is local', () => {
     const dict = read('apps/web/src/lib/i18n/dict.ts');
     expect(dict).toContain("eyebrow: '時刻表之弧 · 七章'");
