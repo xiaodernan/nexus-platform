@@ -49420,3 +49420,13 @@ warrants one sync, so this is the heavy-milestone refresh, not a per-commit one.
   shows `master @ ed4d68c`, `1,847`, `D1573` and the corrected 184/184/184 static foot.
 - Limit stated honestly: other projects' tiles in `index.html` are refreshed by their own syncs;
   this entry owns the NEXUS Platform tile only. The API stays closed — no live model calls.
+
+
+## 1477. D1576 — chapter 185: a ticket bearing tomorrow's time; the arc reaches 185
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-central-terminus-tomorrow-time-ticket-chronicle` — chapter 185 （凌晨零點五分——中環終點站，清潔工發現司機二十三點半壓在桌角的新票被翻了過來：背面寫著「明早六點十分，頭班車」。門外那位在水泉澳邨留下兩名票的老人只問一句：「寫了時間的票，有人認了沒有？」他走後，清潔工撕下記事簿一角，寫上自己開工時間壓回桌角。一張票走完一整天，另一張接過明天——這座城把鐘點交下去，不是靠鐘，是靠願意寫字也願意認字的人）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- Frozen artifacts in lockstep: digest 185 / 15,602 B, index 185 / 14,713 B, derived fence; `check_atlas_lockstep` PASS at 185/185/185. Both authored arms + every count pin (zh/en, chronicle, handbook, stamp, hk-type, home rail, corpus sanity) and `WORLD_ROADMAP` advanced 184 -> 185 and cleaned from its stale 181/D1559 header. `count-claims` keeps the 184-era copy on the stale list.
+- Two gates exposed by the preceding D1553 land were closed here: `check_atlas.mjs` now names `check_internal_proxy_launch_paths.mjs` on the page (454 cited paths), and `check_d952.mjs`'s cited-line-stable pin moved 548 -> 546 after D1552 deleted two CI lines; its 11-arm self-test reddens every corruption including the new 546 line.
+- Gates: web **102 files / 1,008 passed**; atlas/recap 20/20; `verify_all` **NO OFFENDER** (73 PASS, 2 UNCHECKED by design); `check_ui_script` 0 offenders; tsc 0.

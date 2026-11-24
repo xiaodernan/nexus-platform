@@ -2729,4 +2729,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[一-鿿]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /ticket that left|rule of claiming|fresh ticket/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 185 (Central terminus — a ticket bearing tomorrow’s time — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-terminus-tomorrow-time-ticket-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/凌晨零點五分/);
+    const cn = mockGuide('hk-central-terminus-tomorrow-time-ticket-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/凌晨零点五分/);
+    const en = mockGuide('hk-central-terminus-tomorrow-time-ticket-chronicle', 'en');
+    expect(en?.title).toMatch(/Central|terminus|tomorrow/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/cleaner/i);
+    expect(prose).not.toMatch(/[一-鿿]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /time on the back|old man returns|passing the hour/i.test(b.text))).toBe(true);
+  });
 });

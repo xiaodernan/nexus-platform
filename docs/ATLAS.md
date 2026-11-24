@@ -429,6 +429,7 @@ mints/propagates W3C `traceparent`; `apps/ai/nexus_ai/api/tracing.py` parses it 
 | `scripts/falsify_insight_trace_smoke.sh` | D900: turning participation off makes the trace smoke exit non-zero, with the healthy 200 control proving the red is attributable to missing participation |
 | `scripts/check_plane_coordinates.mjs` | the URLs the browser harness reads |
 | `scripts/check_reader_reachability.mjs` | every shipped reader is reachable from a runner |
+| `scripts/check_internal_proxy_launch_paths.mjs` | D1553: tracked launch/configuration paths cannot accidentally opt into ambient proxy routing — a 245-file census from `git ls-files`, 0 active Node/JVM opt-ins, 63 in-memory mutation arms, fail-fast CI grouping before `tee`; PASS covers selected working-tree bytes, not the caller's ambient environment |
 | `scripts/check_contract_drift.mjs` | undocumented routes, client-only routes, missing served paths |
 | `scripts/check_console_a11y.mjs` | landmarks, control names, focus rings, recomputed contrast |
 | `scripts/check_tinted_contrast.mjs` | D956: closes the tinted-ground blind spot the a11y reader declares — reads the 4 opaque `bg-*-soft` + `text-*` pairings from Badge.tsx's cva tone table (contract: a missing tone reddens), resolves both tokens in the light and dark blocks of tokens.css and recomputes the same WCAG ratio, requiring all 4 tones x 2 themes >= 4.5:1 (tightest: light positive-on-soft 4.75:1); source text only, no browser; `--self-test` plants corruptions with a no-op snapshot guard |
