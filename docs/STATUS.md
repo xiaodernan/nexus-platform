@@ -49985,3 +49985,14 @@ at 05:30 (ch192) — over the shared `arcPositionFor` primitive, with honest nul
   the `/world` nav hint advanced 192 -> 193. A Simplified `还好` in the draft was corrected to
   `還好`; `check_ui_script` reports 0 offenders.
 - Web **104 files / 1,050 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1515. D1615 — all four curated arcs browser-verified on representative chapter pages
+
+A production-shaped browser sweep of chapter pages in `zh-HK` confirmed the arc selector and rail
+on one representative chapter per arc: **ticket 5 steps** (ch181), **crossing 5** (ch64),
+**timetable 10** (ch186) and **dawn 6** (ch33). A chapter belonging to two arcs (ch184) correctly
+shows the timetable rail, the first match in the ticket → crossing → timetable → dawn order.
+Every page: no error screen, 0 console errors, no horizontal overflow. Switching the same chapter
+to `en` kept the rail and stayed clean. This is runtime evidence for §五/§六, not a static gate;
+no code change.
