@@ -49960,3 +49960,15 @@ at 05:30 (ch192) — over the shared `arcPositionFor` primitive, with honest nul
   `一百九十二一章` and an English sentence accidentally replaced by Chinese. `handbook-coverage`,
   `dawn-arc` and `dawn-arc-wiring` tests pin all four arcs; the older arc-wiring pins were advanced
   to the four-way copy selection. Web **104 files / 1,049 passed**, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1513. D1613 · the io entry point is LIVE at four curated arcs and 192 chapters
+
+- `docs/SHOWCASE.json` -> D1613 / 2026-11-25 / head f3bcd40 / 1,885 commits; both arms rewritten
+  with the dawn arc, chapter 192, atlas 192/192/192, the measured seven-layer census, the 192/192
+  stamp tracker, teaching tooltips, the identity lock and the production pressure numbers.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. io commit `43efbae` pushed with a
+  rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1613 / f3bcd40 / 1,885 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
