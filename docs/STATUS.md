@@ -49929,3 +49929,16 @@ ledger mention of the forbidden word must be an explicit zero/negative assertion
   derived fence; `check_atlas_lockstep` PASS at 192/192/192. All count pins, `WORLD_ROADMAP`
   and the `/world` nav hint advanced 191 -> 192.
 - Web **104 files / 1,044 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1511. D1611 · the io entry point is LIVE at 192 chapters, nine-stop arc and identity lock
+
+- `docs/SHOWCASE.json` -> D1611 / 2026-11-25 / head 535f740 / 1,883 commits; both arms rewritten
+  with chapter 192, atlas 192/192/192, the nine-stop timetable arc, the measured seven-layer
+  census, the 192/192 stamp tracker, the teaching tooltips, the identity lock, the bilingual browser
+  evidence and the production pressure numbers.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. io commit `0fb36ff` pushed with a
+  rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1611 / 535f740 / 1,883 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
