@@ -50021,3 +50021,16 @@ no code change.
   derived fence; `check_atlas_lockstep` PASS at 194/194/194. All count pins, `WORLD_ROADMAP`
   and the `/world` nav hint advanced 193 -> 194.
 - Web **104 files / 1,051 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
+
+
+## 1518. D1618 · the io entry point is LIVE at 194 chapters and eleven stops
+
+- `docs/SHOWCASE.json` -> D1618 / 2026-11-25 / head f51648d / 1,890 commits; both arms rewritten
+  with chapter 194, atlas 194/194/194, the eleven-stop timetable arc, the four browser-verified
+  arcs, the measured seven-layer census, the 194/194 stamp tracker, teaching tooltips and the
+  identity lock.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. io commit `3754186` pushed with a
+  rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1618 / f51648d / 1,890 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
