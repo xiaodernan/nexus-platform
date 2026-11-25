@@ -49996,3 +49996,16 @@ shows the timetable rail, the first match in the ticket → crossing → timetab
 Every page: no error screen, 0 console errors, no horizontal overflow. Switching the same chapter
 to `en` kept the rail and stayed clean. This is runtime evidence for §五/§六, not a static gate;
 no code change.
+
+
+## 1516. D1616 · the io entry point is LIVE at 193 chapters and four browser-verified arcs
+
+- `docs/SHOWCASE.json` -> D1616 / 2026-11-25 / head 3fa2155 / 1,888 commits; both arms rewritten
+  with chapter 193, atlas 193/193/193, the ten-stop timetable arc, the dawn arc, the four-arc
+  browser evidence, the measured seven-layer census, the 193/193 stamp tracker, teaching tooltips
+  and the identity lock.
+- The io clone was fast-forwarded through parallel cross-project syncs before editing; only
+  `assets/nexus-platform/latest.json` and `index.html` changed. io commit `da795d8` pushed with a
+  rebase loop, no force push.
+- Read back from the public raw URL: `latest.json` is D1616 / 3fa2155 / 1,888 commits.
+- Limit: other projects' tiles on the io page are owned by their own syncs.
