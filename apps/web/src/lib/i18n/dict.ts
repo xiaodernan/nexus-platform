@@ -587,6 +587,11 @@ export interface Dict {
       eyebrow: string; title: string; intro: string; progress: string;
       previous: string; next: string; pathLabel: string;
     };
+    /** D1612: the dawn arc — six chapters from midnight to the first sheet at 05:30. */
+    dawnArc: {
+      eyebrow: string; title: string; intro: string; progress: string;
+      previous: string; next: string; pathLabel: string;
+    };
   };
   /** /hk-type — the consumer archetype quiz (Hong Kong series). */
   hkType: {
@@ -2271,6 +2276,13 @@ const zhHK: Dict = {
         progress: '第 {n} 站，共 {total} 站',
         previous: '上一站', next: '下一站', pathLabel: '時刻表的九站路線',
       },
+      dawnArc: {
+        eyebrow: '破曉之弧 · 六章',
+        title: '由零時到第一張空白紙',
+        intro: '零點的販賣機、三點的果欄、四點的抹窗師傅、四點半的魚市、五點的報紙分送員，到五點半被交出去的空白紙——六章走完一夜到清晨。',
+        progress: '第 {n} / {total} 站',
+        previous: '上一站', next: '下一站', pathLabel: '破曉的路線',
+      },
   },
   hkType: {
     eyebrow: '香港系列 · 互動篇章',
@@ -3134,7 +3146,7 @@ const zhHK: Dict = {
       { title: '香港系列照單全收', text: '/hong-kong 把這座城的一整天放在卡片上；讀過哪章，進度條會記住。時辰表讀完之後，下面的「再往前走」直接從全語料取最新八章。' },
       { title: '問整座城 · /world', text: '在世界地圖按一下，就能問整本系列的章節內容，答案附出處；旁邊還能查真實維基百科資料，零 token。' },
       { title: '帶你玩 · /try', text: '首頁可開教學說明；/try 的五步教練可逐步打勾，進度只存在你的瀏覽器。' },
-      { title: '把整個世界攤開 — /world', text: '一百九十二一章按時辰攤成七層，一頁覽盡一座城；同頁有世界普查、七層實測明細、向導、全語料問答與真實維基資料。' },
+      { title: '把整個世界攤開 — /world', text: '一百九十二章按時辰攤成七層，一頁覽盡一座城；同頁有世界普查、七層實測明細、向導、全語料問答與真實維基資料。' },
       { title: '續讀線 · /guides', text: '讀過哪章，指南頁就會指出下一步最值得開的三度門，並寫明為什麼（共同關鍵詞）。完全本機計算，零 token、零網絡。' },
       { title: 'operator 的鏡子 — /insights', text: '營運側的鬼影台：誰來、誰留、過去七天的趨勢線——全是本地確定性重放，無追蹤、無 cookie。' },
       { title: '/me 收起你的最愛', text: '收藏店舖、偏好、預約和收件匣全在一頁；九成功能不登入也用得。' },
@@ -3154,7 +3166,7 @@ const zhHK: Dict = {
         '/hong-kong 頂部的進度條會記住你讀過哪章（存在瀏覽器 localStorage，不會上傳；換裝置重頭開始）。',
         '兩空開始讀下去，不必回目錄：每章底部的「章節雷達」按共享詞語推出同你讀的這章最相似的三章；/guides 上的「續讀線」則按你已讀過的內容指出下三度值得開的門。兩者都在你的電腦裡算——零 token、零網絡，同一個讀過清單永遠指同一條路。',
         '另有「票之弧」：第 179 至 183 章講同一張票走過一整天。在這五章的任何一章底部，會出現一條五站的路徑——你在第幾站、上一站、下一站都清楚標明。這是編輯選好的線，不是猜出來的相似度；按順序走，或跳到任何一站，都可由你決定。',
-        '還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸——由文錦渡零點四十五分的第一班米車，到皇崗夜閘、羅湖橋下的夜市，再到早晨八點一刻浩明的第二輛米車出閘。口岸的一夜到早，同樣在五章任何一章底部出現五站路徑；跟不跟，由你。再有「時刻表之弧」：第 184 至 192 章跟著一張摺了三折的紙，由中環終點站走到灣仔報紙檔；四站路徑在任一章底部都看得到。',
+        '還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸——由文錦渡零點四十五分的第一班米車，到皇崗夜閘、羅湖橋下的夜市，再到早晨八點一刻浩明的第二輛米車出閘。口岸的一夜到早，同樣在五章任何一章底部出現五站路徑；跟不跟，由你。再有「時刻表之弧」：第 184 至 192 章跟著一張摺了三折的紙，走過灣仔、北角、渡輪與鐵盒；另有「破曉之弧」：第 33、8、20、6、51、192 章由零點的販賣機走到五點半的空白紙。各條路徑在任一章底部都看得到。',
       ] },
       { id: 'quiz', kicker: 'PLAY', title: '4 · /hk-type「香港人格」：怎麼玩', paragraphs: [
         '10 題——由早餐到夜宵，找出你在香港的最近似的人格：常餐店長、茶餐廳老闆、廟街解籤婆婆。沒有對錯，結果只是一面哈哈鏡。',
@@ -4580,6 +4592,13 @@ const en: Dict = {
         progress: 'Stop {n} of {total}',
         previous: 'Previous stop', next: 'Next stop', pathLabel: 'The nine stops the timetable made',
       },
+      dawnArc: {
+        eyebrow: 'DAWN ARC · SIX CHAPTERS',
+        title: 'From midnight to the first blank sheet',
+        intro: 'The midnight vending machine, the three-a.m. fruit market, the window cleaner at four, the fish market at half past, the newspaper runner at five, and the blank sheet passed on at half past five — six chapters from night into morning.',
+        progress: 'Stop {n} of {total}',
+        previous: 'Previous stop', next: 'Next stop', pathLabel: 'The dawn route',
+      },
   },
   hkType: {
     eyebrow: 'Hong Kong Series · The Interactive Chapter',
@@ -5466,7 +5485,7 @@ const en: Dict = {
         'The strip above the chapter grid on /hong-kong remembers which ones you read (localStorage only; a new device starts from zero).',
         'Two ways to keep reading without an index: the CHAPTER RADAR at the foot of every chapter names the three chapters that share the most words with the one you just finished, and the READING THREAD on /guides names the three doors most worth opening next from what you have already read. Both are computed on your machine — zero tokens, zero network, and the same read-set always opens the same path.',
         'There is also the TICKET ARC: chapters 179–183 tell the story of one ticket across a whole day. At the foot of any of those five chapters, a five-stop path appears — where you are, the previous stop and the next are all marked. This is a curated line, not a guessed similarity; walk it in order or jump to any stop, as you like.',
-        'There is also the CROSSING ARC: chapters 64, 61, 62, 65 and 67 tell one border — from Ho Ming’s first rice truck through Man Kam To at a quarter to one, through the Huanggang night gate and the night market below Lo Wu, to his second truck rolling out at a quarter past eight. One border’s night into morning; the same five-stop path appears at the foot of any of them. A third path, the TIMETABLE ARC (chapters 184–192), follows one folded sheet from the Central terminus to the Wan Chai newspaper stall; its four-stop path appears at the foot of each chapter. Walk it or leave it, as you like.',
+        'There is also the CROSSING ARC: chapters 64, 61, 62, 65 and 67 tell one border — from Ho Ming’s first rice truck through Man Kam To at a quarter to one, through the Huanggang night gate and the night market below Lo Wu, to his second truck rolling out at a quarter past eight. One border’s night into morning; the same five-stop path appears at the foot of any of them. The TIMETABLE ARC (chapters 184–192) follows one folded sheet through Wan Chai, North Point, the ferry and the iron box; the DAWN ARC (chapters 33, 8, 20, 6, 51 and 192) walks from the midnight vending machine to the blank sheet at half past five. Each path appears at the foot of any of its chapters. Walk them or leave them, as you like.',
       ] },
       { id: 'quiz', kicker: 'PLAY', title: '4 · /hk-type — how to play the Hong Kong persona quiz', paragraphs: [
         'Ten questions — from the first bowl at dawn to the one before you sleep — find the closest-matching Hong Kong you. There are no wrong answers; the result is a fun mirror, not a diagnosis.',

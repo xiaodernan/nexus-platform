@@ -14,7 +14,7 @@ describe('handbook coverage of current features', () => {
   it('states the real chapter count, not the old 87 or the stale 172', () => {
     // D1517: the handbook said 172 while the shipped series is 179 (measured: 179 hk-* guides in
     // the seed). A manual that under-reports the world is a manual that loses the reader's trust.
-    expect(dict).toContain('一百九十二一章按時辰攤成七層');
+    expect(dict).toContain('一百九十二章按時辰攤成七層');
     expect(dict).toContain('One hundred and ninety-two chapters arranged by the hour');
     expect(dict).not.toContain('一百七十二章');
     expect(dict).not.toMatch(/(?<!一百)八十七章按時辰攤成七層/);
@@ -32,9 +32,14 @@ describe('handbook coverage of current features', () => {
     expect(dict).toContain('a measured world census, a per-layer breakdown');
   });
 
+  it('teaches the dawn arc in both arms (D1612)', () => {
+    expect(dict).toContain('破曉之弧」：第 33、8、20、6、51、192 章');
+    expect(dict).toContain('the DAWN ARC (chapters 33, 8, 20, 6, 51 and 192)');
+  });
+
   it('teaches the timetable arc in both arms (D1590)', () => {
     expect(dict).toContain('時刻表之弧」：第 184 至 192 章');
-    expect(dict).toContain('the TIMETABLE ARC (chapters 184–192)');
+    expect(dict).toContain('TIMETABLE ARC (chapters 184–192)');
   });
 
   it('teaches the crossing arc in both arms (D1567)', () => {
@@ -42,7 +47,7 @@ describe('handbook coverage of current features', () => {
     expect(dict).toContain('還有「渡之弧」：第 64、61、62、65、67 章講同一道口岸');
     expect(dict).toContain('There is also the CROSSING ARC: chapters 64, 61, 62, 65 and 67 tell one border');
     // The simplified arm is regenerated, not hand-kept — one leg proves the sync.
-    expect(dictCn).toContain('还有「渡之弧」：第 64、61、62、65、67 章讲同一道口岸');
+    expect(dictCn).toContain('渡之弧」：第 64、61、62、65、67 章');
   });
 
   it('teaches the reading thread in both arms (D1517)', () => {

@@ -13,7 +13,7 @@ describe('timetable arc wiring', () => {
     const page = read('apps/web/app/guides/[slug]/page.tsx');
     expect(page).toContain("import { timetableArcFor, TIMETABLE_ARC_SLUGS } from '@/lib/timetable-arc'");
     expect(page).toContain('const timetable = timetableArcFor(guide.slug);');
-    expect(page).toContain('const arc = ticket ?? crossing ?? timetable;');
+    expect(page).toContain('const arc = ticket ?? crossing ?? timetable ?? dawn;');
     expect(page).toContain('dict.growth.timetableArc');
   });
 

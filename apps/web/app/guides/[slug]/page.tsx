@@ -15,6 +15,7 @@ import { TicketArcRail } from '@/components/ticket-arc-rail';
 import { ticketArcFor, TICKET_ARC_SLUGS } from '@/lib/ticket-arc';
 import { crossingArcFor, CROSSING_ARC_SLUGS } from '@/lib/crossing-arc';
 import { timetableArcFor, TIMETABLE_ARC_SLUGS } from '@/lib/timetable-arc';
+import { dawnArcFor, DAWN_ARC_SLUGS } from '@/lib/dawn-arc';
 
 /**
  * `/guides/{slug}` (§8, §28). An unreviewed AI guide is still readable, but it is kept out of the
@@ -70,11 +71,12 @@ export default async function GuidePage(props: Props) {
           const ticket = ticketArcFor(guide.slug);
           const crossing = crossingArcFor(guide.slug);
           const timetable = timetableArcFor(guide.slug);
-          const arc = ticket ?? crossing ?? timetable;
+          const dawn = dawnArcFor(guide.slug);
+          const arc = ticket ?? crossing ?? timetable ?? dawn;
           if (!arc) return null;
-          const slugs = ticket ? TICKET_ARC_SLUGS : crossing ? CROSSING_ARC_SLUGS : TIMETABLE_ARC_SLUGS;
+          const slugs = ticket ? TICKET_ARC_SLUGS : crossing ? CROSSING_ARC_SLUGS : timetable ? TIMETABLE_ARC_SLUGS : DAWN_ARC_SLUGS;
           const titles = slugs.map((s) => corpus.find((g) => g.slug === s)?.title ?? s);
-          const copy = ticket ? dict.growth.ticketArc : crossing ? dict.growth.crossingArc : dict.growth.timetableArc;
+          const copy = ticket ? dict.growth.ticketArc : crossing ? dict.growth.crossingArc : timetable ? dict.growth.timetableArc : dict.growth.dawnArc;
           return <TicketArcRail position={arc} titles={titles} copy={copy} />;
         })()}
         {/* D1306 — the live world guide; one compass button, one next step. */}

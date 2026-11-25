@@ -49942,3 +49942,21 @@ ledger mention of the forbidden word must be an explicit zero/negative assertion
   rebase loop, no force push.
 - Read back from the public raw URL: `latest.json` is D1611 / 535f740 / 1,883 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1512. D1612 — a fourth curated arc: dawn, from midnight to the first blank sheet (§六)
+
+The ticket, crossing and timetable arcs covered the ticket's day, the border's night and the folded
+sheet's journey, but the early hours were only a flat list. A new pure `dawn-arc.ts` curates six
+shipped chapters in clock order — vending machine (00:00, ch33), fruit market (03:00, ch8), window
+cleaner (04:00, ch20), fish market (04:30, ch6), newspaper runner (05:00, ch51) and the blank sheet
+at 05:30 (ch192) — over the shared `arcPositionFor` primitive, with honest nulls at both ends.
+
+- Chapter pages now select ticket → crossing → timetable → dawn copy; `dawnArc` copy in both arms,
+  Simplified fold regenerated, and the handbook teaches all four arcs. Chapter 192 belongs to both
+  the timetable and dawn arcs; the timetable rail wins there, and the dawn rail was browser-verified
+  on chapter 33 (6 steps, 0 errors, no overflow).
+- Two copy defects surfaced while editing the handbook prose and were repaired: a doubled `一` in
+  `一百九十二一章` and an English sentence accidentally replaced by Chinese. `handbook-coverage`,
+  `dawn-arc` and `dawn-arc-wiring` tests pin all four arcs; the older arc-wiring pins were advanced
+  to the four-way copy selection. Web **104 files / 1,049 passed**, tsc 0, `verify_all` NO OFFENDER.
