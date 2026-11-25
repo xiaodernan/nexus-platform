@@ -1,5 +1,5 @@
 /**
- * D1590 — the timetable arc (§六): ten chapters, one folded sheet, a bus ride from the terminus through Wan Chai
+ * D1590 — the timetable arc (§六): eleven chapters, one folded sheet, a bus ride from the terminus through Wan Chai
  * and North Point, onto the ferry, into the iron box, out at dawn and across to Kowloon. A curated fact about the corpus, not a similarity guess. Shared walk semantics.
  */
 import { arcPositionFor, type StoryArcPosition } from './story-arc';
@@ -15,11 +15,12 @@ export const TIMETABLE_ARC_SLUGS: readonly string[] = [
   'hk-central-iron-box-unfinished-sheets-chronicle',
   'hk-central-dawn-blank-sheet-chronicle',
   'hk-star-ferry-blank-sheet-crossing-chronicle',
+  'hk-kowloon-pier-eighth-line-chronicle',
 ] as const;
 
 export type TimetableArcPosition = StoryArcPosition;
 
-/** Where a chapter sits in the timetable arc, or null when it is not one of the ten. */
+/** Where a chapter sits in the timetable arc, or null when it is not one of the eleven. */
 export function timetableArcFor(slug: string): TimetableArcPosition | null {
   return arcPositionFor(TIMETABLE_ARC_SLUGS, slug);
 }

@@ -2864,4 +2864,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /seventh line|blank space across|further than the clock/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 194 (a name on line eight — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-kowloon-pier-eighth-line-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/上午十點/);
+    const cn = mockGuide('hk-kowloon-pier-eighth-line-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/上午十点/);
+    const en = mockGuide('hk-kowloon-pier-eighth-line-chronicle', 'en');
+    expect(en?.title).toMatch(/Kowloon pier|name/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/Ah Man|three strokes/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /writing a name|name travels further|back into the box/i.test(b.text))).toBe(true);
+  });
 });

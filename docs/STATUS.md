@@ -50009,3 +50009,15 @@ no code change.
   rebase loop, no force push.
 - Read back from the public raw URL: `latest.json` is D1616 / 3fa2155 / 1,888 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1517. D1617 — chapter 194: a name on line eight; the arc reaches 194
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-kowloon-pier-eighth-line-chronicle` — chapter 194 （10:00 九龍碼頭，搬運工在紙的第八行停了很久，寫下「阿文」——不是地名，是人名。他說：「紙走了這麼遠，總得記住是誰一路寫下來的。」城市大到一張紙裝不下，但記住一個人只需要三筆）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- The timetable arc grew from ten stops to eleven (184 → 194), with copy, handbook, wiring and
+  both arms advanced. Frozen artifacts in lockstep: digest 194 / 16,382 B, index 194 / 15,493 B,
+  derived fence; `check_atlas_lockstep` PASS at 194/194/194. All count pins, `WORLD_ROADMAP`
+  and the `/world` nav hint advanced 193 -> 194.
+- Web **104 files / 1,051 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.
