@@ -2834,4 +2834,19 @@ describe('chapter 106 ships in three arms', () => {
     expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
     expect(en?.body_blocks.some((b) => b.type === 'heading' && /nothing written full|next sheet|keep writing/i.test(b.text))).toBe(true);
   });
+
+  it('chapter 192 (blank sheet at dawn — Layer S continues) ships in three arms too', () => {
+    const hk = mockGuide('hk-central-dawn-blank-sheet-chronicle', 'zh-HK');
+    expect(hk?.title).toMatch(/清晨五點半/);
+    const cn = mockGuide('hk-central-dawn-blank-sheet-chronicle', 'zh-CN');
+    expect(cn?.title).toMatch(/清晨五点半/);
+    const en = mockGuide('hk-central-dawn-blank-sheet-chronicle', 'en');
+    expect(en?.title).toMatch(/Central|blank sheet/i);
+    const prose = (en?.body_blocks ?? [])
+      .map((block) => (block.type === 'paragraph' || block.type === 'heading' ? block.text : ''))
+      .join(' ');
+    expect(prose).toMatch(/soy-milk seller|blank sheet/i);
+    expect(prose).not.toMatch(/[\u4e00-\u9fff]/);
+    expect(en?.body_blocks.some((b) => b.type === 'heading' && /first to write|box need not wait|around once more/i.test(b.text))).toBe(true);
+  });
 });
