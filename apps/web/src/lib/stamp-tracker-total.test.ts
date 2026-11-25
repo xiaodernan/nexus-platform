@@ -11,7 +11,7 @@ const repoRoot = join(HERE, '..', '..', '..', '..');
 describe('stamp tracker total', () => {
   it('mirrors the full HK corpus and matches the copy promise', () => {
     const corpus = mockGuides('zh-HK').filter((g) => g.slug.startsWith('hk-'));
-    expect(corpus.length).toBe(192);
+    expect(corpus.length).toBe(193);
     expect(new Set(corpus.map((g) => g.slug)).size).toBe(corpus.length);
     const page = readFileSync(join(repoRoot, 'apps/web/app/stamp/page.tsx'), 'utf8');
     expect(page).toContain("mockGuides(locale).filter((guide) => guide.slug.startsWith('hk-'))");

@@ -49972,3 +49972,16 @@ at 05:30 (ch192) — over the shared `arcPositionFor` primitive, with honest nul
   rebase loop, no force push.
 - Read back from the public raw URL: `latest.json` is D1613 / f3bcd40 / 1,885 commits.
 - Limit: other projects' tiles on the io page are owned by their own syncs.
+
+
+## 1514. D1614 — chapter 193: the blank sheet crosses to Kowloon; the arc reaches 193
+
+**Code-lane written; no LLM API.** Controlled vocabulary in both authored arms.
+
+- `hk-star-ferry-blank-sheet-crossing-chronicle` — chapter 193 （09:15 中環天星碼頭，清晨寫了「五點半」的空白紙被帶上渡輪；他本可以再寫時間，卻在第七行寫下地名「九龍」。紙的任務從記錄開工變成記住下一站在哪裡。城市大到一張紙裝不下所有站名，小到一張紙能連接兩岸）。zh-HK + EN + opencc fold; `flags:{demo:true}`. Layer S continues.
+- The timetable arc grew from nine stops to ten (184 → 193), with copy, handbook, wiring and both
+  arms advanced. Frozen artifacts in lockstep: digest 193 / 16,290 B, index 193 / 15,400 B,
+  derived fence; `check_atlas_lockstep` PASS at 193/193/193. All count pins, `WORLD_ROADMAP` and
+  the `/world` nav hint advanced 192 -> 193. A Simplified `还好` in the draft was corrected to
+  `還好`; `check_ui_script` reports 0 offenders.
+- Web **104 files / 1,050 passed**, atlas 11/11, tsc 0, `verify_all` NO OFFENDER.

@@ -84,7 +84,7 @@ describe('D1210 /world atlas — the corpus read by the hour', () => {
       const titles = nav(locale);
       expect(titles.length, 'the /world nav hint must exist in every arm').toBeGreaterThan(0);
       for (const title of titles) {
-        expect(title).toContain('192');
+        expect(title).toContain('193');
         expect(title).toContain('106');
         expect(title).not.toMatch(/160|87 hourly|87 個坐標/);
       }
